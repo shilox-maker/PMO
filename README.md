@@ -1,6 +1,6 @@
 # 📑 PPM - Portfolio Management & Governance Dashboard
 
-Plataforma de gobernanza de cartera de proyectos de alto nivel diseñada para que **4-5 Project Managers (PMs)** controlen de forma macro alrededor de **60 proyectos paralelos**.
+Plataforma de gobernanza de cartera de proyectos de alto nivel diseñada para que **Project Managers (PMs)** controlen de forma macro alrededor de **60 proyectos paralelos**, con soporte multiperfil, estados de flujo de trabajo dinámicos, búsquedas ágiles de Key Users e historial de comentarios auditado compatible con Microsoft Outlook.
 
 ---
 
@@ -10,6 +10,7 @@ A diferencia de los gestores de tareas cotidianos, este sistema aísla los detal
 * **Mitigación de Riesgos e Incidencias:** Detección temprana de bloqueos.
 * **Control de Cambios:** Aprobación e impacto en coste y tiempo.
 * **Control Presupuestario Preventivo:** Alertas antes de que ocurra una desviación financiera crítica.
+* **Muro de Comunicación Auditado:** Muro de comunicación interna de proyectos con editor enriquecido.
 
 > [!NOTE]
 > Este sistema es de uso exclusivo para PMs internos y Dirección Ejecutiva. Los proveedores **no** tienen acceso a esta plataforma; toda la información se registra internamente.
@@ -24,12 +25,14 @@ El proyecto está estructurado en un monorepositorio con dos componentes princip
    * **Core:** Node.js con Express.
    * **Base de Datos:** SQLite (`ppm_governance.db`) para facilidad de uso local.
    * **ORM:** Sequelize.
+   * **Seguridad:** Encriptación de contraseñas mediante hashing SHA-256 (nativo con Node `crypto`).
    * **Puerto por defecto:** `5000` (API accesible en `http://localhost:5000/api`).
 
 2. **Frontend (`/frontend`):**
    * **Core:** React 19 (iniciado con Vite).
    * **Iconografía:** Lucide React.
-   * **Estilos:** CSS / Diseño limpio y denso de nivel profesional.
+   * **Estilos:** CSS puro / Diseño limpio, denso y con glassmorphic dark mode para un feeling premium.
+   * **Componentes Custom:** Buscador agrupado autocomplete (Combobox) y Editor WYSIWYG personalizado.
    * **Puerto por defecto:** `5173` (Accesible en `http://localhost:5173`).
 
 ---
@@ -38,10 +41,13 @@ El proyecto está estructurado en un monorepositorio con dos componentes princip
 
 El backend gestiona las siguientes entidades relacionales claves en SQLite:
 * **Sedes:** Sedes físicas de operación (ej. Valencia, Madrid, Buñol).
-* **Proveedores:** Empresas proveedoras externas (incluyendo "Mi Empresa" como registro base).
+* **Proveedores:** Empresas proveedoras externas (con **Dacsa** como la empresa interna preferente).
 * **Contactos_Proveedor:** Personas de contacto clave dentro de cada proveedor.
+* **Estados_Proyecto (Maestro):** Flujo de trabajo configurable (por defecto con 16 estados secuenciales) con emoji y orden de flujo.
+* **Usuarios (Maestro):** Registro de PMs, Directores y Administradores con contraseñas encriptadas, perfil de permisos y estado de cuenta (`activo` / `inactivo`).
 * **Key_Users (KU):** Usuarios clave del negocio o del proveedor que participan en comités o solicitan cambios.
 * **Proyectos:** Entidad central. Almacena metadatos del proyecto, presupuesto inicial, hitos de control, semáforo RAG (Rojo-Amarillo-Verde) y planes de comunicación.
+* **Comentarios_Proyecto:** Muro de comunicación histórico en cada proyecto con control de auditoría de edición (autoría, editor y fecha).
 * **Incidencias:** Problemas activos (Técnica, Retraso, Presupuesto, Proveedor desaparecido).
 * **Riesgos:** Amenazas identificadas y planes de mitigación correspondientes.
 * **Facturas:** Registro financiero. Cuenta con estados `PAGADA` y `PENDIENTE_DE_RECIBIR`.
@@ -69,27 +75,35 @@ El motor del backend calcula dinámicamente el estado real de cada proyecto comb
 * **Fecha Fin Estimada:**
   $$\text{Fecha Fin Estimada} = \text{Fecha Fin Inicial} + \sum (\text{Días de Impacto de Cambios de Alcance APROBADOS})$$
 
+### 3. Validación de Fechas en Backend
+* Para evitar errores en el parseo y discrepancias en los husos horarios locales, la API del backend valida estrictamente que la fecha límite de cualquier tarea o hito se envíe en formato **ISO 8601 (`YYYY-MM-DD`)**. Cualquier fecha mal formateada o inexistente es rechazada preventivamente con un código `400 Bad Request`.
+
 ---
 
-## 🖥️ Vistas y Cuadros de Mando Principales
+## 🖥️ Vistas y Funcionalidades Clave
 
-### 1. Executive Portfolio Dashboard (`/portfolio-dashboard` o `/governance`)
+### 1. Control de Acceso y Sesión (Multi-Perfil)
+* **Formulario de Login**: Autenticación para los perfiles `ADMINISTRADOR`, `PM` y `DIRECTOR`.
+* **Panel de Administración**: Acceso restringido exclusivamente a usuarios con rol `ADMINISTRADOR`. Permite dar de alta/baja (inactivar) usuarios, reestablecer contraseñas, y configurar la ordenación/emojis de las fases del flujo de trabajo (`Estados_Proyecto`).
+
+### 2. Executive Portfolio Dashboard (`/governance`)
 Una pantalla exclusiva para la Dirección Ejecutiva enfocada en métricas consolidadas:
 * **Filtros Maestros:** Filtrado dinámico por **Rango de Fechas** (intersección temporal con la vida del proyecto) y por **Project Manager**.
 * **KPI Cards (Alertas Tempranas):**
   * *Proyectos en Desborde:* Conteo de proyectos donde el Gasto Comprometido supera al Budget Inicial.
   * *Alerta Preventiva CAPEX:* Conteo de proyectos de tipo CAPEX que han consumido $\ge 90\%$ de su presupuesto inicial.
-* **Desglose de Estados:** Gráfico o tarjetas de conteo de proyectos agrupados por sus fases lineales (*Kickoff, Desarrollo, Cierre, Pausado*).
-* **Grid de Alta Densidad:** Lista de proyectos con alertas visuales de tiempo (días de retraso acumulados), alertas financieras (desbordes de coste en **Rojo**) y banderas de **Hitos Vencidos** (hitos pendientes con fecha límite pasada).
+* **Segmentación Dinámica por Estados:** Botones dinámicos que muestran el conteo de proyectos en cada estado del flujo de trabajo directamente leídos del maestro de la base de datos (con soporte de redimensionamiento automático para múltiples estados).
 
-### 2. Vista Vendor 360º
-Permite seleccionar un proveedor y auditar toda su actividad de un vistazo:
-* Proyectos activos e históricos asignados.
-* Historial completo de incidencias técnicas o presupuestarias de sus proyectos.
-* Base de conocimiento de **Lecciones Aprendidas** asociadas al proveedor o a sus proyectos.
+### 3. Buscador Predictivo Combobox de Key Users
+* Reemplaza las listas de checkboxes e inputs obsoletos por un componente autocomplete con buscador predictivo.
+* Agrupa visualmente a los Key Users según su empresa (Proveedor). Los pertenecientes a **Dacsa** aparecen en la parte superior con un badge destacado de **Preferente**.
 
-### 3. Compliance de Gobernanza
-Panel lateral que calcula la cobertura activa de los planes de comunicación (Semanal, Mensual, SteerCo) y lista proyectos con posible abandono (aquellos sin actualizaciones de estado ni registros transaccionales en los últimos 30 días).
+### 4. Muro de Comentarios con Editor WYSIWYG
+* **Editor Customizado**: Soporte para formatos básicos (Negrita, cursiva, listas, y colores de texto).
+* **Integración con Microsoft Outlook**:
+  * **Pegado Limpio**: Intercepta eventos de pegado convirtiendo imágenes de portapapeles a Base64 e ignorando XMLs/clases excedentes de Outlook.
+  - **Copiado de Listas**: Genera etiquetas de lista con estilos en línea (`list-style-type: disc` / `decimal`) asegurando que el copiado directo de comentarios a correos electrónicos de Outlook no rompa el diseño.
+* **Historial Auditado**: Muestra una marca `(Editado)` visible con un tooltip que expone el usuario editor y el timestamp exacto de la última modificación.
 
 ---
 
