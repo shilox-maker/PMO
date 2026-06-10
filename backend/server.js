@@ -1,0 +1,886 @@
+const express = require('express');
+const cors = require('cors');
+const { Op } = require('sequelize');
+const { 
+  sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios, KeyUsers, 
+  Proyectos, ProyectoKeyUsers, ProyectoComSemanalKU, ProyectoComMensualKU, 
+  ProyectoComSteerCoKU, Incidencias, Riesgos, LeccionesAprendidas, Facturas, 
+  CambiosAlcance, Tareas 
+} = require('./models/index');
+const { getProjectCalculations } = require('./models/automations');
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Enable CORS for frontend requests
+app.use(cors());
+app.use(express.json());
+
+// Mock Auth Middleware (Ready for Microsoft Entra ID integration)
+app.use((req, res, next) => {
+  const pmId = req.headers['x-pm-id'];
+  if (pmId) {
+    req.currentPmId = parseInt(pmId, 10);
+  } else {
+    req.currentPmId = null;
+  }
+  next();
+});
+
+// Helper: Format error messages
+const handleErr = (res, error, status = 400) => {
+  console.error(error);
+  res.status(status).json({ error: error.message || 'Error del servidor' });
+};
+
+// Helper: Auto-generate code IDs (Format: PREFIX-YYYY-XXX)
+async function generateNextId(Model, prefix, keyName) {
+  const year = new Date().getFullYear();
+  const pattern = `${prefix}-${year}-%`;
+  
+  const lastRecord = await Model.findOne({
+    where: {
+      [keyName]: {
+        [Op.like]: pattern
+      }
+    },
+    order: [[keyName, 'DESC']]
+  });
+
+  let nextNum = 1;
+  if (lastRecord) {
+    const lastId = lastRecord[keyName];
+    const parts = lastId.split('-');
+    if (parts.length === 3) {
+      const lastNum = parseInt(parts[2], 10);
+      if (!isNaN(lastNum)) {
+        nextNum = lastNum + 1;
+      }
+    }
+  }
+  
+  const paddedNum = String(nextNum).padStart(3, '0');
+  return `${prefix}-${year}-${paddedNum}`;
+}
+
+// ==========================================
+// 1. PMs / Usuarios Endpoints
+// ==========================================
+app.get('/api/pms', async (req, res) => {
+  try {
+    const pms = await Usuarios.findAll({
+      order: [['nombre', 'ASC']]
+    });
+    res.json(pms);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 2. Sedes Endpoints
+// ==========================================
+app.get('/api/sedes', async (req, res) => {
+  try {
+    const sedes = await Sedes.findAll({ order: [['nombre_sede', 'ASC']] });
+    res.json(sedes);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 3. Key Users Endpoints
+// ==========================================
+app.get('/api/key-users', async (req, res) => {
+  try {
+    const kus = await KeyUsers.findAll({
+      include: [{ model: Proveedores, attributes: ['nombre_razon_social'] }],
+      order: [['nombre', 'ASC']]
+    });
+    res.json(kus);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 3.5 Portfolio Optimized Dashboard Endpoints
+// ==========================================
+
+// Get unique project states
+app.get('/api/portfolio/states', async (req, res) => {
+  try {
+    const distinctStates = await Proyectos.findAll({
+      attributes: [[sequelize.fn('DISTINCT', sequelize.col('estado_proyecto')), 'estado']],
+      raw: true
+    });
+    const states = distinctStates.map(ds => ds.estado).filter(Boolean);
+    res.json(states);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Get consolidated portfolio dashboard data with date range and PM filtering
+app.get('/api/portfolio/dashboard', async (req, res) => {
+  try {
+    const { pm, fecha_desde, fecha_hasta, search } = req.query;
+    
+    const where = {};
+    if (pm) {
+      where.id_pm = parseInt(pm, 10);
+    }
+    if (search) {
+      where.nombre_proyecto = { [Op.like]: `%${search}%` };
+    }
+
+    const projectsList = await Proyectos.findAll({
+      where,
+      include: [
+        { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
+        { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
+        { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const dashboardData = await Promise.all(
+      projectsList.map(async (p) => {
+        const id_proyecto = p.id_proyecto;
+        
+        // 1. Approved delay days
+        const approvedCRs = await CambiosAlcance.findAll({
+          where: { id_proyecto, estado_cambio: 'APROBADO' }
+        });
+        let totalCRDays = 0;
+        approvedCRs.forEach(cr => {
+          if (cr.impacta_tiempo) {
+            totalCRDays += parseInt(cr.dias_impacto || 0, 10);
+          }
+        });
+
+        // Calculate estimated end date
+        const initialEndDate = new Date(p.fecha_fin_inicial);
+        initialEndDate.setDate(initialEndDate.getDate() + totalCRDays);
+        const year = initialEndDate.getFullYear();
+        const month = String(initialEndDate.getMonth() + 1).padStart(2, '0');
+        const day = String(initialEndDate.getDate()).padStart(2, '0');
+        const fecha_fin_estimada = `${year}-${month}-${day}`;
+
+        // 2. Committed budget (status PAGADA or PENDIENTE_DE_RECIBIR)
+        const invoices = await Facturas.findAll({
+          where: { 
+            id_proyecto,
+            estado: { [Op.in]: ['PAGADA', 'PENDIENTE_DE_RECIBIR'] }
+          }
+        });
+        let gasto_total_facturas = 0;
+        invoices.forEach(f => {
+          gasto_total_facturas += parseFloat(f.importe || 0);
+        });
+
+        // 3. Next pending milestone
+        const nextMilestone = await Tareas.findOne({
+          where: {
+            id_proyecto,
+            es_hito: true,
+            estado: 'PENDIENTE'
+          },
+          order: [['fecha_limite', 'ASC']]
+        });
+
+        // 4. Overdue milestones indicator (pending milestone with deadline in past)
+        const overdueCount = await Tareas.count({
+          where: {
+            id_proyecto,
+            es_hito: true,
+            estado: 'PENDIENTE',
+            fecha_limite: { [Op.lt]: todayStr }
+          }
+        });
+
+        // 5. Inactivity checking: max updatedAt across related tables in past 30 days
+        let maxUpdated = new Date(p.updatedAt);
+        const childTables = [Facturas, CambiosAlcance, Riesgos, Incidencias, Tareas];
+        for (const Model of childTables) {
+          const latestChild = await Model.findOne({
+            where: { id_proyecto },
+            order: [['updatedAt', 'DESC']]
+          });
+          if (latestChild && new Date(latestChild.updatedAt) > maxUpdated) {
+            maxUpdated = new Date(latestChild.updatedAt);
+          }
+        }
+
+        return {
+          id_proyecto: p.id_proyecto,
+          nombre_proyecto: p.nombre_proyecto,
+          id_pm: p.id_pm,
+          pm_nombre: p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin PM',
+          id_proveedor: p.id_proveedor,
+          prov_nombre: p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner',
+          sede_nombre: p.Sede ? p.Sede.nombre_sede : '',
+          estado_proyecto: p.estado_proyecto,
+          indicador_rag: p.indicador_rag,
+          es_capex: p.es_capex,
+          codigo_capex: p.codigo_capex,
+          budget_inicial: parseFloat(p.budget_inicial),
+          fecha_inicio: p.fecha_inicio,
+          fecha_fin_inicial: p.fecha_fin_inicial,
+          fecha_fin_estimada,
+          dias_retraso_aprobados: totalCRDays,
+          gasto_total_facturas: Number(gasto_total_facturas.toFixed(2)),
+          proximo_hito: nextMilestone ? { titulo_tarea: nextMilestone.titulo_tarea, fecha_limite: nextMilestone.fecha_limite } : null,
+          has_hito_vencido: overdueCount > 0,
+          com_semanal_activo: p.com_semanal_activo,
+          com_mensual_activo: p.com_mensual_activo,
+          com_steerco_activo: p.com_steerco_activo,
+          ultima_actualizacion: maxUpdated.toISOString()
+        };
+      })
+    );
+
+    // Apply time-range filter on calculated estimated dates
+    let finalData = dashboardData;
+    if (fecha_desde || fecha_hasta) {
+      finalData = dashboardData.filter(p => {
+        const matchesDesde = !fecha_desde || p.fecha_fin_estimada >= fecha_desde;
+        const matchesHasta = !fecha_hasta || p.fecha_inicio <= fecha_hasta;
+        return matchesDesde && matchesHasta;
+      });
+    }
+
+    res.json(finalData);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 4. Proyectos (Portfolio Dashboard & CRUD)
+// ==========================================
+
+// Get all projects with filters and calculations
+app.get('/api/projects', async (req, res) => {
+  try {
+    const { pm, vendor, rag, search, state } = req.query;
+    
+    // Construct query filters
+    const where = {};
+    if (pm) where.id_pm = pm;
+    if (vendor) where.id_proveedor = vendor;
+    if (rag) where.indicador_rag = rag;
+    if (state) where.estado_proyecto = state;
+    if (search) {
+      where.nombre_proyecto = { [Op.like]: `%${search}%` };
+    }
+
+    const projectsList = await Proyectos.findAll({
+      where,
+      include: [
+        { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos', 'correo'] },
+        { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
+        { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
+        { model: KeyUsers, as: 'Sponsor', attributes: ['nombre', 'apellidos'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Populate calculations and next milestone for each project
+    const projectsWithCalculations = await Promise.all(
+      projectsList.map(async (project) => {
+        const calc = await getProjectCalculations(
+          project.id_proyecto,
+          project.budget_inicial,
+          project.fecha_fin_inicial
+        );
+
+        const nextMilestone = await Tareas.findOne({
+          where: {
+            id_proyecto: project.id_proyecto,
+            es_hito: true,
+            estado: 'PENDIENTE'
+          },
+          order: [['fecha_limite', 'ASC']]
+        });
+
+        return {
+          ...project.toJSON(),
+          calculations: calc,
+          nextMilestone: nextMilestone ? nextMilestone.toJSON() : null
+        };
+      })
+    );
+
+    res.json(projectsWithCalculations);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Get single project detailed info
+app.get('/api/projects/:id_proyecto', async (req, res) => {
+  try {
+    const { id_proyecto } = req.params;
+    
+    const project = await Proyectos.findByPk(id_proyecto, {
+      include: [
+        { model: Usuarios, as: 'PM', attributes: ['id_usuario', 'nombre', 'apellidos', 'correo'] },
+        { model: Proveedores, as: 'Proveedor', attributes: ['id_proveedor', 'nombre_razon_social'] },
+        { model: Sedes, as: 'Sede', attributes: ['id_sede', 'nombre_sede'] },
+        { model: KeyUsers, as: 'Sponsor', attributes: ['id_ku', 'nombre', 'apellidos', 'correo'] },
+        { model: KeyUsers, as: 'InvolvedKeyUsers', through: { attributes: [] } },
+        { model: KeyUsers, as: 'ComSemanalKUs', through: { attributes: [] } },
+        { model: KeyUsers, as: 'ComMensualKUs', through: { attributes: [] } },
+        { model: KeyUsers, as: 'ComSteerCoKUs', through: { attributes: [] } },
+        { model: Incidencias, order: [['fecha_apertura', 'DESC']] },
+        { model: Riesgos, order: [['fecha_proxima_revision', 'ASC']] },
+        { model: Facturas, order: [['fecha_factura', 'DESC']] },
+        { model: CambiosAlcance, include: [
+          { model: KeyUsers, as: 'Solicitante', attributes: ['nombre', 'apellidos'] },
+          { model: KeyUsers, as: 'Aprobador', attributes: ['nombre', 'apellidos'] }
+        ], order: [['fecha_solicitud', 'DESC']] },
+        { model: Tareas, order: [['fecha_limite', 'ASC']] }
+      ]
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Proyecto no encontrado' });
+    }
+
+    const calc = await getProjectCalculations(
+      project.id_proyecto,
+      project.budget_inicial,
+      project.fecha_fin_inicial
+    );
+
+    res.json({
+      ...project.toJSON(),
+      calculations: calc
+    });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Create new project
+app.post('/api/projects', async (req, res) => {
+  try {
+    const data = req.body;
+
+    // Validate CAPEX requirements
+    if (data.es_capex && (!data.codigo_capex || data.codigo_capex.trim() === '')) {
+      return res.status(400).json({ error: 'El código CAPEX es obligatorio para proyectos CAPEX.' });
+    }
+
+    // Auto-generate project code if missing
+    if (!data.id_proyecto || data.id_proyecto.trim() === '') {
+      data.id_proyecto = await generateNextId(Proyectos, 'PRJ', 'id_proyecto');
+    } else {
+      const idRegex = /^PRJ-\d{4}-\d{3}$/;
+      if (!idRegex.test(data.id_proyecto)) {
+        return res.status(400).json({ error: 'El ID del proyecto debe tener el formato PRJ-YYYY-XXX.' });
+      }
+    }
+
+    const project = await Proyectos.create(data);
+
+    // Add Many-to-Many associations if provided
+    if (data.involvedKus) await project.setInvolvedKeyUsers(data.involvedKus);
+    if (data.comSemanalKus) await project.setComSemanalKUs(data.comSemanalKus);
+    if (data.comMensualKus) await project.setComMensualKUs(data.comMensualKus);
+    if (data.comSteercoKus) await project.setComSteerCoKUs(data.comSteercoKus);
+
+    res.status(201).json(project);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Update project
+app.put('/api/projects/:id_proyecto', async (req, res) => {
+  try {
+    const { id_proyecto } = req.params;
+    const data = req.body;
+
+    const project = await Proyectos.findByPk(id_proyecto);
+    if (!project) {
+      return res.status(404).json({ error: 'Proyecto no encontrado' });
+    }
+
+    // Validate CAPEX requirements
+    if (data.es_capex && (!data.codigo_capex || data.codigo_capex.trim() === '')) {
+      return res.status(400).json({ error: 'El código CAPEX es obligatorio para proyectos CAPEX.' });
+    }
+
+    await project.update(data);
+
+    // Update Many-to-Many relations
+    if (data.involvedKus) await project.setInvolvedKeyUsers(data.involvedKus);
+    if (data.comSemanalKus) await project.setComSemanalKUs(data.comSemanalKus);
+    if (data.comMensualKus) await project.setComMensualKUs(data.comMensualKus);
+    if (data.comSteercoKus) await project.setComSteerCoKUs(data.comSteercoKus);
+
+    res.json(project);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Delete project
+app.delete('/api/projects/:id_proyecto', async (req, res) => {
+  try {
+    const { id_proyecto } = req.params;
+    const project = await Proyectos.findByPk(id_proyecto);
+    if (!project) {
+      return res.status(404).json({ error: 'Proyecto no encontrado' });
+    }
+    await project.destroy();
+    res.json({ message: 'Proyecto eliminado con éxito' });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 5. Proveedores (Vendor 360 & CRUD)
+// ==========================================
+app.get('/api/vendors', async (req, res) => {
+  try {
+    const vendors = await Proveedores.findAll({
+      order: [['nombre_razon_social', 'ASC']]
+    });
+    res.json(vendors);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Vendor 360º View
+app.get('/api/vendors/:id_proveedor', async (req, res) => {
+  try {
+    const { id_proveedor } = req.params;
+    const vendor = await Proveedores.findByPk(id_proveedor, {
+      include: [
+        { model: ContactosProveedor }
+      ]
+    });
+
+    if (!vendor) {
+      return res.status(404).json({ error: 'Proveedor no encontrado' });
+    }
+
+    const projects = await Proyectos.findAll({
+      where: { id_proveedor },
+      include: [
+        { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
+        { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] }
+      ]
+    });
+
+    const projectsWithCalculations = await Promise.all(
+      projects.map(async (project) => {
+        const calc = await getProjectCalculations(
+          project.id_proyecto,
+          project.budget_inicial,
+          project.fecha_fin_inicial
+        );
+        return {
+          ...project.toJSON(),
+          calculations: calc
+        };
+      })
+    );
+
+    const projectIds = projects.map(p => p.id_proyecto);
+    const incidents = await Incidencias.findAll({
+      where: { id_proyecto: projectIds },
+      include: [{ model: Proyectos, attributes: ['nombre_proyecto'] }],
+      order: [['fecha_apertura', 'DESC']]
+    });
+
+    const lessons = await LeccionesAprendidas.findAll({
+      where: {
+        [Op.or]: [
+          { id_proveedor },
+          { id_proyecto: projectIds }
+        ]
+      },
+      include: [
+        { model: Proyectos, attributes: ['nombre_proyecto'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json({
+      vendor: vendor.toJSON(),
+      projects: projectsWithCalculations,
+      incidents,
+      lessons
+    });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Create vendor
+app.post('/api/vendors', async (req, res) => {
+  try {
+    const vendor = await Proveedores.create(req.body);
+    res.status(201).json(vendor);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Update vendor
+app.put('/api/vendors/:id_proveedor', async (req, res) => {
+  try {
+    const { id_proveedor } = req.params;
+    const vendor = await Proveedores.findByPk(id_proveedor);
+    if (!vendor) {
+      return res.status(404).json({ error: 'Proveedor no encontrado' });
+    }
+    await vendor.update(req.body);
+    res.json(vendor);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Delete vendor
+app.delete('/api/vendors/:id_proveedor', async (req, res) => {
+  try {
+    const { id_proveedor } = req.params;
+    const vendor = await Proveedores.findByPk(id_proveedor);
+    if (!vendor) {
+      return res.status(404).json({ error: 'Proveedor no encontrado' });
+    }
+
+    const projectCount = await Proyectos.count({ where: { id_proveedor } });
+    if (projectCount > 0) {
+      return res.status(400).json({ error: 'No se puede eliminar el proveedor porque tiene proyectos activos asociados.' });
+    }
+
+    await vendor.destroy();
+    res.json({ message: 'Proveedor eliminado con éxito' });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 6. Contactos Proveedor Endpoints
+// ==========================================
+app.post('/api/contacts', async (req, res) => {
+  try {
+    const contact = await ContactosProveedor.create(req.body);
+    res.status(201).json(contact);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.delete('/api/contacts/:id_contacto', async (req, res) => {
+  try {
+    const { id_contacto } = req.params;
+    const contact = await ContactosProveedor.findByPk(id_contacto);
+    if (!contact) {
+      return res.status(404).json({ error: 'Contacto no encontrado' });
+    }
+    await contact.destroy();
+    res.json({ message: 'Contacto eliminado con éxito' });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 7. Cambios de Alcance (CR) Endpoints
+// ==========================================
+app.post('/api/scope-changes', async (req, res) => {
+  try {
+    const data = req.body;
+
+    // Auto-generate CR code if missing
+    if (!data.id_cambio || data.id_cambio.trim() === '') {
+      data.id_cambio = await generateNextId(CambiosAlcance, 'CR', 'id_cambio');
+    } else {
+      const crRegex = /^CR-\d{4}-\d{3}$/;
+      if (!crRegex.test(data.id_cambio)) {
+        return res.status(400).json({ error: 'El ID del cambio de alcance debe tener el formato CR-YYYY-XXX.' });
+      }
+    }
+
+    if (!data.impacta_importe) {
+      data.importe_impacto = 0.00;
+    }
+    if (!data.impacta_tiempo) {
+      data.dias_impacto = 0;
+    }
+
+    const cr = await CambiosAlcance.create(data);
+    res.status(201).json(cr);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.put('/api/scope-changes/:id_cambio', async (req, res) => {
+  try {
+    const { id_cambio } = req.params;
+    const data = req.body;
+
+    const cr = await CambiosAlcance.findByPk(id_cambio);
+    if (!cr) {
+      return res.status(404).json({ error: 'Cambio de alcance no encontrado' });
+    }
+
+    if (data.hasOwnProperty('impacta_importe') && !data.impacta_importe) {
+      data.importe_impacto = 0.00;
+    }
+    if (data.hasOwnProperty('impacta_tiempo') && !data.impacta_tiempo) {
+      data.dias_impacto = 0;
+    }
+
+    await cr.update(data);
+    res.json(cr);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 8. Facturas Endpoints
+// ==========================================
+app.post('/api/invoices', async (req, res) => {
+  try {
+    const data = req.body;
+
+    // Auto-generate Invoice code if missing
+    if (!data.id_interno_factura || data.id_interno_factura.trim() === '') {
+      data.id_interno_factura = await generateNextId(Facturas, 'FAC', 'id_interno_factura');
+    } else {
+      const facRegex = /^FAC-\d{4}-\d{3}$/;
+      if (!facRegex.test(data.id_interno_factura)) {
+        return res.status(400).json({ error: 'El ID de factura debe tener el formato FAC-YYYY-XXX.' });
+      }
+    }
+
+    const fac = await Facturas.create(data);
+    res.status(201).json(fac);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.put('/api/invoices/:id_interno_factura', async (req, res) => {
+  try {
+    const { id_interno_factura } = req.params;
+    const fac = await Facturas.findByPk(id_interno_factura);
+    if (!fac) {
+      return res.status(404).json({ error: 'Factura no encontrada' });
+    }
+    await fac.update(req.body);
+    res.json(fac);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.delete('/api/invoices/:id_interno_factura', async (req, res) => {
+  try {
+    const { id_interno_factura } = req.params;
+    const fac = await Facturas.findByPk(id_interno_factura);
+    if (!fac) {
+      return res.status(404).json({ error: 'Factura no encontrada' });
+    }
+    await fac.destroy();
+    res.json({ message: 'Factura eliminada con éxito' });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 9. Riesgos Endpoints
+// ==========================================
+app.post('/api/risks', async (req, res) => {
+  try {
+    const data = req.body;
+
+    // Auto-generate Risk code if missing
+    if (!data.id_riesgo || data.id_riesgo.trim() === '') {
+      data.id_riesgo = await generateNextId(Riesgos, 'RSG', 'id_riesgo');
+    } else {
+      const rsgRegex = /^RSG-\d{4}-\d{3}$/;
+      if (!rsgRegex.test(data.id_riesgo)) {
+        return res.status(400).json({ error: 'El ID de riesgo debe tener el formato RSG-YYYY-XXX.' });
+      }
+    }
+
+    const rsg = await Riesgos.create(data);
+    res.status(201).json(rsg);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.put('/api/risks/:id_riesgo', async (req, res) => {
+  try {
+    const { id_riesgo } = req.params;
+    const rsg = await Riesgos.findByPk(id_riesgo);
+    if (!rsg) {
+      return res.status(404).json({ error: 'Riesgo no encontrado' });
+    }
+    await rsg.update(req.body);
+    res.json(rsg);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 10. Incidencias Endpoints
+// ==========================================
+app.post('/api/issues', async (req, res) => {
+  try {
+    const data = req.body;
+
+    // Auto-generate Incident code if missing
+    if (!data.id_incidencia || data.id_incidencia.trim() === '') {
+      data.id_incidencia = await generateNextId(Incidencias, 'INC', 'id_incidencia');
+    } else {
+      const incRegex = /^INC-\d{4}-\d{3}$/;
+      if (!incRegex.test(data.id_incidencia)) {
+        return res.status(400).json({ error: 'El ID de incidencia debe tener el formato INC-YYYY-XXX.' });
+      }
+    }
+
+    if (data.estado === 'RESUELTA' && (!data.solucion_aplicada || data.solucion_aplicada.trim() === '')) {
+      return res.status(400).json({ error: 'La solución aplicada es obligatoria cuando la incidencia está RESUELTA.' });
+    }
+
+    const inc = await Incidencias.create(data);
+    res.status(201).json(inc);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.put('/api/issues/:id_incidencia', async (req, res) => {
+  try {
+    const { id_incidencia } = req.params;
+    const data = req.body;
+
+    const inc = await Incidencias.findByPk(id_incidencia);
+    if (!inc) {
+      return res.status(404).json({ error: 'Incidencia no encontrada' });
+    }
+
+    const newStatus = data.estado || inc.estado;
+    const newSolution = data.hasOwnProperty('solucion_aplicada') ? data.solucion_aplicada : inc.solucion_aplicada;
+    if (newStatus === 'RESUELTA' && (!newSolution || newSolution.trim() === '')) {
+      return res.status(400).json({ error: 'La solución aplicada es obligatoria cuando la incidencia está RESUELTA.' });
+    }
+
+    await inc.update(data);
+    res.json(inc);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 11. Tareas (PM Internal Checklist)
+// ==========================================
+app.post('/api/tasks', async (req, res) => {
+  try {
+    const task = await Tareas.create(req.body);
+    res.status(201).json(task);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.put('/api/tasks/:id_tarea', async (req, res) => {
+  try {
+    const { id_tarea } = req.params;
+    const task = await Tareas.findByPk(id_tarea);
+    if (!task) {
+      return res.status(404).json({ error: 'Tarea no encontrada' });
+    }
+    await task.update(req.body);
+    res.json(task);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.delete('/api/tasks/:id_tarea', async (req, res) => {
+  try {
+    const { id_tarea } = req.params;
+    const task = await Tareas.findByPk(id_tarea);
+    if (!task) {
+      return res.status(404).json({ error: 'Tarea no encontrada' });
+    }
+    await task.destroy();
+    res.json({ message: 'Tarea eliminada con éxito' });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 12. Lecciones Aprendidas (Knowledge Base)
+// ==========================================
+app.get('/api/lessons', async (req, res) => {
+  try {
+    const lessons = await LeccionesAprendidas.findAll({
+      include: [
+        { model: Proyectos, attributes: ['nombre_proyecto'] },
+        { model: Proveedores, attributes: ['nombre_razon_social'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    res.json(lessons);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.post('/api/lessons', async (req, res) => {
+  try {
+    const data = req.body;
+
+    // Auto-generate LEA code if missing
+    if (!data.id_leccion || data.id_leccion.trim() === '') {
+      data.id_leccion = await generateNextId(LeccionesAprendidas, 'LEA', 'id_leccion');
+    } else {
+      const leaRegex = /^LEA-\d{4}-\d{3}$/;
+      if (!leaRegex.test(data.id_leccion)) {
+        return res.status(400).json({ error: 'El ID de lección debe tener el formato LEA-YYYY-XXX.' });
+      }
+    }
+
+    const lesson = await LeccionesAprendidas.create(data);
+    res.status(201).json(lesson);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Test DB connection and start server
+sequelize.authenticate()
+  .then(() => {
+    console.log('✅ Connection to database established successfully.');
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ Unable to connect to the database:', err);
+  });
