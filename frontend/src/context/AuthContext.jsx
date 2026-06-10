@@ -4,7 +4,10 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [pms, setPms] = useState([]);
-  const [currentPm, setCurrentPm] = useState(null);
+  const [currentPm, setCurrentPm] = useState(() => {
+    const saved = localStorage.getItem('pm_user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(true);
 
   // Toggle Theme (Light / Dark)
@@ -21,24 +24,46 @@ export const AuthProvider = ({ children }) => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  useEffect(() => {
-    // Fetch PMs from backend
+  const fetchActiveUsers = () => {
     fetch('http://localhost:5000/api/pms')
       .then(res => res.json())
       .then(data => {
         setPms(data);
-        if (data.length > 0) {
-          // Set "Jaime" as default if found, otherwise the first PM
-          const defaultPm = data.find(p => p.nombre.toLowerCase() === 'jaime') || data[0];
-          setCurrentPm(defaultPm);
-        }
         setLoading(false);
       })
       .catch(err => {
         console.error('Failed to fetch PMs. Ensure the backend is running.', err);
         setLoading(false);
       });
-  }, []);
+  };
+
+  useEffect(() => {
+    fetchActiveUsers();
+  }, [currentPm]); // Re-fetch when user changes
+
+  const login = async (correo, password) => {
+    const res = await fetch('http://localhost:5000/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ correo, password })
+    });
+    
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Error de credenciales.');
+    }
+    
+    localStorage.setItem('pm_user', JSON.stringify(data));
+    setCurrentPm(data);
+    return data;
+  };
+
+  const logout = () => {
+    localStorage.removeItem('pm_user');
+    setCurrentPm(null);
+  };
 
   // Helper to fetch options with x-pm-id auth header
   const getAuthHeaders = () => {
@@ -48,22 +73,17 @@ export const AuthProvider = ({ children }) => {
     };
   };
 
-  const handlePmChange = (pmId) => {
-    const pm = pms.find(p => p.id_usuario === parseInt(pmId, 10));
-    if (pm) {
-      setCurrentPm(pm);
-    }
-  };
-
   return (
     <AuthContext.Provider value={{
       pms,
       currentPm,
       loading,
       getAuthHeaders,
-      handlePmChange,
       theme,
-      toggleTheme
+      toggleTheme,
+      login,
+      logout,
+      refreshUsers: fetchActiveUsers
     }}>
       {children}
     </AuthContext.Provider>

@@ -4,6 +4,7 @@ import {
   Plus, Search, Building, AlertTriangle, TrendingUp, Calendar, 
   MapPin, User, Filter, AlertOctagon, CheckSquare, RefreshCw, Eye
 } from 'lucide-react';
+import SearchableKeyUserSelect from '../components/SearchableKeyUserSelect';
 
 export default function Dashboard({ onViewProject, onViewVendor }) {
   const { getAuthHeaders, currentPm } = useAuth();
@@ -22,6 +23,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   const [vendorsList, setVendorsList] = useState([]);
   const [sedesList, setSedesList] = useState([]);
   const [keyUsersList, setKeyUsersList] = useState([]);
+  const [statesList, setStatesList] = useState([]);
 
   // Modal creation state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -75,6 +77,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     fetch('http://localhost:5000/api/vendors').then(res => res.json()).then(data => setVendorsList(data));
     fetch('http://localhost:5000/api/sedes').then(res => res.json()).then(data => setSedesList(data));
     fetch('http://localhost:5000/api/key-users').then(res => res.json()).then(data => setKeyUsersList(data));
+    fetch('http://localhost:5000/api/portfolio/states').then(res => res.json()).then(data => setStatesList(data));
   };
 
   useEffect(() => {
@@ -235,10 +238,11 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
           style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
         >
           <option value="">Todos los Estados</option>
-          <option value="Kickoff">Kickoff 🚀</option>
-          <option value="Desarrollo">Desarrollo 🛠️</option>
-          <option value="Cierre">Cierre 🏁</option>
-          <option value="Pausado">Pausado ⏸️</option>
+          {statesList.map(state => (
+            <option key={state.id_estado} value={state.nombre_estado}>
+              {state.icono} {state.nombre_estado}
+            </option>
+          ))}
         </select>
 
         {/* RAG Status Filter */}
@@ -488,18 +492,13 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                 {/* Sponsor Key User */}
                 <div className="form-group">
                   <label className="form-label">Sponsor / Key User Líder *</label>
-                  <select 
-                    name="id_sponsor_ku" 
-                    value={newProject.id_sponsor_ku} 
-                    onChange={handleInputChange}
-                    required
-                    className="user-select"
-                  >
-                    <option value="">Seleccione Sponsor</option>
-                    {keyUsersList.map(ku => (
-                      <option key={ku.id_ku} value={ku.id_ku}>{ku.nombre} {ku.apellidos} ({ku.Proveedore?.nombre_razon_social})</option>
-                    ))}
-                  </select>
+                  <SearchableKeyUserSelect 
+                    keyUsers={keyUsersList}
+                    selected={newProject.id_sponsor_ku}
+                    onChange={(val) => setNewProject(prev => ({ ...prev, id_sponsor_ku: val }))}
+                    multiple={false}
+                    placeholder="Seleccione Sponsor / Key User Líder..."
+                  />
                 </div>
 
                 {/* Gestor PM */}

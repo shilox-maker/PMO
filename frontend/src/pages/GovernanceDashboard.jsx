@@ -22,12 +22,19 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
 
   // Dropdowns lists
   const [pmsList, setPmsList] = useState([]);
+  const [statesList, setStatesList] = useState([]);
 
   useEffect(() => {
     // Fetch PMs list
     fetch('http://localhost:5000/api/pms')
       .then(res => res.json())
       .then(data => setPmsList(data))
+      .catch(err => console.error(err));
+
+    // Fetch States list
+    fetch('http://localhost:5000/api/portfolio/states')
+      .then(res => res.json())
+      .then(data => setStatesList(data))
       .catch(err => console.error(err));
   }, []);
 
@@ -69,11 +76,8 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   const capexWarnCount = projects.filter(p => p.es_capex && p.gasto_total_facturas >= (p.budget_inicial * 0.90)).length;
 
   // Breakdown by State count
-  const stateCounts = {
-    Kickoff: projects.filter(p => p.estado_proyecto === 'Kickoff').length,
-    Desarrollo: projects.filter(p => p.estado_proyecto === 'Desarrollo').length,
-    Cierre: projects.filter(p => p.estado_proyecto === 'Cierre').length,
-    Pausado: projects.filter(p => p.estado_proyecto === 'Pausado').length
+  const getStateCount = (stateName) => {
+    return projects.filter(p => p.estado_proyecto === stateName).length;
   };
 
   // Governance Compliance
@@ -174,14 +178,14 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
           <h4 style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 12, letterSpacing: '0.05em' }}>
             Segmentación por Estado del Proyecto (Filtro Rápido)
           </h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-            {['Kickoff', 'Desarrollo', 'Cierre', 'Pausado'].map(st => {
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+            {statesList.map(state => {
+              const st = state.nombre_estado;
               const isSelected = activeStateFilter === st;
-              const emojiMap = { Kickoff: '🚀', Desarrollo: '🛠️', Cierre: '🏁', Pausado: '⏸️' };
               
               return (
                 <div 
-                  key={st}
+                  key={state.id_estado}
                   onClick={() => setActiveStateFilter(prev => prev === st ? null : st)}
                   style={{
                     padding: '12px 16px',
@@ -196,11 +200,11 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                     transition: 'var(--transition-smooth)'
                   }}
                 >
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                    {emojiMap[st]} {st}
+                  <span style={{ fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>
+                    {state.icono || '❓'} {st}
                   </span>
                   <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>
-                    {stateCounts[st]}
+                    {getStateCount(st)}
                   </span>
                 </div>
               );

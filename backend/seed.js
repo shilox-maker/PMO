@@ -1,4 +1,15 @@
-const { sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios, KeyUsers, Proyectos, Incidencias, Riesgos, LeccionesAprendidas, Facturas, CambiosAlcance, Tareas, ProyectoKeyUsers, ProyectoComSemanalKU, ProyectoComMensualKU, ProyectoSteerCoKU } = require('./models/index');
+const { 
+  sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios, KeyUsers, 
+  Proyectos, Incidencias, Riesgos, LeccionesAprendidas, Facturas, 
+  CambiosAlcance, Tareas, ProyectoKeyUsers, ProyectoComSemanalKU, 
+  ProyectoComMensualKU, ProyectoSteerCoKU, EstadosProyecto, ComentariosProyecto 
+} = require('./models/index');
+
+const crypto = require('crypto');
+
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
 
 async function seed() {
   try {
@@ -16,9 +27,9 @@ async function seed() {
     ]);
     console.log('Sedes seeded.');
 
-    // 2. Seed Proveedores (including "Mi Empresa" required by PRD)
+    // 2. Seed Proveedores (renamed "Mi Empresa" to "Dacsa")
     const proveedores = await Proveedores.bulkCreate([
-      { nombre_razon_social: 'Mi Empresa', telefono_general: '910000000', email_general: 'contacto@miempresa.com' },
+      { nombre_razon_social: 'Dacsa', telefono_general: '910000000', email_general: 'contacto@dacsa.com' },
       { nombre_razon_social: 'Sopra Steria', telefono_general: '960000001', email_general: 'info@soprasteria.com' },
       { nombre_razon_social: 'Indra Minsait', telefono_general: '960000002', email_general: 'info@minsait.com' },
       { nombre_razon_social: 'Accenture', telefono_general: '960000003', email_general: 'info@accenture.com' },
@@ -26,7 +37,7 @@ async function seed() {
     ]);
     console.log('Proveedores seeded.');
 
-    const miEmpresa = proveedores[0];
+    const dacsa = proveedores[0];
     const sopra = proveedores[1];
     const indra = proveedores[2];
     const accenture = proveedores[3];
@@ -41,25 +52,53 @@ async function seed() {
     ]);
     console.log('ContactosProveedor seeded.');
 
-    // 4. Seed Usuarios (Internal PMs / Staff)
-    const pms = await Usuarios.bulkCreate([
-      { nombre: 'Jaime', apellidos: 'Martínez', correo: 'jmartinez@miempresa.com', rol: 'PM' },
-      { nombre: 'Marta', apellidos: 'Sánchez', correo: 'msanchez@miempresa.com', rol: 'PM' },
-      { nombre: 'Carlos', apellidos: 'Gómez', correo: 'cgomez@miempresa.com', rol: 'PM' },
-      { nombre: 'Lucía', apellidos: 'Fernández', correo: 'lfernandez@miempresa.com', rol: 'Director' }
+    // 4. Seed EstadosProyecto (16 states)
+    const statesData = [
+      { nombre_estado: 'Kickoff', icono: '🚀', orden: 1 },
+      { nombre_estado: 'Análisis de Viabilidad', icono: '📋', orden: 2 },
+      { nombre_estado: 'Aprobación de Arquitectura', icono: '📐', orden: 3 },
+      { nombre_estado: 'Diseño Conceptual', icono: '💡', orden: 4 },
+      { nombre_estado: 'Planificación', icono: '📅', orden: 5 },
+      { nombre_estado: 'Validación Técnica', icono: '🔍', orden: 6 },
+      { nombre_estado: 'Desarrollo', icono: '🛠️', orden: 7 },
+      { nombre_estado: 'Pruebas QA', icono: '🧪', orden: 8 },
+      { nombre_estado: 'UAT (Pruebas de Usuario)', icono: '👥', orden: 9 },
+      { nombre_estado: 'Despliegue', icono: '📦', orden: 10 },
+      { nombre_estado: 'Estabilización', icono: '🛡️', orden: 11 },
+      { nombre_estado: 'Cierre', icono: '🏁', orden: 12 },
+      { nombre_estado: 'Pausado', icono: '⏸️', orden: 13 },
+      { nombre_estado: 'Cancelado', icono: '❌', orden: 14 },
+      { nombre_estado: 'En Revisión Financiera', icono: '💰', orden: 15 },
+      { nombre_estado: 'Pendiente de Aprobación', icono: '⏳', orden: 16 }
+    ];
+    const seededStates = await EstadosProyecto.bulkCreate(statesData);
+    console.log('EstadosProyecto seeded.');
+
+    const stateMap = {};
+    seededStates.forEach(s => {
+      stateMap[s.nombre_estado] = s.id_estado;
+    });
+
+    // 5. Seed Usuarios (Internal PMs / Staff with passwords)
+    const users = await Usuarios.bulkCreate([
+      { nombre: 'Jaime', apellidos: 'Martínez', correo: 'jmartinez@dacsa.com', password: hashPassword('123'), perfil: 'PM', activo: true },
+      { nombre: 'Marta', apellidos: 'Sánchez', correo: 'msanchez@dacsa.com', password: hashPassword('123'), perfil: 'PM', activo: true },
+      { nombre: 'Carlos', apellidos: 'Gómez', correo: 'cgomez@dacsa.com', password: hashPassword('123'), perfil: 'PM', activo: true },
+      { nombre: 'Lucía', apellidos: 'Fernández', correo: 'lfernandez@dacsa.com', password: hashPassword('123'), perfil: 'DIRECTOR', activo: true },
+      { nombre: 'Administrador', apellidos: 'Sistema', correo: 'admin@dacsa.com', password: hashPassword('admin'), perfil: 'ADMINISTRADOR', activo: true }
     ]);
-    console.log('Usuarios (PMs) seeded.');
+    console.log('Usuarios seeded.');
 
-    const pmJaime = pms[0];
-    const pmMarta = pms[1];
-    const pmCarlos = pms[2];
+    const pmJaime = users[0];
+    const pmMarta = users[1];
+    const pmCarlos = users[2];
 
-    // 5. Seed KeyUsers
+    // 6. Seed KeyUsers (Dacsa / Vendors)
     const keyUsers = await KeyUsers.bulkCreate([
-      // KUs of "Mi Empresa" (Sponsors / Stakeholders)
-      { nombre: 'Roberto', apellidos: 'Ramos', correo: 'rramos@miempresa.com', id_proveedor_empresa: miEmpresa.id_proveedor },
-      { nombre: 'Elena', apellidos: 'Vargas', correo: 'evargas@miempresa.com', id_proveedor_empresa: miEmpresa.id_proveedor },
-      { nombre: 'Diego', apellidos: 'Torres', correo: 'dtorres@miempresa.com', id_proveedor_empresa: miEmpresa.id_proveedor },
+      // KUs of "Dacsa" (Sponsors / Stakeholders)
+      { nombre: 'Roberto', apellidos: 'Ramos', correo: 'rramos@dacsa.com', id_proveedor_empresa: dacsa.id_proveedor },
+      { nombre: 'Elena', apellidos: 'Vargas', correo: 'evargas@dacsa.com', id_proveedor_empresa: dacsa.id_proveedor },
+      { nombre: 'Diego', apellidos: 'Torres', correo: 'dtorres@dacsa.com', id_proveedor_empresa: dacsa.id_proveedor },
       // KUs of Vendor companies
       { nombre: 'Pedro', apellidos: 'Gutiérrez', correo: 'pgutierrez@sopra.com', id_proveedor_empresa: sopra.id_proveedor },
       { nombre: 'Sofía', apellidos: 'Nieto', correo: 'snieto@minsait.com', id_proveedor_empresa: indra.id_proveedor },
@@ -74,7 +113,7 @@ async function seed() {
     const kuSofia = keyUsers[4];
     const kuTomas = keyUsers[5];
 
-    // 6. Seed Proyectos
+    // 7. Seed Proyectos (Linking with id_estado)
     const proyectosData = [
       {
         id_proyecto: 'PRJ-2026-001',
@@ -84,7 +123,7 @@ async function seed() {
         id_proveedor: sopra.id_proveedor,
         id_sede: sedes[0].id_sede, // Valencia
         id_sponsor_ku: kuRoberto.id_ku,
-        estado_proyecto: 'Desarrollo',
+        id_estado: stateMap['Desarrollo'],
         indicador_rag: 'VERDE',
         fecha_inicio: '2026-01-10',
         fecha_fin_inicial: '2026-10-31',
@@ -106,7 +145,7 @@ async function seed() {
         id_proveedor: indra.id_proveedor,
         id_sede: sedes[1].id_sede, // Madrid
         id_sponsor_ku: kuElena.id_ku,
-        estado_proyecto: 'Kickoff',
+        id_estado: stateMap['Kickoff'],
         indicador_rag: 'VERDE',
         fecha_inicio: '2026-05-01',
         fecha_fin_inicial: '2026-12-31',
@@ -125,7 +164,7 @@ async function seed() {
         id_proveedor: accenture.id_proveedor,
         id_sede: sedes[2].id_sede, // Buñol
         id_sponsor_ku: kuDiego.id_ku,
-        estado_proyecto: 'Desarrollo',
+        id_estado: stateMap['Desarrollo'],
         indicador_rag: 'AMARILLO',
         fecha_inicio: '2026-02-15',
         fecha_fin_inicial: '2026-08-30',
@@ -147,7 +186,7 @@ async function seed() {
         id_proveedor: capgemini.id_proveedor,
         id_sede: sedes[1].id_sede, // Madrid
         id_sponsor_ku: kuRoberto.id_ku,
-        estado_proyecto: 'Desarrollo',
+        id_estado: stateMap['Desarrollo'],
         indicador_rag: 'ROJO',
         fecha_inicio: '2026-03-01',
         fecha_fin_inicial: '2026-07-15',
@@ -167,7 +206,7 @@ async function seed() {
         id_proveedor: sopra.id_proveedor,
         id_sede: sedes[3].id_sede, // Barcelona
         id_sponsor_ku: kuElena.id_ku,
-        estado_proyecto: 'Cierre',
+        id_estado: stateMap['Cierre'],
         indicador_rag: 'VERDE',
         fecha_inicio: '2025-06-01',
         fecha_fin_inicial: '2026-04-30',
@@ -187,7 +226,7 @@ async function seed() {
         id_proveedor: indra.id_proveedor,
         id_sede: sedes[0].id_sede, // Valencia
         id_sponsor_ku: kuDiego.id_ku,
-        estado_proyecto: 'Pausado',
+        id_estado: stateMap['Pausado'],
         indicador_rag: 'AMARILLO',
         fecha_inicio: '2025-11-01',
         fecha_fin_inicial: '2026-05-30',
@@ -206,34 +245,31 @@ async function seed() {
     }
     console.log('Proyectos seeded.');
 
-    // 7. Seed Many-to-Many Relationships (Involved KUs, weekly/monthly/Steerco communications)
-    // Project 1 (Renovación ERP)
+    // 8. Seed Many-to-Many Relationships (Involved KUs, weekly/monthly/Steerco communications)
     const p1 = proyectos[0];
     await p1.addInvolvedKeyUsers([kuRoberto.id_ku, kuElena.id_ku, kuPedro.id_ku]);
     await p1.addComSemanalKUs([kuRoberto.id_ku, kuPedro.id_ku]);
     await p1.addComMensualKUs([kuRoberto.id_ku, kuElena.id_ku]);
     await p1.addComSteerCoKUs([kuRoberto.id_ku]);
 
-    // Project 3 (Automatización Almacén Buñol)
     const p3 = proyectos[2];
     await p3.addInvolvedKeyUsers([kuDiego.id_ku, kuTomas.id_ku]);
     await p3.addComSemanalKUs([kuTomas.id_ku]);
     await p3.addComMensualKUs([kuDiego.id_ku, kuTomas.id_ku]);
     await p3.addComSteerCoKUs([kuDiego.id_ku]);
 
-    // Project 4 (Ciberseguridad)
     const p4 = proyectos[3];
     await p4.addInvolvedKeyUsers([kuRoberto.id_ku, kuSofia.id_ku]);
     await p4.addComSemanalKUs([kuSofia.id_ku]);
     await p4.addComMensualKUs([kuRoberto.id_ku]);
 
-    console.log('Relaciones Many-to-Many de Proyectos y KeyUsers configuradas.');
+    console.log('Relaciones Many-to-Many configuradas.');
 
-    // 8. Seed Incidencias
+    // 9. Seed Incidencias
     await Incidencias.bulkCreate([
       {
         id_incidencia: 'INC-2026-001',
-        id_proyecto: 'PRJ-2026-003', // Automatización Buñol
+        id_proyecto: 'PRJ-2026-003',
         titulo: 'Retraso en entrega de lectores RFID',
         descripcion: 'El proveedor de hardware indica rotura de stock internacional, aplazando la entrega 4 semanas.',
         tipo_incidencias: 'PROVEEDOR_DESAPARECIDO',
@@ -243,7 +279,7 @@ async function seed() {
       },
       {
         id_incidencia: 'INC-2026-002',
-        id_proyecto: 'PRJ-2026-004', // Ciberseguridad
+        id_proyecto: 'PRJ-2026-004',
         titulo: 'Bloqueo de puertos de red críticos',
         descripcion: 'El firewall central bloquea accesos legítimos de la aplicación de producción principal.',
         tipo_incidencias: 'TECNICA',
@@ -253,7 +289,7 @@ async function seed() {
       },
       {
         id_incidencia: 'INC-2026-003',
-        id_proyecto: 'PRJ-2026-001', // Renovación ERP
+        id_proyecto: 'PRJ-2026-001',
         titulo: 'Inconsistencia de datos en migración',
         descripcion: 'Las facturas históricas del año 2020 no cuadran sus sumas acumuladas.',
         tipo_incidencias: 'TECNICA',
@@ -266,11 +302,11 @@ async function seed() {
     ]);
     console.log('Incidencias seeded.');
 
-    // 9. Seed Riesgos
+    // 10. Seed Riesgos
     await Riesgos.bulkCreate([
       {
         id_riesgo: 'RSG-2026-001',
-        id_proyecto: 'PRJ-2026-001', // Renovación ERP
+        id_proyecto: 'PRJ-2026-001',
         titulo_riesgo: 'Resistencia al cambio de usuarios finales',
         descripcion: 'Los usuarios de administración podrían rechazar el nuevo flujo de facturas al ser diferente.',
         probabilidad: 'ALTA',
@@ -281,7 +317,7 @@ async function seed() {
       },
       {
         id_riesgo: 'RSG-2026-002',
-        id_proyecto: 'PRJ-2026-003', // Automatización Buñol
+        id_proyecto: 'PRJ-2026-003',
         titulo_riesgo: 'Desviación presupuestaria por fluctuación de moneda',
         descripcion: 'Los sensores importados cotizan en USD y la tasa EUR/USD puede incrementarse.',
         probabilidad: 'MEDIA',
@@ -292,7 +328,7 @@ async function seed() {
       },
       {
         id_riesgo: 'RSG-2026-003',
-        id_proyecto: 'PRJ-2026-001', // Renovación ERP
+        id_proyecto: 'PRJ-2026-001',
         titulo_riesgo: 'Fuga de perfiles clave del partner técnico',
         descripcion: 'Rotación del arquitecto de software asignado por Sopra Steria.',
         probabilidad: 'BAJA',
@@ -304,12 +340,12 @@ async function seed() {
     ]);
     console.log('Riesgos seeded.');
 
-    // 10. Seed LeccionesAprendidas
+    // 11. Seed LeccionesAprendidas
     await LeccionesAprendidas.bulkCreate([
       {
         id_leccion: 'LEA-2026-001',
         tipo_leccion: 'BUENA_PRACTICA',
-        id_proyecto: 'PRJ-2026-005', // Big Data
+        id_proyecto: 'PRJ-2026-005',
         id_proveedor: sopra.id_proveedor,
         titulo: 'Uso de entorno sandbox previo a migración',
         contexto: 'Crear réplicas aisladas de datos para pruebas disminuyó los errores productivos un 90%.',
@@ -327,11 +363,11 @@ async function seed() {
     ]);
     console.log('LeccionesAprendidas seeded.');
 
-    // 11. Seed Facturas
+    // 12. Seed Facturas
     await Facturas.bulkCreate([
       {
         id_interno_factura: 'FAC-2026-001',
-        id_proyecto: 'PRJ-2026-001', // Renovación ERP
+        id_proyecto: 'PRJ-2026-001',
         id_proveedor: sopra.id_proveedor,
         numero_factura: 'FR-2026-8891',
         concepto: 'Hito 1: Análisis de procesos de negocio y diseño conceptual',
@@ -341,7 +377,7 @@ async function seed() {
       },
       {
         id_interno_factura: 'FAC-2026-002',
-        id_proyecto: 'PRJ-2026-001', // Renovación ERP
+        id_proyecto: 'PRJ-2026-001',
         id_proveedor: sopra.id_proveedor,
         numero_factura: 'FR-2026-9044',
         concepto: 'Hito 2: Configuración del core financiero y compras',
@@ -351,7 +387,7 @@ async function seed() {
       },
       {
         id_interno_factura: 'FAC-2026-003',
-        id_proyecto: 'PRJ-2026-003', // Automatización Buñol
+        id_proyecto: 'PRJ-2026-003',
         id_proveedor: accenture.id_proveedor,
         numero_factura: 'FAC-ACN-3011',
         concepto: 'Adquisición y licenciamiento inicial software de almacenes',
@@ -361,7 +397,7 @@ async function seed() {
       },
       {
         id_interno_factura: 'FAC-2026-004',
-        id_proyecto: 'PRJ-2026-004', // Ciberseguridad
+        id_proyecto: 'PRJ-2026-004',
         id_proveedor: capgemini.id_proveedor,
         numero_factura: 'FAC-CAP-998',
         concepto: 'Auditoría inicial de intrusión física y lógica',
@@ -372,11 +408,11 @@ async function seed() {
     ]);
     console.log('Facturas seeded.');
 
-    // 12. Seed CambiosAlcance (Scope Change Control)
+    // 13. Seed CambiosAlcance
     await CambiosAlcance.bulkCreate([
       {
         id_cambio: 'CR-2026-001',
-        id_proyecto: 'PRJ-2026-001', // Renovación ERP (+€30,000 y +45 días)
+        id_proyecto: 'PRJ-2026-001',
         fecha_solicitud: '2026-03-15',
         fecha_resolucion: '2026-03-22',
         id_solicitante_ku: kuRoberto.id_ku,
@@ -390,7 +426,7 @@ async function seed() {
       },
       {
         id_cambio: 'CR-2026-002',
-        id_proyecto: 'PRJ-2026-001', // Renovación ERP (solicitado pendiente)
+        id_proyecto: 'PRJ-2026-001',
         fecha_solicitud: '2026-05-10',
         id_solicitante_ku: kuPedro.id_ku,
         id_aprobador_ku: kuRoberto.id_ku,
@@ -403,7 +439,7 @@ async function seed() {
       },
       {
         id_cambio: 'CR-2026-003',
-        id_proyecto: 'PRJ-2026-003', // Automatización Buñol (+€15,000, sin impacto temporal)
+        id_proyecto: 'PRJ-2026-003',
         fecha_solicitud: '2026-04-01',
         fecha_resolucion: '2026-04-08',
         id_solicitante_ku: kuDiego.id_ku,
@@ -417,7 +453,7 @@ async function seed() {
       },
       {
         id_cambio: 'CR-2026-004',
-        id_proyecto: 'PRJ-2026-004', // Ciberseguridad (RECHAZADO)
+        id_proyecto: 'PRJ-2026-004',
         fecha_solicitud: '2026-03-20',
         fecha_resolucion: '2026-03-25',
         id_solicitante_ku: kuSofia.id_ku,
@@ -432,7 +468,7 @@ async function seed() {
     ]);
     console.log('CambiosAlcance seeded.');
 
-    // 13. Seed Tareas (PM Checklist)
+    // 14. Seed Tareas
     await Tareas.bulkCreate([
       { id_proyecto: 'PRJ-2026-001', titulo_tarea: 'Definir Plan de Migración de datos', es_hito: true, estado: 'COMPLETADA', fecha_limite: '2026-03-31' },
       { id_proyecto: 'PRJ-2026-001', titulo_tarea: 'Despliegue entorno sandbox', es_hito: false, estado: 'COMPLETADA', fecha_limite: '2026-04-15' },
@@ -445,11 +481,18 @@ async function seed() {
     ]);
     console.log('Tareas seeded.');
 
+    // 15. Seed Comentarios
+    await ComentariosProyecto.bulkCreate([
+      { id_proyecto: 'PRJ-2026-001', id_usuario: pmJaime.id_usuario, texto_comentario: '<p><strong>Reunión de alineación completada.</strong> Las interfaces del ERP están validadas por el equipo de operaciones de Dacsa.</p>', fecha_registro: new Date('2026-02-15T10:00:00Z'), editado: false },
+      { id_proyecto: 'PRJ-2026-001', id_usuario: pmMarta.id_usuario, texto_comentario: '<p><em>Nota:</em> Se ha identificado una pequeña demora en la entrega de las credenciales de prueba por parte de Sopra Steria. Se está revisando.</p>', fecha_registro: new Date('2026-03-01T15:30:00Z'), editado: false },
+      { id_proyecto: 'PRJ-2026-003', id_usuario: pmJaime.id_usuario, texto_comentario: '<p>Se ha revisado el plan de mitigación para la adquisición de sensores. Estamos pendientes de recibir la confirmación de la cotización final en USD.</p>', fecha_registro: new Date('2026-04-05T09:15:00Z'), editado: false }
+    ]);
+    console.log('Comentarios seeded.');
+
     console.log('🎉 Seeding successfully completed!');
   } catch (error) {
     console.error('❌ Error during seeding:', error);
   } finally {
-    // If run as a separate process, we don't necessarily close unless wanted, but let's end connection
     await sequelize.close();
   }
 }

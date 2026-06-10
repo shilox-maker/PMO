@@ -1,11 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const { Op } = require('sequelize');
+const crypto = require('crypto');
 const { 
   sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios, KeyUsers, 
   Proyectos, ProyectoKeyUsers, ProyectoComSemanalKU, ProyectoComMensualKU, 
   ProyectoComSteerCoKU, Incidencias, Riesgos, LeccionesAprendidas, Facturas, 
-  CambiosAlcance, Tareas 
+  CambiosAlcance, Tareas, EstadosProyecto, ComentariosProyecto 
 } = require('./models/index');
 const { getProjectCalculations } = require('./models/automations');
 
@@ -16,7 +17,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Mock Auth Middleware (Ready for Microsoft Entra ID integration)
+// Auth Middleware: Set req.currentPmId from header
 app.use((req, res, next) => {
   const pmId = req.headers['x-pm-id'];
   if (pmId) {
@@ -32,6 +33,55 @@ const handleErr = (res, error, status = 400) => {
   console.error(error);
   res.status(status).json({ error: error.message || 'Error del servidor' });
 };
+
+// Helper: Password Hashing using SHA-256
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+// Helper: Validate ISO 8601 date (YYYY-MM-DD)
+function isValidISODate(dateStr) {
+  if (typeof dateStr !== 'string') return false;
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(dateStr)) return false;
+  
+  const parts = dateStr.split('-');
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  
+  if (month < 1 || month > 12) return false;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  return day >= 1 && day <= daysInMonth;
+}
+
+// Middleware: Validate date in task creation / update
+function validateTaskDate(req, res, next) {
+  const { fecha_limite } = req.body;
+  if (fecha_limite !== undefined) {
+    if (!isValidISODate(fecha_limite)) {
+      return res.status(400).json({ error: 'La fecha límite de la tarea debe tener el formato YYYY-MM-DD y ser una fecha válida.' });
+    }
+  }
+  next();
+}
+
+// Middleware: Restrict access to administrators
+async function restrictToAdmin(req, res, next) {
+  const pmId = req.currentPmId;
+  if (!pmId) {
+    return res.status(401).json({ error: 'Acceso denegado. Inicie sesión.' });
+  }
+  try {
+    const user = await Usuarios.findByPk(pmId);
+    if (!user || user.perfil !== 'ADMINISTRADOR') {
+      return res.status(403).json({ error: 'Acceso restringido a administradores.' });
+    }
+    next();
+  } catch (error) {
+    handleErr(res, error, 500);
+  }
+}
 
 // Helper: Auto-generate code IDs (Format: PREFIX-YYYY-XXX)
 async function generateNextId(Model, prefix, keyName) {
@@ -64,11 +114,49 @@ async function generateNextId(Model, prefix, keyName) {
 }
 
 // ==========================================
-// 1. PMs / Usuarios Endpoints
+// 1. Authentication / Login Endpoint
+// ==========================================
+app.post('/api/login', async (req, res) => {
+  try {
+    const { correo, password } = req.body;
+    if (!correo || !password) {
+      return res.status(400).json({ error: 'El correo y la contraseña son obligatorios.' });
+    }
+
+    const user = await Usuarios.findOne({ where: { correo } });
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no registrado o credenciales incorrectas.' });
+    }
+
+    if (!user.activo) {
+      return res.status(403).json({ error: 'Tu usuario se encuentra inactivo. Contacta a un administrador.' });
+    }
+
+    const hashedInput = hashPassword(password);
+    if (user.password !== hashedInput) {
+      return res.status(401).json({ error: 'Credenciales inválidas.' });
+    }
+
+    res.json({
+      id_usuario: user.id_usuario,
+      nombre: user.nombre,
+      apellidos: user.apellidos,
+      correo: user.correo,
+      perfil: user.perfil,
+      activo: user.activo
+    });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 2. PMs / Active Users Endpoints
 // ==========================================
 app.get('/api/pms', async (req, res) => {
   try {
     const pms = await Usuarios.findAll({
+      where: { activo: true },
       order: [['nombre', 'ASC']]
     });
     res.json(pms);
@@ -78,7 +166,7 @@ app.get('/api/pms', async (req, res) => {
 });
 
 // ==========================================
-// 2. Sedes Endpoints
+// 3. Sedes Endpoints
 // ==========================================
 app.get('/api/sedes', async (req, res) => {
   try {
@@ -90,7 +178,7 @@ app.get('/api/sedes', async (req, res) => {
 });
 
 // ==========================================
-// 3. Key Users Endpoints
+// 4. Key Users Endpoints
 // ==========================================
 app.get('/api/key-users', async (req, res) => {
   try {
@@ -105,17 +193,15 @@ app.get('/api/key-users', async (req, res) => {
 });
 
 // ==========================================
-// 3.5 Portfolio Optimized Dashboard Endpoints
+// 5. Portfolio Optimized Dashboard Endpoints
 // ==========================================
 
-// Get unique project states
+// Get unique project states from table Estados_Proyecto
 app.get('/api/portfolio/states', async (req, res) => {
   try {
-    const distinctStates = await Proyectos.findAll({
-      attributes: [[sequelize.fn('DISTINCT', sequelize.col('estado_proyecto')), 'estado']],
-      raw: true
+    const states = await EstadosProyecto.findAll({
+      order: [['orden', 'ASC']]
     });
-    const states = distinctStates.map(ds => ds.estado).filter(Boolean);
     res.json(states);
   } catch (error) {
     handleErr(res, error);
@@ -140,7 +226,8 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
       include: [
         { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
         { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
-        { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] }
+        { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
+        { model: EstadosProyecto, as: 'Estado', attributes: ['nombre_estado', 'icono'] }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -223,7 +310,9 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
           id_proveedor: p.id_proveedor,
           prov_nombre: p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner',
           sede_nombre: p.Sede ? p.Sede.nombre_sede : '',
-          estado_proyecto: p.estado_proyecto,
+          id_estado: p.id_estado,
+          estado_proyecto: p.Estado ? p.Estado.nombre_estado : 'Sin Estado',
+          estado_icono: p.Estado ? p.Estado.icono : '❓',
           indicador_rag: p.indicador_rag,
           es_capex: p.es_capex,
           codigo_capex: p.codigo_capex,
@@ -260,7 +349,7 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
 });
 
 // ==========================================
-// 4. Proyectos (Portfolio Dashboard & CRUD)
+// 6. Proyectos (Portfolio Dashboard & CRUD)
 // ==========================================
 
 // Get all projects with filters and calculations
@@ -273,9 +362,11 @@ app.get('/api/projects', async (req, res) => {
     if (pm) where.id_pm = pm;
     if (vendor) where.id_proveedor = vendor;
     if (rag) where.indicador_rag = rag;
-    if (state) where.estado_proyecto = state;
     if (search) {
       where.nombre_proyecto = { [Op.like]: `%${search}%` };
+    }
+    if (state) {
+      where['$Estado.nombre_estado$'] = state;
     }
 
     const projectsList = await Proyectos.findAll({
@@ -284,7 +375,8 @@ app.get('/api/projects', async (req, res) => {
         { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos', 'correo'] },
         { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
         { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
-        { model: KeyUsers, as: 'Sponsor', attributes: ['nombre', 'apellidos'] }
+        { model: KeyUsers, as: 'Sponsor', attributes: ['nombre', 'apellidos'] },
+        { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono'] }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -343,7 +435,8 @@ app.get('/api/projects/:id_proyecto', async (req, res) => {
           { model: KeyUsers, as: 'Solicitante', attributes: ['nombre', 'apellidos'] },
           { model: KeyUsers, as: 'Aprobador', attributes: ['nombre', 'apellidos'] }
         ], order: [['fecha_solicitud', 'DESC']] },
-        { model: Tareas, order: [['fecha_limite', 'ASC']] }
+        { model: Tareas, order: [['fecha_limite', 'ASC']] },
+        { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono'] }
       ]
     });
 
@@ -366,6 +459,19 @@ app.get('/api/projects/:id_proyecto', async (req, res) => {
   }
 });
 
+// Helper: Resolve legacy estado_proyecto string to id_estado
+async function resolveStateId(data) {
+  if (data.estado_proyecto && !data.id_estado) {
+    const stateObj = await EstadosProyecto.findOne({ where: { nombre_estado: data.estado_proyecto } });
+    if (stateObj) {
+      data.id_estado = stateObj.id_estado;
+    } else {
+      const firstState = await EstadosProyecto.findOne({ order: [['orden', 'ASC']] });
+      if (firstState) data.id_estado = firstState.id_estado;
+    }
+  }
+}
+
 // Create new project
 app.post('/api/projects', async (req, res) => {
   try {
@@ -384,6 +490,15 @@ app.post('/api/projects', async (req, res) => {
       if (!idRegex.test(data.id_proyecto)) {
         return res.status(400).json({ error: 'El ID del proyecto debe tener el formato PRJ-YYYY-XXX.' });
       }
+    }
+
+    // Resolve state name to state ID if needed
+    await resolveStateId(data);
+
+    // Fallback: If still no id_estado, assign first state in DB
+    if (!data.id_estado) {
+      const firstState = await EstadosProyecto.findOne({ order: [['orden', 'ASC']] });
+      if (firstState) data.id_estado = firstState.id_estado;
     }
 
     const project = await Proyectos.create(data);
@@ -416,6 +531,9 @@ app.put('/api/projects/:id_proyecto', async (req, res) => {
       return res.status(400).json({ error: 'El código CAPEX es obligatorio para proyectos CAPEX.' });
     }
 
+    // Resolve state name to state ID if needed
+    await resolveStateId(data);
+
     await project.update(data);
 
     // Update Many-to-Many relations
@@ -446,7 +564,7 @@ app.delete('/api/projects/:id_proyecto', async (req, res) => {
 });
 
 // ==========================================
-// 5. Proveedores (Vendor 360 & CRUD)
+// 7. Proveedores (Vendor 360 & CRUD)
 // ==========================================
 app.get('/api/vendors', async (req, res) => {
   try {
@@ -477,7 +595,8 @@ app.get('/api/vendors/:id_proveedor', async (req, res) => {
       where: { id_proveedor },
       include: [
         { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
-        { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] }
+        { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
+        { model: EstadosProyecto, as: 'Estado', attributes: ['nombre_estado', 'icono'] }
       ]
     });
 
@@ -573,7 +692,7 @@ app.delete('/api/vendors/:id_proveedor', async (req, res) => {
 });
 
 // ==========================================
-// 6. Contactos Proveedor Endpoints
+// 8. Contactos Proveedor Endpoints
 // ==========================================
 app.post('/api/contacts', async (req, res) => {
   try {
@@ -599,7 +718,7 @@ app.delete('/api/contacts/:id_contacto', async (req, res) => {
 });
 
 // ==========================================
-// 7. Cambios de Alcance (CR) Endpoints
+// 9. Cambios de Alcance (CR) Endpoints
 // ==========================================
 app.post('/api/scope-changes', async (req, res) => {
   try {
@@ -654,7 +773,7 @@ app.put('/api/scope-changes/:id_cambio', async (req, res) => {
 });
 
 // ==========================================
-// 8. Facturas Endpoints
+// 10. Facturas Endpoints
 // ==========================================
 app.post('/api/invoices', async (req, res) => {
   try {
@@ -706,7 +825,7 @@ app.delete('/api/invoices/:id_interno_factura', async (req, res) => {
 });
 
 // ==========================================
-// 9. Riesgos Endpoints
+// 11. Riesgos Endpoints
 // ==========================================
 app.post('/api/risks', async (req, res) => {
   try {
@@ -744,7 +863,7 @@ app.put('/api/risks/:id_riesgo', async (req, res) => {
 });
 
 // ==========================================
-// 10. Incidencias Endpoints
+// 12. Incidencias Endpoints
 // ==========================================
 app.post('/api/issues', async (req, res) => {
   try {
@@ -795,9 +914,9 @@ app.put('/api/issues/:id_incidencia', async (req, res) => {
 });
 
 // ==========================================
-// 11. Tareas (PM Internal Checklist)
+// 13. Tareas (PM Internal Checklist)
 // ==========================================
-app.post('/api/tasks', async (req, res) => {
+app.post('/api/tasks', validateTaskDate, async (req, res) => {
   try {
     const task = await Tareas.create(req.body);
     res.status(201).json(task);
@@ -806,7 +925,7 @@ app.post('/api/tasks', async (req, res) => {
   }
 });
 
-app.put('/api/tasks/:id_tarea', async (req, res) => {
+app.put('/api/tasks/:id_tarea', validateTaskDate, async (req, res) => {
   try {
     const { id_tarea } = req.params;
     const task = await Tareas.findByPk(id_tarea);
@@ -835,7 +954,7 @@ app.delete('/api/tasks/:id_tarea', async (req, res) => {
 });
 
 // ==========================================
-// 12. Lecciones Aprendidas (Knowledge Base)
+// 14. Lecciones Aprendidas (Knowledge Base)
 // ==========================================
 app.get('/api/lessons', async (req, res) => {
   try {
@@ -868,6 +987,248 @@ app.post('/api/lessons', async (req, res) => {
 
     const lesson = await LeccionesAprendidas.create(data);
     res.status(201).json(lesson);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 15. ComentariosProyecto Endpoints
+// ==========================================
+app.get('/api/projects/:id_proyecto/comments', async (req, res) => {
+  try {
+    const comments = await ComentariosProyecto.findAll({
+      where: { id_proyecto: req.params.id_proyecto },
+      include: [
+        { model: Usuarios, as: 'Autor', attributes: ['nombre', 'apellidos', 'correo'] },
+        { model: Usuarios, as: 'Editor', attributes: ['nombre', 'apellidos', 'correo'] }
+      ],
+      order: [['fecha_registro', 'DESC']]
+    });
+    res.json(comments);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.post('/api/comments', async (req, res) => {
+  try {
+    const { id_proyecto, texto_comentario } = req.body;
+    const authorId = req.currentPmId;
+    if (!authorId) {
+      return res.status(401).json({ error: 'No autorizado. Inicie sesión.' });
+    }
+    if (!id_proyecto || !texto_comentario || texto_comentario.trim() === '') {
+      return res.status(400).json({ error: 'El código del proyecto y el texto del comentario son obligatorios.' });
+    }
+
+    const comment = await ComentariosProyecto.create({
+      id_proyecto,
+      id_usuario: authorId,
+      texto_comentario,
+      fecha_registro: new Date()
+    });
+
+    const fullComment = await ComentariosProyecto.findByPk(comment.id_comentario, {
+      include: [
+        { model: Usuarios, as: 'Autor', attributes: ['nombre', 'apellidos', 'correo'] },
+        { model: Usuarios, as: 'Editor', attributes: ['nombre', 'apellidos', 'correo'] }
+      ]
+    });
+
+    res.status(201).json(fullComment);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.put('/api/comments/:id_comentario', async (req, res) => {
+  try {
+    const { id_comentario } = req.params;
+    const { texto_comentario } = req.body;
+    const editorId = req.currentPmId;
+    if (!editorId) {
+      return res.status(401).json({ error: 'No autorizado. Inicie sesión.' });
+    }
+    if (!texto_comentario || texto_comentario.trim() === '') {
+      return res.status(400).json({ error: 'El texto del comentario es obligatorio.' });
+    }
+
+    const comment = await ComentariosProyecto.findByPk(id_comentario);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comentario no encontrado.' });
+    }
+
+    await comment.update({
+      texto_comentario,
+      editado: true,
+      id_usuario_modificacion: editorId,
+      fecha_modificacion: new Date()
+    });
+
+    const fullComment = await ComentariosProyecto.findByPk(id_comentario, {
+      include: [
+        { model: Usuarios, as: 'Autor', attributes: ['nombre', 'apellidos', 'correo'] },
+        { model: Usuarios, as: 'Editor', attributes: ['nombre', 'apellidos', 'correo'] }
+      ]
+    });
+
+    res.json(fullComment);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.delete('/api/comments/:id_comentario', async (req, res) => {
+  try {
+    const { id_comentario } = req.params;
+    const comment = await ComentariosProyecto.findByPk(id_comentario);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comentario no encontrado.' });
+    }
+    await comment.destroy();
+    res.json({ message: 'Comentario eliminado con éxito.' });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
+// 16. Admin Endpoints (Estados & Usuarios CRUD)
+// ==========================================
+
+// --- ESTADOS ---
+app.get('/api/admin/states', restrictToAdmin, async (req, res) => {
+  try {
+    const states = await EstadosProyecto.findAll({ order: [['orden', 'ASC']] });
+    res.json(states);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.post('/api/admin/states', restrictToAdmin, async (req, res) => {
+  try {
+    const { nombre_estado, icono, orden } = req.body;
+    if (!nombre_estado || orden === undefined) {
+      return res.status(400).json({ error: 'El nombre del estado y el orden son obligatorios.' });
+    }
+    const state = await EstadosProyecto.create({
+      nombre_estado,
+      icono,
+      orden: parseInt(orden, 10)
+    });
+    res.status(201).json(state);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.put('/api/admin/states/:id_estado', restrictToAdmin, async (req, res) => {
+  try {
+    const { id_estado } = req.params;
+    const { nombre_estado, icono, orden } = req.body;
+    const state = await EstadosProyecto.findByPk(id_estado);
+    if (!state) {
+      return res.status(404).json({ error: 'Estado no encontrado.' });
+    }
+    await state.update({
+      nombre_estado: nombre_estado !== undefined ? nombre_estado : state.nombre_estado,
+      icono: icono !== undefined ? icono : state.icono,
+      orden: orden !== undefined ? parseInt(orden, 10) : state.orden
+    });
+    res.json(state);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.delete('/api/admin/states/:id_estado', restrictToAdmin, async (req, res) => {
+  try {
+    const { id_estado } = req.params;
+    const state = await EstadosProyecto.findByPk(id_estado);
+    if (!state) {
+      return res.status(404).json({ error: 'Estado no encontrado.' });
+    }
+    const count = await Proyectos.count({ where: { id_estado } });
+    if (count > 0) {
+      return res.status(400).json({ error: 'No se puede eliminar el estado porque hay proyectos activos asociados a él.' });
+    }
+    await state.destroy();
+    res.json({ message: 'Estado eliminado con éxito.' });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// --- USUARIOS ---
+app.get('/api/admin/users', restrictToAdmin, async (req, res) => {
+  try {
+    const users = await Usuarios.findAll({ order: [['nombre', 'ASC']] });
+    res.json(users);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.post('/api/admin/users', restrictToAdmin, async (req, res) => {
+  try {
+    const { nombre, apellidos, correo, password, perfil, activo } = req.body;
+    if (!nombre || !apellidos || !correo || !password || !perfil) {
+      return res.status(400).json({ error: 'Todos los campos obligatorios son requeridos.' });
+    }
+    const user = await Usuarios.create({
+      nombre,
+      apellidos,
+      correo,
+      password: hashPassword(password),
+      perfil,
+      activo: activo !== undefined ? activo : true
+    });
+    res.status(201).json(user);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.put('/api/admin/users/:id_usuario', restrictToAdmin, async (req, res) => {
+  try {
+    const { id_usuario } = req.params;
+    const { nombre, apellidos, correo, password, perfil, activo } = req.body;
+    const user = await Usuarios.findByPk(id_usuario);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+    const updates = {
+      nombre: nombre !== undefined ? nombre : user.nombre,
+      apellidos: apellidos !== undefined ? apellidos : user.apellidos,
+      correo: correo !== undefined ? correo : user.correo,
+      perfil: perfil !== undefined ? perfil : user.perfil,
+      activo: activo !== undefined ? activo : user.activo
+    };
+    if (password && password.trim() !== '') {
+      updates.password = hashPassword(password);
+    }
+    await user.update(updates);
+    res.json(user);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+app.delete('/api/admin/users/:id_usuario', restrictToAdmin, async (req, res) => {
+  try {
+    const { id_usuario } = req.params;
+    const user = await Usuarios.findByPk(id_usuario);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+    const count = await Proyectos.count({ where: { id_pm: id_usuario } });
+    if (count > 0) {
+      return res.status(400).json({ error: 'No se puede eliminar el usuario porque tiene proyectos activos asignados. Desactívelo en su lugar.' });
+    }
+    await user.destroy();
+    res.json({ message: 'Usuario eliminado con éxito.' });
   } catch (error) {
     handleErr(res, error);
   }

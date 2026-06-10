@@ -5,6 +5,8 @@ import {
   TrendingUp, Activity, CheckSquare, ShieldAlert, AlertTriangle, 
   MessageSquare, FileText, Plus, Trash2, Edit2, Check, X, RefreshCw 
 } from 'lucide-react';
+import SearchableKeyUserSelect from '../components/SearchableKeyUserSelect';
+import RichTextEditor from '../components/RichTextEditor';
 
 export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const { getAuthHeaders } = useAuth();
@@ -18,6 +20,14 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [vendors, setVendors] = useState([]);
   const [keyUsers, setKeyUsers] = useState([]);
   const [pms, setPms] = useState([]);
+  const [workflowStates, setWorkflowStates] = useState([]);
+
+  // Comments states
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
 
   // ==========================================
   // EDIT STATE MODALS
@@ -72,19 +82,104 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       });
   };
 
+  const fetchComments = () => {
+    setCommentsLoading(true);
+    fetch(`http://localhost:5000/api/projects/${projectId}/comments`)
+      .then(res => res.json())
+      .then(data => {
+        setComments(data);
+        setCommentsLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching comments:', err);
+        setCommentsLoading(false);
+      });
+  };
+
   const fetchMetadata = () => {
     fetch('http://localhost:5000/api/sedes').then(res => res.json()).then(data => setSedes(data));
     fetch('http://localhost:5000/api/vendors').then(res => res.json()).then(data => setVendors(data));
     fetch('http://localhost:5000/api/key-users').then(res => res.json()).then(data => setKeyUsers(data));
     fetch('http://localhost:5000/api/pms').then(res => res.json()).then(data => setPms(data));
+    fetch('http://localhost:5000/api/portfolio/states').then(res => res.json()).then(data => setWorkflowStates(data));
   };
 
   useEffect(() => {
     if (projectId) {
       fetchProjectData();
       fetchMetadata();
+      fetchComments();
     }
   }, [projectId]);
+
+  const handleAddComment = () => {
+    if (!newCommentText || newCommentText.trim() === '' || newCommentText === '<br>') return;
+    fetch(`http://localhost:5000/api/comments`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        id_proyecto: projectId,
+        texto_comentario: newCommentText
+      })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al publicar comentario');
+        return res.json();
+      })
+      .then(() => {
+        setNewCommentText('');
+        fetchComments();
+      })
+      .catch(err => alert(err.message));
+  };
+
+  const handleUpdateComment = (id) => {
+    if (!editingCommentText || editingCommentText.trim() === '' || editingCommentText === '<br>') return;
+    fetch(`http://localhost:5000/api/comments/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        texto_comentario: editingCommentText
+      })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al actualizar comentario');
+        return res.json();
+      })
+      .then(() => {
+        setEditingCommentId(null);
+        setEditingCommentText('');
+        fetchComments();
+      })
+      .catch(err => alert(err.message));
+  };
+
+  const handleDeleteComment = (id) => {
+    if (!window.confirm('¿Seguro que desea eliminar este comentario?')) return;
+    fetch(`http://localhost:5000/api/comments/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al eliminar comentario');
+        return res.json();
+      })
+      .then(() => {
+        fetchComments();
+      })
+      .catch(err => alert(err.message));
+  };
+
+  const formatDateTime = (isoString) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} a las ${hours}:${minutes}`;
+  };
 
   // Open Edit Project Modal with prepopulated values
   const openEditProject = () => {
@@ -605,15 +700,16 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--md-sys-color-outline)' }}>Fase:</span>
             <select 
-              value={project.estado_proyecto}
-              onChange={(e) => handleUpdateProject({ estado_proyecto: e.target.value })}
+              value={project.id_estado || ''}
+              onChange={(e) => handleUpdateProject({ id_estado: parseInt(e.target.value, 10) })}
               className="user-select"
               style={{ width: 'auto', padding: '6px 12px', height: '36px' }}
             >
-              <option value="Kickoff">Kickoff 🚀</option>
-              <option value="Desarrollo">Desarrollo 🛠️</option>
-              <option value="Cierre">Cierre 🏁</option>
-              <option value="Pausado">Pausado ⏸️</option>
+              {workflowStates.map(state => (
+                <option key={state.id_estado} value={state.id_estado}>
+                  {state.icono} {state.nombre_estado}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -1073,103 +1169,267 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           </div>
         )}
 
-        {/* PANEL: PLANES COMUNICACIONES */}
+        {/* PANEL: PLANES COMUNICACIONES & TIMELINE DE COMENTARIOS */}
         {activeTab === 'comunicaciones' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
-            {/* Weekly */}
-            <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Plan de Comunicación Semanal</h3>
-                <span className={`badge ${project.com_semanal_activo ? 'badge-green' : 'badge-orange'}`}>
-                  {project.com_semanal_activo ? 'ACTIVO' : 'INACTIVO'}
-                </span>
-              </div>
-              {project.com_semanal_activo ? (
-                <>
-                  <div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Finalidad:</div>
-                    <p style={{ fontSize: '0.9rem', marginTop: 4 }}>{project.com_semanal_finalidad}</p>
-                  </div>
-                  <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12 }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes de Negocio:</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {project.ComSemanalKUs?.length === 0 ? (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Sin participantes asignados.</span>
-                      ) : (
-                        project.ComSemanalKUs?.map(ku => (
-                          <div key={ku.id_ku} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
-                        ))
-                      )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+              {/* Weekly */}
+              <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Plan de Comunicación Semanal</h3>
+                  <span className={`badge ${project.com_semanal_activo ? 'badge-green' : 'badge-orange'}`}>
+                    {project.com_semanal_activo ? 'ACTIVO' : 'INACTIVO'}
+                  </span>
+                </div>
+                {project.com_semanal_activo ? (
+                  <>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Finalidad:</div>
+                      <p style={{ fontSize: '0.9rem', marginTop: 4 }}>{project.com_semanal_finalidad}</p>
                     </div>
-                  </div>
-                </>
-              ) : (
-                <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se ha configurado seguimiento semanal.</p>
-              )}
+                    <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12 }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes de Negocio:</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {project.ComSemanalKUs?.length === 0 ? (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Sin participantes asignados.</span>
+                        ) : (
+                          project.ComSemanalKUs?.map(ku => (
+                            <div key={ku.id_ku} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se ha configurado seguimiento semanal.</p>
+                )}
+              </div>
+
+              {/* Monthly */}
+              <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Plan de Comunicación Mensual</h3>
+                  <span className={`badge ${project.com_mensual_activo ? 'badge-green' : 'badge-orange'}`}>
+                    {project.com_mensual_activo ? 'ACTIVO' : 'INACTIVO'}
+                  </span>
+                </div>
+                {project.com_mensual_activo ? (
+                  <>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Finalidad:</div>
+                      <p style={{ fontSize: '0.9rem', marginTop: 4 }}>{project.com_mensual_finalidad}</p>
+                    </div>
+                    <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12 }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes de Negocio:</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {project.ComMensualKUs?.length === 0 ? (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Sin participantes asignados.</span>
+                        ) : (
+                          project.ComMensualKUs?.map(ku => (
+                            <div key={ku.id_ku} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se ha configurado seguimiento mensual.</p>
+                )}
+              </div>
+
+              {/* SteerCo */}
+              <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Comité de Dirección (SteerCo)</h3>
+                  <span className={`badge ${project.com_steerco_activo ? 'badge-green' : 'badge-orange'}`}>
+                    {project.com_steerco_activo ? 'ACTIVO' : 'INACTIVO'}
+                  </span>
+                </div>
+                {project.com_steerco_activo ? (
+                  <>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Finalidad:</div>
+                      <p style={{ fontSize: '0.9rem', marginTop: 4 }}>{project.com_steerco_finalidad}</p>
+                    </div>
+                    <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12 }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes de Negocio:</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {project.ComSteerCoKUs?.length === 0 ? (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Sin participantes asignados.</span>
+                        ) : (
+                          project.ComSteerCoKUs?.map(ku => (
+                            <div key={ku.id_ku} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se ha configurado comité ejecutivo SteerCo.</p>
+                )}
+              </div>
             </div>
 
-            {/* Monthly */}
-            <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Plan de Comunicación Mensual</h3>
-                <span className={`badge ${project.com_mensual_activo ? 'badge-green' : 'badge-orange'}`}>
-                  {project.com_mensual_activo ? 'ACTIVO' : 'INACTIVO'}
-                </span>
+            {/* FEED DE COMENTARIOS AUDITADOS */}
+            <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div>
+                <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Muro de Comunicación del Proyecto</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
+                  Historial de comunicaciones y comentarios del proyecto. Soporta pegado de texto enriquecido e imágenes directamente desde Microsoft Outlook.
+                </p>
               </div>
-              {project.com_mensual_activo ? (
-                <>
-                  <div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Finalidad:</div>
-                    <p style={{ fontSize: '0.9rem', marginTop: 4 }}>{project.com_mensual_finalidad}</p>
-                  </div>
-                  <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12 }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes de Negocio:</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {project.ComMensualKUs?.length === 0 ? (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Sin participantes asignados.</span>
-                      ) : (
-                        project.ComMensualKUs?.map(ku => (
-                          <div key={ku.id_ku} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se ha configurado seguimiento mensual.</p>
-              )}
-            </div>
 
-            {/* SteerCo */}
-            <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Comité de Dirección (SteerCo)</h3>
-                <span className={`badge ${project.com_steerco_activo ? 'badge-green' : 'badge-orange'}`}>
-                  {project.com_steerco_activo ? 'ACTIVO' : 'INACTIVO'}
-                </span>
+              {/* Editor to Add Comment */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <RichTextEditor 
+                  value={newCommentText} 
+                  onChange={setNewCommentText} 
+                  placeholder="Escribe un comentario importante o pega contenido directamente aquí..."
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button 
+                    className="m3-btn m3-btn-primary" 
+                    onClick={handleAddComment}
+                    disabled={!newCommentText || newCommentText.trim() === '' || newCommentText === '<br>'}
+                  >
+                    Publicar Comentario
+                  </button>
+                </div>
               </div>
-              {project.com_steerco_activo ? (
-                <>
-                  <div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Finalidad:</div>
-                    <p style={{ fontSize: '0.9rem', marginTop: 4 }}>{project.com_steerco_finalidad}</p>
-                  </div>
-                  <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12 }}>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes de Negocio:</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {project.ComSteerCoKUs?.length === 0 ? (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Sin participantes asignados.</span>
+
+              {/* Timeline comments feed */}
+              <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {commentsLoading ? (
+                  <span>Cargando comentarios...</span>
+                ) : comments.length === 0 ? (
+                  <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem', textAlign: 'center', padding: '12px 0' }}>
+                    No hay comentarios registrados para este proyecto.
+                  </p>
+                ) : (
+                  comments.map(c => (
+                    <div 
+                      key={c.id_comentario} 
+                      className="comment-bubble"
+                      style={{
+                        padding: 16,
+                        backgroundColor: 'var(--md-sys-color-surface-container-high)',
+                        borderRadius: '16px',
+                        border: '1px solid var(--md-sys-color-outline-variant)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8,
+                        position: 'relative'
+                      }}
+                    >
+                      {/* Comment Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: '50%',
+                            backgroundColor: 'var(--md-sys-color-primary-container)',
+                            color: 'var(--md-sys-color-on-primary-container)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 'bold',
+                            fontSize: '0.75rem'
+                          }}>
+                            {c.Autor?.nombre[0] || 'U'}{c.Autor?.apellidos[0] || ''}
+                          </div>
+                          <div>
+                            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.Autor?.nombre} {c.Autor?.apellidos}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', marginLeft: 8 }}>{formatDateTime(c.fecha_registro)}</span>
+                          </div>
+                        </div>
+
+                        {/* Actions: Edit & Delete (Visible to all users) */}
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button 
+                            className="icon-btn" 
+                            onClick={() => {
+                              setEditingCommentId(c.id_comentario);
+                              setEditingCommentText(c.texto_comentario);
+                            }}
+                            style={{ width: 28, height: 28, color: 'var(--md-sys-color-primary)' }}
+                            title="Editar comentario"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                          <button 
+                            className="icon-btn" 
+                            onClick={() => handleDeleteComment(c.id_comentario)}
+                            style={{ width: 28, height: 28, color: 'var(--color-rag-red)' }}
+                            title="Eliminar comentario"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Comment Body */}
+                      {editingCommentId === c.id_comentario ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+                          <RichTextEditor 
+                            value={editingCommentText} 
+                            onChange={setEditingCommentText} 
+                            placeholder="Edita tu comentario..."
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                            <button 
+                              className="m3-btn m3-btn-outline" 
+                              onClick={() => {
+                                setEditingCommentId(null);
+                                setEditingCommentText('');
+                              }}
+                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                            >
+                              Cancelar
+                            </button>
+                            <button 
+                              className="m3-btn m3-btn-primary" 
+                              onClick={() => handleUpdateComment(c.id_comentario)}
+                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                            >
+                              Guardar
+                            </button>
+                          </div>
+                        </div>
                       ) : (
-                        project.ComSteerCoKUs?.map(ku => (
-                          <div key={ku.id_ku} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
-                        ))
+                        <div 
+                          className="comment-rich-text"
+                          dangerouslySetInnerHTML={{ __html: c.texto_comentario }}
+                          style={{
+                            fontSize: '0.9rem',
+                            color: 'var(--md-sys-color-on-surface)',
+                            lineHeight: '1.5',
+                            wordBreak: 'break-word'
+                          }}
+                        />
+                      )}
+
+                      {/* Audit stamp tooltip / label */}
+                      {c.editado && (
+                        <div 
+                          style={{
+                            alignSelf: 'flex-start',
+                            fontSize: '0.75rem',
+                            color: 'var(--md-sys-color-outline)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            cursor: 'help'
+                          }}
+                          title={`Editado por ${c.Editor?.nombre} ${c.Editor?.apellidos} el ${formatDateTime(c.fecha_modificacion)}`}
+                        >
+                          <span style={{ fontStyle: 'italic', textDecoration: 'underline dashed' }}>(Editado)</span>
+                        </div>
                       )}
                     </div>
-                  </div>
-                </>
-              ) : (
-                <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se ha configurado comité ejecutivo SteerCo.</p>
-              )}
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1307,16 +1567,13 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 {/* Sponsor */}
                 <div className="form-group">
                   <label className="form-label">Sponsor / KU Líder *</label>
-                  <select 
-                    value={editProjectForm.id_sponsor_ku || ''}
-                    onChange={(e) => setEditProjectForm({ ...editProjectForm, id_sponsor_ku: parseInt(e.target.value, 10) })}
-                    required
-                    className="user-select"
-                  >
-                    {keyUsers.map(k => (
-                      <option key={k.id_ku} value={k.id_ku}>{k.nombre} {k.apellidos}</option>
-                    ))}
-                  </select>
+                  <SearchableKeyUserSelect 
+                    keyUsers={keyUsers}
+                    selected={editProjectForm.id_sponsor_ku}
+                    onChange={(val) => setEditProjectForm(prev => ({ ...prev, id_sponsor_ku: val }))}
+                    multiple={false}
+                    placeholder="Seleccione Sponsor / Key User Líder..."
+                  />
                 </div>
 
                 {/* Fechas */}
@@ -1382,22 +1639,16 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   </div>
                 )}
 
-                {/* Involved Key Users (Corrigiendo: ku involucrados) */}
+                {/* Involved Key Users */}
                 <div className="form-group" style={{ gridColumn: 'span 2', borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 16 }}>
                   <label className="form-label" style={{ marginBottom: 8 }}>Key Users de negocio Involucrados</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    {keyUsers.map(ku => (
-                      <label key={ku.id_ku} className="m3-checkbox-label" style={{ fontSize: '0.85rem' }}>
-                        <input 
-                          type="checkbox" 
-                          checked={editProjectForm.involvedKus?.includes(ku.id_ku)}
-                          onChange={() => handleKeyUserToggle('involvedKus', ku.id_ku)}
-                          className="m3-checkbox"
-                        />
-                        <span>{ku.nombre} {ku.apellidos} ({ku.Proveedore?.nombre_razon_social})</span>
-                      </label>
-                    ))}
-                  </div>
+                  <SearchableKeyUserSelect 
+                    keyUsers={keyUsers}
+                    selected={editProjectForm.involvedKus || []}
+                    onChange={(val) => setEditProjectForm(prev => ({ ...prev, involvedKus: val }))}
+                    multiple={true}
+                    placeholder="Seleccione Key Users Involucrados..."
+                  />
                 </div>
 
                 {/* Weekly Plan */}
@@ -1421,20 +1672,14 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         className="m3-input"
                         style={{ marginTop: 6 }}
                       />
-                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Participantes Semanales:</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-                        {keyUsers.map(ku => (
-                          <label key={ku.id_ku} className="m3-checkbox-label" style={{ fontSize: '0.8rem' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={editProjectForm.comSemanalKus?.includes(ku.id_ku)}
-                              onChange={() => handleKeyUserToggle('comSemanalKus', ku.id_ku)}
-                              className="m3-checkbox"
-                            />
-                            <span>{ku.nombre} {ku.apellidos}</span>
-                          </label>
-                        ))}
-                      </div>
+                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes Semanales:</div>
+                      <SearchableKeyUserSelect 
+                        keyUsers={keyUsers}
+                        selected={editProjectForm.comSemanalKus || []}
+                        onChange={(val) => setEditProjectForm(prev => ({ ...prev, comSemanalKus: val }))}
+                        multiple={true}
+                        placeholder="Seleccione Participantes Semanales..."
+                      />
                     </>
                   )}
                 </div>
@@ -1460,20 +1705,14 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         className="m3-input"
                         style={{ marginTop: 6 }}
                       />
-                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Participantes Mensuales:</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-                        {keyUsers.map(ku => (
-                          <label key={ku.id_ku} className="m3-checkbox-label" style={{ fontSize: '0.8rem' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={editProjectForm.comMensualKus?.includes(ku.id_ku)}
-                              onChange={() => handleKeyUserToggle('comMensualKus', ku.id_ku)}
-                              className="m3-checkbox"
-                            />
-                            <span>{ku.nombre} {ku.apellidos}</span>
-                          </label>
-                        ))}
-                      </div>
+                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes Mensuales:</div>
+                      <SearchableKeyUserSelect 
+                        keyUsers={keyUsers}
+                        selected={editProjectForm.comMensualKus || []}
+                        onChange={(val) => setEditProjectForm(prev => ({ ...prev, comMensualKus: val }))}
+                        multiple={true}
+                        placeholder="Seleccione Participantes Mensuales..."
+                      />
                     </>
                   )}
                 </div>
@@ -1499,20 +1738,14 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         className="m3-input"
                         style={{ marginTop: 6 }}
                       />
-                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Participantes SteerCo:</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-                        {keyUsers.map(ku => (
-                          <label key={ku.id_ku} className="m3-checkbox-label" style={{ fontSize: '0.8rem' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={editProjectForm.comSteercoKus?.includes(ku.id_ku)}
-                              onChange={() => handleKeyUserToggle('comSteercoKus', ku.id_ku)}
-                              className="m3-checkbox"
-                            />
-                            <span>{ku.nombre} {ku.apellidos}</span>
-                          </label>
-                        ))}
-                      </div>
+                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes SteerCo:</div>
+                      <SearchableKeyUserSelect 
+                        keyUsers={keyUsers}
+                        selected={editProjectForm.comSteercoKus || []}
+                        onChange={(val) => setEditProjectForm(prev => ({ ...prev, comSteercoKus: val }))}
+                        multiple={true}
+                        placeholder="Seleccione Participantes SteerCo..."
+                      />
                     </>
                   )}
                 </div>

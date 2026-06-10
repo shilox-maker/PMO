@@ -95,11 +95,44 @@ const Usuarios = sequelize.define('Usuarios', {
     allowNull: false,
     unique: true
   },
-  rol: {
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  perfil: {
+    type: DataTypes.ENUM('ADMINISTRADOR', 'PM', 'DIRECTOR'),
+    allowNull: false,
+    defaultValue: 'PM'
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  }
+});
+
+// 4.5 EstadosProyecto Model (Centraliza los estados del workflow del portfolio)
+const EstadosProyecto = sequelize.define('Estados_Proyecto', {
+  id_estado: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  nombre_estado: {
     type: DataTypes.STRING,
     allowNull: false,
-    defaultValue: 'PM' // e.g., PM, Director
+    unique: true
+  },
+  icono: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  orden: {
+    type: DataTypes.INTEGER,
+    allowNull: false
   }
+}, {
+  timestamps: false
 });
 
 // 5. KeyUsers Model
@@ -179,9 +212,19 @@ const Proyectos = sequelize.define('Proyectos', {
       key: 'id_ku'
     }
   },
+  id_estado: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Estados_Proyecto',
+      key: 'id_estado'
+    }
+  },
   estado_proyecto: {
-    type: DataTypes.STRING, // e.g., Kickoff, Desarrollo, Cierre, Pausado
-    allowNull: false
+    type: DataTypes.VIRTUAL,
+    get() {
+      return this.Estado ? this.Estado.nombre_estado : null;
+    }
   },
   indicador_rag: {
     type: DataTypes.ENUM('VERDE', 'AMARILLO', 'ROJO'),
@@ -553,6 +596,58 @@ const Tareas = sequelize.define('Tareas', {
   }
 });
 
+// 13. ComentariosProyecto Model
+const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
+  id_comentario: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  id_proyecto: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: 'Proyectos',
+      key: 'id_proyecto'
+    },
+    onDelete: 'CASCADE'
+  },
+  id_usuario: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Usuarios',
+      key: 'id_usuario'
+    }
+  },
+  texto_comentario: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  fecha_registro: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  editado: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  id_usuario_modificacion: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Usuarios',
+      key: 'id_usuario'
+    }
+  },
+  fecha_modificacion: {
+    type: DataTypes.DATE,
+    allowNull: true
+  }
+});
+
 // Set up Associations
 // Proveedor has many Contacts
 Proveedores.hasMany(ContactosProveedor, { foreignKey: 'id_proveedor', onDelete: 'CASCADE' });
@@ -598,7 +693,7 @@ KeyUsers.belongsToMany(Proyectos, { through: ProyectoComSteerCoKU, foreignKey: '
 Proyectos.hasMany(Incidencias, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
 Incidencias.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
 
-// Project has many Riesgos
+// Project has many Risks
 Proyectos.hasMany(Riesgos, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
 Riesgos.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
 
@@ -632,6 +727,22 @@ CambiosAlcance.belongsTo(KeyUsers, { foreignKey: 'id_aprobador_ku', as: 'Aprobad
 Proyectos.hasMany(Tareas, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
 Tareas.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
 
+// EstadosProyecto has many Proyectos
+EstadosProyecto.hasMany(Proyectos, { foreignKey: 'id_estado', as: 'Proyectos' });
+Proyectos.belongsTo(EstadosProyecto, { foreignKey: 'id_estado', as: 'Estado' });
+
+// Project has many ComentariosProyecto
+Proyectos.hasMany(ComentariosProyecto, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
+ComentariosProyecto.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
+
+// Usuario has many ComentariosProyecto (Autor)
+Usuarios.hasMany(ComentariosProyecto, { foreignKey: 'id_usuario' });
+ComentariosProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario', as: 'Autor' });
+
+// Usuario has many ComentariosProyecto (Editor)
+Usuarios.hasMany(ComentariosProyecto, { foreignKey: 'id_usuario_modificacion' });
+ComentariosProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario_modificacion', as: 'Editor' });
+
 module.exports = {
   sequelize,
   Sedes,
@@ -649,5 +760,7 @@ module.exports = {
   LeccionesAprendidas,
   Facturas,
   CambiosAlcance,
-  Tareas
+  Tareas,
+  EstadosProyecto,
+  ComentariosProyecto
 };

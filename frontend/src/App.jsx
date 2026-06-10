@@ -5,12 +5,125 @@ import GovernanceDashboard from './pages/GovernanceDashboard';
 import ProjectDetail from './pages/ProjectDetail';
 import Vendor360 from './pages/Vendor360';
 import VendorDirectory from './pages/VendorDirectory';
+import AdminPanel from './pages/AdminPanel';
 import { 
-  Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building 
+  Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
+  Settings, LogOut, RefreshCw, User, Lock, Mail
 } from 'lucide-react';
 
+function LoginScreen() {
+  const { login, theme, toggleTheme } = useAuth();
+  const [correo, setCorreo] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    login(correo, password)
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  };
+
+  return (
+    <div className="login-container" style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      backgroundColor: 'var(--md-sys-color-background)',
+      padding: '20px'
+    }}>
+      <div className="m3-card glass-panel" style={{
+        maxWidth: '400px',
+        width: '100%',
+        padding: '32px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '24px',
+        borderRadius: '28px',
+        border: '1px solid var(--md-sys-color-outline-variant)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '16px',
+            backgroundColor: 'var(--md-sys-color-primary)',
+            color: 'var(--md-sys-color-on-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            margin: '0 auto 16px auto'
+          }}>P</div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--md-sys-color-on-surface)' }}>Gobernanza PPM</h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', marginTop: '4px' }}>Inicia sesión en tu cuenta de Dacsa</p>
+        </div>
+
+        {error && (
+          <div style={{
+            backgroundColor: 'rgba(255, 69, 58, 0.1)',
+            color: 'var(--color-rag-red)',
+            padding: '12px 16px',
+            borderRadius: '12px',
+            fontSize: '0.85rem',
+            fontWeight: 500,
+            border: '1px solid rgba(255, 69, 58, 0.2)'
+          }}>{error}</div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="form-group">
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Mail size={14} /> Correo Electrónico
+            </label>
+            <input
+              type="email"
+              required
+              className="m3-input"
+              placeholder="usuario@dacsa.com"
+              value={correo}
+              onChange={(e) => setCorreo(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Lock size={14} /> Contraseña
+            </label>
+            <input
+              type="password"
+              required
+              className="m3-input"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <button type="submit" disabled={loading} className="m3-btn m3-btn-primary" style={{ marginTop: '8px', height: '48px', borderRadius: '100px', width: '100%' }}>
+            {loading ? 'Accediendo...' : 'Entrar'}
+          </button>
+        </form>
+
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <button className="m3-btn m3-btn-tonal" onClick={toggleTheme} style={{ borderRadius: '100px', width: '100%' }}>
+            Cambiar a Modo {theme === 'dark' ? 'Claro' : 'Oscuro'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NavigationRail({ activeView, setActiveView }) {
-  const { pms, currentPm, handlePmChange, theme, toggleTheme } = useAuth();
+  const { currentPm, logout, theme, toggleTheme } = useAuth();
 
   return (
     <div className="nav-rail">
@@ -28,7 +141,6 @@ function NavigationRail({ activeView, setActiveView }) {
           <span>Gestión Técnica</span>
         </a>
         
-        {/* New route for executive governance (Control Ejecutivo) */}
         <a 
           className={`nav-link ${activeView === 'governance' ? 'active' : ''}`}
           onClick={() => setActiveView('governance')}
@@ -52,34 +164,74 @@ function NavigationRail({ activeView, setActiveView }) {
           <BookOpen className="nav-link-icon" />
           <span>Lecciones</span>
         </a>
+
+        {currentPm && currentPm.perfil === 'ADMINISTRADOR' && (
+          <a 
+            className={`nav-link ${activeView === 'admin' ? 'active' : ''}`}
+            onClick={() => setActiveView('admin')}
+          >
+            <Settings className="nav-link-icon" />
+            <span>Administración</span>
+          </a>
+        )}
       </div>
 
-      {/* Profile/PM Switcher (Section 3 - Local tests conmutador) */}
-      <div className="user-switcher-panel">
-        <div className="user-switcher-label">Prueba Perfil PM</div>
-        <select 
-          className="user-select"
-          value={currentPm ? currentPm.id_usuario : ''}
-          onChange={(e) => handlePmChange(e.target.value)}
-        >
-          {pms.map(p => (
-            <option key={p.id_usuario} value={p.id_usuario}>
-              {p.nombre} {p.apellidos} ({p.rol})
-            </option>
-          ))}
-        </select>
-        
-        <div style={{ padding: '4px 12px', fontSize: '0.7rem', color: 'var(--md-sys-color-outline)' }}>
-          Pruebas Locales (v1) • Listo para Entra ID (v2)
-        </div>
+      {/* User profile card & Logout */}
+      <div className="user-switcher-panel" style={{ marginTop: 'auto', padding: '16px 12px' }}>
+        {currentPm && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 10,
+              padding: 10,
+              backgroundColor: 'var(--md-sys-color-surface-container-high)',
+              borderRadius: 14,
+              border: '1px solid var(--md-sys-color-outline-variant)'
+            }}>
+              <div style={{ 
+                width: 32, 
+                height: 32, 
+                borderRadius: '50%', 
+                backgroundColor: 'var(--md-sys-color-primary-container)', 
+                color: 'var(--md-sys-color-on-primary-container)',
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                fontWeight: 'bold',
+                fontSize: '0.85rem',
+                flexShrink: 0
+              }}>
+                {currentPm.nombre[0]}{currentPm.apellidos[0]}
+              </div>
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {currentPm.nombre} {currentPm.apellidos}
+                </div>
+                <div style={{ fontSize: '0.65rem', color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                  {currentPm.perfil}
+                </div>
+              </div>
+            </div>
+            
+            <button 
+              className="m3-btn m3-btn-tonal"
+              onClick={logout}
+              style={{ padding: '8px 12px', justifyContent: 'flex-start', gap: 8, fontSize: '0.8rem', borderRadius: '12px', width: '100%' }}
+            >
+              <LogOut size={16} />
+              <span>Cerrar Sesión</span>
+            </button>
+          </div>
+        )}
 
         {/* Theme Toggle */}
         <button 
           className="m3-btn m3-btn-tonal"
           onClick={toggleTheme}
-          style={{ marginTop: 8, justifyContent: 'flex-start', padding: '10px 16px', width: '100%' }}
+          style={{ justifyContent: 'flex-start', padding: '10px 16px', width: '100%', borderRadius: '12px' }}
         >
-          {theme === 'dark' ? <Sun size={18} /> : <Sun size={18} />}
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           <span>Modo {theme === 'dark' ? 'Claro' : 'Oscuro'}</span>
         </button>
       </div>
@@ -147,10 +299,9 @@ function GeneralLessonsPage() {
   );
 }
 
-// Wrapper for hooks inside Provider
 function MainAppContent() {
   const [activeView, setActiveView] = useState('dashboard');
-  const [backView, setBackView] = useState('dashboard'); // Tracks previous page for navigation stack
+  const [backView, setBackView] = useState('dashboard'); // Tracks previous page
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [selectedVendorId, setSelectedVendorId] = useState(null);
   
@@ -185,6 +336,8 @@ function MainAppContent() {
         return 'Vista 360º de Partner';
       case 'lessons':
         return 'Lecciones Aprendidas';
+      case 'admin':
+        return 'Módulo de Administración (Exclusivo)';
       default:
         return 'Gobernanza Dashboard';
     }
@@ -206,7 +359,7 @@ function MainAppContent() {
             {currentPm && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 16px', backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '16px', fontSize: '0.85rem', fontWeight: 600 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--color-rag-green)' }}></div>
-                <span>PM: {currentPm.nombre} {currentPm.apellidos}</span>
+                <span>Usuario: {currentPm.nombre} {currentPm.apellidos} ({currentPm.perfil})</span>
               </div>
             )}
           </div>
@@ -246,7 +399,6 @@ function MainAppContent() {
             <Vendor360 
               vendorId={selectedVendorId}
               onBack={() => {
-                // If we came from details, go back there, else go to dashboard
                 if (selectedProjectId) {
                   setActiveView('project_detail');
                 } else {
@@ -260,16 +412,39 @@ function MainAppContent() {
           {activeView === 'lessons' && (
             <GeneralLessonsPage />
           )}
+
+          {activeView === 'admin' && (
+            <AdminPanel />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
+function AppConsumer() {
+  const { currentPm, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: 'var(--md-sys-color-background)', gap: 16 }}>
+        <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
+        <span style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-outline)' }}>Iniciando plataforma...</span>
+      </div>
+    );
+  }
+
+  if (!currentPm) {
+    return <LoginScreen />;
+  }
+
+  return <MainAppContent />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <MainAppContent />
+      <AppConsumer />
     </AuthProvider>
   );
 }
