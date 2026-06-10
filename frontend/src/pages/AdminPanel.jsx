@@ -12,7 +12,7 @@ export default function AdminPanel() {
   // States list
   const [states, setStates] = useState([]);
   const [statesLoading, setStatesLoading] = useState(false);
-  const [stateForm, setStateForm] = useState({ id_estado: '', nombre_estado: '', icono: '', orden: '' });
+  const [stateForm, setStateForm] = useState({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false });
   const [editingStateId, setEditingStateId] = useState(null);
   const [stateError, setStateError] = useState('');
   const [stateSuccess, setStateSuccess] = useState('');
@@ -87,7 +87,8 @@ export default function AdminPanel() {
     const payload = {
       nombre_estado: stateForm.nombre_estado,
       icono: stateForm.icono || null,
-      orden: parseInt(stateForm.orden, 10)
+      orden: parseInt(stateForm.orden, 10),
+      proyecto_cerrado: !!stateForm.proyecto_cerrado
     };
 
     const isEdit = editingStateId !== null;
@@ -108,7 +109,7 @@ export default function AdminPanel() {
       })
       .then(() => {
         setStateSuccess(isEdit ? 'Estado actualizado correctamente.' : 'Estado creado correctamente.');
-        setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '' });
+        setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false });
         setEditingStateId(null);
         fetchStates();
       })
@@ -120,7 +121,8 @@ export default function AdminPanel() {
       id_estado: state.id_estado,
       nombre_estado: state.nombre_estado,
       icono: state.icono || '',
-      orden: state.orden.toString()
+      orden: state.orden.toString(),
+      proyecto_cerrado: !!state.proyecto_cerrado
     });
     setEditingStateId(state.id_estado);
     setStateError('');
@@ -275,6 +277,7 @@ export default function AdminPanel() {
                       <th style={{ width: '60px' }}>Orden</th>
                       <th>Estado</th>
                       <th style={{ width: '60px' }}>Icono</th>
+                      <th style={{ width: '100px', textAlign: 'center' }}>Tipo</th>
                       <th style={{ width: '90px' }}>Acción</th>
                     </tr>
                   </thead>
@@ -284,6 +287,13 @@ export default function AdminPanel() {
                         <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{st.orden}</td>
                         <td style={{ fontWeight: 600 }}>{st.nombre_estado}</td>
                         <td style={{ fontSize: '1.2rem', textAlign: 'center' }}>{st.icono || '❓'}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          {st.proyecto_cerrado ? (
+                            <span className="badge badge-red" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Cerrado</span>
+                          ) : (
+                            <span className="badge badge-blue" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Abierto</span>
+                          )}
+                        </td>
                         <td>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button className="icon-btn" onClick={() => handleEditStateClick(st)} style={{ color: 'var(--md-sys-color-primary)' }} title="Editar">
@@ -357,6 +367,19 @@ export default function AdminPanel() {
                 />
               </div>
 
+              <div className="form-group">
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={stateForm.proyecto_cerrado}
+                    onChange={(e) => setStateForm(prev => ({ ...prev, proyecto_cerrado: e.target.checked }))}
+                    className="m3-checkbox"
+                    style={{ width: 18, height: 18 }}
+                  />
+                  <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>Proyecto cerrado</span>
+                </label>
+              </div>
+
               <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
                 {editingStateId && (
                   <button 
@@ -365,7 +388,7 @@ export default function AdminPanel() {
                     style={{ flexGrow: 1 }}
                     onClick={() => {
                       setEditingStateId(null);
-                      setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '' });
+                      setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false });
                     }}
                   >
                     Cancelar

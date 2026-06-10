@@ -18,7 +18,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
 
   // Secondary/Drilldown Filters
   const [activeKpiFilter, setActiveKpiFilter] = useState(null); // 'overrun', 'capex_warn', or null
-  const [activeStateFilter, setActiveStateFilter] = useState(null); // 'Kickoff', 'Desarrollo', etc., or null
+  const [activeStateFilter, setActiveStateFilter] = useState([]); // Array of state names
 
   // Dropdowns lists
   const [pmsList, setPmsList] = useState([]);
@@ -62,7 +62,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
     fetchDashboardData();
     // Reset secondary filters on maestro filter change
     setActiveKpiFilter(null);
-    setActiveStateFilter(null);
+    setActiveStateFilter([]);
   }, [filterPm, fechaDesde, fechaHasta]);
 
   // ==========================================
@@ -105,8 +105,8 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
     }
     
     // Apply State filter
-    if (activeStateFilter) {
-      if (p.estado_proyecto !== activeStateFilter) return false;
+    if (activeStateFilter.length > 0) {
+      if (!activeStateFilter.includes(p.estado_proyecto)) return false;
     }
 
     return true;
@@ -178,15 +178,77 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
           <h4 style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 12, letterSpacing: '0.05em' }}>
             Segmentación por Estado del Proyecto (Filtro Rápido)
           </h4>
+          
+          {/* Quick action buttons for filtering */}
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => {
+                const openStates = statesList
+                  .filter(s => !s.proyecto_cerrado)
+                  .map(s => s.nombre_estado);
+                setActiveStateFilter(openStates);
+              }}
+              style={{
+                borderRadius: '20px',
+                padding: '8px 16px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                border: '1px solid var(--md-sys-color-primary)',
+                color: 'var(--md-sys-color-primary)',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                transition: 'var(--transition-smooth)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(168, 199, 250, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              📂 Proyectos abiertos
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveStateFilter([])}
+              style={{
+                borderRadius: '20px',
+                padding: '8px 16px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                border: 'none',
+                color: 'var(--md-sys-color-outline)',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                transition: 'var(--transition-smooth)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--md-sys-color-on-surface)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--md-sys-color-outline)';
+              }}
+            >
+              🧹 Limpiar selección
+            </button>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
             {statesList.map(state => {
               const st = state.nombre_estado;
-              const isSelected = activeStateFilter === st;
+              const isSelected = activeStateFilter.includes(st);
               
               return (
                 <div 
                   key={state.id_estado}
-                  onClick={() => setActiveStateFilter(prev => prev === st ? null : st)}
+                  onClick={() => {
+                    setActiveStateFilter(prev => 
+                      prev.includes(st) 
+                        ? prev.filter(x => x !== st) 
+                        : [...prev, st]
+                    );
+                  }}
                   style={{
                     padding: '12px 16px',
                     backgroundColor: isSelected ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-high)',

@@ -592,6 +592,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     const url = isEdit ? `http://localhost:5000/api/tasks/${editingTask.id_tarea}` : 'http://localhost:5000/api/tasks';
     const method = isEdit ? 'PUT' : 'POST';
 
+    if (!isEdit) {
+      delete payload.id_tarea;
+    }
+
     fetch(url, {
       method,
       headers: getAuthHeaders(),
@@ -748,90 +752,254 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         
         {/* PANEL: FICHA GENERAL */}
         {activeTab === 'ficha' && (
-          <div className="detail-grid-split">
-            {/* Left Info */}
-            <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div>
-                <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 8 }}>Descripción</h3>
-                <p style={{ color: 'var(--md-sys-color-on-surface)', whiteSpace: 'pre-line' }}>{project.descripcion}</p>
-              </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div className="detail-grid-split">
+              {/* Left Info */}
+              <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div>
+                  <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 8 }}>Descripción</h3>
+                  <p style={{ color: 'var(--md-sys-color-on-surface)', whiteSpace: 'pre-line' }}>{project.descripcion}</p>
+                </div>
 
-              <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 20 }}>
-                <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 12 }}>Atributos de Gobernanza</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <MapPin size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Sede</div>
-                      <div style={{ fontWeight: 500 }}>{project.Sede?.nombre_sede}</div>
+                <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 20 }}>
+                  <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 12 }}>Atributos de Gobernanza</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <MapPin size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Sede</div>
+                        <div style={{ fontWeight: 500 }}>{project.Sede?.nombre_sede}</div>
+                      </div>
                     </div>
-                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <Building size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Partner Adjudicatario</div>
-                      <span 
-                        style={{ fontWeight: 500, textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)' }}
-                        onClick={() => onViewVendor(project.id_proveedor)}
-                      >
-                        {project.Proveedor?.nombre_razon_social}
-                      </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <Building size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Partner Adjudicatario</div>
+                        <span 
+                          style={{ fontWeight: 500, textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)' }}
+                          onClick={() => onViewVendor(project.id_proveedor)}
+                        >
+                          {project.Proveedor?.nombre_razon_social}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <User size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Gestor Interno PM</div>
-                      <div style={{ fontWeight: 500 }}>{project.PM?.nombre} {project.PM?.apellidos}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <User size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Gestor Interno PM</div>
+                        <div style={{ fontWeight: 500 }}>{project.PM?.nombre} {project.PM?.apellidos}</div>
+                      </div>
                     </div>
-                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <User size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Sponsor / Key User Líder</div>
-                      <div style={{ fontWeight: 500 }}>{project.Sponsor?.nombre} {project.Sponsor?.apellidos}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <User size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Sponsor / Key User Líder</div>
+                        <div style={{ fontWeight: 500 }}>{project.Sponsor?.nombre} {project.Sponsor?.apellidos}</div>
+                      </div>
                     </div>
-                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <Calendar size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Fechas de Proyecto</div>
-                      <div style={{ fontWeight: 500, fontSize: '0.85rem' }}>
-                        Inicio: {project.fecha_inicio} <br />
-                        Fin Base: {project.fecha_fin_inicial} <br />
-                        Fin Est.: <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 'bold' }}>{calc?.fecha_fin_estimada}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <Calendar size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Fechas de Proyecto</div>
+                        <div style={{ fontWeight: 500, fontSize: '0.85rem' }}>
+                          Inicio: {project.fecha_inicio} <br />
+                          Fin Base: {project.fecha_fin_inicial} <br />
+                          Fin Est.: <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 'bold' }}>{calc?.fecha_fin_estimada}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Right: Key Users Involved */}
+              <div className="m3-card glass-panel">
+                <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 16 }}>Key Users Involucrados</h3>
+                {project.InvolvedKeyUsers?.length === 0 ? (
+                  <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se han asignado Key Users de negocio a este proyecto.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {project.InvolvedKeyUsers?.map(ku => (
+                      <div key={ku.id_ku} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px' }}>
+                        <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)', display: 'flex', alignItems: 'center', justify: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                          {ku.nombre[0]}{ku.apellidos[0]}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{ku.nombre} {ku.apellidos}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>{ku.correo}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Right: Key Users Involved */}
-            <div className="m3-card glass-panel">
-              <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 16 }}>Key Users Involucrados</h3>
-              {project.InvolvedKeyUsers?.length === 0 ? (
-                <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se han asignado Key Users de negocio a este proyecto.</p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {project.InvolvedKeyUsers?.map(ku => (
-                    <div key={ku.id_ku} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px' }}>
-                      <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)', display: 'flex', alignItems: 'center', justify: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
-                        {ku.nombre[0]}{ku.apellidos[0]}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{ku.nombre} {ku.apellidos}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>{ku.correo}</div>
-                      </div>
-                    </div>
-                  ))}
+            {/* FEED DE COMENTARIOS AUDITADOS */}
+            <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div>
+                <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Muro de Comunicación del Proyecto</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
+                  Historial de comunicaciones y comentarios del proyecto. Soporta pegado de texto enriquecido e imágenes directamente desde Microsoft Outlook.
+                </p>
+              </div>
+
+              {/* Editor to Add Comment */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <RichTextEditor 
+                  value={newCommentText} 
+                  onChange={setNewCommentText} 
+                  placeholder="Escribe un comentario importante o pega contenido directamente aquí..."
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button 
+                    className="m3-btn m3-btn-primary" 
+                    onClick={handleAddComment}
+                    disabled={!newCommentText || newCommentText.trim() === '' || newCommentText === '<br>'}
+                  >
+                    Publicar Comentario
+                  </button>
                 </div>
-              )}
+              </div>
+
+              {/* Timeline comments feed */}
+              <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {commentsLoading ? (
+                  <span>Cargando comentarios...</span>
+                ) : comments.length === 0 ? (
+                  <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem', textAlign: 'center', padding: '12px 0' }}>
+                    No hay comentarios registrados para este proyecto.
+                  </p>
+                ) : (
+                  comments.map(c => (
+                    <div 
+                      key={c.id_comentario} 
+                      className="comment-bubble"
+                      style={{
+                        padding: 16,
+                        backgroundColor: 'var(--md-sys-color-surface-container-high)',
+                        borderRadius: '16px',
+                        border: '1px solid var(--md-sys-color-outline-variant)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8,
+                        position: 'relative'
+                      }}
+                    >
+                      {/* Comment Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: '50%',
+                            backgroundColor: 'var(--md-sys-color-primary-container)',
+                            color: 'var(--md-sys-color-on-primary-container)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 'bold',
+                            fontSize: '0.75rem'
+                          }}>
+                            {c.Autor?.nombre[0] || 'U'}{c.Autor?.apellidos[0] || ''}
+                          </div>
+                          <div>
+                            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.Autor?.nombre} {c.Autor?.apellidos}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', marginLeft: 8 }}>{formatDateTime(c.fecha_registro)}</span>
+                          </div>
+                        </div>
+
+                        {/* Actions: Edit & Delete (Visible to all users) */}
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button 
+                            className="icon-btn" 
+                            onClick={() => {
+                              setEditingCommentId(c.id_comentario);
+                              setEditingCommentText(c.texto_comentario);
+                            }}
+                            style={{ width: 28, height: 28, color: 'var(--md-sys-color-primary)' }}
+                            title="Editar comentario"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                          <button 
+                            className="icon-btn" 
+                            onClick={() => handleDeleteComment(c.id_comentario)}
+                            style={{ width: 28, height: 28, color: 'var(--color-rag-red)' }}
+                            title="Eliminar comentario"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Comment Body */}
+                      {editingCommentId === c.id_comentario ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+                          <RichTextEditor 
+                            value={editingCommentText} 
+                            onChange={setEditingCommentText} 
+                            placeholder="Edita tu comentario..."
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                            <button 
+                              className="m3-btn m3-btn-outline" 
+                              onClick={() => {
+                                setEditingCommentId(null);
+                                setEditingCommentText('');
+                              }}
+                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                            >
+                              Cancelar
+                            </button>
+                            <button 
+                              className="m3-btn m3-btn-primary" 
+                              onClick={() => handleUpdateComment(c.id_comentario)}
+                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                            >
+                              Guardar
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div 
+                          className="comment-rich-text"
+                          dangerouslySetInnerHTML={{ __html: c.texto_comentario }}
+                          style={{
+                            fontSize: '0.9rem',
+                            color: 'var(--md-sys-color-on-surface)',
+                            lineHeight: '1.5',
+                            wordBreak: 'break-word'
+                          }}
+                        />
+                      )}
+
+                      {/* Audit stamp tooltip / label */}
+                      {c.editado && (
+                        <div 
+                          style={{
+                            alignSelf: 'flex-start',
+                            fontSize: '0.75rem',
+                            color: 'var(--md-sys-color-outline)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            cursor: 'help'
+                          }}
+                          title={`Editado por ${c.Editor?.nombre} ${c.Editor?.apellidos} el ${formatDateTime(c.fecha_modificacion)}`}
+                        >
+                          <span style={{ fontStyle: 'italic', textDecoration: 'underline dashed' }}>(Editado)</span>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1169,7 +1337,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           </div>
         )}
 
-        {/* PANEL: PLANES COMUNICACIONES & TIMELINE DE COMENTARIOS */}
+        {/* PANEL: PLANES COMUNICACIONES */}
         {activeTab === 'comunicaciones' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
@@ -1266,168 +1434,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   </>
                 ) : (
                   <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se ha configurado comité ejecutivo SteerCo.</p>
-                )}
-              </div>
-            </div>
-
-            {/* FEED DE COMENTARIOS AUDITADOS */}
-            <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <div>
-                <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Muro de Comunicación del Proyecto</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
-                  Historial de comunicaciones y comentarios del proyecto. Soporta pegado de texto enriquecido e imágenes directamente desde Microsoft Outlook.
-                </p>
-              </div>
-
-              {/* Editor to Add Comment */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <RichTextEditor 
-                  value={newCommentText} 
-                  onChange={setNewCommentText} 
-                  placeholder="Escribe un comentario importante o pega contenido directamente aquí..."
-                />
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <button 
-                    className="m3-btn m3-btn-primary" 
-                    onClick={handleAddComment}
-                    disabled={!newCommentText || newCommentText.trim() === '' || newCommentText === '<br>'}
-                  >
-                    Publicar Comentario
-                  </button>
-                </div>
-              </div>
-
-              {/* Timeline comments feed */}
-              <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {commentsLoading ? (
-                  <span>Cargando comentarios...</span>
-                ) : comments.length === 0 ? (
-                  <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem', textAlign: 'center', padding: '12px 0' }}>
-                    No hay comentarios registrados para este proyecto.
-                  </p>
-                ) : (
-                  comments.map(c => (
-                    <div 
-                      key={c.id_comentario} 
-                      className="comment-bubble"
-                      style={{
-                        padding: 16,
-                        backgroundColor: 'var(--md-sys-color-surface-container-high)',
-                        borderRadius: '16px',
-                        border: '1px solid var(--md-sys-color-outline-variant)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 8,
-                        position: 'relative'
-                      }}
-                    >
-                      {/* Comment Header */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: '50%',
-                            backgroundColor: 'var(--md-sys-color-primary-container)',
-                            color: 'var(--md-sys-color-on-primary-container)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 'bold',
-                            fontSize: '0.75rem'
-                          }}>
-                            {c.Autor?.nombre[0] || 'U'}{c.Autor?.apellidos[0] || ''}
-                          </div>
-                          <div>
-                            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.Autor?.nombre} {c.Autor?.apellidos}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', marginLeft: 8 }}>{formatDateTime(c.fecha_registro)}</span>
-                          </div>
-                        </div>
-
-                        {/* Actions: Edit & Delete (Visible to all users) */}
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button 
-                            className="icon-btn" 
-                            onClick={() => {
-                              setEditingCommentId(c.id_comentario);
-                              setEditingCommentText(c.texto_comentario);
-                            }}
-                            style={{ width: 28, height: 28, color: 'var(--md-sys-color-primary)' }}
-                            title="Editar comentario"
-                          >
-                            <Edit2 size={12} />
-                          </button>
-                          <button 
-                            className="icon-btn" 
-                            onClick={() => handleDeleteComment(c.id_comentario)}
-                            style={{ width: 28, height: 28, color: 'var(--color-rag-red)' }}
-                            title="Eliminar comentario"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Comment Body */}
-                      {editingCommentId === c.id_comentario ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
-                          <RichTextEditor 
-                            value={editingCommentText} 
-                            onChange={setEditingCommentText} 
-                            placeholder="Edita tu comentario..."
-                          />
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                            <button 
-                              className="m3-btn m3-btn-outline" 
-                              onClick={() => {
-                                setEditingCommentId(null);
-                                setEditingCommentText('');
-                              }}
-                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                            >
-                              Cancelar
-                            </button>
-                            <button 
-                              className="m3-btn m3-btn-primary" 
-                              onClick={() => handleUpdateComment(c.id_comentario)}
-                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                            >
-                              Guardar
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div 
-                          className="comment-rich-text"
-                          dangerouslySetInnerHTML={{ __html: c.texto_comentario }}
-                          style={{
-                            fontSize: '0.9rem',
-                            color: 'var(--md-sys-color-on-surface)',
-                            lineHeight: '1.5',
-                            wordBreak: 'break-word'
-                          }}
-                        />
-                      )}
-
-                      {/* Audit stamp tooltip / label */}
-                      {c.editado && (
-                        <div 
-                          style={{
-                            alignSelf: 'flex-start',
-                            fontSize: '0.75rem',
-                            color: 'var(--md-sys-color-outline)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            cursor: 'help'
-                          }}
-                          title={`Editado por ${c.Editor?.nombre} ${c.Editor?.apellidos} el ${formatDateTime(c.fecha_modificacion)}`}
-                        >
-                          <span style={{ fontStyle: 'italic', textDecoration: 'underline dashed' }}>(Editado)</span>
-                        </div>
-                      )}
-                    </div>
-                  ))
                 )}
               </div>
             </div>

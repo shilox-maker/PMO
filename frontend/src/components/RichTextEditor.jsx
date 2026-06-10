@@ -181,6 +181,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "Escribe
       }}>
         <button 
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => executeCommand('bold')}
           style={{
             padding: '6px',
@@ -201,6 +202,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "Escribe
 
         <button 
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => executeCommand('italic')}
           style={{
             padding: '6px',
@@ -223,6 +225,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "Escribe
 
         <button 
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             executeCommand('insertUnorderedList');
             setTimeout(() => {
@@ -254,6 +257,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "Escribe
 
         <button 
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             executeCommand('insertOrderedList');
             setTimeout(() => {
@@ -289,6 +293,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "Escribe
         <div style={{ position: 'relative' }}>
           <button 
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => setShowColorPicker(!showColorPicker)}
             style={{
               padding: '6px',
@@ -331,8 +336,15 @@ export default function RichTextEditor({ value, onChange, placeholder = "Escribe
               {colors.map(c => (
                 <div 
                   key={c.name}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    executeCommand('foreColor', c.value);
+                    if (c.value.startsWith('var(')) {
+                      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+                      const defaultColor = isLight ? '#1f1f1f' : '#e2e2e6';
+                      executeCommand('foreColor', defaultColor);
+                    } else {
+                      executeCommand('foreColor', c.value);
+                    }
                     setShowColorPicker(false);
                   }}
                   style={{

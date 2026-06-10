@@ -130,6 +130,11 @@ const EstadosProyecto = sequelize.define('Estados_Proyecto', {
   orden: {
     type: DataTypes.INTEGER,
     allowNull: false
+  },
+  proyecto_cerrado: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
   }
 }, {
   timestamps: false

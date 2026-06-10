@@ -1109,14 +1109,15 @@ app.get('/api/admin/states', restrictToAdmin, async (req, res) => {
 
 app.post('/api/admin/states', restrictToAdmin, async (req, res) => {
   try {
-    const { nombre_estado, icono, orden } = req.body;
+    const { nombre_estado, icono, orden, proyecto_cerrado } = req.body;
     if (!nombre_estado || orden === undefined) {
       return res.status(400).json({ error: 'El nombre del estado y el orden son obligatorios.' });
     }
     const state = await EstadosProyecto.create({
       nombre_estado,
       icono,
-      orden: parseInt(orden, 10)
+      orden: parseInt(orden, 10),
+      proyecto_cerrado: proyecto_cerrado !== undefined ? !!proyecto_cerrado : false
     });
     res.status(201).json(state);
   } catch (error) {
@@ -1127,7 +1128,7 @@ app.post('/api/admin/states', restrictToAdmin, async (req, res) => {
 app.put('/api/admin/states/:id_estado', restrictToAdmin, async (req, res) => {
   try {
     const { id_estado } = req.params;
-    const { nombre_estado, icono, orden } = req.body;
+    const { nombre_estado, icono, orden, proyecto_cerrado } = req.body;
     const state = await EstadosProyecto.findByPk(id_estado);
     if (!state) {
       return res.status(404).json({ error: 'Estado no encontrado.' });
@@ -1135,7 +1136,8 @@ app.put('/api/admin/states/:id_estado', restrictToAdmin, async (req, res) => {
     await state.update({
       nombre_estado: nombre_estado !== undefined ? nombre_estado : state.nombre_estado,
       icono: icono !== undefined ? icono : state.icono,
-      orden: orden !== undefined ? parseInt(orden, 10) : state.orden
+      orden: orden !== undefined ? parseInt(orden, 10) : state.orden,
+      proyecto_cerrado: proyecto_cerrado !== undefined ? !!proyecto_cerrado : state.proyecto_cerrado
     });
     res.json(state);
   } catch (error) {

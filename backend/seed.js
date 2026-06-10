@@ -54,22 +54,22 @@ async function seed() {
 
     // 4. Seed EstadosProyecto (16 states)
     const statesData = [
-      { nombre_estado: 'Kickoff', icono: '🚀', orden: 1 },
-      { nombre_estado: 'Análisis de Viabilidad', icono: '📋', orden: 2 },
-      { nombre_estado: 'Aprobación de Arquitectura', icono: '📐', orden: 3 },
-      { nombre_estado: 'Diseño Conceptual', icono: '💡', orden: 4 },
-      { nombre_estado: 'Planificación', icono: '📅', orden: 5 },
-      { nombre_estado: 'Validación Técnica', icono: '🔍', orden: 6 },
-      { nombre_estado: 'Desarrollo', icono: '🛠️', orden: 7 },
-      { nombre_estado: 'Pruebas QA', icono: '🧪', orden: 8 },
-      { nombre_estado: 'UAT (Pruebas de Usuario)', icono: '👥', orden: 9 },
-      { nombre_estado: 'Despliegue', icono: '📦', orden: 10 },
-      { nombre_estado: 'Estabilización', icono: '🛡️', orden: 11 },
-      { nombre_estado: 'Cierre', icono: '🏁', orden: 12 },
-      { nombre_estado: 'Pausado', icono: '⏸️', orden: 13 },
-      { nombre_estado: 'Cancelado', icono: '❌', orden: 14 },
-      { nombre_estado: 'En Revisión Financiera', icono: '💰', orden: 15 },
-      { nombre_estado: 'Pendiente de Aprobación', icono: '⏳', orden: 16 }
+      { nombre_estado: 'Kickoff', icono: '🚀', orden: 1, proyecto_cerrado: false },
+      { nombre_estado: 'Análisis de Viabilidad', icono: '📋', orden: 2, proyecto_cerrado: false },
+      { nombre_estado: 'Aprobación de Arquitectura', icono: '📐', orden: 3, proyecto_cerrado: false },
+      { nombre_estado: 'Diseño Conceptual', icono: '💡', orden: 4, proyecto_cerrado: false },
+      { nombre_estado: 'Planificación', icono: '📅', orden: 5, proyecto_cerrado: false },
+      { nombre_estado: 'Validación Técnica', icono: '🔍', orden: 6, proyecto_cerrado: false },
+      { nombre_estado: 'Desarrollo', icono: '🛠️', orden: 7, proyecto_cerrado: false },
+      { nombre_estado: 'Pruebas QA', icono: '🧪', orden: 8, proyecto_cerrado: false },
+      { nombre_estado: 'UAT (Pruebas de Usuario)', icono: '👥', orden: 9, proyecto_cerrado: false },
+      { nombre_estado: 'Despliegue', icono: '📦', orden: 10, proyecto_cerrado: false },
+      { nombre_estado: 'Estabilización', icono: '🛡️', orden: 11, proyecto_cerrado: false },
+      { nombre_estado: 'Cierre', icono: '🏁', orden: 12, proyecto_cerrado: true },
+      { nombre_estado: 'Pausado', icono: '⏸️', orden: 13, proyecto_cerrado: false },
+      { nombre_estado: 'Cancelado', icono: '❌', orden: 14, proyecto_cerrado: true },
+      { nombre_estado: 'En Revisión Financiera', icono: '💰', orden: 15, proyecto_cerrado: false },
+      { nombre_estado: 'Pendiente de Aprobación', icono: '⏳', orden: 16, proyecto_cerrado: false }
     ];
     const seededStates = await EstadosProyecto.bulkCreate(statesData);
     console.log('EstadosProyecto seeded.');
