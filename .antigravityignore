@@ -1,0 +1,26 @@
+# Dependencias & gestores de paquetes
+node_modules/
+.pnpm-store/
+vendor/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Archivos de bloqueo (grandes, rara vez útiles para la IA)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Archivos generados
+**/*.min.js
+**/*.min.css
+**/*.map
+
+# Recursos que la IA no necesita
+public/assets/
+**/*.png
+**/*.jpg
+**/*.mp4

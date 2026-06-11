@@ -1,14 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Building, Plus, Edit2, Trash2, Search, Eye, RefreshCw, Phone, Mail 
+  Building, Plus, Edit2, Trash2, Search, Eye, RefreshCw, Phone, Mail,
+  ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
+import { getSortedData } from '../utils/sorting';
+
 
 export default function VendorDirectory({ onViewVendor }) {
   const { getAuthHeaders } = useAuth();
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Sorting state
+  const [sortConfig, setSortConfig] = useState({ key: 'id_proveedor', direction: 'asc' });
+
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const renderSortHeader = (label, key, extraStyle = {}) => {
+    const isSorted = sortConfig.key === key;
+    return (
+      <th 
+        onClick={() => handleSort(key)} 
+        style={{ cursor: 'pointer', userSelect: 'none', ...extraStyle }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {label}
+          {isSorted ? (
+            sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
+          ) : (
+            <ArrowUpDown size={14} style={{ opacity: 0.3 }} />
+          )}
+        </div>
+      </th>
+    );
+  };
+
 
   // Modals state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -186,15 +219,15 @@ export default function VendorDirectory({ onViewVendor }) {
           <table className="m3-table">
             <thead>
               <tr>
-                <th style={{ width: '80px' }}>Código</th>
-                <th>Razón Social / Nombre</th>
-                <th>Teléfono General</th>
-                <th>Correo Electrónico</th>
+                {renderSortHeader('Código', 'id_proveedor', { width: '120px' })}
+                {renderSortHeader('Razón Social / Nombre', 'nombre_razon_social')}
+                {renderSortHeader('Teléfono General', 'telefono_general')}
+                {renderSortHeader('Correo Electrónico', 'email_general')}
                 <th style={{ width: '220px', textAlign: 'right' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {filteredVendors.map((vendor) => (
+              {getSortedData(filteredVendors, sortConfig).map((vendor) => (
                 <tr key={vendor.id_proveedor}>
                   <td style={{ fontWeight: 700, fontSize: '0.9rem' }}>#{vendor.id_proveedor}</td>
                   <td style={{ fontWeight: 600 }}>

@@ -3,10 +3,13 @@ import { useAuth } from '../context/AuthContext';
 import { 
   ArrowLeft, Calendar, Building, User, MapPin, DollarSign, 
   TrendingUp, Activity, CheckSquare, ShieldAlert, AlertTriangle, 
-  MessageSquare, FileText, Plus, Trash2, Edit2, Check, X, RefreshCw 
+  MessageSquare, FileText, Plus, Trash2, Edit2, Check, X, RefreshCw,
+  Star, FileDown, Printer, ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
 import SearchableKeyUserSelect from '../components/SearchableKeyUserSelect';
 import RichTextEditor from '../components/RichTextEditor';
+import { getSortedData } from '../utils/sorting';
+
 
 export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const { getAuthHeaders } = useAuth();
@@ -14,6 +17,36 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('ficha');
+
+  // Sorting configs
+  const [invoicesSort, setInvoicesSort] = useState({ key: 'id_interno_factura', direction: 'desc' });
+  const [crSort, setCrSort] = useState({ key: 'id_cambio', direction: 'desc' });
+  const [issuesSort, setIssuesSort] = useState({ key: 'id_incidencia', direction: 'desc' });
+  const [risksSort, setRisksSort] = useState({ key: 'id_riesgo', direction: 'desc' });
+  const [tasksSort, setTasksSort] = useState({ key: 'fecha_limite', direction: 'asc' });
+
+  const renderSortHeader = (label, key, sortConfig, setSortConfig, extraStyle = {}) => {
+    const isSorted = sortConfig.key === key;
+    return (
+      <th 
+        onClick={() => setSortConfig(prev => ({
+          key,
+          direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }))} 
+        style={{ cursor: 'pointer', userSelect: 'none', ...extraStyle }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {label}
+          {isSorted ? (
+            sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
+          ) : (
+            <ArrowUpDown size={14} style={{ opacity: 0.3 }} />
+          )}
+        </div>
+      </th>
+    );
+  };
+
 
   // Metadata list for dropdowns
   const [sedes, setSedes] = useState([]);
@@ -26,8 +59,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [comments, setComments] = useState([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
+  const [newCommentImportant, setNewCommentImportant] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState('');
+  const [editingCommentImportant, setEditingCommentImportant] = useState(false);
 
   // ==========================================
   // EDIT STATE MODALS
@@ -119,7 +154,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       headers: getAuthHeaders(),
       body: JSON.stringify({
         id_proyecto: projectId,
-        texto_comentario: newCommentText
+        texto_comentario: newCommentText,
+        es_importante: newCommentImportant
       })
     })
       .then(res => {
@@ -128,6 +164,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       })
       .then(() => {
         setNewCommentText('');
+        setNewCommentImportant(false);
         fetchComments();
       })
       .catch(err => alert(err.message));
@@ -139,7 +176,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({
-        texto_comentario: editingCommentText
+        texto_comentario: editingCommentText,
+        es_importante: editingCommentImportant
       })
     })
       .then(res => {
@@ -149,6 +187,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       .then(() => {
         setEditingCommentId(null);
         setEditingCommentText('');
+        setEditingCommentImportant(false);
         fetchComments();
       })
       .catch(err => alert(err.message));
@@ -179,6 +218,168 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${day}/${month}/${year} a las ${hours}:${minutes}`;
+  };
+
+  // ==========================================
+  // REPORT ENGINE: Atomic Project Report
+  // ==========================================
+  const generateProjectReport = () => {
+    if (!project) return;
+
+    const importantComments = comments.filter(c => c.es_importante);
+    const calc = project.calculations || {};
+    const budgetInitial = parseFloat(project.budget_inicial) || 0;
+    const gastoTotal = calc.gasto_comprometido || 0;
+    const budgetOverrun = gastoTotal > budgetInitial;
+    const budgetPercent = budgetInitial > 0 ? ((gastoTotal / budgetInitial) * 100).toFixed(1) : 0;
+
+    const fechaFinInicial = project.fecha_fin_inicial || '—';
+    const fechaFinEstimada = calc.fecha_fin_estimada || fechaFinInicial;
+    const diasRetraso = calc.dias_retraso_aprobados || 0;
+    const hasDelay = diasRetraso > 0;
+
+    // Milestones (from tasks that are hitos)
+    const allTasks = project.Tareas || [];
+    const milestones = allTasks.filter(t => t.es_hito);
+    const completed = milestones.filter(t => t.estado === 'COMPLETADA')
+      .sort((a, b) => new Date(b.fecha_limite) - new Date(a.fecha_limite))
+      .slice(0, 3);
+    const pending = milestones.filter(t => t.estado === 'PENDIENTE')
+      .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite))
+      .slice(0, 3);
+
+    const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
+    const formatDate = (d) => {
+      if (!d) return '—';
+      const dt = new Date(d);
+      return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth()+1).padStart(2, '0')}/${dt.getFullYear()}`;
+    };
+
+    const milestoneRows = (list, type) => {
+      if (list.length === 0) return `<tr><td colspan="3" style="text-align:center;color:#999;padding:12px;">Sin hitos ${type}</td></tr>`;
+      return list.map(m => `
+        <tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0e0e0;">${m.titulo_tarea}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0e0e0;">${formatDate(m.fecha_limite)}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0e0e0;">
+            <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:${m.estado === 'COMPLETADA' ? '#e8f5e9' : '#fff3e0'};color:${m.estado === 'COMPLETADA' ? '#2e7d32' : '#e65100'};">
+              ${m.estado === 'COMPLETADA' ? '✅ Completado' : '⏳ Pendiente'}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    };
+
+    const commentsHtml = importantComments.length === 0
+      ? '<p style="color:#999;text-align:center;padding:20px;">No hay comentarios ejecutivos marcados como importantes.</p>'
+      : importantComments.map(c => `
+        <div style="padding:16px;margin-bottom:12px;background:#fffbf0;border-left:4px solid #f59e0b;border-radius:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <strong style="font-size:13px;color:#1a1a2e;">
+              ${c.Autor?.nombre || ''} ${c.Autor?.apellidos || ''}
+            </strong>
+            <span style="font-size:11px;color:#888;">${formatDate(c.fecha_registro)}</span>
+          </div>
+          <div style="font-size:13px;line-height:1.6;color:#333;">${c.texto_comentario}</div>
+          ${c.editado ? `<div style="font-size:11px;color:#999;margin-top:6px;font-style:italic;">Editado por ${c.Editor?.nombre || ''} ${c.Editor?.apellidos || ''} el ${formatDateTime(c.fecha_modificacion)}</div>` : ''}
+        </div>
+      `).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Informe Ejecutivo — ${project.id_proyecto}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; color: #1a1a2e; background: #fff; padding: 40px; font-size: 13px; line-height: 1.6; }
+    @media print {
+      body { padding: 20px; }
+      .no-print { display: none !important; }
+    }
+    .report-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 3px solid #1a1a2e; }
+    .report-header h1 { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+    .report-header .meta { font-size: 12px; color: #666; text-align: right; }
+    .section { margin-bottom: 28px; }
+    .section h2 { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 2px solid #eee; text-transform: uppercase; letter-spacing: 0.05em; }
+    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+    .kpi-box { padding: 16px; border-radius: 10px; background: #f8f9fa; border: 1px solid #e9ecef; }
+    .kpi-box .label { font-size: 11px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .kpi-box .value { font-size: 18px; font-weight: 700; }
+    .alert-red { color: #dc2626 !important; }
+    .alert-green { color: #16a34a !important; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th { padding: 10px 12px; background: #f1f3f5; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #555; text-align: left; border-bottom: 2px solid #dee2e6; }
+    .print-btn { position: fixed; top: 20px; right: 20px; padding: 12px 24px; background: #1a1a2e; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; z-index: 100; }
+    .print-btn:hover { background: #2d2d4e; }
+  </style>
+</head>
+<body>
+  <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+
+  <div class="report-header">
+    <div>
+      <h1>${project.Estado?.icono || ''} ${project.nombre_proyecto}</h1>
+      <p style="font-size:13px;color:#666;margin-top:4px;">${project.id_proyecto} · ${project.Estado?.nombre_estado || 'Sin Estado'}</p>
+    </div>
+    <div class="meta">
+      <p><strong>PM:</strong> ${project.PM?.nombre || ''} ${project.PM?.apellidos || ''}</p>
+      <p><strong>Partner:</strong> ${project.Proveedor?.nombre_razon_social || '—'}</p>
+      <p><strong>Sede:</strong> ${project.Sede?.nombre_sede || '—'}</p>
+      <p><strong>Generado:</strong> ${formatDate(new Date().toISOString())}</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📊 KPIs de Control</h2>
+    <div class="kpi-grid">
+      <div class="kpi-box">
+        <div class="label">Fecha Fin Inicial</div>
+        <div class="value">${formatDate(fechaFinInicial)}</div>
+      </div>
+      <div class="kpi-box">
+        <div class="label">Fecha Fin Estimada</div>
+        <div class="value ${hasDelay ? 'alert-red' : ''}">${formatDate(fechaFinEstimada)} ${hasDelay ? `<span style="font-size:12px;font-weight:500;">(+${diasRetraso} días)</span>` : ''}</div>
+      </div>
+      <div class="kpi-box">
+        <div class="label">Presupuesto Inicial</div>
+        <div class="value">${formatCurrency(budgetInitial)}</div>
+      </div>
+      <div class="kpi-box">
+        <div class="label">Gasto Comprometido (${budgetPercent}%)</div>
+        <div class="value ${budgetOverrun ? 'alert-red' : 'alert-green'}">${formatCurrency(gastoTotal)} ${budgetOverrun ? '<span style="font-size:12px;">⚠️ SOBRECOSTO</span>' : ''}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🏁 Hitos del Proyecto</h2>
+    <table>
+      <thead><tr><th>Hito</th><th>Fecha</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${milestoneRows(completed, 'completados')}
+        ${milestoneRows(pending, 'pendientes')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>⭐ Muro Ejecutivo — Comentarios Importantes</h2>
+    ${commentsHtml}
+  </div>
+
+  <div style="margin-top:40px;padding-top:16px;border-top:2px solid #eee;font-size:11px;color:#999;text-align:center;">
+    PPM Dashboard — Informe generado automáticamente el ${formatDate(new Date().toISOString())} a las ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}
+  </div>
+</body>
+</html>`;
+
+    const reportWindow = window.open('', '_blank');
+    if (reportWindow) {
+      reportWindow.document.write(html);
+      reportWindow.document.close();
+    }
   };
 
   // Open Edit Project Modal with prepopulated values
@@ -680,6 +881,24 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         {/* Global Controls & Edit Project Trigger */}
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           
+          <button 
+            className="m3-btn" 
+            onClick={generateProjectReport}
+            style={{ 
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)', 
+              color: '#fff', 
+              border: 'none',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+            title="Generar informe ejecutivo del proyecto"
+          >
+            <Printer size={16} />
+            📄 Generar Informe
+          </button>
+
           <button className="m3-btn m3-btn-primary" onClick={openEditProject}>
             <Edit2 size={16} />
             Editar Proyecto
@@ -856,7 +1075,34 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   onChange={setNewCommentText} 
                   placeholder="Escribe un comentario importante o pega contenido directamente aquí..."
                 />
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 8, 
+                      cursor: 'pointer',
+                      padding: '6px 12px',
+                      borderRadius: '20px',
+                      border: newCommentImportant ? '2px solid #f59e0b' : '2px solid var(--md-sys-color-outline-variant)',
+                      background: newCommentImportant ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
+                      transition: 'all 0.2s ease',
+                      fontSize: '0.85rem',
+                      fontWeight: 500,
+                      userSelect: 'none'
+                    }}
+                  >
+                    <input 
+                      type="checkbox" 
+                      checked={newCommentImportant} 
+                      onChange={(e) => setNewCommentImportant(e.target.checked)}
+                      style={{ display: 'none' }}
+                    />
+                    <Star size={16} fill={newCommentImportant ? '#f59e0b' : 'none'} color={newCommentImportant ? '#f59e0b' : 'var(--md-sys-color-outline)'} />
+                    <span style={{ color: newCommentImportant ? '#d97706' : 'var(--md-sys-color-outline)' }}>
+                      {newCommentImportant ? '⭐ Importante (se incluirá en Informe)' : 'Marcar como Importante (Incluir en Informe)'}
+                    </span>
+                  </label>
                   <button 
                     className="m3-btn m3-btn-primary" 
                     onClick={handleAddComment}
@@ -882,9 +1128,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                       className="comment-bubble"
                       style={{
                         padding: 16,
-                        backgroundColor: 'var(--md-sys-color-surface-container-high)',
+                        backgroundColor: c.es_importante ? 'rgba(245, 158, 11, 0.06)' : 'var(--md-sys-color-surface-container-high)',
                         borderRadius: '16px',
-                        border: '1px solid var(--md-sys-color-outline-variant)',
+                        border: c.es_importante ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid var(--md-sys-color-outline-variant)',
+                        borderLeft: c.es_importante ? '4px solid #f59e0b' : '1px solid var(--md-sys-color-outline-variant)',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 8,
@@ -898,8 +1145,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                             width: 28,
                             height: 28,
                             borderRadius: '50%',
-                            backgroundColor: 'var(--md-sys-color-primary-container)',
-                            color: 'var(--md-sys-color-on-primary-container)',
+                            backgroundColor: c.es_importante ? 'rgba(245, 158, 11, 0.2)' : 'var(--md-sys-color-primary-container)',
+                            color: c.es_importante ? '#d97706' : 'var(--md-sys-color-on-primary-container)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -912,6 +1159,23 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                             <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.Autor?.nombre} {c.Autor?.apellidos}</span>
                             <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', marginLeft: 8 }}>{formatDateTime(c.fecha_registro)}</span>
                           </div>
+                          {c.es_importante && (
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              padding: '2px 10px',
+                              borderRadius: '12px',
+                              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                              color: '#fff',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              letterSpacing: '0.03em',
+                              textTransform: 'uppercase'
+                            }}>
+                              <Star size={10} fill="#fff" /> Informe
+                            </span>
+                          )}
                         </div>
 
                         {/* Actions: Edit & Delete (Visible to all users) */}
@@ -921,6 +1185,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                             onClick={() => {
                               setEditingCommentId(c.id_comentario);
                               setEditingCommentText(c.texto_comentario);
+                              setEditingCommentImportant(!!c.es_importante);
                             }}
                             style={{ width: 28, height: 28, color: 'var(--md-sys-color-primary)' }}
                             title="Editar comentario"
@@ -946,24 +1211,40 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                             onChange={setEditingCommentText} 
                             placeholder="Edita tu comentario..."
                           />
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                            <button 
-                              className="m3-btn m3-btn-outline" 
-                              onClick={() => {
-                                setEditingCommentId(null);
-                                setEditingCommentText('');
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label 
+                              style={{ 
+                                display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+                                padding: '4px 10px', borderRadius: '16px',
+                                border: editingCommentImportant ? '2px solid #f59e0b' : '2px solid var(--md-sys-color-outline-variant)',
+                                background: editingCommentImportant ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
+                                transition: 'all 0.2s ease', fontSize: '0.8rem', fontWeight: 500, userSelect: 'none'
                               }}
-                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                             >
-                              Cancelar
-                            </button>
-                            <button 
-                              className="m3-btn m3-btn-primary" 
-                              onClick={() => handleUpdateComment(c.id_comentario)}
-                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                            >
-                              Guardar
-                            </button>
+                              <input type="checkbox" checked={editingCommentImportant} onChange={(e) => setEditingCommentImportant(e.target.checked)} style={{ display: 'none' }} />
+                              <Star size={14} fill={editingCommentImportant ? '#f59e0b' : 'none'} color={editingCommentImportant ? '#f59e0b' : 'var(--md-sys-color-outline)'} />
+                              <span style={{ color: editingCommentImportant ? '#d97706' : 'var(--md-sys-color-outline)' }}>Importante</span>
+                            </label>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button 
+                                className="m3-btn m3-btn-outline" 
+                                onClick={() => {
+                                  setEditingCommentId(null);
+                                  setEditingCommentText('');
+                                  setEditingCommentImportant(false);
+                                }}
+                                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                              >
+                                Cancelar
+                              </button>
+                              <button 
+                                className="m3-btn m3-btn-primary" 
+                                onClick={() => handleUpdateComment(c.id_comentario)}
+                                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                              >
+                                Guardar
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ) : (
@@ -1023,17 +1304,17 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   <table className="m3-table">
                     <thead>
                       <tr>
-                        <th>Cód Interno</th>
-                        <th>Nº Factura</th>
-                        <th>Concepto</th>
-                        <th>Fecha</th>
-                        <th>Importe</th>
-                        <th>Estado</th>
+                        {renderSortHeader('Cód Interno', 'id_interno_factura', invoicesSort, setInvoicesSort)}
+                        {renderSortHeader('Nº Factura', 'numero_factura', invoicesSort, setInvoicesSort)}
+                        {renderSortHeader('Concepto', 'concepto', invoicesSort, setInvoicesSort)}
+                        {renderSortHeader('Fecha', 'fecha_factura', invoicesSort, setInvoicesSort)}
+                        {renderSortHeader('Importe', 'importe', invoicesSort, setInvoicesSort)}
+                        {renderSortHeader('Estado', 'estado', invoicesSort, setInvoicesSort)}
                         <th>Acción</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {project.Facturas?.map(fac => (
+                      {getSortedData(project.Facturas || [], invoicesSort).map(fac => (
                         <tr key={fac.id_interno_factura}>
                           <td style={{ fontWeight: 700 }}>{fac.id_interno_factura}</td>
                           <td>{fac.numero_factura}</td>
@@ -1124,17 +1405,17 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 <table className="m3-table">
                   <thead>
                     <tr>
-                      <th>Código</th>
-                      <th>Solicitante / Aprobador</th>
-                      <th>Descripción / Motivo</th>
-                      <th>Importe Impacto</th>
-                      <th>Plazo Impacto</th>
-                      <th>Estado</th>
+                      {renderSortHeader('Código', 'id_cambio', crSort, setCrSort)}
+                      {renderSortHeader('Solicitante / Aprobador', 'Solicitante.nombre', crSort, setCrSort)}
+                      {renderSortHeader('Descripción / Motivo', 'descripcion_motivo', crSort, setCrSort)}
+                      {renderSortHeader('Importe Impacto', 'importe_impacto', crSort, setCrSort)}
+                      {renderSortHeader('Plazo Impacto', 'dias_impacto', crSort, setCrSort)}
+                      {renderSortHeader('Estado', 'estado_cambio', crSort, setCrSort)}
                       <th>Acción / Edición</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {project.Cambios_Alcances?.map(cr => (
+                    {getSortedData(project.Cambios_Alcances || [], crSort).map(cr => (
                       <tr key={cr.id_cambio}>
                         <td style={{ fontWeight: 700 }}>{cr.id_cambio}</td>
                         <td>
@@ -1220,17 +1501,17 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   <table className="m3-table">
                     <thead>
                       <tr>
-                        <th>Código</th>
-                        <th>Incidencia / Descripción</th>
-                        <th>Tipo</th>
-                        <th>Criticidad</th>
-                        <th>Estado</th>
-                        <th>Apertura / Cierre</th>
+                        {renderSortHeader('Código', 'id_incidencia', issuesSort, setIssuesSort)}
+                        {renderSortHeader('Incidencia / Descripción', 'titulo', issuesSort, setIssuesSort)}
+                        {renderSortHeader('Tipo', 'tipo_incidencias', issuesSort, setIssuesSort)}
+                        {renderSortHeader('Criticidad', 'criticidad', issuesSort, setIssuesSort)}
+                        {renderSortHeader('Estado', 'estado', issuesSort, setIssuesSort)}
+                        {renderSortHeader('Apertura / Cierre', 'fecha_apertura', issuesSort, setIssuesSort)}
                         <th>Acción</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {project.Incidencias?.map(inc => (
+                      {getSortedData(project.Incidencias || [], issuesSort).map(inc => (
                         <tr key={inc.id_incidencia}>
                           <td style={{ fontWeight: 700 }}>{inc.id_incidencia}</td>
                           <td>
@@ -1292,17 +1573,17 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   <table className="m3-table">
                     <thead>
                       <tr>
-                        <th>Código</th>
-                        <th>Riesgo / Descripción</th>
-                        <th>Prob. / Imp.</th>
-                        <th>Plan Mitigación</th>
-                        <th>Prox. Rev.</th>
-                        <th>Estado</th>
+                        {renderSortHeader('Código', 'id_riesgo', risksSort, setRisksSort)}
+                        {renderSortHeader('Riesgo / Descripción', 'titulo_riesgo', risksSort, setRisksSort)}
+                        {renderSortHeader('Prob. / Imp.', 'probabilidad', risksSort, setRisksSort)}
+                        {renderSortHeader('Plan Mitigación', 'plan_mitigacion', risksSort, setRisksSort)}
+                        {renderSortHeader('Prox. Rev.', 'fecha_proxima_revision', risksSort, setRisksSort)}
+                        {renderSortHeader('Estado', 'estado_riesgo', risksSort, setRisksSort)}
                         <th>Acción</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {project.Riesgos?.map(rsg => (
+                      {getSortedData(project.Riesgos || [], risksSort).map(rsg => (
                         <tr key={rsg.id_riesgo}>
                           <td style={{ fontWeight: 700 }}>{rsg.id_riesgo}</td>
                           <td>
@@ -1454,7 +1735,16 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
               <p style={{ color: 'var(--md-sys-color-outline)' }}>No hay tareas.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {project.Tareas?.map(task => (
+                <div style={{ display: 'flex', gap: 16, padding: '0 12px 8px 12px', borderBottom: '1px solid var(--md-sys-color-outline-variant)', fontSize: '0.8rem', fontWeight: 600 }}>
+                  <span onClick={() => setTasksSort(prev => ({ key: 'titulo_tarea', direction: prev.key === 'titulo_tarea' && prev.direction === 'asc' ? 'desc' : 'asc' }))} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    Tarea {tasksSort.key === 'titulo_tarea' ? (tasksSort.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />}
+                  </span>
+                  <span style={{ marginLeft: 'auto' }}></span>
+                  <span onClick={() => setTasksSort(prev => ({ key: 'fecha_limite', direction: prev.key === 'fecha_limite' && prev.direction === 'asc' ? 'desc' : 'asc' }))} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    Fecha Límite {tasksSort.key === 'fecha_limite' ? (tasksSort.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />) : <ArrowUpDown size={12} style={{ opacity: 0.3 }} />}
+                  </span>
+                </div>
+                {getSortedData(project.Tareas || [], tasksSort).map(task => (
                   <div key={task.id_tarea} className={`task-item ${task.estado === 'COMPLETADA' ? 'completed' : ''}`}>
                     <div className="task-left">
                       <input 

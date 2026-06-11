@@ -2,12 +2,53 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Sliders, Users, Plus, Edit2, Trash2, Shield, 
-  CheckCircle, XCircle, RefreshCw, AlertTriangle
+  CheckCircle, XCircle, RefreshCw, AlertTriangle,
+  ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
+import { getSortedData } from '../utils/sorting';
+
 
 export default function AdminPanel() {
   const { getAuthHeaders, refreshUsers } = useAuth();
   const [activeTab, setActiveTab] = useState('states'); // 'states' or 'users'
+
+  // Sort states
+  const [statesSort, setStatesSort] = useState({ key: 'orden', direction: 'asc' });
+  const [usersSort, setUsersSort] = useState({ key: 'nombre', direction: 'asc' });
+
+  const handleStatesSort = (key) => {
+    setStatesSort(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const handleUsersSort = (key) => {
+    setUsersSort(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const renderSortHeader = (label, key, sortConfig, onSort, extraStyle = {}) => {
+    const isSorted = sortConfig.key === key;
+    return (
+      <th 
+        onClick={() => onSort(key)} 
+        style={{ cursor: 'pointer', userSelect: 'none', ...extraStyle }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: extraStyle.textAlign === 'center' ? 'center' : 'flex-start' }}>
+          {label}
+          {isSorted ? (
+            sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
+          ) : (
+            <ArrowUpDown size={14} style={{ opacity: 0.3 }} />
+          )}
+        </div>
+      </th>
+    );
+  };
+
 
   // States list
   const [states, setStates] = useState([]);
@@ -274,15 +315,15 @@ export default function AdminPanel() {
                 <table className="m3-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '60px' }}>Orden</th>
-                      <th>Estado</th>
-                      <th style={{ width: '60px' }}>Icono</th>
-                      <th style={{ width: '100px', textAlign: 'center' }}>Tipo</th>
+                      {renderSortHeader('Orden', 'orden', statesSort, handleStatesSort, { width: '80px', textAlign: 'center' })}
+                      {renderSortHeader('Estado', 'nombre_estado', statesSort, handleStatesSort)}
+                      {renderSortHeader('Icono', 'icono', statesSort, handleStatesSort, { width: '80px', textAlign: 'center' })}
+                      {renderSortHeader('Tipo', 'proyecto_cerrado', statesSort, handleStatesSort, { width: '100px', textAlign: 'center' })}
                       <th style={{ width: '90px' }}>Acción</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {states.map(st => (
+                    {getSortedData(states, statesSort).map(st => (
                       <tr key={st.id_estado} style={{ backgroundColor: editingStateId === st.id_estado ? 'var(--md-sys-color-primary-container)' : 'transparent' }}>
                         <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{st.orden}</td>
                         <td style={{ fontWeight: 600 }}>{st.nombre_estado}</td>
@@ -421,15 +462,15 @@ export default function AdminPanel() {
                 <table className="m3-table">
                   <thead>
                     <tr>
-                      <th>Nombre y Apellidos</th>
-                      <th>Correo</th>
-                      <th>Perfil</th>
-                      <th style={{ width: '80px', textAlign: 'center' }}>Estado</th>
+                      {renderSortHeader('Nombre y Apellidos', 'nombre', usersSort, handleUsersSort)}
+                      {renderSortHeader('Correo', 'correo', usersSort, handleUsersSort)}
+                      {renderSortHeader('Perfil', 'perfil', usersSort, handleUsersSort)}
+                      {renderSortHeader('Estado', 'activo', usersSort, handleUsersSort, { width: '100px', textAlign: 'center' })}
                       <th style={{ width: '90px' }}>Acción</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map(usr => (
+                    {getSortedData(users, usersSort).map(usr => (
                       <tr key={usr.id_usuario} style={{ backgroundColor: editingUserId === usr.id_usuario ? 'var(--md-sys-color-primary-container)' : 'transparent' }}>
                         <td style={{ fontWeight: 600 }}>{usr.nombre} {usr.apellidos}</td>
                         <td style={{ fontSize: '0.85rem' }}>{usr.correo}</td>

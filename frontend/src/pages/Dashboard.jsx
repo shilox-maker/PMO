@@ -2,14 +2,47 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Plus, Search, Building, AlertTriangle, TrendingUp, Calendar, 
-  MapPin, User, Filter, AlertOctagon, CheckSquare, RefreshCw, Eye
+  MapPin, User, Filter, AlertOctagon, CheckSquare, RefreshCw, Eye,
+  ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
+import { getSortedData } from '../utils/sorting';
+
 import SearchableKeyUserSelect from '../components/SearchableKeyUserSelect';
 
 export default function Dashboard({ onViewProject, onViewVendor }) {
   const { getAuthHeaders, currentPm } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Sorting state
+  const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
+
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const renderSortHeader = (label, key, extraStyle = {}) => {
+    const isSorted = sortConfig.key === key;
+    return (
+      <th 
+        onClick={() => handleSort(key)} 
+        style={{ cursor: 'pointer', userSelect: 'none', ...extraStyle }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {label}
+          {isSorted ? (
+            sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
+          ) : (
+            <ArrowUpDown size={14} style={{ opacity: 0.3 }} />
+          )}
+        </div>
+      </th>
+    );
+  };
+
   
   // Technical List Filters
   const [filterPm, setFilterPm] = useState('');
@@ -279,21 +312,21 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
           <table className="m3-table">
             <thead>
               <tr>
-                <th>Código</th>
-                <th>Nombre del Proyecto</th>
-                <th>Estado/Fase</th>
-                <th>RAG</th>
-                <th>Socio Tecnológico</th>
-                <th>Gestor PM</th>
-                <th>Sede</th>
-                <th>Presupuesto (Act. / Disp.)</th>
-                <th>Progreso Gasto</th>
-                <th>Próximo Hito</th>
+                {renderSortHeader('Código', 'id_proyecto')}
+                {renderSortHeader('Nombre del Proyecto', 'nombre_proyecto')}
+                {renderSortHeader('Estado/Fase', 'estado_proyecto')}
+                {renderSortHeader('RAG', 'indicador_rag')}
+                {renderSortHeader('Socio Tecnológico', 'Proveedor.nombre_razon_social')}
+                {renderSortHeader('Gestor PM', 'PM.nombre')}
+                {renderSortHeader('Sede', 'Sede.nombre_sede')}
+                {renderSortHeader('Presupuesto (Act. / Disp.)', 'calculations.budget_actualizado')}
+                {renderSortHeader('Progreso Gasto', 'calculations.consumo_real')}
+                {renderSortHeader('Próximo Hito', 'nextMilestone.fecha_limite')}
                 <th>Acción</th>
               </tr>
             </thead>
             <tbody>
-              {projects.map((project) => {
+              {getSortedData(projects, sortConfig).map((project) => {
                 const calc = project.calculations;
                 const consumptionPercent = calc ? Math.min((calc.consumo_real / calc.budget_actualizado) * 100, 100) : 0;
                 const displayedPercent = calc ? Math.round((calc.consumo_real / calc.budget_actualizado) * 100) : 0;

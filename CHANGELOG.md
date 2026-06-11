@@ -6,6 +6,69 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [1.3.0] - 2026-06-11
+
+### Añadido
+- **Ordenación por Columnas en CRUDs**:
+  - Implementación de ordenación dinámica e interactiva en todas las tablas y listados CRUD del frontend.
+  - Ordenación alfabética para columnas de texto (usando `localeCompare` para soporte de acentos), numérica para valores y monedas, e ISO para campos de fechas.
+  - Creación de una utilidad centralizada de ordenación `frontend/src/utils/sorting.js` con soporte para resolver rutas anidadas en objetos de datos (ej: `PM.nombre`, `calculations.budget_actualizado`).
+  - Indicadores visuales premium en las cabeceras de las tablas (`ArrowUp` ⬆️, `ArrowDown` ⬇️ y `ArrowUpDown` ⇅ de Lucide Icons) para reflejar de forma intuitiva el estado y la dirección de la ordenación activa.
+  - Tablas afectadas:
+    - **Dashboard de Proyectos**: Código, Nombre, Estado, RAG, Partner, PM, Sede, Presupuesto, Progreso de Gasto y Próximo Hito.
+    - **Cuadrícula Ejecutiva**: Código, Proyecto, PM, RAG, Alerta de Tiempo, Alerta de Dinero y Próximo Hito.
+    - **Panel de Administración**: Orden, Estado, Icono y Tipo (Workflow); Nombre, Correo, Perfil y Estado (Usuarios).
+    - **Directorio de Socios**: Código, Razón Social, Teléfono y Correo.
+    - **Ficha 360 de Partner**: Proyectos Administrados e Incidencias Históricas.
+    - **Ficha de Detalle de Proyecto**: Facturas, Cambios de Alcance, Incidencias, Riesgos y Checklist de Tareas.
+
+---
+
+## [1.2.1] - 2026-06-11
+
+
+### Solucionado
+- **🐛 Bug de importación en `seed.js`**: Corregido el nombre incorrecto del modelo `ProyectoSteerCoKU` → `ProyectoComSteerCoKU` que impedía la re-inicialización correcta de la base de datos.
+- **🗄️ Recreación de BD con esquema completo**: Ejecutado el seed con `force: true` para generar las tablas con todos los campos definidos en los modelos (`es_importante` en `Comentarios_Proyecto`, `proyecto_cerrado` en `Estados_Proyecto`), incluyendo datos de prueba realistas con comentarios marcados como importantes para el motor de reportes.
+
+---
+
+## [1.2.0] - 2026-06-11
+
+### Añadido
+- **Motor de Reportes Atómicos y Concatenados**:
+  - Botón `📄 Generar Informe` en la cabecera de la ficha de detalle de cada proyecto.
+  - Genera un HTML estructurado con estilos CSS de impresión (`@media print`) para exportar limpiamente a PDF.
+  - Estructura del informe: KPIs de Control (fechas, presupuesto, desviaciones), Tabla de Hitos (últimos 3 completados + próximos 3 pendientes) y Muro Ejecutivo (solo comentarios importantes).
+  - Botón `📊 Exportar Informe de Portfolio` en el Dashboard de Control Ejecutivo.
+  - Recorre todos los proyectos filtrados, consulta la API para obtener el detalle completo, y concatena los bloques HTML con `page-break-after: always` entre cada proyecto.
+  - Portada generada automáticamente con conteo de proyectos incluidos y fecha/hora de generación.
+- **Flag de Importancia en Comentarios (`es_importante`)**:
+  - Nuevo campo booleano `es_importante` en el modelo `Comentarios_Proyecto`.
+  - Checkbox/toggle visual junto al botón de publicación: `⭐ Marcar como Importante (Incluir en Informe)`.
+  - Resaltado visual premium para comentarios importantes: borde dorado/ámbar lateral, fondo cálido tintado y badge `⭐ Informe`.
+  - El flag se mantiene editable al modificar un comentario existente.
+  - Solo los comentarios con `es_importante = true` aparecen en los informes ejecutivos generados por el motor de reportes.
+- **Campo `proyecto_cerrado` en `Estados_Proyecto`**:
+  - Nuevo campo booleano para marcar los estados que representan un proyecto cerrado (ej: Cierre, Cancelado).
+  - Editable en el Panel de Administración junto al nombre, icono y orden del estado.
+  - Se persiste correctamente en la base de datos.
+- **Multi-selección de Estados en Control Ejecutivo**:
+  - Los botones de segmentación por estado ahora permiten seleccionar múltiples estados simultáneamente.
+  - Botón rápido `📂 Proyectos abiertos` que selecciona automáticamente todos los estados donde `proyecto_cerrado = false`.
+  - Botón `🧹 Limpiar selección` para restablecer la vista completa.
+
+### Modificado
+- **Muro de Comunicación** reubicado a la pestaña **Ficha General** del proyecto (anteriormente en la pestaña de Comunicaciones) ya que no está directamente relacionado con los planes de comunicación.
+- Ampliada la paleta de colores del editor WYSIWYG con verde, azul y morado.
+- Mejorado el selector de colores del editor para aplicar correctamente los colores seleccionados.
+
+### Solucionado
+- **🐛 Bug `SQLITE_MISMATCH` al crear tareas**: Corregida la limpieza del payload de creación de tareas para evitar enviar campos no válidos al modelo.
+- **🐛 Bug de persistencia de `proyecto_cerrado`**: Corregido el reinicio del servidor backend necesario para cargar cambios de esquema de base de datos.
+
+---
+
 ## [1.1.0] - 2026-06-10
 
 ### Añadido

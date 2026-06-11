@@ -1013,7 +1013,7 @@ app.get('/api/projects/:id_proyecto/comments', async (req, res) => {
 
 app.post('/api/comments', async (req, res) => {
   try {
-    const { id_proyecto, texto_comentario } = req.body;
+    const { id_proyecto, texto_comentario, es_importante } = req.body;
     const authorId = req.currentPmId;
     if (!authorId) {
       return res.status(401).json({ error: 'No autorizado. Inicie sesión.' });
@@ -1026,6 +1026,7 @@ app.post('/api/comments', async (req, res) => {
       id_proyecto,
       id_usuario: authorId,
       texto_comentario,
+      es_importante: es_importante !== undefined ? !!es_importante : false,
       fecha_registro: new Date()
     });
 
@@ -1045,7 +1046,7 @@ app.post('/api/comments', async (req, res) => {
 app.put('/api/comments/:id_comentario', async (req, res) => {
   try {
     const { id_comentario } = req.params;
-    const { texto_comentario } = req.body;
+    const { texto_comentario, es_importante } = req.body;
     const editorId = req.currentPmId;
     if (!editorId) {
       return res.status(401).json({ error: 'No autorizado. Inicie sesión.' });
@@ -1059,12 +1060,17 @@ app.put('/api/comments/:id_comentario', async (req, res) => {
       return res.status(404).json({ error: 'Comentario no encontrado.' });
     }
 
-    await comment.update({
+    const updateData = {
       texto_comentario,
       editado: true,
       id_usuario_modificacion: editorId,
       fecha_modificacion: new Date()
-    });
+    };
+    if (es_importante !== undefined) {
+      updateData.es_importante = !!es_importante;
+    }
+
+    await comment.update(updateData);
 
     const fullComment = await ComentariosProyecto.findByPk(id_comentario, {
       include: [

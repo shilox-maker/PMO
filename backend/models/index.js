@@ -629,6 +629,11 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
     type: DataTypes.TEXT,
     allowNull: false
   },
+  es_importante: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
   fecha_registro: {
     type: DataTypes.DATE,
     allowNull: false,

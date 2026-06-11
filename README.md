@@ -47,7 +47,7 @@ El backend gestiona las siguientes entidades relacionales claves en SQLite:
 * **Usuarios (Maestro):** Registro de PMs, Directores y Administradores con contraseñas encriptadas, perfil de permisos y estado de cuenta (`activo` / `inactivo`).
 * **Key_Users (KU):** Usuarios clave del negocio o del proveedor que participan en comités o solicitan cambios.
 * **Proyectos:** Entidad central. Almacena metadatos del proyecto, presupuesto inicial, hitos de control, semáforo RAG (Rojo-Amarillo-Verde) y planes de comunicación.
-* **Comentarios_Proyecto:** Muro de comunicación histórico en cada proyecto con control de auditoría de edición (autoría, editor y fecha).
+* **Comentarios_Proyecto:** Muro de comunicación histórico en cada proyecto con control de auditoría de edición (autoría, editor y fecha). Incluye un campo `es_importante` (booleano) para filtrar comentarios cualitativos relevantes para los informes ejecutivos.
 * **Incidencias:** Problemas activos (Técnica, Retraso, Presupuesto, Proveedor desaparecido).
 * **Riesgos:** Amenazas identificadas y planes de mitigación correspondientes.
 * **Facturas:** Registro financiero. Cuenta con estados `PAGADA` y `PENDIENTE_DE_RECIBIR`.
@@ -92,7 +92,17 @@ Una pantalla exclusiva para la Dirección Ejecutiva enfocada en métricas consol
 * **KPI Cards (Alertas Tempranas):**
   * *Proyectos en Desborde:* Conteo de proyectos donde el Gasto Comprometido supera al Budget Inicial.
   * *Alerta Preventiva CAPEX:* Conteo de proyectos de tipo CAPEX que han consumido $\ge 90\%$ de su presupuesto inicial.
-* **Segmentación Dinámica por Estados:** Botones dinámicos que muestran el conteo de proyectos en cada estado del flujo de trabajo directamente leídos del maestro de la base de datos (con soporte de redimensionamiento automático para múltiples estados).
+* **Segmentación Dinámica por Estados:** Botones dinámicos que muestran el conteo de proyectos en cada estado del flujo de trabajo directamente leídos del maestro de la base de datos (con soporte de redimensionamiento automático para múltiples estados). Soporte para multi-selección de estados y un botón rápido "📂 Proyectos abiertos" que filtra automáticamente los estados donde `proyecto_cerrado = false`.
+* **📊 Exportar Informe de Portfolio:** Botón prominente que genera un dossier ejecutivo PDF concatenando los informes atómicos de todos los proyectos filtrados actualmente, con saltos de página obligatorios entre cada proyecto.
+
+### 5. Motor de Reportes (Atómico y Concatenado)
+* **Informe Atómico de Proyecto (`📄 Generar Informe`):** Desde la cabecera de la ficha de detalle del proyecto, genera un HTML estructurado con estilos CSS de impresión (`@media print`) para exportar limpiamente a PDF.
+* **Estructura del bloque de proyecto:**
+  * Cabecera con metadatos (ID, Nombre, PM, Partner, Sede, Estado con icono).
+  * KPIs de Control: Comparativa Fecha Fin Inicial vs Estimada (retrasos en rojo) y Presupuesto Inicial vs Gasto Comprometido (sobrecostes en rojo).
+  * Tabla de Hitos: Últimos 3 completados y próximos 3 pendientes.
+  * **Muro Ejecutivo:** Solo los comentarios marcados como `es_importante = true` se imprimen en el informe. Los comentarios operativos ordinarios se omiten.
+* **Informe de Portfolio Concatenado (`📊 Exportar Informe de Portfolio`):** Ejecuta el motor atómico para cada proyecto filtrado en la cuadrícula del Dashboard Ejecutivo, concatena los bloques HTML y aplica `page-break-after: always` entre cada uno.
 
 ### 3. Buscador Predictivo Combobox de Key Users
 * Reemplaza las listas de checkboxes e inputs obsoletos por un componente autocomplete con buscador predictivo.
@@ -104,6 +114,7 @@ Una pantalla exclusiva para la Dirección Ejecutiva enfocada en métricas consol
   * **Pegado Limpio**: Intercepta eventos de pegado convirtiendo imágenes de portapapeles a Base64 e ignorando XMLs/clases excedentes de Outlook.
   - **Copiado de Listas**: Genera etiquetas de lista con estilos en línea (`list-style-type: disc` / `decimal`) asegurando que el copiado directo de comentarios a correos electrónicos de Outlook no rompa el diseño.
 * **Historial Auditado**: Muestra una marca `(Editado)` visible con un tooltip que expone el usuario editor y el timestamp exacto de la última modificación.
+* **Flag de Importancia (`es_importante`)**: Checkbox/toggle visual junto al botón de publicación: `[ ] Marcar como Importante (Incluir en Informe)`. Los comentarios marcados como importantes se resaltan visualmente con un borde dorado/ámbar y un badge "⭐ Informe". Solo estos comentarios aparecen en los informes ejecutivos generados.
 
 ---
 

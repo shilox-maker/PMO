@@ -2,14 +2,55 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Building, Phone, Mail, User, ShieldAlert, BookOpen, 
-  Layers, ArrowLeft, Plus, Trash2, CheckCircle, RefreshCw 
+  Layers, ArrowLeft, Plus, Trash2, CheckCircle, RefreshCw,
+  ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
+import { getSortedData } from '../utils/sorting';
+
 
 export default function Vendor360({ vendorId, onBack, onViewProject }) {
   const { getAuthHeaders } = useAuth();
   
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Sorting states
+  const [projectsSort, setProjectsSort] = useState({ key: 'id_proyecto', direction: 'asc' });
+  const [incidentsSort, setIncidentsSort] = useState({ key: 'id_incidencia', direction: 'desc' });
+
+  const handleProjectsSort = (key) => {
+    setProjectsSort(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const handleIncidentsSort = (key) => {
+    setIncidentsSort(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const renderSortHeader = (label, key, sortConfig, onSort, extraStyle = {}) => {
+    const isSorted = sortConfig.key === key;
+    return (
+      <th 
+        onClick={() => onSort(key)} 
+        style={{ cursor: 'pointer', userSelect: 'none', ...extraStyle }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {label}
+          {isSorted ? (
+            sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
+          ) : (
+            <ArrowUpDown size={14} style={{ opacity: 0.3 }} />
+          )}
+        </div>
+      </th>
+    );
+  };
+
 
   // New Contact form state
   const [showContactModal, setShowContactModal] = useState(false);
@@ -146,16 +187,16 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
                 <table className="m3-table">
                   <thead>
                     <tr>
-                      <th>Código</th>
-                      <th>Nombre Proyecto</th>
-                      <th>PM Interno</th>
-                      <th>RAG</th>
-                      <th>Presupuesto</th>
+                      {renderSortHeader('Código', 'id_proyecto', projectsSort, handleProjectsSort)}
+                      {renderSortHeader('Nombre Proyecto', 'nombre_proyecto', projectsSort, handleProjectsSort)}
+                      {renderSortHeader('PM Interno', 'PM.nombre', projectsSort, handleProjectsSort)}
+                      {renderSortHeader('RAG', 'indicador_rag', projectsSort, handleProjectsSort)}
+                      {renderSortHeader('Presupuesto', 'calculations.budget_actualizado', projectsSort, handleProjectsSort)}
                       <th>Acción</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {projects.map(p => (
+                    {getSortedData(projects, projectsSort).map(p => (
                       <tr key={p.id_proyecto}>
                         <td style={{ fontWeight: 700 }}>{p.id_proyecto}</td>
                         <td style={{ fontWeight: 500 }}>{p.nombre_proyecto}</td>
@@ -194,16 +235,16 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
                 <table className="m3-table">
                   <thead>
                     <tr>
-                      <th>Código</th>
-                      <th>Proyecto</th>
-                      <th>Incidencia</th>
-                      <th>Criticidad</th>
-                      <th>Estado</th>
-                      <th>Apertura</th>
+                      {renderSortHeader('Código', 'id_incidencia', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader('Proyecto', 'Proyecto.nombre_proyecto', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader('Incidencia', 'titulo', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader('Criticidad', 'criticidad', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader('Estado', 'estado', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader('Apertura', 'fecha_apertura', incidentsSort, handleIncidentsSort)}
                     </tr>
                   </thead>
                   <tbody>
-                    {incidents.map(inc => (
+                    {getSortedData(incidents, incidentsSort).map(inc => (
                       <tr key={inc.id_incidencia}>
                         <td style={{ fontWeight: 700 }}>{inc.id_incidencia}</td>
                         <td>{inc.Proyecto?.nombre_proyecto}</td>
