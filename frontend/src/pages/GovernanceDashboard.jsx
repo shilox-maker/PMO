@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   AlertOctagon, Coins, ShieldCheck, Clock, Eye, 
   Filter, Calendar, User, RefreshCw, AlertTriangle, Printer,
-  ArrowUp, ArrowDown, ArrowUpDown
+  ArrowUp, ArrowDown, ArrowUpDown, FileDown
 } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
 
@@ -42,6 +42,36 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
       </th>
     );
   };
+
+  const handleExportExcel = () => {
+    const params = new URLSearchParams();
+    if (filterPm) params.append('pm', filterPm);
+    if (fechaDesde) params.append('fecha_desde', fechaDesde);
+    if (fechaHasta) params.append('fecha_hasta', fechaHasta);
+
+    fetch(`http://localhost:5000/api/projects/export?${params.toString()}`, {
+      headers: getAuthHeaders()
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al exportar a Excel');
+        return res.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Reporte_Portfolio.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(err => {
+        console.error('Error al descargar el Excel:', err);
+        alert(err.message);
+      });
+  };
+
 
   
   // Maestro Filters
@@ -530,38 +560,70 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
           </div>
         </div>
 
-        {/* Portfolio Report Button */}
-        <button
-          onClick={generatePortfolioReport}
-          disabled={generatingReport || filteredGridData.length === 0}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            padding: '20px 24px',
-            background: generatingReport ? 'var(--md-sys-color-surface-container-high)' : 'linear-gradient(135deg, #f59e0b, #d97706)',
-            color: generatingReport ? 'var(--md-sys-color-outline)' : '#fff',
-            border: 'none',
-            borderRadius: '20px',
-            cursor: generatingReport ? 'wait' : 'pointer',
-            fontWeight: 700,
-            fontSize: '0.85rem',
-            minWidth: '160px',
-            transition: 'all 0.2s ease',
-            opacity: filteredGridData.length === 0 ? 0.5 : 1
-          }}
-          title={`Generar informe de portfolio con ${filteredGridData.length} proyectos`}
-        >
-          {generatingReport ? (
-            <RefreshCw className="animate-spin" size={24} />
-          ) : (
-            <Printer size={24} />
-          )}
-          <span>{generatingReport ? 'Generando...' : '📊 Exportar Informe'}</span>
-          <span style={{ fontSize: '0.7rem', fontWeight: 400, opacity: 0.9 }}>{filteredGridData.length} proyectos</span>
-        </button>
+        {/* Action Buttons Container */}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          {/* Portfolio Report Button */}
+          <button
+            onClick={generatePortfolioReport}
+            disabled={generatingReport || filteredGridData.length === 0}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              padding: '20px 24px',
+              background: generatingReport ? 'var(--md-sys-color-surface-container-high)' : 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: generatingReport ? 'var(--md-sys-color-outline)' : '#fff',
+              border: 'none',
+              borderRadius: '20px',
+              cursor: generatingReport ? 'wait' : 'pointer',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              minWidth: '160px',
+              transition: 'all 0.2s ease',
+              opacity: filteredGridData.length === 0 ? 0.5 : 1
+            }}
+            title={`Generar informe de portfolio con ${filteredGridData.length} proyectos`}
+          >
+            {generatingReport ? (
+              <RefreshCw className="animate-spin" size={24} />
+            ) : (
+              <Printer size={24} />
+            )}
+            <span>{generatingReport ? 'Generando...' : '📊 Exportar Informe'}</span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 400, opacity: 0.9 }}>{filteredGridData.length} proyectos</span>
+          </button>
+
+          {/* Export to Excel Button */}
+          <button
+            onClick={handleExportExcel}
+            disabled={filteredGridData.length === 0}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              padding: '20px 24px',
+              backgroundColor: 'var(--md-sys-color-surface-container-high)',
+              color: 'var(--md-sys-color-on-surface)',
+              border: '1px solid var(--md-sys-color-outline-variant)',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              minWidth: '160px',
+              transition: 'all 0.2s ease',
+              opacity: filteredGridData.length === 0 ? 0.5 : 1
+            }}
+            title={`Exportar a Excel ${filteredGridData.length} proyectos`}
+          >
+            <FileDown size={24} style={{ color: 'var(--md-sys-color-primary)' }} />
+            <span>Excel de Portfolio</span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 400, opacity: 0.7 }}>{filteredGridData.length} proyectos</span>
+          </button>
+        </div>
       </div>
 
       {/* BLOQUE 3: Grid Control Left & Compliance Right */}

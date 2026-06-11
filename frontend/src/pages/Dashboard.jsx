@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   Plus, Search, Building, AlertTriangle, TrendingUp, Calendar, 
   MapPin, User, Filter, AlertOctagon, CheckSquare, RefreshCw, Eye,
-  ArrowUp, ArrowDown, ArrowUpDown
+  ArrowUp, ArrowDown, ArrowUpDown, FileDown
 } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
 
@@ -42,6 +42,38 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       </th>
     );
   };
+
+  const handleExportExcel = () => {
+    const params = new URLSearchParams();
+    if (filterPm) params.append('pm', filterPm);
+    if (filterVendor) params.append('vendor', filterVendor);
+    if (filterRag) params.append('rag', filterRag);
+    if (filterState) params.append('state', filterState);
+    if (searchTerm) params.append('search', searchTerm);
+
+    fetch(`http://localhost:5000/api/projects/export?${params.toString()}`, {
+      headers: getAuthHeaders()
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al exportar a Excel');
+        return res.blob();
+      })
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Reporte_Proyectos.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(err => {
+        console.error('Error al descargar el Excel:', err);
+        alert(err.message);
+      });
+  };
+
 
   
   // Technical List Filters
@@ -290,6 +322,11 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
           <option value="AMARILLO">AMARILLO 🟡</option>
           <option value="ROJO">ROJO 🔴</option>
         </select>
+
+        <button className="m3-btn m3-btn-tonal" onClick={handleExportExcel} style={{ height: '40px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <FileDown size={18} />
+          Exportar a Excel
+        </button>
 
         <button className="m3-btn m3-btn-primary" onClick={() => setShowCreateModal(true)} style={{ height: '40px' }}>
           <Plus size={18} />

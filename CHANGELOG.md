@@ -6,6 +6,18 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [1.4.0] - 2026-06-11
+
+### Añadido
+- **Exportación de Datos a Excel**:
+  - Incorporación de la biblioteca `exceljs` en el backend para generar archivos Excel en el servidor y transmitirlos directamente al cliente.
+  - Creación del endpoint `GET /api/projects/export` que calcula dinámicamente las variables financieras y de tiempos (Budget Actualizado, Consumo Real, Presupuesto Disponible, Fecha Fin Estimada) para cada proyecto basado en facturas y cambios de alcance.
+  - Diseño estructurado en el reporte Excel con cabeceras temáticas oscuras (`#1A1A2E`) y formato adecuado para columnas de moneda (€) y fechas.
+  - Botón interactivo "Exportar a Excel" en la vista de **Proyectos** (`Dashboard.jsx`), aplicando de manera directa los filtros de búsqueda técnica y RAG activos.
+  - Botón interactivo "Excel de Portfolio" en **KPIs de Portfolio** (`GovernanceDashboard.jsx`), permitiendo exportar el conjunto de datos acotado por filtros temporales y gestor PM.
+
+---
+
 ## [1.3.0] - 2026-06-11
 
 ### Añadido

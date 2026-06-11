@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
+const ExcelJS = require('exceljs');
 const { 
   sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios, KeyUsers, 
   Proyectos, ProyectoKeyUsers, ProyectoComSemanalKU, ProyectoComMensualKU, 
@@ -408,6 +409,150 @@ app.get('/api/projects', async (req, res) => {
     );
 
     res.json(projectsWithCalculations);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Export projects list to Excel format (.xlsx)
+app.get('/api/projects/export', async (req, res) => {
+  try {
+    const { pm, vendor, rag, search, state, fecha_desde, fecha_hasta } = req.query;
+
+    const where = {};
+    if (pm) where.id_pm = pm;
+    if (vendor) where.id_proveedor = vendor;
+    if (rag) where.indicador_rag = rag;
+    if (search) {
+      where.nombre_proyecto = { [Op.like]: `%${search}%` };
+    }
+    if (state) {
+      where['$Estado.nombre_estado$'] = state;
+    }
+
+    const projectsList = await Proyectos.findAll({
+      where,
+      include: [
+        { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
+        { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
+        { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
+        { model: EstadosProyecto, as: 'Estado', attributes: ['nombre_estado', 'icono'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Proyectos');
+
+    // Define columns structure
+    worksheet.columns = [
+      { header: 'Código', key: 'id_proyecto', width: 15 },
+      { header: 'Nombre del Proyecto', key: 'nombre_proyecto', width: 30 },
+      { header: 'Estado / Fase', key: 'estado_proyecto', width: 15 },
+      { header: 'RAG', key: 'indicador_rag', width: 12 },
+      { header: 'Socio Tecnológico', key: 'proveedor', width: 25 },
+      { header: 'Gestor PM', key: 'pm', width: 20 },
+      { header: 'Sede', key: 'sede', width: 15 },
+      { header: 'Presupuesto Inicial', key: 'budget_inicial', width: 20 },
+      { header: 'Budget Actualizado', key: 'budget_actualizado', width: 20 },
+      { header: 'Consumo Real', key: 'consumo_real', width: 20 },
+      { header: 'Presupuesto Disponible', key: 'presupuesto_disponible', width: 22 },
+      { header: 'Fecha Inicio', key: 'fecha_inicio', width: 15 },
+      { header: 'Fecha Fin Inicial', key: 'fecha_fin_inicial', width: 15 },
+      { header: 'Fecha Fin Estimada', key: 'fecha_fin_estimada', width: 18 }
+    ];
+
+    // Format headers (dark mode themed)
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '1A1A2E' }
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'left' };
+
+    for (const p of projectsList) {
+      const id_proyecto = p.id_proyecto;
+
+      // Approved CR calculations
+      const approvedCRs = await CambiosAlcance.findAll({
+        where: { id_proyecto, estado_cambio: 'APROBADO' }
+      });
+      let totalCRDays = 0;
+      let totalCRAmount = 0;
+      approvedCRs.forEach(cr => {
+        if (cr.impacta_tiempo) {
+          totalCRDays += parseInt(cr.dias_impacto || 0, 10);
+        }
+        if (cr.impacta_importe) {
+          totalCRAmount += parseFloat(cr.importe_impacto || 0);
+        }
+      });
+
+      const budget_inicial = parseFloat(p.budget_inicial) || 0;
+      const budget_actualizado = budget_inicial + totalCRAmount;
+
+      const initialEndDate = new Date(p.fecha_fin_inicial);
+      initialEndDate.setDate(initialEndDate.getDate() + totalCRDays);
+      const year = initialEndDate.getFullYear();
+      const month = String(initialEndDate.getMonth() + 1).padStart(2, '0');
+      const day = String(initialEndDate.getDate()).padStart(2, '0');
+      const fecha_fin_estimada = `${year}-${month}-${day}`;
+
+      // Invoices sum
+      const invoices = await Facturas.findAll({
+        where: { 
+          id_proyecto,
+          estado: { [Op.in]: ['PAGADA', 'PENDIENTE_DE_RECIBIR'] }
+        }
+      });
+      let consumo_real = 0;
+      invoices.forEach(f => {
+        consumo_real += parseFloat(f.importe || 0);
+      });
+
+      const presupuesto_disponible = budget_actualizado - consumo_real;
+
+      // Filter by estimated end dates if timeframe is specified
+      if (fecha_desde && fecha_fin_estimada < fecha_desde) continue;
+      if (fecha_hasta && p.fecha_inicio > fecha_hasta) continue;
+
+      const row = worksheet.addRow({
+        id_proyecto: p.id_proyecto,
+        nombre_proyecto: p.nombre_proyecto,
+        estado_proyecto: p.Estado ? p.Estado.nombre_estado : 'Sin Estado',
+        indicador_rag: p.indicador_rag,
+        proveedor: p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner',
+        pm: p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin PM',
+        sede: p.Sede ? p.Sede.nombre_sede : '',
+        budget_inicial,
+        budget_actualizado,
+        consumo_real,
+        presupuesto_disponible,
+        fecha_inicio: p.fecha_inicio,
+        fecha_fin_inicial: p.fecha_fin_inicial,
+        fecha_fin_estimada
+      });
+
+      // Excel formatting for monetary cells
+      row.getCell('budget_inicial').numFmt = '#,##0.00" €"';
+      row.getCell('budget_actualizado').numFmt = '#,##0.00" €"';
+      row.getCell('consumo_real').numFmt = '#,##0.00" €"';
+      row.getCell('presupuesto_disponible').numFmt = '#,##0.00" €"';
+    }
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="Reporte_Proyectos.xlsx"'
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (error) {
     handleErr(res, error);
   }

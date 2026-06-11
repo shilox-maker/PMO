@@ -6,7 +6,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import Vendor360 from './pages/Vendor360';
 import VendorDirectory from './pages/VendorDirectory';
 import AdminPanel from './pages/AdminPanel';
-import { 
+import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
   Settings, LogOut, RefreshCw, User, Lock, Mail
 } from 'lucide-react';
@@ -62,7 +62,7 @@ function LoginScreen() {
             fontWeight: 'bold',
             margin: '0 auto 16px auto'
           }}>P</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--md-sys-color-on-surface)' }}>Gobernanza PPM</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--md-sys-color-on-surface)' }}>DACSA IT PPM</h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', marginTop: '4px' }}>Inicia sesión en tu cuenta de Dacsa</p>
         </div>
 
@@ -133,31 +133,31 @@ function NavigationRail({ activeView, setActiveView }) {
       </div>
 
       <div className="nav-links">
-        <a 
+        <a
           className={`nav-link ${activeView === 'dashboard' ? 'active' : ''}`}
           onClick={() => setActiveView('dashboard')}
         >
           <Briefcase className="nav-link-icon" />
-          <span>Gestión Técnica</span>
+          <span>Proyectos</span>
         </a>
-        
-        <a 
+
+        <a
           className={`nav-link ${activeView === 'governance' ? 'active' : ''}`}
           onClick={() => setActiveView('governance')}
         >
           <Activity className="nav-link-icon" />
-          <span>Control Ejecutivo</span>
+          <span>KPIs de Portfolio</span>
         </a>
-
-        <a 
+        <hr />
+        <a
           className={`nav-link ${activeView === 'vendors' ? 'active' : ''}`}
           onClick={() => setActiveView('vendors')}
         >
           <Building className="nav-link-icon" />
           <span>Socios Tecnológicos</span>
         </a>
-        
-        <a 
+
+        <a
           className={`nav-link ${activeView === 'lessons' ? 'active' : ''}`}
           onClick={() => setActiveView('lessons')}
         >
@@ -166,7 +166,7 @@ function NavigationRail({ activeView, setActiveView }) {
         </a>
 
         {currentPm && currentPm.perfil === 'ADMINISTRADOR' && (
-          <a 
+          <a
             className={`nav-link ${activeView === 'admin' ? 'active' : ''}`}
             onClick={() => setActiveView('admin')}
           >
@@ -180,24 +180,24 @@ function NavigationRail({ activeView, setActiveView }) {
       <div className="user-switcher-panel" style={{ marginTop: 'auto', padding: '16px 12px' }}>
         {currentPm && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
               gap: 10,
               padding: 10,
               backgroundColor: 'var(--md-sys-color-surface-container-high)',
               borderRadius: 14,
               border: '1px solid var(--md-sys-color-outline-variant)'
             }}>
-              <div style={{ 
-                width: 32, 
-                height: 32, 
-                borderRadius: '50%', 
-                backgroundColor: 'var(--md-sys-color-primary-container)', 
+              <div style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                backgroundColor: 'var(--md-sys-color-primary-container)',
                 color: 'var(--md-sys-color-on-primary-container)',
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 fontWeight: 'bold',
                 fontSize: '0.85rem',
                 flexShrink: 0
@@ -213,8 +213,8 @@ function NavigationRail({ activeView, setActiveView }) {
                 </div>
               </div>
             </div>
-            
-            <button 
+
+            <button
               className="m3-btn m3-btn-tonal"
               onClick={logout}
               style={{ padding: '8px 12px', justifyContent: 'flex-start', gap: 8, fontSize: '0.8rem', borderRadius: '12px', width: '100%' }}
@@ -226,7 +226,7 @@ function NavigationRail({ activeView, setActiveView }) {
         )}
 
         {/* Theme Toggle */}
-        <button 
+        <button
           className="m3-btn m3-btn-tonal"
           onClick={toggleTheme}
           style={{ justifyContent: 'flex-start', padding: '10px 16px', width: '100%', borderRadius: '12px' }}
@@ -286,7 +286,7 @@ function GeneralLessonsPage() {
               <p style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface)' }}>
                 <strong>Recomendación futura:</strong> {lesson.recomendacion_futura}
               </p>
-              
+
               <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
                 {lesson.Proyecto && <span>Proyecto: {lesson.Proyecto.nombre_proyecto}</span>}
                 {lesson.Proveedore && <span>Partner: {lesson.Proveedore.nombre_razon_social}</span>}
@@ -304,7 +304,7 @@ function MainAppContent() {
   const [backView, setBackView] = useState('dashboard'); // Tracks previous page
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [selectedVendorId, setSelectedVendorId] = useState(null);
-  
+
   const { currentPm } = useAuth();
 
   const handleViewProject = (id) => {
@@ -345,16 +345,16 @@ function MainAppContent() {
 
   return (
     <div className="app-container">
-      <NavigationRail 
-        activeView={activeView} 
+      <NavigationRail
+        activeView={activeView}
         setActiveView={setActiveView}
       />
-      
+
       <div className="main-viewport">
         {/* Sticky Top Bar */}
         <div className="top-bar">
           <h1 className="page-title">{getPageTitle()}</h1>
-          
+
           <div className="top-bar-actions">
             {currentPm && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 16px', backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '16px', fontSize: '0.85rem', fontWeight: 600 }}>
@@ -368,27 +368,27 @@ function MainAppContent() {
         {/* Dynamic content rendering */}
         <div className="content-wrapper">
           {activeView === 'dashboard' && (
-            <Dashboard 
-              onViewProject={handleViewProject} 
-              onViewVendor={handleViewVendor} 
+            <Dashboard
+              onViewProject={handleViewProject}
+              onViewVendor={handleViewVendor}
             />
           )}
 
           {activeView === 'governance' && (
-            <GovernanceDashboard 
+            <GovernanceDashboard
               onViewProject={handleViewProject}
               onViewVendor={handleViewVendor}
             />
           )}
 
           {activeView === 'vendors' && (
-            <VendorDirectory 
+            <VendorDirectory
               onViewVendor={handleViewVendor}
             />
           )}
 
           {activeView === 'project_detail' && (
-            <ProjectDetail 
+            <ProjectDetail
               projectId={selectedProjectId}
               onBack={() => setActiveView(backView)}
               onViewVendor={handleViewVendor}
@@ -396,7 +396,7 @@ function MainAppContent() {
           )}
 
           {activeView === 'vendor_360' && (
-            <Vendor360 
+            <Vendor360
               vendorId={selectedVendorId}
               onBack={() => {
                 if (selectedProjectId) {
