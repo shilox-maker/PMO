@@ -218,7 +218,15 @@ export default function SearchableKeyUserSelect({
                   }}>
                     <span>{group.company}</span>
                     {group.company.toLowerCase() === 'dacsa' && (
-                      <span style={{ fontSize: '0.6rem', padding: '1px 6px', backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)', borderRadius: '100px' }}>
+                      <span style={{ 
+                        fontSize: '0.65rem', 
+                        fontWeight: 'bold',
+                        padding: '2px 8px', 
+                        backgroundColor: 'var(--md-sys-color-secondary)', 
+                        color: 'var(--md-sys-color-on-secondary)', 
+                        borderRadius: '100px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      }}>
                         Preferente
                       </span>
                     )}

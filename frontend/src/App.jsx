@@ -8,7 +8,7 @@ import VendorDirectory from './pages/VendorDirectory';
 import AdminPanel from './pages/AdminPanel';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
-  Settings, LogOut, RefreshCw, User, Lock, Mail
+  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2
 } from 'lucide-react';
 
 function LoginScreen() {
@@ -114,7 +114,7 @@ function LoginScreen() {
 
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <button className="m3-btn m3-btn-tonal" onClick={toggleTheme} style={{ borderRadius: '100px', width: '100%' }}>
-            Cambiar a Modo {theme === 'dark' ? 'Claro' : 'Oscuro'}
+            Tema Actual: {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Corporativo Dacsa'}
           </button>
         </div>
       </div>
@@ -231,8 +231,10 @@ function NavigationRail({ activeView, setActiveView }) {
           onClick={toggleTheme}
           style={{ justifyContent: 'flex-start', padding: '10px 16px', width: '100%', borderRadius: '12px' }}
         >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          <span>Modo {theme === 'dark' ? 'Claro' : 'Oscuro'}</span>
+          {theme === 'light' && <Sun size={18} />}
+          {theme === 'dark' && <Moon size={18} />}
+          {theme === 'dacsa' && <Building2 size={18} />}
+          <span>Tema {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Dacsa'}</span>
         </button>
       </div>
     </div>

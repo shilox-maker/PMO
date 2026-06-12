@@ -101,6 +101,44 @@
   --color-rag-red: #dc2626;
 }
 
+/* TEMA DACSA CORPORATIVO */
+[data-theme="dacsa"] {
+  /* Fondos generales */
+  --bg-color: #F4F5F7; 
+  --card-bg: rgba(255, 255, 255, 0.85); 
+  
+  /* Colores Corporativos Dacsa */
+  --primary-color: #1A5B36; /* Verde oscuro (Logo y Banner) */
+  --accent-color: #FFB800;  /* Amarillo/Naranja (Botón Aceptar y Topbar) */
+  
+  /* Mapping to Material 3 variables so it applies globally */
+  --md-sys-color-primary: #1A5B36;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #d9f3de;
+  --md-sys-color-on-primary-container: #00210e;
+  
+  --md-sys-color-secondary: #FFB800;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #fff4ce;
+  --md-sys-color-on-secondary-container: #332400;
+
+  --md-sys-color-background: #F4F5F7;
+  --md-sys-color-on-background: #333333;
+  
+  --md-sys-color-surface: rgba(255, 255, 255, 0.85);
+  --md-sys-color-on-surface: #333333;
+  --md-sys-color-surface-container: #ffffff;
+  --md-sys-color-surface-container-high: #f0f2f5;
+  --md-sys-color-surface-container-highest: #e4e7ec;
+  
+  --md-sys-color-outline: rgba(26, 91, 54, 0.15);
+  --md-sys-color-outline-variant: rgba(26, 91, 54, 0.08);
+
+  --color-rag-green: #248a3d;
+  --color-rag-yellow: #d97706;
+  --color-rag-red: #dc2626;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

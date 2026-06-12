@@ -21,7 +21,11 @@ export const AuthProvider = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    setTheme((prevTheme) => {
+      if (prevTheme === 'light') return 'dark';
+      if (prevTheme === 'dark') return 'dacsa';
+      return 'light';
+    });
   };
 
   const fetchActiveUsers = () => {
