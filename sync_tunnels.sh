@@ -66,3 +66,20 @@ echo "=================================================="
 echo "La URL interna de tu API es: $API_URL/api"
 echo "La URL pública para tus usuarios es: $FRONTEND_URL"
 echo "=================================================="
+
+# ==============================================================================
+# 7. Notificación por Telegram (Opcional)
+# ==============================================================================
+# Si rellenas estas variables, la Raspberry te mandará un mensaje con la URL
+TELEGRAM_BOT_TOKEN=""
+TELEGRAM_CHAT_ID=""
+
+if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+    echo "📱 Enviando notificación por Telegram..."
+    MESSAGE="✅ *PPM Dashboard Reiniciado*%0A%0A🌐 *URL Pública:* $FRONTEND_URL"
+    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+        -d chat_id="${TELEGRAM_CHAT_ID}" \
+        -d text="${MESSAGE}" \
+        -d parse_mode="Markdown" > /dev/null
+    echo "✅ Mensaje enviado al móvil."
+fi
