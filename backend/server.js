@@ -40,8 +40,8 @@ const handleErr = (res, error, status = 400) => {
 };
 
 // Helper: Password Hashing using SHA-256
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
+function hashPassword(password, salt = '') {
+  return crypto.createHash('sha256').update(password + salt).digest('hex');
 }
 
 // Helper: Validate ISO 8601 date (YYYY-MM-DD)
@@ -137,8 +137,26 @@ app.post('/api/login', async (req, res) => {
       return res.status(403).json({ error: 'Tu usuario se encuentra inactivo. Contacta a un administrador.' });
     }
 
-    const hashedInput = hashPassword(password);
-    if (user.password !== hashedInput) {
+    // Retrocompatibility: If the user has no salt, check against unsalted hash. 
+    // If valid, migrate to salted hash. If they have a salt, use it.
+    let isValid = false;
+    if (!user.password_salt) {
+      const hashedInput = hashPassword(password);
+      if (user.password === hashedInput) {
+        isValid = true;
+        // Migrate to salted hash
+        const newSalt = crypto.randomBytes(16).toString('hex');
+        const newHash = hashPassword(password, newSalt);
+        await user.update({ password: newHash, password_salt: newSalt });
+      }
+    } else {
+      const hashedInput = hashPassword(password, user.password_salt);
+      if (user.password === hashedInput) {
+        isValid = true;
+      }
+    }
+
+    if (!isValid) {
       return res.status(401).json({ error: 'Credenciales inválidas.' });
     }
 
@@ -1361,11 +1379,17 @@ app.post('/api/admin/users', restrictToAdmin, async (req, res) => {
     if (!nombre || !apellidos || !correo || !password || !perfil) {
       return res.status(400).json({ error: 'Todos los campos obligatorios son requeridos.' });
     }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]).{10,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({ error: 'La contraseña no cumple con la política de seguridad requerida' });
+    }
+    const salt = crypto.randomBytes(16).toString('hex');
     const user = await Usuarios.create({
       nombre,
       apellidos,
       correo,
-      password: hashPassword(password),
+      password: hashPassword(password, salt),
+      password_salt: salt,
       perfil,
       activo: activo !== undefined ? activo : true
     });
@@ -1391,7 +1415,13 @@ app.put('/api/admin/users/:id_usuario', restrictToAdmin, async (req, res) => {
       activo: activo !== undefined ? activo : user.activo
     };
     if (password && password.trim() !== '') {
-      updates.password = hashPassword(password);
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]).{10,}$/;
+      if (!passwordRegex.test(password)) {
+        return res.status(400).json({ error: 'La contraseña no cumple con la política de seguridad requerida' });
+      }
+      const salt = crypto.randomBytes(16).toString('hex');
+      updates.password_salt = salt;
+      updates.password = hashPassword(password, salt);
     }
     await user.update(updates);
     res.json(user);
@@ -1409,7 +1439,7 @@ app.delete('/api/admin/users/:id_usuario', restrictToAdmin, async (req, res) => 
     }
     const count = await Proyectos.count({ where: { id_pm: id_usuario } });
     if (count > 0) {
-      return res.status(400).json({ error: 'No se puede eliminar el usuario porque tiene proyectos activos asignados. Desactívelo en su lugar.' });
+      return res.status(400).json({ error: 'No se puede eliminar el usuario porque tiene proyectos asignados.' });
     }
     await user.destroy();
     res.json({ message: 'Usuario eliminado con éxito.' });
@@ -1418,14 +1448,67 @@ app.delete('/api/admin/users/:id_usuario', restrictToAdmin, async (req, res) => 
   }
 });
 
+// --- CAMBIO DE CONTRASEÑA ---
+app.put('/api/users/me/change-password', async (req, res) => {
+  try {
+    const userId = req.currentPmId;
+    if (!userId) {
+      return res.status(401).json({ error: 'No autorizado. Inicie sesión.' });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Ambas contraseñas son obligatorias.' });
+    }
+
+    const user = await Usuarios.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    // Check current password
+    const hashedCurrent = hashPassword(currentPassword, user.password_salt || '');
+    if (user.password !== hashedCurrent) {
+      return res.status(401).json({ error: 'La contraseña actual es incorrecta.' });
+    }
+
+    // Check new password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]).{10,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({ error: 'La nueva contraseña no cumple con la política de seguridad requerida.' });
+    }
+
+    // Generate new salt and hash
+    const newSalt = crypto.randomBytes(16).toString('hex');
+    const newHash = hashPassword(newPassword, newSalt);
+
+    await user.update({ password: newHash, password_salt: newSalt });
+
+    res.json({ message: 'Contraseña actualizada correctamente.' });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+
+const umzug = require('./migrate');
+
 // Sync DB connection and start server
-sequelize.sync({ alter: true })
+sequelize.sync()
   .then(() => {
     console.log('✅ Connection to database established successfully. Database synced.');
+    return umzug.up();
+  })
+  .then((migrations) => {
+    if (migrations.length > 0) {
+      console.log(`✅ Executed ${migrations.length} migrations`);
+    } else {
+      console.log('✅ Database is up to date');
+    }
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT} and listening on 0.0.0.0`);
     });
   })
   .catch(err => {
-    console.error('❌ Unable to connect to the database:', err);
+    console.error('❌ Error during database initialization:', err);
   });

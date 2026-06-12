@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
 import GovernanceDashboard from './pages/GovernanceDashboard';
@@ -8,8 +9,108 @@ import VendorDirectory from './pages/VendorDirectory';
 import AdminPanel from './pages/AdminPanel';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
-  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2
+  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key
 } from 'lucide-react';
+
+function ChangePasswordModal({ isOpen, onClose }) {
+  const { getAuthHeaders } = useAuth();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  if (!isOpen) return null;
+
+  const validatePassword = (pwd) => {
+    if (!pwd) return [];
+    const errors = [];
+    if (pwd.length < 10) errors.push('Mínimo 10 caracteres');
+    if (!/[A-Z]/.test(pwd)) errors.push('Al menos una mayúscula');
+    if (!/[a-z]/.test(pwd)) errors.push('Al menos una minúscula');
+    if (!/\d/.test(pwd)) errors.push('Al menos un número');
+    if (!/[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]/.test(pwd)) errors.push('Al menos un carácter especial');
+    return errors;
+  };
+
+  const pwdErrors = validatePassword(newPassword);
+  const passwordsMatch = newPassword === confirmPassword;
+  
+  const isSubmitDisabled = !currentPassword || !newPassword || !confirmPassword || pwdErrors.length > 0 || !passwordsMatch || loading;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/me/change-password`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al cambiar la contraseña');
+      
+      setSuccess('Contraseña actualizada correctamente.');
+      setTimeout(() => {
+        onClose();
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setSuccess('');
+      }, 2000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return createPortal(
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 99999 }}>
+      <div className="modal-content glass-panel" onClick={e => e.stopPropagation()} style={{ maxWidth: 450, padding: 32 }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: 20 }}>Cambiar Contraseña</h2>
+        
+        {error && <div style={{ backgroundColor: 'rgba(255,69,58,0.1)', color: 'var(--color-rag-red)', padding: 12, borderRadius: 12, marginBottom: 16, fontSize: '0.85rem' }}>{error}</div>}
+        {success && <div style={{ backgroundColor: 'rgba(52,199,89,0.1)', color: 'var(--color-rag-green)', padding: 12, borderRadius: 12, marginBottom: 16, fontSize: '0.85rem' }}>{success}</div>}
+        
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="form-group">
+            <label className="form-label">Contraseña Actual *</label>
+            <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required className="m3-input" />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Nueva Contraseña *</label>
+            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="m3-input" style={{ borderColor: newPassword && pwdErrors.length > 0 ? 'var(--color-rag-red)' : '' }} />
+            {newPassword && pwdErrors.length > 0 && (
+              <ul style={{ color: 'var(--color-rag-red)', fontSize: '0.75rem', marginTop: 4, paddingLeft: 16 }}>
+                {pwdErrors.map((err, i) => <li key={i}>{err}</li>)}
+              </ul>
+            )}
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Confirmar Nueva Contraseña *</label>
+            <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="m3-input" style={{ borderColor: confirmPassword && !passwordsMatch ? 'var(--color-rag-red)' : '' }} />
+            {confirmPassword && !passwordsMatch && (
+              <span style={{ color: 'var(--color-rag-red)', fontSize: '0.75rem', marginTop: 4, display: 'block' }}>Las contraseñas no coinciden.</span>
+            )}
+          </div>
+          
+          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+            <button type="button" className="m3-btn m3-btn-outline" onClick={onClose} style={{ flexGrow: 1 }}>Cancelar</button>
+            <button type="submit" className="m3-btn m3-btn-primary" disabled={isSubmitDisabled} style={{ flexGrow: 1 }}>{loading ? 'Guardando...' : 'Actualizar'}</button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 function LoginScreen() {
   const { login, theme, toggleTheme } = useAuth();
@@ -124,6 +225,7 @@ function LoginScreen() {
 
 function NavigationRail({ activeView, setActiveView }) {
   const { currentPm, logout, theme, toggleTheme } = useAuth();
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   return (
     <div className="nav-rail">
@@ -216,6 +318,14 @@ function NavigationRail({ activeView, setActiveView }) {
 
             <button
               className="m3-btn m3-btn-tonal"
+              onClick={() => setIsChangePasswordOpen(true)}
+              style={{ padding: '8px 12px', justifyContent: 'flex-start', gap: 8, fontSize: '0.8rem', borderRadius: '12px', width: '100%' }}
+            >
+              <Key size={16} />
+              <span>Cambiar Contraseña</span>
+            </button>
+            <button
+              className="m3-btn m3-btn-tonal"
               onClick={logout}
               style={{ padding: '8px 12px', justifyContent: 'flex-start', gap: 8, fontSize: '0.8rem', borderRadius: '12px', width: '100%' }}
             >
@@ -224,6 +334,8 @@ function NavigationRail({ activeView, setActiveView }) {
             </button>
           </div>
         )}
+
+        <ChangePasswordModal isOpen={isChangePasswordOpen} onClose={() => setIsChangePasswordOpen(false)} />
 
         {/* Theme Toggle */}
         <button

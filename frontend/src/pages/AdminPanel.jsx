@@ -7,6 +7,16 @@ import {
 } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
 
+const validatePassword = (pwd) => {
+  if (!pwd) return [];
+  const errors = [];
+  if (pwd.length < 10) errors.push('Mínimo 10 caracteres');
+  if (!/[A-Z]/.test(pwd)) errors.push('Al menos una mayúscula');
+  if (!/[a-z]/.test(pwd)) errors.push('Al menos una minúscula');
+  if (!/\d/.test(pwd)) errors.push('Al menos un número');
+  if (!/[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]/.test(pwd)) errors.push('Al menos un carácter especial');
+  return errors;
+};
 
 export default function AdminPanel() {
   const { getAuthHeaders, refreshUsers } = useAuth();
@@ -65,6 +75,9 @@ export default function AdminPanel() {
   const [editingUserId, setEditingUserId] = useState(null);
   const [userError, setUserError] = useState('');
   const [userSuccess, setUserSuccess] = useState('');
+
+  const pwdErrors = validatePassword(userForm.password);
+  const isUserSubmitDisabled = (!editingUserId && !userForm.password) || (userForm.password && pwdErrors.length > 0);
 
   // Fetch States from backend
   const fetchStates = () => {
@@ -206,6 +219,11 @@ export default function AdminPanel() {
 
     if (!isEdit && !userForm.password) {
       setUserError('La contraseña es obligatoria para nuevos usuarios.');
+      return;
+    }
+
+    if (userForm.password && validatePassword(userForm.password).length > 0) {
+      setUserError('La contraseña no cumple con la política de seguridad requerida.');
       return;
     }
 
@@ -569,9 +587,15 @@ export default function AdminPanel() {
                   value={userForm.password}
                   onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))}
                   required={!editingUserId}
-                  placeholder="Mínimo 3 caracteres"
+                  placeholder="Ej: Tr4ctor.2026!"
                   className="m3-input"
+                  style={{ borderColor: userForm.password && pwdErrors.length > 0 ? 'var(--color-rag-red)' : '' }}
                 />
+                {userForm.password && pwdErrors.length > 0 && (
+                  <ul style={{ color: 'var(--color-rag-red)', fontSize: '0.75rem', marginTop: 4, paddingLeft: 16 }}>
+                    {pwdErrors.map((err, i) => <li key={i}>{err}</li>)}
+                  </ul>
+                )}
               </div>
 
               <div className="form-group">
@@ -613,7 +637,7 @@ export default function AdminPanel() {
                     Cancelar
                   </button>
                 )}
-                <button type="submit" className="m3-btn m3-btn-primary" style={{ flexGrow: 1 }}>
+                <button type="submit" className="m3-btn m3-btn-primary" style={{ flexGrow: 1 }} disabled={isUserSubmitDisabled}>
                   {editingUserId ? 'Guardar Cambios' : 'Registrar PM / User'}
                 </button>
               </div>

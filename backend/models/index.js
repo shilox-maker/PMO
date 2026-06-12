@@ -99,6 +99,10 @@ const Usuarios = sequelize.define('Usuarios', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  password_salt: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   perfil: {
     type: DataTypes.ENUM('ADMINISTRADOR', 'PM', 'DIRECTOR'),
     allowNull: false,

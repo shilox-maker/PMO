@@ -181,13 +181,28 @@ Al desplegar en un servidor o Raspberry Pi accesible desde otros equipos de la r
      npm run build
      ```
 
+## 🚀 Automatización de Despliegue (`deploy.sh`)
+
+La plataforma incluye un script maestro en la raíz (`deploy.sh`) para automatizar el ciclo de actualización en producción (ej: Raspberry Pi).
+
+El script gestiona el ciclo de vida completo de forma segura:
+1. `git pull` de los últimos cambios de la rama `main`.
+2. Instalación de dependencias del backend.
+3. Ejecución de **Migraciones de Base de Datos** de forma segura usando `umzug` (`npm run migrate`).
+4. Instalación de dependencias y compilación para producción (`npm run build`) del frontend.
+5. Reinicio automático de todos los servicios locales usando **PM2**.
+6. Detección y muestreo automático de las URLs generadas por Cloudflared en caso de usar túneles públicos.
+
+*Para actualizar la plataforma, simplemente ejecuta `./deploy.sh` por SSH en el servidor.*
+
 ---
 
-## 📝 Comandos Útiles de Desarrollo
+## 🛠️ Comandos Útiles de Desarrollo
 
 | Componente | Comando | Descripción |
 | :--- | :--- | :--- |
-| **Backend** | `npm run seed` | Reinicializa y puebla la base de datos `ppm_governance.db`. |
-| **Backend** | `npm start` | Inicia la API de Express. |
+| **Backend** | `npm run seed` | Reinicializa y puebla la base de datos `ppm_governance.db`. Destructivo (borra datos actuales). |
+| **Backend** | `npm run migrate` | Ejecuta las migraciones de base de datos pendientes (`umzug`). |
+| **Backend** | `npm start` | Inicia la API de Express (también ejecuta migraciones pendientes). |
 | **Frontend** | `npm run dev` | Arranca el entorno interactivo de desarrollo de Vite. |
 | **Frontend** | `npm run build` | Compila el bundle de frontend optimizado para producción en `/frontend/dist`. |

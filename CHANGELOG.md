@@ -6,6 +6,23 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [1.6.0] - 2026-06-12
+
+### Añadido
+- **Cambio de Contraseña (Autoservicio)**:
+  - Nueva política de seguridad estricta para contraseñas (mínimo 10 caracteres, combinando mayúsculas, minúsculas, números y caracteres especiales).
+  - Implementación de Salts (`password_salt`) para el hashing SHA-256 en base de datos.
+  - Endpoint dedicado `/api/users/me/change-password` y modal flotante en la interfaz del usuario.
+  - **Retrocompatibilidad**: Auto-migración silenciosa de seguridad al hacer login con contraseñas heredadas sin salt.
+- **Sistema Formal de Migraciones de Base de Datos**:
+  - Sustitución de sincronización automática de Sequelize por control programático con `umzug` en el arranque.
+  - Nuevos scripts de utilidad `npm run migrate` y `npm run migrate:undo`.
+- **Automatización de Despliegue DevOps**:
+  - Script maestro `deploy.sh` en la raíz para ejecutar actualizaciones `zero-downtime` o controladas contra fallos (`set -e`).
+  - Extracción automática de URLs públicas en túneles temporales de Cloudflared vía logs de PM2.
+
+---
+
 ## [1.5.0] - 2026-06-12
 
 ### Añadido
