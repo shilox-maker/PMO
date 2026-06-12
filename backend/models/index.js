@@ -487,6 +487,10 @@ const Facturas = sequelize.define('Facturas', {
   estado: {
     type: DataTypes.ENUM('PENDIENTE_DE_RECIBIR', 'PAGADA'),
     allowNull: false
+  },
+  PO: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 });
 

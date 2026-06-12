@@ -273,17 +273,19 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
         const day = String(initialEndDate.getDate()).padStart(2, '0');
         const fecha_fin_estimada = `${year}-${month}-${day}`;
 
-        // 2. Committed budget (status PAGADA or PENDIENTE_DE_RECIBIR)
+        // 2. Committed budget (status PAGADA or PENDIENTE_DE_RECIBIR) and PO gathering
         const invoices = await Facturas.findAll({
-          where: { 
-            id_proyecto,
-            estado: { [Op.in]: ['PAGADA', 'PENDIENTE_DE_RECIBIR'] }
-          }
+          where: { id_proyecto }
         });
         let gasto_total_facturas = 0;
+        let pos = new Set();
         invoices.forEach(f => {
-          gasto_total_facturas += parseFloat(f.importe || 0);
+          if (f.PO) pos.add(f.PO);
+          if (f.estado === 'PAGADA' || f.estado === 'PENDIENTE_DE_RECIBIR') {
+            gasto_total_facturas += parseFloat(f.importe || 0);
+          }
         });
+        const po_list = Array.from(pos).join(', ');
 
         // 3. Next pending milestone
         const nextMilestone = await Tareas.findOne({
@@ -338,6 +340,7 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
           fecha_fin_estimada,
           dias_retraso_aprobados: totalCRDays,
           gasto_total_facturas: Number(gasto_total_facturas.toFixed(2)),
+          po_list,
           proximo_hito: nextMilestone ? { titulo_tarea: nextMilestone.titulo_tarea, fecha_limite: nextMilestone.fecha_limite } : null,
           has_hito_vencido: overdueCount > 0,
           com_semanal_activo: p.com_semanal_activo,
@@ -470,6 +473,7 @@ app.get('/api/projects/export', async (req, res) => {
       { header: 'Socio Tecnológico', key: 'proveedor', width: 25 },
       { header: 'Gestor PM', key: 'pm', width: 20 },
       { header: 'Sede', key: 'sede', width: 15 },
+      { header: 'PO (Purchase Order)', key: 'po_list', width: 20 },
       { header: 'Presupuesto Inicial', key: 'budget_inicial', width: 20 },
       { header: 'Budget Actualizado', key: 'budget_actualizado', width: 20 },
       { header: 'Consumo Real', key: 'consumo_real', width: 20 },
@@ -524,17 +528,19 @@ app.get('/api/projects/export', async (req, res) => {
       const day = String(initialEndDate.getDate()).padStart(2, '0');
       const fecha_fin_estimada = `${year}-${month}-${day}`;
 
-      // Invoices sum
+      // Invoices sum and PO gathering
       const invoices = await Facturas.findAll({
-        where: { 
-          id_proyecto,
-          estado: { [Op.in]: ['PAGADA', 'PENDIENTE_DE_RECIBIR'] }
-        }
+        where: { id_proyecto }
       });
       let consumo_real = 0;
+      let pos = new Set();
       invoices.forEach(f => {
-        consumo_real += parseFloat(f.importe || 0);
+        if (f.PO) pos.add(f.PO);
+        if (f.estado === 'PAGADA' || f.estado === 'PENDIENTE_DE_RECIBIR') {
+          consumo_real += parseFloat(f.importe || 0);
+        }
       });
+      const po_list = Array.from(pos).join(', ');
 
       const presupuesto_disponible = budget_actualizado - consumo_real;
 
@@ -550,6 +556,7 @@ app.get('/api/projects/export', async (req, res) => {
         proveedor: p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner',
         pm: p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin PM',
         sede: p.Sede ? p.Sede.nombre_sede : '',
+        po_list,
         budget_inicial,
         budget_actualizado,
         consumo_real,
@@ -1411,10 +1418,10 @@ app.delete('/api/admin/users/:id_usuario', restrictToAdmin, async (req, res) => 
   }
 });
 
-// Test DB connection and start server
-sequelize.authenticate()
+// Sync DB connection and start server
+sequelize.sync({ alter: true })
   .then(() => {
-    console.log('✅ Connection to database established successfully.');
+    console.log('✅ Connection to database established successfully. Database synced.');
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT} and listening on 0.0.0.0`);
     });

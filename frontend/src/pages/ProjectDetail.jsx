@@ -1306,6 +1306,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                       <tr>
                         {renderSortHeader('Cód Interno', 'id_interno_factura', invoicesSort, setInvoicesSort)}
                         {renderSortHeader('Nº Factura', 'numero_factura', invoicesSort, setInvoicesSort)}
+                        {renderSortHeader('PO', 'PO', invoicesSort, setInvoicesSort)}
                         {renderSortHeader('Concepto', 'concepto', invoicesSort, setInvoicesSort)}
                         {renderSortHeader('Fecha', 'fecha_factura', invoicesSort, setInvoicesSort)}
                         {renderSortHeader('Importe', 'importe', invoicesSort, setInvoicesSort)}
@@ -1318,6 +1319,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         <tr key={fac.id_interno_factura}>
                           <td style={{ fontWeight: 700 }}>{fac.id_interno_factura}</td>
                           <td>{fac.numero_factura}</td>
+                          <td>{fac.PO || '—'}</td>
                           <td style={{ fontWeight: 500 }}>{fac.concepto}</td>
                           <td>{fac.fecha_factura}</td>
                           <td style={{ fontWeight: 600 }}>{fac.importe.toLocaleString('es-ES')} €</td>
@@ -2125,6 +2127,17 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   onChange={(e) => setInvoiceForm({ ...invoiceForm, numero_factura: e.target.value })}
                   placeholder="FAC-SOP-2026-022"
                   required
+                  className="m3-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">PO (Purchase Order) ERP</label>
+                <input 
+                  type="text" 
+                  value={invoiceForm.PO}
+                  onChange={(e) => setInvoiceForm({ ...invoiceForm, PO: e.target.value })}
+                  placeholder="Ej. PO-2026-00145"
                   className="m3-input"
                 />
               </div>
