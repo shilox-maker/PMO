@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams, Navigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
@@ -223,9 +224,13 @@ function LoginScreen() {
   );
 }
 
-function NavigationRail({ activeView, setActiveView }) {
+function NavigationRail() {
   const { currentPm, logout, theme, toggleTheme } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname.startsWith(path);
 
   return (
     <div className="nav-rail">
@@ -236,32 +241,32 @@ function NavigationRail({ activeView, setActiveView }) {
 
       <div className="nav-links">
         <a
-          className={`nav-link ${activeView === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveView('dashboard')}
+          className={`nav-link ${isActive('/dashboard') || location.pathname === '/' ? 'active' : ''}`}
+          onClick={() => navigate('/dashboard')}
         >
           <Briefcase className="nav-link-icon" />
           <span>Proyectos</span>
         </a>
 
         <a
-          className={`nav-link ${activeView === 'governance' ? 'active' : ''}`}
-          onClick={() => setActiveView('governance')}
+          className={`nav-link ${isActive('/governance') ? 'active' : ''}`}
+          onClick={() => navigate('/governance')}
         >
           <Activity className="nav-link-icon" />
           <span>KPIs de Portfolio</span>
         </a>
         <hr />
         <a
-          className={`nav-link ${activeView === 'vendors' ? 'active' : ''}`}
-          onClick={() => setActiveView('vendors')}
+          className={`nav-link ${isActive('/proveedores') || isActive('/proveedor/') ? 'active' : ''}`}
+          onClick={() => navigate('/proveedores')}
         >
           <Building className="nav-link-icon" />
           <span>Socios Tecnológicos</span>
         </a>
 
         <a
-          className={`nav-link ${activeView === 'lessons' ? 'active' : ''}`}
-          onClick={() => setActiveView('lessons')}
+          className={`nav-link ${isActive('/lecciones') ? 'active' : ''}`}
+          onClick={() => navigate('/lecciones')}
         >
           <BookOpen className="nav-link-icon" />
           <span>Lecciones</span>
@@ -269,8 +274,8 @@ function NavigationRail({ activeView, setActiveView }) {
 
         {currentPm && currentPm.perfil === 'ADMINISTRADOR' && (
           <a
-            className={`nav-link ${activeView === 'admin' ? 'active' : ''}`}
-            onClick={() => setActiveView('admin')}
+            className={`nav-link ${isActive('/admin') ? 'active' : ''}`}
+            onClick={() => navigate('/admin')}
           >
             <Settings className="nav-link-icon" />
             <span>Administración</span>
@@ -413,56 +418,41 @@ function GeneralLessonsPage() {
   );
 }
 
+function ProjectDetailWrapper({ onBack }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  return <ProjectDetail projectId={id} onBack={onBack} onViewVendor={(vid) => navigate('/proveedor/' + vid)} />;
+}
+
+function Vendor360Wrapper({ onBack }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  return <Vendor360 vendorId={id} onBack={onBack} onViewProject={(pid) => navigate('/proyecto/' + pid)} />;
+}
+
 function MainAppContent() {
-  const [activeView, setActiveView] = useState('dashboard');
-  const [backView, setBackView] = useState('dashboard'); // Tracks previous page
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
-  const [selectedVendorId, setSelectedVendorId] = useState(null);
-
   const { currentPm } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleViewProject = (id) => {
-    setSelectedProjectId(id);
-    setBackView(activeView);
-    setActiveView('project_detail');
-  };
-
-  const handleViewVendor = (id) => {
-    setSelectedVendorId(id);
-    if (activeView !== 'project_detail') {
-      setSelectedProjectId(null);
-    }
-    setBackView(activeView);
-    setActiveView('vendor_360');
-  };
+  const handleViewProject = (id) => navigate('/proyecto/' + id);
+  const handleViewVendor = (id) => navigate('/proveedor/' + id);
+  const handleBack = () => navigate(-1);
 
   const getPageTitle = () => {
-    switch (activeView) {
-      case 'dashboard':
-        return 'Gobernanza Técnica (Listado de Cartera)';
-      case 'governance':
-        return 'Control Ejecutivo de Cartera';
-      case 'vendors':
-        return 'Socios Tecnológicos (Directorio)';
-      case 'project_detail':
-        return 'Detalle de Proyecto';
-      case 'vendor_360':
-        return 'Vista 360º de Partner';
-      case 'lessons':
-        return 'Lecciones Aprendidas';
-      case 'admin':
-        return 'Módulo de Administración (Exclusivo)';
-      default:
-        return 'Gobernanza Dashboard';
-    }
+    if (location.pathname.startsWith('/dashboard') || location.pathname === '/') return 'Gobernanza Técnica (Listado de Cartera)';
+    if (location.pathname.startsWith('/governance')) return 'Control Ejecutivo de Cartera';
+    if (location.pathname === '/proveedores') return 'Socios Tecnológicos (Directorio)';
+    if (location.pathname.startsWith('/proyecto/')) return 'Detalle de Proyecto';
+    if (location.pathname.startsWith('/proveedor/')) return 'Vista 360º de Partner';
+    if (location.pathname.startsWith('/lecciones')) return 'Lecciones Aprendidas';
+    if (location.pathname.startsWith('/admin')) return 'Módulo de Administración (Exclusivo)';
+    return 'Gobernanza Dashboard';
   };
 
   return (
     <div className="app-container">
-      <NavigationRail
-        activeView={activeView}
-        setActiveView={setActiveView}
-      />
+      <NavigationRail />
 
       <div className="main-viewport">
         {/* Sticky Top Bar */}
@@ -481,55 +471,33 @@ function MainAppContent() {
 
         {/* Dynamic content rendering */}
         <div className="content-wrapper">
-          {activeView === 'dashboard' && (
-            <Dashboard
-              onViewProject={handleViewProject}
-              onViewVendor={handleViewVendor}
-            />
-          )}
-
-          {activeView === 'governance' && (
-            <GovernanceDashboard
-              onViewProject={handleViewProject}
-              onViewVendor={handleViewVendor}
-            />
-          )}
-
-          {activeView === 'vendors' && (
-            <VendorDirectory
-              onViewVendor={handleViewVendor}
-            />
-          )}
-
-          {activeView === 'project_detail' && (
-            <ProjectDetail
-              projectId={selectedProjectId}
-              onBack={() => setActiveView(backView)}
-              onViewVendor={handleViewVendor}
-            />
-          )}
-
-          {activeView === 'vendor_360' && (
-            <Vendor360
-              vendorId={selectedVendorId}
-              onBack={() => {
-                if (selectedProjectId) {
-                  setActiveView('project_detail');
-                } else {
-                  setActiveView(backView);
-                }
-              }}
-              onViewProject={handleViewProject}
-            />
-          )}
-
-          {activeView === 'lessons' && (
-            <GeneralLessonsPage />
-          )}
-
-          {activeView === 'admin' && (
-            <AdminPanel />
-          )}
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            
+            <Route path="/dashboard" element={
+              <Dashboard onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+            } />
+            
+            <Route path="/governance" element={
+              <GovernanceDashboard onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+            } />
+            
+            <Route path="/proveedores" element={
+              <VendorDirectory onViewVendor={handleViewVendor} />
+            } />
+            
+            <Route path="/proyecto/:id" element={
+              <ProjectDetailWrapper onBack={handleBack} />
+            } />
+            
+            <Route path="/proveedor/:id" element={
+              <Vendor360Wrapper onBack={handleBack} />
+            } />
+            
+            <Route path="/lecciones" element={<GeneralLessonsPage />} />
+            
+            <Route path="/admin" element={<AdminPanel />} />
+          </Routes>
         </div>
       </div>
     </div>
@@ -557,8 +525,10 @@ function AppConsumer() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppConsumer />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppConsumer />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
