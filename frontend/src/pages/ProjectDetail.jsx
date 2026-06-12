@@ -105,7 +105,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const fetchProjectData = () => {
     setLoading(true);
-    fetch(`/projects/${projectId}`)
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`)
       .then(res => res.json())
       .then(data => {
         setProject(data);
@@ -119,7 +119,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const fetchComments = () => {
     setCommentsLoading(true);
-    fetch(`/projects/${projectId}/comments`)
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`)
       .then(res => res.json())
       .then(data => {
         setComments(data);
@@ -132,11 +132,11 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   };
 
   const fetchMetadata = () => {
-    fetch(`${import.meta.env.VITE_API_URL}`).then(res => res.json()).then(data => setSedes(data));
-    fetch(`${import.meta.env.VITE_API_URL}`).then(res => res.json()).then(data => setVendors(data));
-    fetch(`${import.meta.env.VITE_API_URL}`).then(res => res.json()).then(data => setKeyUsers(data));
-    fetch(`${import.meta.env.VITE_API_URL}`).then(res => res.json()).then(data => setPms(data));
-    fetch(`${import.meta.env.VITE_API_URL}`).then(res => res.json()).then(data => setWorkflowStates(data));
+    fetch(`${import.meta.env.VITE_API_URL}/sedes`).then(res => res.json()).then(data => setSedes(data));
+    fetch(`${import.meta.env.VITE_API_URL}/vendors`).then(res => res.json()).then(data => setVendors(data));
+    fetch(`${import.meta.env.VITE_API_URL}/key-users`).then(res => res.json()).then(data => setKeyUsers(data));
+    fetch(`${import.meta.env.VITE_API_URL}/pms`).then(res => res.json()).then(data => setPms(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`).then(res => res.json()).then(data => setWorkflowStates(data));
   };
 
   useEffect(() => {
@@ -149,7 +149,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const handleAddComment = () => {
     if (!newCommentText || newCommentText.trim() === '' || newCommentText === '<br>') return;
-    fetch(`/comments`, {
+    fetch(`${import.meta.env.VITE_API_URL}/comments`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
@@ -172,7 +172,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const handleUpdateComment = (id) => {
     if (!editingCommentText || editingCommentText.trim() === '' || editingCommentText === '<br>') return;
-    fetch(`/comments/${id}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/comments/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({
@@ -195,7 +195,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const handleDeleteComment = (id) => {
     if (!window.confirm('¿Seguro que desea eliminar este comentario?')) return;
-    fetch(`/comments/${id}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/comments/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     })
@@ -405,7 +405,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       return;
     }
 
-    fetch(`/projects/${projectId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(editProjectForm)
@@ -424,7 +424,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   // Quick updates for dropdown changes (RAG / State)
   const handleUpdateProject = (fieldsToUpdate) => {
-    fetch(`/projects/${projectId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(fieldsToUpdate)
@@ -494,8 +494,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
     const isEdit = !!editingInvoice;
     const url = isEdit 
-      ? `/invoices/${editingInvoice.id_interno_factura}` 
-      : `${import.meta.env.VITE_API_URL}`;
+      ? `${import.meta.env.VITE_API_URL}/invoices/${editingInvoice.id_interno_factura}` 
+      : `${import.meta.env.VITE_API_URL}/invoices`;
     const method = isEdit ? 'PUT' : 'POST';
 
     // Clean up empty ID if creating to trigger auto-generation
@@ -522,7 +522,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const handleDeleteInvoice = (facId) => {
     if (!window.confirm('¿Seguro que desea eliminar esta factura?')) return;
-    fetch(`/invoices/${facId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/invoices/${facId}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     })
@@ -578,8 +578,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
     const isEdit = !!editingCr;
     const url = isEdit 
-      ? `/scope-changes/${editingCr.id_cambio}` 
-      : `${import.meta.env.VITE_API_URL}`;
+      ? `${import.meta.env.VITE_API_URL}/scope-changes/${editingCr.id_cambio}` 
+      : `${import.meta.env.VITE_API_URL}/scope-changes`;
     const method = isEdit ? 'PUT' : 'POST';
 
     if (!isEdit && (!payload.id_cambio || payload.id_cambio.trim() === '')) {
@@ -605,7 +605,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   // Quick Resolve CR (approve/reject from list buttons)
   const handleResolveCr = (crId, newState) => {
-    fetch(`/scope-changes/${crId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/scope-changes/${crId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ 
@@ -654,7 +654,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
     const payload = { ...riskForm, id_proyecto: projectId };
     const isEdit = !!editingRisk;
-    const url = isEdit ? `/risks/${editingRisk.id_riesgo}` : `${import.meta.env.VITE_API_URL}`;
+    const url = isEdit ? `${import.meta.env.VITE_API_URL}/risks/${editingRisk.id_riesgo}` : `${import.meta.env.VITE_API_URL}/risks`;
     const method = isEdit ? 'PUT' : 'POST';
 
     if (!isEdit && (!payload.id_riesgo || payload.id_riesgo.trim() === '')) {
@@ -680,7 +680,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const handleToggleRiskState = (riskId, currentStatus) => {
     const nextStatus = currentStatus === 'ACTIVO' ? 'MITIGADO' : currentStatus === 'MITIGADO' ? 'CERRADO' : 'ACTIVO';
-    fetch(`/risks/${riskId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/risks/${riskId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ estado_riesgo: nextStatus })
@@ -731,7 +731,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
     const payload = { ...issueForm, id_proyecto: projectId };
     const isEdit = !!editingIssue;
-    const url = isEdit ? `/issues/${editingIssue.id_incidencia}` : `${import.meta.env.VITE_API_URL}`;
+    const url = isEdit ? `${import.meta.env.VITE_API_URL}/issues/${editingIssue.id_incidencia}` : `${import.meta.env.VITE_API_URL}/issues`;
     const method = isEdit ? 'PUT' : 'POST';
 
     if (!isEdit && (!payload.id_incidencia || payload.id_incidencia.trim() === '')) {
@@ -790,7 +790,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
     const payload = { ...taskForm, id_proyecto: projectId };
     const isEdit = !!editingTask;
-    const url = isEdit ? `/tasks/${editingTask.id_tarea}` : `${import.meta.env.VITE_API_URL}`;
+    const url = isEdit ? `${import.meta.env.VITE_API_URL}/tasks/${editingTask.id_tarea}` : `${import.meta.env.VITE_API_URL}/tasks`;
     const method = isEdit ? 'PUT' : 'POST';
 
     if (!isEdit) {
@@ -816,7 +816,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const handleToggleTask = (taskId, currentState) => {
     const nextState = currentState === 'PENDIENTE' ? 'COMPLETADA' : 'PENDIENTE';
-    fetch(`/tasks/${taskId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ estado: nextState })
@@ -827,7 +827,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const handleDeleteTask = (taskId) => {
     if (!window.confirm('¿Seguro que desea eliminar esta tarea checklist?')) return;
-    fetch(`/tasks/${taskId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     })

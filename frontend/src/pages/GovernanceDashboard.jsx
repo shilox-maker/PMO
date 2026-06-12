@@ -49,7 +49,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
     if (fechaDesde) params.append('fecha_desde', fechaDesde);
     if (fechaHasta) params.append('fecha_hasta', fechaHasta);
 
-    fetch(`/projects/export?${params.toString()}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/projects/export?${params.toString()}`, {
       headers: getAuthHeaders()
     })
       .then(res => {
@@ -90,13 +90,13 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
 
   useEffect(() => {
     // Fetch PMs list
-    fetch(`${import.meta.env.VITE_API_URL}`)
+    fetch(`${import.meta.env.VITE_API_URL}/pms`)
       .then(res => res.json())
       .then(data => setPmsList(data))
       .catch(err => console.error(err));
 
     // Fetch States list
-    fetch(`${import.meta.env.VITE_API_URL}`)
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`)
       .then(res => res.json())
       .then(data => setStatesList(data))
       .catch(err => console.error(err));
@@ -109,7 +109,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
     if (fechaDesde) params.append('fecha_desde', fechaDesde);
     if (fechaHasta) params.append('fecha_hasta', fechaHasta);
 
-    fetch(`/portfolio/dashboard?${params.toString()}`)
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/dashboard?${params.toString()}`)
       .then(res => res.json())
       .then(data => {
         setProjects(data);
@@ -209,8 +209,8 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
       const projectBlocks = [];
       for (const p of filteredGridData) {
         const [detailRes, commentsRes] = await Promise.all([
-          fetch(`/projects/${p.id_proyecto}`, { headers: getAuthHeaders() }),
-          fetch(`/projects/${p.id_proyecto}/comments`, { headers: getAuthHeaders() })
+          fetch(`${import.meta.env.VITE_API_URL}/projects/${p.id_proyecto}`, { headers: getAuthHeaders() }),
+          fetch(`${import.meta.env.VITE_API_URL}/projects/${p.id_proyecto}/comments`, { headers: getAuthHeaders() })
         ]);
         const detail = await detailRes.json();
         const comments = await commentsRes.json();

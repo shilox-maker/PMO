@@ -65,7 +65,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
 
   const fetchVendorData = () => {
     setLoading(true);
-    fetch(`/vendors/${vendorId}`)
+    fetch(`${import.meta.env.VITE_API_URL}/vendors/${vendorId}`)
       .then(res => res.json())
       .then(result => {
         setData(result);
@@ -97,7 +97,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
       id_proveedor: parseInt(vendorId, 10)
     };
 
-    fetch(`${import.meta.env.VITE_API_URL}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/contacts`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(payload)
@@ -120,7 +120,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
   const handleDeleteContact = (contactId) => {
     if (!window.confirm('¿Seguro que desea eliminar este contacto técnico?')) return;
 
-    fetch(`/contacts/${contactId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/contacts/${contactId}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     })

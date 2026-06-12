@@ -69,7 +69,7 @@ export default function AdminPanel() {
   // Fetch States from backend
   const fetchStates = () => {
     setStatesLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/admin/states`, {
       headers: getAuthHeaders()
     })
       .then(res => {
@@ -89,7 +89,7 @@ export default function AdminPanel() {
   // Fetch Users from backend
   const fetchUsers = () => {
     setUsersLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/admin/users`, {
       headers: getAuthHeaders()
     })
       .then(res => {
@@ -134,8 +134,8 @@ export default function AdminPanel() {
 
     const isEdit = editingStateId !== null;
     const url = isEdit 
-      ? `/admin/states/${editingStateId}` 
-      : `${import.meta.env.VITE_API_URL}`;
+      ? `${import.meta.env.VITE_API_URL}/admin/states/${editingStateId}` 
+      : `${import.meta.env.VITE_API_URL}/admin/states`;
     const method = isEdit ? 'PUT' : 'POST';
 
     fetch(url, {
@@ -175,7 +175,7 @@ export default function AdminPanel() {
     setStateError('');
     setStateSuccess('');
 
-    fetch(`/admin/states/${id}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/admin/states/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     })
@@ -222,8 +222,8 @@ export default function AdminPanel() {
     }
 
     const url = isEdit 
-      ? `/admin/users/${editingUserId}` 
-      : `${import.meta.env.VITE_API_URL}`;
+      ? `${import.meta.env.VITE_API_URL}/admin/users/${editingUserId}` 
+      : `${import.meta.env.VITE_API_URL}/admin/users`;
     const method = isEdit ? 'PUT' : 'POST';
 
     fetch(url, {
@@ -266,7 +266,7 @@ export default function AdminPanel() {
     setUserError('');
     setUserSuccess('');
 
-    fetch(`/admin/users/${id}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/admin/users/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     })
