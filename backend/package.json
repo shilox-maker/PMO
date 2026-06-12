@@ -11,9 +11,13 @@
     "migrate:undo": "node migrate.js down"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "exceljs": "^4.4.0",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.3",
     "sequelize": "^6.37.3",
     "sqlite3": "^5.1.7",
     "umzug": "^3.8.3"

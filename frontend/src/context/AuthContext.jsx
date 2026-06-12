@@ -4,10 +4,8 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [pms, setPms] = useState([]);
-  const [currentPm, setCurrentPm] = useState(() => {
-    const saved = localStorage.getItem('pm_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [currentPm, setCurrentPm] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Toggle Theme (Light / Dark)
@@ -33,17 +31,41 @@ export const AuthProvider = ({ children }) => {
       .then(res => res.json())
       .then(data => {
         setPms(data);
-        setLoading(false);
       })
       .catch(err => {
         console.error('Failed to fetch PMs. Ensure the backend is running.', err);
-        setLoading(false);
       });
   };
 
+  // Verify JWT token on initial load
   useEffect(() => {
-    fetchActiveUsers();
-  }, [currentPm]); // Re-fetch when user changes
+    const savedToken = localStorage.getItem('pm_token');
+    if (savedToken) {
+      fetch(`${import.meta.env.VITE_API_URL}/auth/verify`, {
+        headers: { 'Authorization': `Bearer ${savedToken}` }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Token expired');
+        return res.json();
+      })
+      .then(data => {
+        setCurrentPm(data.user);
+        setToken(savedToken);
+        setLoading(false);
+      })
+      .catch(() => {
+        localStorage.removeItem('pm_token');
+        localStorage.removeItem('pm_user');
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentPm) fetchActiveUsers();
+  }, [currentPm]);
 
   const login = async (correo, password) => {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
@@ -59,21 +81,25 @@ export const AuthProvider = ({ children }) => {
       throw new Error(data.error || 'Error de credenciales.');
     }
     
-    localStorage.setItem('pm_user', JSON.stringify(data));
-    setCurrentPm(data);
+    localStorage.setItem('pm_token', data.token);
+    localStorage.setItem('pm_user', JSON.stringify(data.user));
+    setToken(data.token);
+    setCurrentPm(data.user);
     return data;
   };
 
   const logout = () => {
+    localStorage.removeItem('pm_token');
     localStorage.removeItem('pm_user');
+    setToken(null);
     setCurrentPm(null);
   };
 
-  // Helper to fetch options with x-pm-id auth header
+  // Helper to fetch options with Authorization JWT header
   const getAuthHeaders = () => {
     return {
       'Content-Type': 'application/json',
-      'x-pm-id': currentPm ? currentPm.id_usuario.toString() : ''
+      'Authorization': token ? `Bearer ${token}` : ''
     };
   };
 

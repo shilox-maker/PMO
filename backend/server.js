@@ -2,6 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const ExcelJS = require('exceljs');
 const { 
   sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios, KeyUsers, 
@@ -13,20 +17,43 @@ const { getProjectCalculations } = require('./models/automations');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const JWT_SECRET = process.env.JWT_SECRET || 'pmo-secret-key-change-in-production';
 
-// Enable CORS for frontend requests
+// Security Headers
+app.use(helmet());
+
+// Login Rate Limiter (10 req / 15 min)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Demasiados intentos de login, por favor intenta más tarde.' }
+});
+
+// Enable CORS for frontend requests (Restrict to frontend URL in production)
+const allowedOrigins = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, 'http://localhost:5173'] : '*';
 app.use(cors({
-  origin: '*',
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-pm-id']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
-// Auth Middleware: Set req.currentPmId from header
+// Auth Middleware: Verify JWT from Authorization header
 app.use((req, res, next) => {
-  const pmId = req.headers['x-pm-id'];
-  if (pmId) {
-    req.currentPmId = parseInt(pmId, 10);
+  // Ignorar middleware de auth en login (que maneja su propio error si falla)
+  if (req.path === '/api/login') {
+    return next();
+  }
+  
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      req.currentPmId = decoded.id_usuario;
+    } catch (err) {
+      req.currentPmId = null;
+    }
   } else {
     req.currentPmId = null;
   }
@@ -39,9 +66,9 @@ const handleErr = (res, error, status = 400) => {
   res.status(status).json({ error: error.message || 'Error del servidor' });
 };
 
-// Helper: Password Hashing using SHA-256
-function hashPassword(password, salt = '') {
-  return crypto.createHash('sha256').update(password + salt).digest('hex');
+// Helper: Password Hashing using bcrypt
+async function hashPassword(password) {
+  return bcrypt.hash(password, 10);
 }
 
 // Helper: Validate ISO 8601 date (YYYY-MM-DD)
@@ -121,7 +148,7 @@ async function generateNextId(Model, prefix, keyName) {
 // ==========================================
 // 1. Authentication / Login Endpoint
 // ==========================================
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', loginLimiter, async (req, res) => {
   try {
     const { correo, password } = req.body;
     if (!correo || !password) {
@@ -137,22 +164,25 @@ app.post('/api/login', async (req, res) => {
       return res.status(403).json({ error: 'Tu usuario se encuentra inactivo. Contacta a un administrador.' });
     }
 
-    // Retrocompatibility: If the user has no salt, check against unsalted hash. 
-    // If valid, migrate to salted hash. If they have a salt, use it.
     let isValid = false;
-    if (!user.password_salt) {
-      const hashedInput = hashPassword(password);
-      if (user.password === hashedInput) {
-        isValid = true;
-        // Migrate to salted hash
-        const newSalt = crypto.randomBytes(16).toString('hex');
-        const newHash = hashPassword(password, newSalt);
-        await user.update({ password: newHash, password_salt: newSalt });
-      }
+    
+    // Si la contraseña parece estar hasheada con bcrypt (empieza por $2a$ o $2b$)
+    if (user.password.startsWith('$2')) {
+      isValid = await bcrypt.compare(password, user.password);
     } else {
-      const hashedInput = hashPassword(password, user.password_salt);
+      // Soporte legado para SHA256 (para poder migrar sin que los usuarios pierdan acceso)
+      let hashedInput;
+      if (!user.password_salt) {
+        hashedInput = crypto.createHash('sha256').update(password).digest('hex');
+      } else {
+        hashedInput = crypto.createHash('sha256').update(password + user.password_salt).digest('hex');
+      }
+      
       if (user.password === hashedInput) {
         isValid = true;
+        // Migrar automáticamente la contraseña a Bcrypt
+        const newHash = await hashPassword(password);
+        await user.update({ password: newHash, password_salt: null }); // Salt ya no es necesario con bcrypt
       }
     }
 
@@ -160,13 +190,51 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas.' });
     }
 
+    // Generate JWT
+    const token = jwt.sign(
+      { id_usuario: user.id_usuario, perfil: user.perfil },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
     res.json({
-      id_usuario: user.id_usuario,
-      nombre: user.nombre,
-      apellidos: user.apellidos,
-      correo: user.correo,
-      perfil: user.perfil,
-      activo: user.activo
+      token,
+      user: {
+        id_usuario: user.id_usuario,
+        nombre: user.nombre,
+        apellidos: user.apellidos,
+        correo: user.correo,
+        perfil: user.perfil,
+        activo: user.activo
+      }
+    });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Auth Verify Endpoint (Para cuando el frontend recarga la página con el JWT en el Header)
+app.get('/api/auth/verify', async (req, res) => {
+  try {
+    const pmId = req.currentPmId;
+    if (!pmId) {
+      return res.status(401).json({ error: 'Token inválido o expirado.' });
+    }
+
+    const user = await Usuarios.findByPk(pmId);
+    if (!user || !user.activo) {
+      return res.status(401).json({ error: 'Usuario inactivo o no encontrado.' });
+    }
+
+    res.json({
+      user: {
+        id_usuario: user.id_usuario,
+        nombre: user.nombre,
+        apellidos: user.apellidos,
+        correo: user.correo,
+        perfil: user.perfil,
+        activo: user.activo
+      }
     });
   } catch (error) {
     handleErr(res, error);
@@ -1383,13 +1451,12 @@ app.post('/api/admin/users', restrictToAdmin, async (req, res) => {
     if (!passwordRegex.test(password)) {
       return res.status(400).json({ error: 'La contraseña no cumple con la política de seguridad requerida' });
     }
-    const salt = crypto.randomBytes(16).toString('hex');
     const user = await Usuarios.create({
       nombre,
       apellidos,
       correo,
-      password: hashPassword(password, salt),
-      password_salt: salt,
+      password: await hashPassword(password),
+      password_salt: null,
       perfil,
       activo: activo !== undefined ? activo : true
     });
@@ -1419,9 +1486,8 @@ app.put('/api/admin/users/:id_usuario', restrictToAdmin, async (req, res) => {
       if (!passwordRegex.test(password)) {
         return res.status(400).json({ error: 'La contraseña no cumple con la política de seguridad requerida' });
       }
-      const salt = crypto.randomBytes(16).toString('hex');
-      updates.password_salt = salt;
-      updates.password = hashPassword(password, salt);
+      updates.password_salt = null;
+      updates.password = await hashPassword(password);
     }
     await user.update(updates);
     res.json(user);
@@ -1467,8 +1533,20 @@ app.put('/api/users/me/change-password', async (req, res) => {
     }
 
     // Check current password
-    const hashedCurrent = hashPassword(currentPassword, user.password_salt || '');
-    if (user.password !== hashedCurrent) {
+    let isValid = false;
+    if (user.password.startsWith('$2')) {
+      isValid = await bcrypt.compare(currentPassword, user.password);
+    } else {
+      let hashedCurrent = crypto.createHash('sha256').update(currentPassword).digest('hex');
+      if (user.password_salt) {
+         hashedCurrent = crypto.createHash('sha256').update(currentPassword + user.password_salt).digest('hex');
+      }
+      if (user.password === hashedCurrent) {
+        isValid = true;
+      }
+    }
+
+    if (!isValid) {
       return res.status(401).json({ error: 'La contraseña actual es incorrecta.' });
     }
 
@@ -1478,11 +1556,10 @@ app.put('/api/users/me/change-password', async (req, res) => {
       return res.status(400).json({ error: 'La nueva contraseña no cumple con la política de seguridad requerida.' });
     }
 
-    // Generate new salt and hash
-    const newSalt = crypto.randomBytes(16).toString('hex');
-    const newHash = hashPassword(newPassword, newSalt);
+    // Generate new hash using bcrypt
+    const newHash = await hashPassword(newPassword);
 
-    await user.update({ password: newHash, password_salt: newSalt });
+    await user.update({ password: newHash, password_salt: null });
 
     res.json({ message: 'Contraseña actualizada correctamente.' });
   } catch (error) {
