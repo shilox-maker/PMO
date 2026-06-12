@@ -34,14 +34,15 @@ pm2 delete tunnel-api tunnel-frontend 2>/dev/null || true
 # Asumimos que el backend se llama 'pmo-backend' o 'backend' en PM2, si no existe lo levanta
 pm2 restart pmo-backend || pm2 start server.js --name "pmo-backend" --cwd ./backend
 
-# Iniciamos túnel del backend
+# Limpiamos logs antiguos y levantamos túnel del backend
+pm2 flush tunnel-api 2>/dev/null || true
 pm2 start cloudflared --name "tunnel-api" -- tunnel --url http://localhost:5000
 
 echo "⏳ Esperando 15 segundos para la generación de la URL de la API..."
 sleep 15
 
-# Extraemos la nueva URL aleatoria
-API_URL=$(pm2 logs tunnel-api --lines 100 --nostream | grep -o 'https://[a-zA-Z0-9-]*\.trycloudflare\.com' | head -n 1)
+# Extraemos la nueva URL aleatoria (usando tail -n 1 para coger la más reciente)
+API_URL=$(pm2 logs tunnel-api --lines 100 --nostream | grep -o 'https://[a-zA-Z0-9-]*\.trycloudflare\.com' | tail -n 1)
 
 if [ -z "$API_URL" ]; then
     echo "❌ Error: No se pudo obtener la URL de la API. Revisa los logs de PM2."
@@ -70,12 +71,13 @@ pm2 restart pmo-frontend || pm2 start npm --name "pmo-frontend" --cwd ./frontend
 # 7. Levantar Túnel del Frontend
 echo "🌐 [7/7] Levantando el túnel público del Frontend..."
 # Ajusta el puerto si en producción usas otro servidor en lugar de `npm run dev` (ej. 5173)
+pm2 flush tunnel-frontend 2>/dev/null || true
 pm2 start cloudflared --name "tunnel-frontend" -- tunnel --url http://localhost:5173
 
 echo "⏳ Esperando 20 segundos para la generación de la URL del frontend..."
 sleep 20
 
-FRONTEND_URL=$(pm2 logs tunnel-frontend --lines 100 --nostream | grep -o 'https://[a-zA-Z0-9-]*\.trycloudflare\.com' | head -n 1)
+FRONTEND_URL=$(pm2 logs tunnel-frontend --lines 100 --nostream | grep -o 'https://[a-zA-Z0-9-]*\.trycloudflare\.com' | tail -n 1)
 
 if [ -z "$FRONTEND_URL" ]; then
     echo "❌ Error: No se pudo obtener la URL del Frontend."
