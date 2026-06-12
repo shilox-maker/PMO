@@ -8,11 +8,33 @@ import {
 import { getSortedData } from '../utils/sorting';
 
 import SearchableKeyUserSelect from '../components/SearchableKeyUserSelect';
+import { useTableColumns } from '../hooks/useTableColumns';
+import ColumnSelector from '../components/ColumnSelector';
+
+const DEFAULT_PROJECT_COLUMNS = [
+  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
+  { id: 'nombre_proyecto', label: 'Nombre del Proyecto', fixed: true, visible: true },
+  { id: 'estado_proyecto', label: 'Estado/Fase', fixed: false, visible: true },
+  { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
+  { id: 'proveedor', label: 'Socio Tecnológico', fixed: false, visible: false },
+  { id: 'pm', label: 'Gestor PM', fixed: false, visible: true },
+  { id: 'sede', label: 'Sede', fixed: false, visible: false },
+  { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: true },
+  { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: true },
+  { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
+  { id: 'budget', label: 'Presupuesto', fixed: false, visible: true },
+  { id: 'progreso', label: 'Progreso Gasto', fixed: false, visible: true },
+  { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true },
+  { id: 'accion', label: 'Acción', fixed: true, visible: true }
+];
 
 export default function Dashboard({ onViewProject, onViewVendor }) {
   const { getAuthHeaders, currentPm } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Column visibility
+  const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns', DEFAULT_PROJECT_COLUMNS);
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
@@ -50,6 +72,10 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     if (filterRag) params.append('rag', filterRag);
     if (filterState) params.append('state', filterState);
     if (searchTerm) params.append('search', searchTerm);
+    
+    // Add visible columns
+    const visibleKeys = tableCols.filter(c => c.visible).map(c => c.id).join(',');
+    if (visibleKeys) params.append('cols', visibleKeys);
 
     fetch(`${import.meta.env.VITE_API_URL}/projects/export?${params.toString()}`, {
       headers: getAuthHeaders()
@@ -251,7 +277,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   return (
     <div>
       {/* Filters bar */}
-      <div className="m3-card glass-panel" style={{ padding: '20px 24px', marginBottom: 24 }}>
+      <div className="m3-card glass-panel" style={{ padding: '20px 24px', marginBottom: 24, position: 'relative', zIndex: 10, overflow: 'visible' }}>
         {/* Row 1: Search & Master Dropdowns */}
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--md-sys-color-outline)' }}>
@@ -317,7 +343,9 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
           </select>
         </div>
         
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto' }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto', position: 'relative', zIndex: 50 }}>
+          <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
+          
           <button className="m3-btn m3-btn-tonal" onClick={handleExportExcel} style={{ height: '40px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <FileDown size={18} />
             Exportar a Excel
@@ -451,17 +479,20 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
           <table className="m3-table">
             <thead>
               <tr>
-                {renderSortHeader('Código', 'id_proyecto')}
-                {renderSortHeader('Nombre del Proyecto', 'nombre_proyecto')}
-                {renderSortHeader('Estado/Fase', 'estado_proyecto')}
-                {renderSortHeader('RAG', 'indicador_rag')}
-                {renderSortHeader('Socio Tecnológico', 'Proveedor.nombre_razon_social')}
-                {renderSortHeader('Gestor PM', 'PM.nombre')}
-                {renderSortHeader('Sede', 'Sede.nombre_sede')}
-                {renderSortHeader('Presupuesto (Act. / Disp.)', 'calculations.budget_actualizado')}
-                {renderSortHeader('Progreso Gasto', 'calculations.consumo_real')}
-                {renderSortHeader('Próximo Hito', 'nextMilestone.fecha_limite')}
-                <th>Acción</th>
+                {visibleColumnsMap.id_proyecto && renderSortHeader('Código', 'id_proyecto')}
+                {visibleColumnsMap.nombre_proyecto && renderSortHeader('Nombre del Proyecto', 'nombre_proyecto')}
+                {visibleColumnsMap.estado_proyecto && renderSortHeader('Estado/Fase', 'estado_proyecto')}
+                {visibleColumnsMap.indicador_rag && renderSortHeader('RAG', 'indicador_rag')}
+                {visibleColumnsMap.proveedor && renderSortHeader('Socio Tecnológico', 'Proveedor.nombre_razon_social')}
+                {visibleColumnsMap.pm && renderSortHeader('Gestor PM', 'PM.nombre')}
+                {visibleColumnsMap.sede && renderSortHeader('Sede', 'Sede.nombre_sede')}
+                {visibleColumnsMap.fecha_inicio && renderSortHeader('Fecha Inicio', 'fecha_inicio')}
+                {visibleColumnsMap.fecha_fin_inicial && renderSortHeader('Fecha Fin Base', 'fecha_fin_inicial')}
+                {visibleColumnsMap.fecha_fin_estimada && renderSortHeader('Fecha Fin Est.', 'calculations.fecha_fin_estimada')}
+                {visibleColumnsMap.budget && renderSortHeader('Presupuesto (Act. / Disp.)', 'calculations.budget_actualizado')}
+                {visibleColumnsMap.progreso && renderSortHeader('Progreso Gasto', 'calculations.consumo_real')}
+                {visibleColumnsMap.proximo_hito && renderSortHeader('Próximo Hito', 'nextMilestone.fecha_limite')}
+                {visibleColumnsMap.accion && <th>Acción</th>}
               </tr>
             </thead>
             <tbody>
@@ -473,10 +504,10 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                 return (
                   <tr key={project.id_proyecto}>
                     {/* ID */}
-                    <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{project.id_proyecto}</td>
+                    {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{project.id_proyecto}</td>}
                     
                     {/* Name */}
-                    <td style={{ fontWeight: 600, minWidth: '180px' }}>
+                    {visibleColumnsMap.nombre_proyecto && <td style={{ fontWeight: 600, minWidth: '180px' }}>
                       <span 
                         style={{ cursor: 'pointer', color: 'var(--md-sys-color-on-surface)' }}
                         onClick={() => onViewProject(project.id_proyecto)}
@@ -488,41 +519,46 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                           CAPEX • {project.codigo_capex}
                         </div>
                       )}
-                    </td>
+                    </td>}
 
                     {/* Estado */}
-                    <td>
+                    {visibleColumnsMap.estado_proyecto && <td>
                       <span className="badge" style={{ backgroundColor: 'var(--md-sys-color-surface-container-highest)', color: 'var(--md-sys-color-on-surface)', fontWeight: 600 }}>
                         {project.estado_proyecto}
                       </span>
-                    </td>
+                    </td>}
 
                     {/* RAG */}
-                    <td>
+                    {visibleColumnsMap.indicador_rag && <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <div className={`project-rag-dot ${project.indicador_rag}`} style={{ width: 10, height: 10 }}></div>
                         <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{project.indicador_rag}</span>
                       </div>
-                    </td>
+                    </td>}
 
                     {/* Vendor */}
-                    <td>
+                    {visibleColumnsMap.proveedor && <td>
                       <span 
                         style={{ textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)', fontWeight: 500 }}
                         onClick={() => onViewVendor(project.id_proveedor)}
                       >
                         {project.Proveedor?.nombre_razon_social}
                       </span>
-                    </td>
+                    </td>}
 
                     {/* PM */}
-                    <td>{project.PM?.nombre} {project.PM?.apellidos}</td>
+                    {visibleColumnsMap.pm && <td>{project.PM?.nombre} {project.PM?.apellidos}</td>}
 
                     {/* Sede */}
-                    <td>{project.Sede?.nombre_sede}</td>
+                    {visibleColumnsMap.sede && <td>{project.Sede?.nombre_sede}</td>}
+
+                    {/* Dates */}
+                    {visibleColumnsMap.fecha_inicio && <td>{project.fecha_inicio ? new Date(project.fecha_inicio).toLocaleDateString('es-ES') : '—'}</td>}
+                    {visibleColumnsMap.fecha_fin_inicial && <td>{project.fecha_fin_inicial ? new Date(project.fecha_fin_inicial).toLocaleDateString('es-ES') : '—'}</td>}
+                    {visibleColumnsMap.fecha_fin_estimada && <td>{calc?.fecha_fin_estimada ? new Date(calc.fecha_fin_estimada).toLocaleDateString('es-ES') : '—'}</td>}
 
                     {/* Budget */}
-                    <td>
+                    {visibleColumnsMap.budget && <td>
                       <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>
                         Act: {calc?.budget_actualizado.toLocaleString('es-ES')} €
                       </div>
@@ -532,10 +568,10 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                       }}>
                         Disp: {calc?.presupuesto_disponible.toLocaleString('es-ES')} €
                       </div>
-                    </td>
+                    </td>}
 
                     {/* Progress Bar */}
-                    <td style={{ minWidth: '120px' }}>
+                    {visibleColumnsMap.progreso && <td style={{ minWidth: '120px' }}>
                       <div style={{ display: 'flex', justify: 'space-between', fontSize: '0.75rem', fontWeight: 600, marginBottom: 4 }}>
                         <span>{calc?.consumo_real.toLocaleString('es-ES', { maximumFractionDigits: 0 })} €</span>
                         <span>{displayedPercent}%</span>
@@ -549,10 +585,10 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                           }}
                         ></div>
                       </div>
-                    </td>
+                    </td>}
 
                     {/* Milestone */}
-                    <td style={{ fontSize: '0.8rem', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {visibleColumnsMap.proximo_hito && <td style={{ fontSize: '0.8rem', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {project.nextMilestone ? (
                         <div title={`${project.nextMilestone.titulo_tarea} (${project.nextMilestone.fecha_limite})`}>
                           <strong>{project.nextMilestone.titulo_tarea}</strong>
@@ -561,10 +597,10 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                       ) : (
                         <span style={{ color: 'var(--md-sys-color-outline)' }}>Ninguno</span>
                       )}
-                    </td>
+                    </td>}
 
                     {/* Action */}
-                    <td>
+                    {visibleColumnsMap.accion && <td>
                       <button 
                         className="m3-btn m3-btn-tonal" 
                         onClick={() => onViewProject(project.id_proyecto)}
@@ -573,7 +609,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                         <Eye size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
                         Ficha
                       </button>
-                    </td>
+                    </td>}
                   </tr>
                 );
               })}

@@ -6,13 +6,30 @@ import {
   ArrowUp, ArrowDown, ArrowUpDown, FileDown, ChevronDown, ChevronUp, Search
 } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
+import { useTableColumns } from '../hooks/useTableColumns';
+import ColumnSelector from '../components/ColumnSelector';
 
-
+const DEFAULT_GOV_COLUMNS = [
+  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
+  { id: 'nombre_proyecto', label: 'Proyecto', fixed: true, visible: true },
+  { id: 'pm_nombre', label: 'PM', fixed: false, visible: true },
+  { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
+  { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: true },
+  { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: true },
+  { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
+  { id: 'alerta_tiempo', label: 'Alerta de Tiempo', fixed: false, visible: true },
+  { id: 'alerta_dinero', label: 'Alerta de Dinero', fixed: false, visible: true },
+  { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true },
+  { id: 'accion', label: 'Ficha', fixed: true, visible: true }
+];
 export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   const { getAuthHeaders } = useAuth();
   
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Column visibility
+  const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-governance-columns', DEFAULT_GOV_COLUMNS);
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
@@ -52,6 +69,10 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
     if (filters.states && filters.states.length > 0) params.append('state', filters.states.join(','));
     if (filters.fechaDesde) params.append('fecha_desde', filters.fechaDesde);
     if (filters.fechaHasta) params.append('fecha_hasta', filters.fechaHasta);
+
+    // Add visible columns
+    const visibleKeys = tableCols.filter(c => c.visible).map(c => c.id).join(',');
+    if (visibleKeys) params.append('cols', visibleKeys);
 
     fetch(`${import.meta.env.VITE_API_URL}/projects/export?${params.toString()}`, {
       headers: getAuthHeaders()
@@ -361,7 +382,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   return (
     <div>
       {/* Combined Master Filters & State Segmentation Panel */}
-      <div className="m3-card glass-panel" style={{ padding: '20px 24px', marginBottom: 24 }}>
+      <div className="m3-card glass-panel" style={{ padding: '20px 24px', marginBottom: 24, position: 'relative', zIndex: 10, overflow: 'visible' }}>
         {/* Row 1: Filters */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--md-sys-color-outline)' }}>
@@ -452,7 +473,9 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
           </div>
           
           {/* Action Buttons Container */}
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto' }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto', position: 'relative', zIndex: 50 }}>
+            <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
+            
             <button
               onClick={generatePortfolioReport}
               disabled={generatingReport || filteredGridData.length === 0}
@@ -663,14 +686,17 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
               <table className="m3-table">
                 <thead>
                   <tr>
-                    {renderSortHeader('Código', 'id_proyecto')}
-                    {renderSortHeader('Proyecto', 'nombre_proyecto')}
-                    {renderSortHeader('PM', 'pm_nombre')}
-                    {renderSortHeader('RAG', 'indicador_rag')}
-                    {renderSortHeader('Alerta de Tiempo', 'dias_retraso_aprobados')}
-                    {renderSortHeader('Alerta de Dinero', 'gasto_total_facturas')}
-                    {renderSortHeader('Próximo Hito', 'proximo_hito.fecha_limite')}
-                    <th>Ficha</th>
+                    {visibleColumnsMap.id_proyecto && renderSortHeader('Código', 'id_proyecto')}
+                    {visibleColumnsMap.nombre_proyecto && renderSortHeader('Proyecto', 'nombre_proyecto')}
+                    {visibleColumnsMap.pm_nombre && renderSortHeader('PM', 'pm_nombre')}
+                    {visibleColumnsMap.indicador_rag && renderSortHeader('RAG', 'indicador_rag')}
+                    {visibleColumnsMap.fecha_inicio && renderSortHeader('Fecha Inicio', 'fecha_inicio')}
+                    {visibleColumnsMap.fecha_fin_inicial && renderSortHeader('Fecha Fin Base', 'fecha_fin_inicial')}
+                    {visibleColumnsMap.fecha_fin_estimada && renderSortHeader('Fecha Fin Est.', 'fecha_fin_estimada')}
+                    {visibleColumnsMap.alerta_tiempo && renderSortHeader('Alerta de Tiempo', 'dias_retraso_aprobados')}
+                    {visibleColumnsMap.alerta_dinero && renderSortHeader('Alerta de Dinero', 'gasto_total_facturas')}
+                    {visibleColumnsMap.proximo_hito && renderSortHeader('Próximo Hito', 'proximo_hito.fecha_limite')}
+                    {visibleColumnsMap.accion && <th>Ficha</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -685,31 +711,36 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                     return (
                       <tr key={p.id_proyecto}>
                         {/* ID */}
-                        <td style={{ fontWeight: 700, fontSize: '0.8rem' }}>{p.id_proyecto}</td>
+                        {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.8rem' }}>{p.id_proyecto}</td>}
 
                         {/* Nombre */}
-                        <td style={{ minWidth: '180px' }}>
+                        {visibleColumnsMap.nombre_proyecto && <td style={{ minWidth: '180px' }}>
                           <span style={{ fontWeight: 600, color: 'var(--md-sys-color-on-surface)' }}>
                             {p.nombre_proyecto}
                           </span>
                           <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', marginTop: 2 }}>
                             {p.estado_proyecto} {p.es_capex ? `• CAPEX (${p.codigo_capex})` : '• OPEX'}
                           </div>
-                        </td>
+                        </td>}
 
                         {/* PM */}
-                        <td>{p.pm_nombre}</td>
+                        {visibleColumnsMap.pm_nombre && <td>{p.pm_nombre}</td>}
 
                         {/* RAG */}
-                        <td>
+                        {visibleColumnsMap.indicador_rag && <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <div className={`project-rag-dot ${p.indicador_rag}`} style={{ width: 10, height: 10 }}></div>
                             <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.indicador_rag}</span>
                           </div>
-                        </td>
+                        </td>}
+
+                        {/* Dates */}
+                        {visibleColumnsMap.fecha_inicio && <td>{p.fecha_inicio ? new Date(p.fecha_inicio).toLocaleDateString('es-ES') : '—'}</td>}
+                        {visibleColumnsMap.fecha_fin_inicial && <td>{p.fecha_fin_inicial ? new Date(p.fecha_fin_inicial).toLocaleDateString('es-ES') : '—'}</td>}
+                        {visibleColumnsMap.fecha_fin_estimada && <td>{p.fecha_fin_estimada ? new Date(p.fecha_fin_estimada).toLocaleDateString('es-ES') : '—'}</td>}
 
                         {/* Time Alert (Retraso Real) */}
-                        <td>
+                        {visibleColumnsMap.alerta_tiempo && <td>
                           {isTimeDelayed ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                               <span style={{ color: 'var(--color-rag-red)', fontWeight: 700, fontSize: '0.85rem' }}>
@@ -730,10 +761,10 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                               En plazo
                             </span>
                           )}
-                        </td>
+                        </td>}
 
                         {/* Money Alert (Riesgo Presupuestario) */}
-                        <td>
+                        {visibleColumnsMap.alerta_dinero && <td>
                           {isOverBudget ? (
                             <span style={{ color: 'var(--color-rag-red)', fontWeight: 700, fontSize: '0.85rem' }}>
                               ⚠️ Excede en {devPercent}% al inicial
@@ -743,10 +774,10 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                               OK
                             </span>
                           )}
-                        </td>
+                        </td>}
 
                         {/* Next Milestone */}
-                        <td style={{ fontSize: '0.8rem' }}>
+                        {visibleColumnsMap.proximo_hito && <td style={{ fontSize: '0.8rem' }}>
                           {p.proximo_hito ? (
                             <div>
                               <div style={{ fontWeight: 600 }}>{p.proximo_hito.titulo_tarea}</div>
@@ -755,10 +786,10 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                           ) : (
                             <span style={{ color: 'var(--md-sys-color-outline)' }}>Sin hitos</span>
                           )}
-                        </td>
+                        </td>}
 
                         {/* Actions */}
-                        <td>
+                        {visibleColumnsMap.accion && <td>
                           <button 
                             className="icon-btn" 
                             onClick={() => onViewProject(p.id_proyecto)}
@@ -766,7 +797,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                           >
                             <Eye size={16} />
                           </button>
-                        </td>
+                        </td>}
                       </tr>
                     );
                   })}

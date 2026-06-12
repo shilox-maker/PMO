@@ -434,7 +434,7 @@ app.get('/api/projects', async (req, res) => {
 // Export projects list to Excel format (.xlsx)
 app.get('/api/projects/export', async (req, res) => {
   try {
-    const { pm, vendor, rag, search, state, fecha_desde, fecha_hasta } = req.query;
+    const { pm, vendor, rag, search, state, cols } = req.query;
 
     const where = {};
     if (pm) where.id_pm = pm;
@@ -462,7 +462,7 @@ app.get('/api/projects/export', async (req, res) => {
     const worksheet = workbook.addWorksheet('Proyectos');
 
     // Define columns structure
-    worksheet.columns = [
+    let exportCols = [
       { header: 'Código', key: 'id_proyecto', width: 15 },
       { header: 'Nombre del Proyecto', key: 'nombre_proyecto', width: 30 },
       { header: 'Estado / Fase', key: 'estado_proyecto', width: 15 },
@@ -478,6 +478,13 @@ app.get('/api/projects/export', async (req, res) => {
       { header: 'Fecha Fin Inicial', key: 'fecha_fin_inicial', width: 15 },
       { header: 'Fecha Fin Estimada', key: 'fecha_fin_estimada', width: 18 }
     ];
+
+    if (cols) {
+      const allowedCols = cols.split(',');
+      exportCols = exportCols.filter(c => allowedCols.includes(c.key) || c.key === 'id_proyecto' || c.key === 'nombre_proyecto');
+    }
+
+    worksheet.columns = exportCols;
 
     // Format headers (dark mode themed)
     const headerRow = worksheet.getRow(1);
