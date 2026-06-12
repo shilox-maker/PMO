@@ -90,13 +90,13 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
 
   useEffect(() => {
     // Fetch PMs list
-    fetch(\${import.meta.env.VITE_API_URL}\)
+    fetch(`${import.meta.env.VITE_API_URL}`)
       .then(res => res.json())
       .then(data => setPmsList(data))
       .catch(err => console.error(err));
 
     // Fetch States list
-    fetch(\${import.meta.env.VITE_API_URL}\)
+    fetch(`${import.meta.env.VITE_API_URL}`)
       .then(res => res.json())
       .then(data => setStatesList(data))
       .catch(err => console.error(err));

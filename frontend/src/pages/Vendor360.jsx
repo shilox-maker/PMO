@@ -97,7 +97,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
       id_proveedor: parseInt(vendorId, 10)
     };
 
-    fetch(\${import.meta.env.VITE_API_URL}\, {
+    fetch(`${import.meta.env.VITE_API_URL}`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(payload)

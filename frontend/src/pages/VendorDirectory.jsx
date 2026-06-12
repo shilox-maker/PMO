@@ -57,7 +57,7 @@ export default function VendorDirectory({ onViewVendor }) {
 
   const fetchVendors = () => {
     setLoading(true);
-    fetch(\${import.meta.env.VITE_API_URL}\)
+    fetch(`${import.meta.env.VITE_API_URL}`)
       .then(res => res.json())
       .then(data => {
         setVendors(data);
@@ -109,7 +109,7 @@ export default function VendorDirectory({ onViewVendor }) {
       return;
     }
 
-    fetch(\${import.meta.env.VITE_API_URL}\, {
+    fetch(`${import.meta.env.VITE_API_URL}`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(vendorForm)

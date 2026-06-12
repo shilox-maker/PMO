@@ -138,11 +138,11 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   };
 
   const fetchMetadata = () => {
-    fetch(\${import.meta.env.VITE_API_URL}\).then(res => res.json()).then(data => setPmsList(data));
-    fetch(\${import.meta.env.VITE_API_URL}\).then(res => res.json()).then(data => setVendorsList(data));
-    fetch(\${import.meta.env.VITE_API_URL}\).then(res => res.json()).then(data => setSedesList(data));
-    fetch(\${import.meta.env.VITE_API_URL}\).then(res => res.json()).then(data => setKeyUsersList(data));
-    fetch(\${import.meta.env.VITE_API_URL}\).then(res => res.json()).then(data => setStatesList(data));
+    fetch(`${import.meta.env.VITE_API_URL}`).then(res => res.json()).then(data => setPmsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}`).then(res => res.json()).then(data => setVendorsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}`).then(res => res.json()).then(data => setSedesList(data));
+    fetch(`${import.meta.env.VITE_API_URL}`).then(res => res.json()).then(data => setKeyUsersList(data));
+    fetch(`${import.meta.env.VITE_API_URL}`).then(res => res.json()).then(data => setStatesList(data));
   };
 
   useEffect(() => {
@@ -202,7 +202,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       delete payload.id_proyecto;
     }
 
-    fetch(\${import.meta.env.VITE_API_URL}\, {
+    fetch(`${import.meta.env.VITE_API_URL}`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(payload)

@@ -244,7 +244,7 @@ function GeneralLessonsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(\${import.meta.env.VITE_API_URL}\)
+    fetch(`${import.meta.env.VITE_API_URL}`)
       .then(res => res.json())
       .then(data => {
         setLessons(data);
