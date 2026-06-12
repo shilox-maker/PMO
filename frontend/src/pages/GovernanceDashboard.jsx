@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   AlertOctagon, Coins, ShieldCheck, Clock, Eye, 
   Filter, Calendar, User, RefreshCw, AlertTriangle, Printer,
-  ArrowUp, ArrowDown, ArrowUpDown, FileDown
+  ArrowUp, ArrowDown, ArrowUpDown, FileDown, ChevronDown, ChevronUp, Search
 } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
 
@@ -45,9 +45,13 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
 
   const handleExportExcel = () => {
     const params = new URLSearchParams();
-    if (filterPm) params.append('pm', filterPm);
-    if (fechaDesde) params.append('fecha_desde', fechaDesde);
-    if (fechaHasta) params.append('fecha_hasta', fechaHasta);
+    if (filters.pm) params.append('pm', filters.pm);
+    if (filters.vendor) params.append('vendor', filters.vendor);
+    if (filters.rag) params.append('rag', filters.rag);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.states && filters.states.length > 0) params.append('state', filters.states.join(','));
+    if (filters.fechaDesde) params.append('fecha_desde', filters.fechaDesde);
+    if (filters.fechaHasta) params.append('fecha_hasta', filters.fechaHasta);
 
     fetch(`${import.meta.env.VITE_API_URL}/projects/export?${params.toString()}`, {
       headers: getAuthHeaders()
@@ -73,41 +77,47 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   };
 
 
-  
-  // Maestro Filters
-  const [filterPm, setFilterPm] = useState('');
-  const [fechaDesde, setFechaDesde] = useState('2026-01-01');
-  const [fechaHasta, setFechaHasta] = useState('2026-12-31');
+  const [filters, setFilters] = useState({
+    pm: '',
+    vendor: '',
+    rag: '',
+    search: '',
+    fechaDesde: '2026-01-01',
+    fechaHasta: '2026-12-31',
+    states: []
+  });
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const [isStatesOpen, setIsStatesOpen] = useState(false);
 
   // Secondary/Drilldown Filters
   const [activeKpiFilter, setActiveKpiFilter] = useState(null); // 'overrun', 'capex_warn', or null
-  const [activeStateFilter, setActiveStateFilter] = useState([]); // Array of state names
   const [generatingReport, setGeneratingReport] = useState(false);
 
   // Dropdowns lists
   const [pmsList, setPmsList] = useState([]);
+  const [vendorsList, setVendorsList] = useState([]);
   const [statesList, setStatesList] = useState([]);
 
   useEffect(() => {
-    // Fetch PMs list
-    fetch(`${import.meta.env.VITE_API_URL}/pms`)
-      .then(res => res.json())
-      .then(data => setPmsList(data))
-      .catch(err => console.error(err));
-
-    // Fetch States list
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`)
-      .then(res => res.json())
-      .then(data => setStatesList(data))
-      .catch(err => console.error(err));
+    fetch(`${import.meta.env.VITE_API_URL}/pms`).then(res => res.json()).then(data => setPmsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/vendors`).then(res => res.json()).then(data => setVendorsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`).then(res => res.json()).then(data => setStatesList(data));
   }, []);
 
   const fetchDashboardData = () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (filterPm) params.append('pm', filterPm);
-    if (fechaDesde) params.append('fecha_desde', fechaDesde);
-    if (fechaHasta) params.append('fecha_hasta', fechaHasta);
+    if (filters.pm) params.append('pm', filters.pm);
+    if (filters.vendor) params.append('vendor', filters.vendor);
+    if (filters.rag) params.append('rag', filters.rag);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.fechaDesde) params.append('fecha_desde', filters.fechaDesde);
+    if (filters.fechaHasta) params.append('fecha_hasta', filters.fechaHasta);
+    if (filters.states && filters.states.length > 0) params.append('state', filters.states.join(','));
 
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/dashboard?${params.toString()}`)
       .then(res => res.json())
@@ -124,10 +134,9 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   // Re-fetch when Maestro filters change
   useEffect(() => {
     fetchDashboardData();
-    // Reset secondary filters on maestro filter change
+    // Reset secondary KPI filter on maestro filter change
     setActiveKpiFilter(null);
-    setActiveStateFilter([]);
-  }, [filterPm, fechaDesde, fechaHasta]);
+  }, [filters]);
 
   // ==========================================
   // METRIC COMPUTATIONS (AFFECTED BY MAESTRO FILTERS)
@@ -168,11 +177,6 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
       if (!p.es_capex || p.gasto_total_facturas < (p.budget_inicial * 0.90)) return false;
     }
     
-    // Apply State filter
-    if (activeStateFilter.length > 0) {
-      if (!activeStateFilter.includes(p.estado_proyecto)) return false;
-    }
-
     return true;
   });
 
@@ -370,8 +374,8 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
             <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>Desde:</span>
             <input 
               type="date" 
-              value={fechaDesde} 
-              onChange={(e) => setFechaDesde(e.target.value)}
+              value={filters.fechaDesde} 
+              onChange={(e) => handleFilterChange('fechaDesde', e.target.value)}
               className="m3-input"
               style={{ width: '150px', height: '40px', padding: '0 12px' }}
             />
@@ -382,27 +386,103 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
             <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>Hasta:</span>
             <input 
               type="date" 
-              value={fechaHasta} 
-              onChange={(e) => setFechaHasta(e.target.value)}
+              value={filters.fechaHasta} 
+              onChange={(e) => handleFilterChange('fechaHasta', e.target.value)}
               className="m3-input"
               style={{ width: '150px', height: '40px', padding: '0 12px' }}
             />
           </div>
 
+          {/* Search */}
+          <div style={{ position: 'relative', flexGrow: 1, minWidth: '180px' }}>
+            <input 
+              type="text" 
+              placeholder="Buscar por nombre..." 
+              value={filters.search} 
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+              className="m3-input"
+              style={{ paddingLeft: '40px', height: '40px' }}
+            />
+            <Search size={18} style={{ position: 'absolute', left: '14px', top: '11px', color: 'var(--md-sys-color-outline)' }} />
+          </div>
+
           {/* PM dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexGrow: 1 }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>PM:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <select 
-              value={filterPm} 
-              onChange={(e) => setFilterPm(e.target.value)}
+              value={filters.pm} 
+              onChange={(e) => handleFilterChange('pm', e.target.value)}
               className="user-select"
-              style={{ width: 'auto', minWidth: '180px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+              style={{ width: 'auto', minWidth: '140px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
             >
-              <option value="">Cualquier Gestor PM</option>
+              <option value="">Todos los PM</option>
               {pmsList.map(p => (
                 <option key={p.id_usuario} value={p.id_usuario}>{p.nombre} {p.apellidos}</option>
               ))}
             </select>
+          </div>
+
+          {/* Vendor dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filters.vendor} 
+              onChange={(e) => handleFilterChange('vendor', e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '140px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">Todos los Partners</option>
+              {vendorsList.map(v => (
+                <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* RAG dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filters.rag} 
+              onChange={(e) => handleFilterChange('rag', e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">Todos los RAG</option>
+              <option value="VERDE">VERDE 🟢</option>
+              <option value="AMARILLO">AMARILLO 🟡</option>
+              <option value="ROJO">ROJO 🔴</option>
+            </select>
+          </div>
+          
+          {/* Action Buttons Container */}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto' }}>
+            <button
+              onClick={generatePortfolioReport}
+              disabled={generatingReport || filteredGridData.length === 0}
+              className="m3-btn m3-btn-primary"
+              style={{
+                height: '40px',
+                background: generatingReport ? 'var(--md-sys-color-surface-container-high)' : 'linear-gradient(135deg, #f59e0b, #d97706)',
+                color: generatingReport ? 'var(--md-sys-color-outline)' : '#fff',
+                border: 'none',
+                opacity: filteredGridData.length === 0 ? 0.5 : 1
+              }}
+              title="Generar informe de portfolio PDF"
+            >
+              {generatingReport ? <RefreshCw className="animate-spin" size={18} /> : <Printer size={18} />}
+              <span>{generatingReport ? 'Generando...' : 'Informe'}</span>
+            </button>
+
+            <button
+              onClick={handleExportExcel}
+              disabled={filteredGridData.length === 0}
+              className="m3-btn m3-btn-tonal"
+              style={{
+                height: '40px',
+                opacity: filteredGridData.length === 0 ? 0.5 : 1
+              }}
+              title="Exportar a Excel"
+            >
+              <FileDown size={18} style={{ color: 'var(--md-sys-color-primary)' }} />
+              <span>Excel</span>
+            </button>
           </div>
         </div>
 
@@ -411,103 +491,104 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
 
         {/* Row 2: State Segmentation Buttons */}
         <div>
-          <h4 style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 12, letterSpacing: '0.05em' }}>
-            Segmentación por Estado del Proyecto (Filtro Rápido)
-          </h4>
-          
-          {/* Quick action buttons for filtering */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => {
-                const openStates = statesList
-                  .filter(s => !s.proyecto_cerrado)
-                  .map(s => s.nombre_estado);
-                setActiveStateFilter(openStates);
-              }}
-              style={{
-                borderRadius: '20px',
-                padding: '8px 16px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                border: '1px solid var(--md-sys-color-primary)',
-                color: 'var(--md-sys-color-primary)',
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-                transition: 'var(--transition-smooth)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(168, 199, 250, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              📂 Proyectos abiertos
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveStateFilter([])}
-              style={{
-                borderRadius: '20px',
-                padding: '8px 16px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                border: 'none',
-                color: 'var(--md-sys-color-outline)',
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-                transition: 'var(--transition-smooth)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--md-sys-color-on-surface)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--md-sys-color-outline)';
-              }}
-            >
-              🧹 Limpiar selección
-            </button>
+          <div 
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+            onClick={() => setIsStatesOpen(!isStatesOpen)}
+          >
+            <h4 style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Filtro por Estados del Proyecto
+            </h4>
+            {isStatesOpen ? <ChevronUp size={18} color="var(--md-sys-color-outline)" /> : <ChevronDown size={18} color="var(--md-sys-color-outline)" />}
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-            {statesList.map(state => {
-              const st = state.nombre_estado;
-              const isSelected = activeStateFilter.includes(st);
-              
-              return (
-                <div 
-                  key={state.id_estado}
+          
+          {isStatesOpen && (
+            <div style={{ marginTop: 16 }}>
+              {/* Quick action buttons for filtering */}
+              <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
                   onClick={() => {
-                    setActiveStateFilter(prev => 
-                      prev.includes(st) 
-                        ? prev.filter(x => x !== st) 
-                        : [...prev, st]
-                    );
+                    const openStates = statesList
+                      .filter(s => !s.proyecto_cerrado)
+                      .map(s => s.nombre_estado);
+                    handleFilterChange('states', openStates);
                   }}
                   style={{
-                    padding: '12px 16px',
-                    backgroundColor: isSelected ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-high)',
-                    color: isSelected ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface)',
-                    borderRadius: '16px',
+                    borderRadius: '20px',
+                    padding: '8px 16px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    border: '1px solid var(--md-sys-color-primary)',
+                    color: 'var(--md-sys-color-primary)',
+                    backgroundColor: 'transparent',
                     cursor: 'pointer',
-                    border: isSelected ? '1px solid var(--md-sys-color-primary)' : '1px solid var(--md-sys-color-outline-variant)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
                     transition: 'var(--transition-smooth)'
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(168, 199, 250, 0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>
-                    {state.icono || '❓'} {st}
-                  </span>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>
-                    {getStateCount(st)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                  📂 Proyectos abiertos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleFilterChange('states', [])}
+                  style={{
+                    borderRadius: '20px',
+                    padding: '8px 16px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    color: 'var(--md-sys-color-outline)',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    transition: 'var(--transition-smooth)'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--md-sys-color-on-surface)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--md-sys-color-outline)'}
+                >
+                  🧹 Limpiar selección
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+                {statesList.map(state => {
+                  const st = state.nombre_estado;
+                  const isSelected = filters.states.includes(st);
+                  
+                  return (
+                    <div 
+                      key={state.id_estado}
+                      onClick={() => {
+                        const newStates = isSelected 
+                          ? filters.states.filter(x => x !== st) 
+                          : [...filters.states, st];
+                        handleFilterChange('states', newStates);
+                      }}
+                      style={{
+                        padding: '12px 16px',
+                        backgroundColor: isSelected ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-high)',
+                        color: isSelected ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface)',
+                        borderRadius: '16px',
+                        cursor: 'pointer',
+                        border: isSelected ? '1px solid var(--md-sys-color-primary)' : '1px solid var(--md-sys-color-outline-variant)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'var(--transition-smooth)'
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>
+                        {state.icono || '❓'} {st}
+                      </span>
+                      <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>
+                        {getStateCount(st)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -560,70 +641,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
           </div>
         </div>
 
-        {/* Action Buttons Container */}
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          {/* Portfolio Report Button */}
-          <button
-            onClick={generatePortfolioReport}
-            disabled={generatingReport || filteredGridData.length === 0}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              padding: '20px 24px',
-              background: generatingReport ? 'var(--md-sys-color-surface-container-high)' : 'linear-gradient(135deg, #f59e0b, #d97706)',
-              color: generatingReport ? 'var(--md-sys-color-outline)' : '#fff',
-              border: 'none',
-              borderRadius: '20px',
-              cursor: generatingReport ? 'wait' : 'pointer',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              minWidth: '160px',
-              transition: 'all 0.2s ease',
-              opacity: filteredGridData.length === 0 ? 0.5 : 1
-            }}
-            title={`Generar informe de portfolio con ${filteredGridData.length} proyectos`}
-          >
-            {generatingReport ? (
-              <RefreshCw className="animate-spin" size={24} />
-            ) : (
-              <Printer size={24} />
-            )}
-            <span>{generatingReport ? 'Generando...' : '📊 Exportar Informe'}</span>
-            <span style={{ fontSize: '0.7rem', fontWeight: 400, opacity: 0.9 }}>{filteredGridData.length} proyectos</span>
-          </button>
-
-          {/* Export to Excel Button */}
-          <button
-            onClick={handleExportExcel}
-            disabled={filteredGridData.length === 0}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              padding: '20px 24px',
-              backgroundColor: 'var(--md-sys-color-surface-container-high)',
-              color: 'var(--md-sys-color-on-surface)',
-              border: '1px solid var(--md-sys-color-outline-variant)',
-              borderRadius: '20px',
-              cursor: 'pointer',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              minWidth: '160px',
-              transition: 'all 0.2s ease',
-              opacity: filteredGridData.length === 0 ? 0.5 : 1
-            }}
-            title={`Exportar a Excel ${filteredGridData.length} proyectos`}
-          >
-            <FileDown size={24} style={{ color: 'var(--md-sys-color-primary)' }} />
-            <span>Excel de Portfolio</span>
-            <span style={{ fontSize: '0.7rem', fontWeight: 400, opacity: 0.7 }}>{filteredGridData.length} proyectos</span>
-          </button>
-        </div>
+        {/* Action Buttons Container was removed from here */}
       </div>
 
       {/* BLOQUE 3: Grid Control Left & Compliance Right */}

@@ -6,6 +6,23 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [1.4.2] - 2026-06-12
+
+### Añadido
+- **Unificación de Filtros**: Inclusión de panel de segmentación por estado de proyecto tanto en la vista Proyectos como en el Executive Portfolio Dashboard, con renderizado colapsable estilo *glassmorphic*.
+- **Mejora Visual de Filtros**: Igualación a píxel de contenedores, márgenes y `grid` (flex vs. block layout) entre las vistas de Proyectos y Governance.
+- **Exportaciones Unificadas**: Alineación de los botones de informe (PDF) y exportación a Excel dentro del header de los filtros principales en ambas vistas.
+
+### Cambiado
+- **Tema Dacsa (Accesibilidad)**: Refactorizado `index.css` de variables rgba() semitransparentes a colores sólidos HEX para mejorar el contraste del texto sobre fondos grises/blancos.
+
+### Arreglado
+- Corrección de `ReferenceError` en el Frontend provocado por estados React sin envolver en la migración al estado unificado `filters` en Governance.
+- Corrección de la sintaxis `where` y los filtros `$Estado.nombre_estado$` en backend (SQLite), trasladando las condiciones directamente al array `include` de Sequelize.
+- Corrección de variables (`projectsData` -> `projects`) que provocaban cuelgues visuales en `Dashboard.jsx`.
+
+---
+
 ## [1.4.1] - 2026-06-12
 
 ### Añadido

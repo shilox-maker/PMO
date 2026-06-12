@@ -216,11 +216,17 @@ app.get('/api/portfolio/states', async (req, res) => {
 // Get consolidated portfolio dashboard data with date range and PM filtering
 app.get('/api/portfolio/dashboard', async (req, res) => {
   try {
-    const { pm, fecha_desde, fecha_hasta, search } = req.query;
+    const { pm, fecha_desde, fecha_hasta, search, vendor, rag, state } = req.query;
     
     const where = {};
     if (pm) {
       where.id_pm = parseInt(pm, 10);
+    }
+    if (vendor) {
+      where.id_proveedor = parseInt(vendor, 10);
+    }
+    if (rag) {
+      where.indicador_rag = rag;
     }
     if (search) {
       where.nombre_proyecto = { [Op.like]: `%${search}%` };
@@ -232,7 +238,12 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
         { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
         { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
         { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
-        { model: EstadosProyecto, as: 'Estado', attributes: ['nombre_estado', 'icono'] }
+        { 
+          model: EstadosProyecto, 
+          as: 'Estado', 
+          attributes: ['nombre_estado', 'icono'],
+          ...(state ? { where: { nombre_estado: { [Op.in]: state.split(',') } } } : {})
+        }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -370,9 +381,6 @@ app.get('/api/projects', async (req, res) => {
     if (search) {
       where.nombre_proyecto = { [Op.like]: `%${search}%` };
     }
-    if (state) {
-      where['$Estado.nombre_estado$'] = state;
-    }
 
     const projectsList = await Proyectos.findAll({
       where,
@@ -381,7 +389,12 @@ app.get('/api/projects', async (req, res) => {
         { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
         { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
         { model: KeyUsers, as: 'Sponsor', attributes: ['nombre', 'apellidos'] },
-        { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono'] }
+        { 
+          model: EstadosProyecto, 
+          as: 'Estado', 
+          attributes: ['id_estado', 'nombre_estado', 'icono'],
+          ...(state ? { where: { nombre_estado: { [Op.in]: state.split(',') } } } : {})
+        }
       ],
       order: [['createdAt', 'DESC']]
     });

@@ -131,8 +131,8 @@
   --md-sys-color-surface-container-high: #f0f2f5;
   --md-sys-color-surface-container-highest: #e4e7ec;
   
-  --md-sys-color-outline: rgba(26, 91, 54, 0.15);
-  --md-sys-color-outline-variant: rgba(26, 91, 54, 0.08);
+  --md-sys-color-outline: #5c7566;
+  --md-sys-color-outline-variant: #b0c0b8;
 
   --color-rag-green: #248a3d;
   --color-rag-yellow: #d97706;
