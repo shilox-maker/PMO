@@ -113,6 +113,15 @@ const Usuarios = sequelize.define('Usuarios', {
     allowNull: false,
     defaultValue: true
   }
+}, {
+  defaultScope: {
+    attributes: { exclude: ['password', 'password_salt'] }
+  },
+  scopes: {
+    withPassword: {
+      attributes: {}
+    }
+  }
 });
 
 // 4.5 EstadosProyecto Model (Centraliza los estados del workflow del portfolio)

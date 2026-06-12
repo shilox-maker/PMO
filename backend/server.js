@@ -51,13 +51,13 @@ app.use((req, res, next) => {
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
       req.currentPmId = decoded.id_usuario;
+      return next();
     } catch (err) {
-      req.currentPmId = null;
+      return res.status(401).json({ error: 'Token inválido o expirado.' });
     }
   } else {
-    req.currentPmId = null;
+    return res.status(401).json({ error: 'Acceso denegado. No se proporcionó token de autenticación.' });
   }
-  next();
 });
 
 // Helper: Format error messages
@@ -155,7 +155,7 @@ app.post('/api/login', loginLimiter, async (req, res) => {
       return res.status(400).json({ error: 'El correo y la contraseña son obligatorios.' });
     }
 
-    const user = await Usuarios.findOne({ where: { correo } });
+    const user = await Usuarios.scope('withPassword').findOne({ where: { correo } });
     if (!user) {
       return res.status(401).json({ error: 'Usuario no registrado o credenciales incorrectas.' });
     }
@@ -1527,7 +1527,7 @@ app.put('/api/users/me/change-password', async (req, res) => {
       return res.status(400).json({ error: 'Ambas contraseñas son obligatorias.' });
     }
 
-    const user = await Usuarios.findByPk(userId);
+    const user = await Usuarios.scope('withPassword').findByPk(userId);
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
