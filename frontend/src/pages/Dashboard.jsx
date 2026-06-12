@@ -51,7 +51,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     if (filterState) params.append('state', filterState);
     if (searchTerm) params.append('search', searchTerm);
 
-    fetch(`http://localhost:5000/api/projects/export?${params.toString()}`, {
+    fetch(`/projects/export?${params.toString()}`, {
       headers: getAuthHeaders()
     })
       .then(res => {
@@ -125,7 +125,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     if (filterState) params.append('state', filterState);
     if (searchTerm) params.append('search', searchTerm);
 
-    fetch(`http://localhost:5000/api/projects?${params.toString()}`)
+    fetch(`/projects?${params.toString()}`)
       .then(res => res.json())
       .then(data => {
         setProjects(data);
@@ -138,11 +138,11 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   };
 
   const fetchMetadata = () => {
-    fetch('http://localhost:5000/api/pms').then(res => res.json()).then(data => setPmsList(data));
-    fetch('http://localhost:5000/api/vendors').then(res => res.json()).then(data => setVendorsList(data));
-    fetch('http://localhost:5000/api/sedes').then(res => res.json()).then(data => setSedesList(data));
-    fetch('http://localhost:5000/api/key-users').then(res => res.json()).then(data => setKeyUsersList(data));
-    fetch('http://localhost:5000/api/portfolio/states').then(res => res.json()).then(data => setStatesList(data));
+    fetch(\${import.meta.env.VITE_API_URL}\).then(res => res.json()).then(data => setPmsList(data));
+    fetch(\${import.meta.env.VITE_API_URL}\).then(res => res.json()).then(data => setVendorsList(data));
+    fetch(\${import.meta.env.VITE_API_URL}\).then(res => res.json()).then(data => setSedesList(data));
+    fetch(\${import.meta.env.VITE_API_URL}\).then(res => res.json()).then(data => setKeyUsersList(data));
+    fetch(\${import.meta.env.VITE_API_URL}\).then(res => res.json()).then(data => setStatesList(data));
   };
 
   useEffect(() => {
@@ -202,7 +202,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       delete payload.id_proyecto;
     }
 
-    fetch('http://localhost:5000/api/projects', {
+    fetch(\${import.meta.env.VITE_API_URL}\, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(payload)

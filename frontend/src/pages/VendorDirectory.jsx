@@ -57,7 +57,7 @@ export default function VendorDirectory({ onViewVendor }) {
 
   const fetchVendors = () => {
     setLoading(true);
-    fetch('http://localhost:5000/api/vendors')
+    fetch(\${import.meta.env.VITE_API_URL}\)
       .then(res => res.json())
       .then(data => {
         setVendors(data);
@@ -109,7 +109,7 @@ export default function VendorDirectory({ onViewVendor }) {
       return;
     }
 
-    fetch('http://localhost:5000/api/vendors', {
+    fetch(\${import.meta.env.VITE_API_URL}\, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(vendorForm)
@@ -135,7 +135,7 @@ export default function VendorDirectory({ onViewVendor }) {
       return;
     }
 
-    fetch(`http://localhost:5000/api/vendors/${editingVendor.id_proveedor}`, {
+    fetch(`/vendors/${editingVendor.id_proveedor}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(vendorForm)
@@ -155,7 +155,7 @@ export default function VendorDirectory({ onViewVendor }) {
   const handleDeleteVendor = (vendorId, vendorName) => {
     if (!window.confirm(`¿Seguro que desea eliminar el socio tecnológico "${vendorName}"?`)) return;
 
-    fetch(`http://localhost:5000/api/vendors/${vendorId}`, {
+    fetch(`/vendors/${vendorId}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     })

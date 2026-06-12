@@ -6,6 +6,16 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [1.4.1] - 2026-06-12
+
+### Añadido
+- **Configuración de Entornos Frontend**:
+  - Implementación de variables de entorno mediante Vite (`VITE_API_URL`).
+  - Creación de `.env` base para entorno local y `.envRaspberry` para despliegues en Raspberry.
+  - Refactorización de todos los endpoints hardcodeados a variables dinámicas en los componentes del frontend.
+
+---
+
 ## [1.4.0] - 2026-06-11
 
 ### Añadido

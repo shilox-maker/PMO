@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const fetchActiveUsers = () => {
-    fetch('http://localhost:5000/api/pms')
+    fetch(\${import.meta.env.VITE_API_URL}\)
       .then(res => res.json())
       .then(data => {
         setPms(data);
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
   }, [currentPm]); // Re-fetch when user changes
 
   const login = async (correo, password) => {
-    const res = await fetch('http://localhost:5000/api/login', {
+    const res = await fetch(\${import.meta.env.VITE_API_URL}\, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

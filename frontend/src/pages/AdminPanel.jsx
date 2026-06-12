@@ -69,7 +69,7 @@ export default function AdminPanel() {
   // Fetch States from backend
   const fetchStates = () => {
     setStatesLoading(true);
-    fetch('http://localhost:5000/api/admin/states', {
+    fetch(\${import.meta.env.VITE_API_URL}\, {
       headers: getAuthHeaders()
     })
       .then(res => {
@@ -89,7 +89,7 @@ export default function AdminPanel() {
   // Fetch Users from backend
   const fetchUsers = () => {
     setUsersLoading(true);
-    fetch('http://localhost:5000/api/admin/users', {
+    fetch(\${import.meta.env.VITE_API_URL}\, {
       headers: getAuthHeaders()
     })
       .then(res => {
@@ -134,8 +134,8 @@ export default function AdminPanel() {
 
     const isEdit = editingStateId !== null;
     const url = isEdit 
-      ? `http://localhost:5000/api/admin/states/${editingStateId}` 
-      : 'http://localhost:5000/api/admin/states';
+      ? `/admin/states/${editingStateId}` 
+      : \${import.meta.env.VITE_API_URL}\;
     const method = isEdit ? 'PUT' : 'POST';
 
     fetch(url, {
@@ -175,7 +175,7 @@ export default function AdminPanel() {
     setStateError('');
     setStateSuccess('');
 
-    fetch(`http://localhost:5000/api/admin/states/${id}`, {
+    fetch(`/admin/states/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     })
@@ -222,8 +222,8 @@ export default function AdminPanel() {
     }
 
     const url = isEdit 
-      ? `http://localhost:5000/api/admin/users/${editingUserId}` 
-      : 'http://localhost:5000/api/admin/users';
+      ? `/admin/users/${editingUserId}` 
+      : \${import.meta.env.VITE_API_URL}\;
     const method = isEdit ? 'PUT' : 'POST';
 
     fetch(url, {
@@ -266,7 +266,7 @@ export default function AdminPanel() {
     setUserError('');
     setUserSuccess('');
 
-    fetch(`http://localhost:5000/api/admin/users/${id}`, {
+    fetch(`/admin/users/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     })
