@@ -162,6 +162,27 @@ Asegúrate de tener instalado **Node.js** (versión 18 o superior). No necesitas
 
 ---
 
+## 🌍 Despliegue en Red Local / Servidor (Ej: Raspberry Pi)
+
+Al desplegar en un servidor o Raspberry Pi accesible desde otros equipos de la red, es **obligatorio** configurar las variables de entorno para evitar errores de conexión o problemas de **CORS**.
+
+1. **Backend (CORS configurado)**:
+   - El backend ya cuenta con `cors()` explícitamente configurado para permitir cualquier origen (`origin: '*'`) y validar las cabeceras personalizadas necesarias como `x-pm-id`.
+
+2. **Frontend (Archivo `.env`)**:
+   - Debes crear o modificar el archivo `.env` dentro de la carpeta `frontend/`.
+   - **Incorrecto (si se accede desde otro PC)**: `VITE_API_URL=http://localhost:5000/api`
+   - **Correcto**: `VITE_API_URL=http://<IP_DEL_SERVIDOR>:5000/api` (ej: `192.168.0.33`).
+   - *Nota: En Linux, los archivos que empiezan por punto (`.env`) están ocultos. Usa `ls -a` para verlos.*
+
+3. **Recompilación Obligatoria**:
+   - En Vite/React, las variables de entorno se inyectan en tiempo de compilación. **Siempre que cambies el `.env` debes recompilar** ejecutando:
+     ```bash
+     npm run build
+     ```
+
+---
+
 ## 📝 Comandos Útiles de Desarrollo
 
 | Componente | Comando | Descripción |
