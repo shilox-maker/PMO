@@ -1395,8 +1395,8 @@ app.delete('/api/admin/users/:id_usuario', restrictToAdmin, async (req, res) => 
 sequelize.authenticate()
   .then(() => {
     console.log('✅ Connection to database established successfully.');
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT} and listening on 0.0.0.0`);
     });
   })
   .catch(err => {
