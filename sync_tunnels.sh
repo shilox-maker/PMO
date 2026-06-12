@@ -71,8 +71,8 @@ echo "=================================================="
 # 7. Notificación por Telegram (Opcional)
 # ==============================================================================
 # Si rellenas estas variables, la Raspberry te mandará un mensaje con la URL
-TELEGRAM_BOT_TOKEN=""
-TELEGRAM_CHAT_ID=""
+TELEGRAM_BOT_TOKEN="8534634806:AAFCRXWppAGDTYUQUJtQvlXtQ8dLhOx0lQA"
+TELEGRAM_CHAT_ID="91557996"
 
 if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
     echo "📱 Enviando notificación por Telegram..."
