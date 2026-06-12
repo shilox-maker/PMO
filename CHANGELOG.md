@@ -6,6 +6,15 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [1.5.0] - 2026-06-12
+
+### Añadido
+- **Campo PO (Purchase Order)**: Añadido en la vista de Facturas (Frontend & Backend).
+- **Selector de Columnas para PO**: Incluido PO en los selectores dinámicos del Dashboard y Governance Dashboard.
+- **Exportaciones con PO**: Añadido listado de POs en las exportaciones a Excel de Proyectos y datos consolidados del backend.
+
+---
+
 ## [1.4.2] - 2026-06-12
 
 ### Añadido
