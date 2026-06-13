@@ -38,6 +38,8 @@ export default function Timeline({ onViewProject }) {
   const [showClosed, setShowClosed] = useState(false);
   const [filterRag, setFilterRag] = useState('');
   const [filterPm, setFilterPm] = useState('');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
   const [tooltip, setTooltip] = useState(null);
   const scrollRef = useRef(null);
   const todayLineRef = useRef(null);
@@ -67,9 +69,16 @@ export default function Timeline({ onViewProject }) {
       if (!showClosed && p.proyecto_cerrado) return false;
       if (filterRag && p.indicador_rag !== filterRag) return false;
       if (filterPm && p.pm_nombre !== filterPm) return false;
+
+      // Date overlap check
+      const pStart = p.fecha_inicio;
+      const pEnd = p.fecha_fin_estimada;
+      if (filterStartDate && pEnd && pEnd < filterStartDate) return false;
+      if (filterEndDate && pStart && pStart > filterEndDate) return false;
+
       return true;
     });
-  }, [projects, showClosed, filterRag, filterPm]);
+  }, [projects, showClosed, filterRag, filterPm, filterStartDate, filterEndDate]);
 
   // Unique PMs for filter
   const pmList = useMemo(() => [...new Set(projects.map(p => p.pm_nombre))].sort(), [projects]);
@@ -181,6 +190,10 @@ export default function Timeline({ onViewProject }) {
               <option value="">Todos PM</option>
               {pmList.map(pm => <option key={pm} value={pm}>{pm}</option>)}
             </select>
+
+            <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="timeline-select" title="Rango de fecha inicio" />
+            <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>a</span>
+            <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="timeline-select" title="Rango de fecha fin" />
 
             <label className="timeline-toggle">
               <input type="checkbox" checked={showClosed} onChange={e => setShowClosed(e.target.checked)} />

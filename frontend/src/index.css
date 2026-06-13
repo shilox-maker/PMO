@@ -197,6 +197,8 @@ button, input, select, textarea {
   color: var(--md-sys-color-on-primary);
   font-weight: 700;
   font-size: 1.25rem;
+  line-height: 1;
+  text-align: center;
 }
 
 .brand-name {
