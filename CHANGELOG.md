@@ -9,6 +9,9 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 ## [1.7.0] - 2026-06-13
 
 ### Añadido
+- **Suite de Pruebas Funcionales**:
+  - Pruebas E2E en Frontend configuradas con **Playwright**.
+  - Pruebas de integración API en Backend configuradas con **Jest** y **Supertest** (usando SQLite en memoria).
 - **Timeline / Gantt de Portfolio**:
   - Nueva vista global temporal de todos los proyectos activos.
   - Representación visual con barras coloreadas según el estado RAG del proyecto.

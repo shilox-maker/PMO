@@ -4,7 +4,7 @@ const path = require('path');
 // SQLite connection options
 const sqliteConfig = {
   dialect: 'sqlite',
-  storage: path.join(__dirname, '../ppm_governance.db'),
+  storage: process.env.NODE_ENV === 'test' ? ':memory:' : path.join(__dirname, '../ppm_governance.db'),
   logging: false, // Set to console.log to see SQL queries
   define: {
     timestamps: true, // adds createdAt and updatedAt

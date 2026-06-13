@@ -123,6 +123,24 @@ Vista global interactiva que mapea todos los proyectos en un eje temporal horizo
 * **Historial Auditado**: Muestra una marca `(Editado)` visible con un tooltip que expone el usuario editor y el timestamp exacto de la última modificación.
 * **Flag de Importancia (`es_importante`)**: Checkbox/toggle visual junto al botón de publicación: `[ ] Marcar como Importante (Incluir en Informe)`. Los comentarios marcados como importantes se resaltan visualmente con un borde dorado/ámbar y un badge "⭐ Informe". Solo estos comentarios aparecen en los informes ejecutivos generados.
 
+## Pruebas Funcionales (E2E y API)
+
+La aplicación cuenta con una suite de pruebas para verificar el funcionamiento del Frontend (E2E) y Backend (API).
+
+### 1. Pruebas de Backend (API)
+Se utiliza **Jest** y **Supertest** contra una base de datos SQLite en memoria (`:memory:`).
+```bash
+cd backend
+npm test
+```
+
+### 2. Pruebas de Frontend (E2E)
+Se utiliza **Playwright** para simular la navegación en navegador real.
+```bash
+cd frontend
+npx playwright test
+```
+
 ---
 
 ## 🏃 Instrucciones de Arranque Local
