@@ -153,7 +153,9 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     if (filterStates.length > 0) params.append('state', filterStates.join(','));
     if (searchTerm) params.append('search', searchTerm);
 
-    fetch(`${import.meta.env.VITE_API_URL}/projects?${params.toString()}`)
+    fetch(`${import.meta.env.VITE_API_URL}/projects?${params.toString()}`, {
+      headers: getAuthHeaders()
+    })
       .then(res => res.json())
       .then(data => {
         setProjects(data);
@@ -166,11 +168,11 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   };
 
   const fetchMetadata = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/pms`).then(res => res.json()).then(data => setPmsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`).then(res => res.json()).then(data => setVendorsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/sedes`).then(res => res.json()).then(data => setSedesList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/key-users`).then(res => res.json()).then(data => setKeyUsersList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`).then(res => res.json()).then(data => setStatesList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedesList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/key-users`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setKeyUsersList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
   };
 
   useEffect(() => {

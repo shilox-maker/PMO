@@ -65,7 +65,9 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
 
   const fetchVendorData = () => {
     setLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}/vendors/${vendorId}`)
+    fetch(`${import.meta.env.VITE_API_URL}/vendors/${vendorId}`, {
+      headers: getAuthHeaders()
+    })
       .then(res => res.json())
       .then(result => {
         setData(result);

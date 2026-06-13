@@ -57,7 +57,9 @@ export default function VendorDirectory({ onViewVendor }) {
 
   const fetchVendors = () => {
     setLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`)
+    fetch(`${import.meta.env.VITE_API_URL}/vendors`, {
+      headers: getAuthHeaders()
+    })
       .then(res => res.json())
       .then(data => {
         setVendors(data);

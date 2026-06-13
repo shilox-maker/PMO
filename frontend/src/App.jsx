@@ -359,11 +359,14 @@ function NavigationRail() {
 }
 
 function GeneralLessonsPage() {
+  const { getAuthHeaders } = useAuth();
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/lessons`)
+    fetch(`${import.meta.env.VITE_API_URL}/lessons`, {
+      headers: getAuthHeaders()
+    })
       .then(res => res.json())
       .then(data => {
         setLessons(data);

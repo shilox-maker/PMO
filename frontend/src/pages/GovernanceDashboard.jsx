@@ -126,9 +126,9 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   const [statesList, setStatesList] = useState([]);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/pms`).then(res => res.json()).then(data => setPmsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`).then(res => res.json()).then(data => setVendorsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`).then(res => res.json()).then(data => setStatesList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
   }, []);
 
   const fetchDashboardData = () => {
@@ -142,7 +142,9 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
     if (filters.fechaHasta) params.append('fecha_hasta', filters.fechaHasta);
     if (filters.states && filters.states.length > 0) params.append('state', filters.states.join(','));
 
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/dashboard?${params.toString()}`)
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/dashboard?${params.toString()}`, {
+      headers: getAuthHeaders()
+    })
       .then(res => res.json())
       .then(data => {
         setProjects(data);

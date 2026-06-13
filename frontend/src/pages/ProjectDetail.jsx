@@ -105,7 +105,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const fetchProjectData = () => {
     setLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`)
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
+      headers: getAuthHeaders()
+    })
       .then(res => res.json())
       .then(data => {
         setProject(data);
@@ -119,7 +121,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const fetchComments = () => {
     setCommentsLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`)
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`, {
+      headers: getAuthHeaders()
+    })
       .then(res => res.json())
       .then(data => {
         setComments(data);
@@ -132,11 +136,11 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   };
 
   const fetchMetadata = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/sedes`).then(res => res.json()).then(data => setSedes(data));
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`).then(res => res.json()).then(data => setVendors(data));
-    fetch(`${import.meta.env.VITE_API_URL}/key-users`).then(res => res.json()).then(data => setKeyUsers(data));
-    fetch(`${import.meta.env.VITE_API_URL}/pms`).then(res => res.json()).then(data => setPms(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`).then(res => res.json()).then(data => setWorkflowStates(data));
+    fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedes(data));
+    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendors(data));
+    fetch(`${import.meta.env.VITE_API_URL}/key-users`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setKeyUsers(data));
+    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPms(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowStates(data));
   };
 
   useEffect(() => {
