@@ -95,7 +95,14 @@ Una pantalla exclusiva para la Dirección Ejecutiva enfocada en métricas consol
 * **Segmentación Dinámica por Estados:** Botones dinámicos que muestran el conteo de proyectos en cada estado del flujo de trabajo directamente leídos del maestro de la base de datos (con soporte de redimensionamiento automático para múltiples estados). Soporte para multi-selección de estados y un botón rápido "📂 Proyectos abiertos" que filtra automáticamente los estados donde `proyecto_cerrado = false`.
 * **📊 Exportar Informe de Portfolio:** Botón prominente que genera un dossier ejecutivo PDF concatenando los informes atómicos de todos los proyectos filtrados actualmente, con saltos de página obligatorios entre cada proyecto.
 
-### 5. Motor de Reportes (Atómico y Concatenado)
+### 3. Timeline / Gantt de Portfolio (`/timeline`)
+Vista global interactiva que mapea todos los proyectos en un eje temporal horizontal:
+* **Zoom Dinámico:** Permite alternar entre vistas de calendario Trimestral, Mensual y Semanal para analizar picos de carga.
+* **Hitos Visuales:** Muestra las tareas clave (`es_hito`) como diamantes interactivos ubicados sobre las barras de los proyectos, con tooltips que detallan su estado y fecha.
+* **Línea del Día "Hoy":** Ubica automáticamente el foco visual en el momento actual para evaluar el progreso en tiempo real.
+* **Filtrado Múltiple:** Segmentación instantánea por RAG, PM y proyectos cerrados.
+
+### 4. Motor de Reportes (Atómico y Concatenado)
 * **Informe Atómico de Proyecto (`📄 Generar Informe`):** Desde la cabecera de la ficha de detalle del proyecto, genera un HTML estructurado con estilos CSS de impresión (`@media print`) para exportar limpiamente a PDF.
 * **Estructura del bloque de proyecto:**
   * Cabecera con metadatos (ID, Nombre, PM, Partner, Sede, Estado con icono).

@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
 import GovernanceDashboard from './pages/GovernanceDashboard';
 import ProjectDetail from './pages/ProjectDetail';
+import Timeline from './pages/Timeline';
 import Vendor360 from './pages/Vendor360';
 import VendorDirectory from './pages/VendorDirectory';
 import AdminPanel from './pages/AdminPanel';
@@ -255,6 +256,14 @@ function NavigationRail() {
           <Activity className="nav-link-icon" />
           <span>KPIs de Portfolio</span>
         </a>
+
+        <a
+          className={`nav-link ${isActive('/timeline') ? 'active' : ''}`}
+          onClick={() => navigate('/timeline')}
+        >
+          <Calendar className="nav-link-icon" />
+          <span>Timeline</span>
+        </a>
         <hr />
         <a
           className={`nav-link ${isActive('/proveedores') || isActive('/proveedor/') ? 'active' : ''}`}
@@ -445,6 +454,7 @@ function MainAppContent() {
   const getPageTitle = () => {
     if (location.pathname.startsWith('/dashboard') || location.pathname === '/') return 'Gobernanza Técnica (Listado de Cartera)';
     if (location.pathname.startsWith('/governance')) return 'Control Ejecutivo de Cartera';
+    if (location.pathname.startsWith('/timeline')) return 'Timeline de Portfolio';
     if (location.pathname === '/proveedores') return 'Socios Tecnológicos (Directorio)';
     if (location.pathname.startsWith('/proyecto/')) return 'Detalle de Proyecto';
     if (location.pathname.startsWith('/proveedor/')) return 'Vista 360º de Partner';
@@ -483,6 +493,10 @@ function MainAppContent() {
             
             <Route path="/governance" element={
               <GovernanceDashboard onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+            } />
+
+            <Route path="/timeline" element={
+              <Timeline onViewProject={handleViewProject} />
             } />
             
             <Route path="/proveedores" element={

@@ -17,7 +17,15 @@ const { getProjectCalculations } = require('./models/automations');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET || 'pmo-secret-key-change-in-production';
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET === 'pmo-secret-key-change-in-production') {
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ WARNING: JWT_SECRET not set or using default key in production! Generating a secure random key for this session...');
+    JWT_SECRET = crypto.randomBytes(64).toString('hex');
+  } else {
+    JWT_SECRET = 'pmo-secret-key-change-in-production';
+  }
+}
 
 // Security Headers
 app.use(helmet());
@@ -113,6 +121,51 @@ async function restrictToAdmin(req, res, next) {
   } catch (error) {
     handleErr(res, error, 500);
   }
+}
+
+// Helper: Sanitize HTML content to prevent Stored XSS
+function sanitizeHTML(html) {
+  if (typeof html !== 'string') return '';
+  
+  // 1. Remove script tags and their content
+  let clean = html.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '');
+  
+  // 2. Remove style tags and their content
+  clean = clean.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, '');
+  
+  // 3. Remove inline events (onmouseover, onclick, onerror, etc.)
+  clean = clean.replace(/on\w+\s*=\s*(['"])(.*?)\1/gi, '');
+  clean = clean.replace(/on\w+\s*=\s*([^\s>]+)/gi, '');
+  
+  // 4. Remove javascript: URIs
+  clean = clean.replace(/href\s*=\s*(['"])\s*javascript:(.*?)\1/gi, '');
+  clean = clean.replace(/href\s*=\s*javascript:([^\s>]+)/gi, '');
+  
+  // 5. Remove other risky protocols
+  clean = clean.replace(/href\s*=\s*(['"])\s*(data|vbscript):(.*?)\1/gi, '');
+  clean = clean.replace(/src\s*=\s*(['"])\s*(data|javascript|vbscript):(.*?)\1/gi, '');
+
+  // 6. Strip non-whitelisted HTML tags
+  clean = clean.replace(/<[^>]+>/g, (match) => {
+    if (match.match(/^<\/?(p|strong|em|br|ul|ol|li|span|div|h1|h2|h3|h4|h5|h6|blockquote|table|thead|tbody|tr|th|td)(\s[^>]*)?>$/i)) {
+      return match.replace(/\s+on\w+\s*=\s*(['"])(.*?)\1/gi, '')
+                  .replace(/\s+on\w+\s*=\s*([^\s>]+)/gi, '')
+                  .replace(/\s+href\s*=\s*(['"])\s*javascript:(.*?)\1/gi, '')
+                  .replace(/\s+href\s*=\s*javascript:([^\s>]+)/gi, '');
+    }
+    return '';
+  });
+  
+  return clean;
+}
+
+// Helper: Sanitize values for Excel export to prevent Formula / CSV Injection
+function sanitizeExcelValue(val) {
+  if (typeof val !== 'string') return val;
+  if (val.startsWith('=') || val.startsWith('+') || val.startsWith('-') || val.startsWith('@')) {
+    return `'${val}`;
+  }
+  return val;
 }
 
 // Helper: Auto-generate code IDs (Format: PREFIX-YYYY-XXX)
@@ -454,6 +507,50 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
 });
 
 // ==========================================
+// 5.5 Timeline / Gantt (Portfolio View)
+// ==========================================
+app.get('/api/timeline', async (req, res) => {
+  try {
+    const projects = await Proyectos.findAll({
+      include: [
+        { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
+        { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
+        { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'proyecto_cerrado'] },
+        { model: Tareas, where: { es_hito: true }, required: false, attributes: ['id_tarea', 'titulo_tarea', 'fecha_limite', 'estado'] }
+      ],
+      order: [['fecha_inicio', 'ASC']]
+    });
+
+    const timelineData = await Promise.all(
+      projects.map(async (p) => {
+        const calc = await getProjectCalculations(p.id_proyecto, p.budget_inicial, p.fecha_fin_inicial);
+        return {
+          id_proyecto: p.id_proyecto,
+          nombre_proyecto: p.nombre_proyecto,
+          pm_nombre: p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin PM',
+          prov_nombre: p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner',
+          indicador_rag: p.indicador_rag,
+          estado_proyecto: p.Estado ? p.Estado.nombre_estado : 'Sin Estado',
+          proyecto_cerrado: p.Estado ? p.Estado.proyecto_cerrado : false,
+          fecha_inicio: p.fecha_inicio,
+          fecha_fin_estimada: calc.fecha_fin_estimada,
+          hitos: (p.Tareas || []).map(t => ({
+            id_tarea: t.id_tarea,
+            titulo_tarea: t.titulo_tarea,
+            fecha_limite: t.fecha_limite,
+            estado: t.estado
+          }))
+        };
+      })
+    );
+
+    res.json(timelineData);
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// ==========================================
 // 6. Proyectos (Portfolio Dashboard & CRUD)
 // ==========================================
 
@@ -635,14 +732,14 @@ app.get('/api/projects/export', async (req, res) => {
       if (fecha_hasta && p.fecha_inicio > fecha_hasta) continue;
 
       const row = worksheet.addRow({
-        id_proyecto: p.id_proyecto,
-        nombre_proyecto: p.nombre_proyecto,
-        estado_proyecto: p.Estado ? p.Estado.nombre_estado : 'Sin Estado',
-        indicador_rag: p.indicador_rag,
-        proveedor: p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner',
-        pm: p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin PM',
-        sede: p.Sede ? p.Sede.nombre_sede : '',
-        po_list,
+        id_proyecto: sanitizeExcelValue(p.id_proyecto),
+        nombre_proyecto: sanitizeExcelValue(p.nombre_proyecto),
+        estado_proyecto: sanitizeExcelValue(p.Estado ? p.Estado.nombre_estado : 'Sin Estado'),
+        indicador_rag: sanitizeExcelValue(p.indicador_rag),
+        proveedor: sanitizeExcelValue(p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner'),
+        pm: sanitizeExcelValue(p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin PM'),
+        sede: sanitizeExcelValue(p.Sede ? p.Sede.nombre_sede : ''),
+        po_list: sanitizeExcelValue(po_list),
         budget_inicial,
         budget_actualizado,
         consumo_real,
@@ -818,6 +915,22 @@ app.delete('/api/projects/:id_proyecto', async (req, res) => {
     if (!project) {
       return res.status(404).json({ error: 'Proyecto no encontrado' });
     }
+
+    const user = await Usuarios.findByPk(req.currentPmId);
+    if (!user) {
+      return res.status(401).json({ error: 'Acceso denegado. Usuario no encontrado.' });
+    }
+
+    // Allow ADMINISTRADOR or DIRECTOR to delete any project.
+    // Allow PM to delete only if they are the owner of the project.
+    const isAuthorized = user.perfil === 'ADMINISTRADOR' || 
+                         user.perfil === 'DIRECTOR' || 
+                         project.id_pm === req.currentPmId;
+
+    if (!isAuthorized) {
+      return res.status(403).json({ error: 'Acceso denegado. No tienes permisos para eliminar este proyecto.' });
+    }
+
     await project.destroy();
     res.json({ message: 'Proyecto eliminado con éxito' });
   } catch (error) {
@@ -933,7 +1046,7 @@ app.put('/api/vendors/:id_proveedor', async (req, res) => {
 });
 
 // Delete vendor
-app.delete('/api/vendors/:id_proveedor', async (req, res) => {
+app.delete('/api/vendors/:id_proveedor', restrictToAdmin, async (req, res) => {
   try {
     const { id_proveedor } = req.params;
     const vendor = await Proveedores.findByPk(id_proveedor);
@@ -1287,7 +1400,7 @@ app.post('/api/comments', async (req, res) => {
     const comment = await ComentariosProyecto.create({
       id_proyecto,
       id_usuario: authorId,
-      texto_comentario,
+      texto_comentario: sanitizeHTML(texto_comentario),
       es_importante: es_importante !== undefined ? !!es_importante : false,
       fecha_registro: new Date()
     });
@@ -1323,7 +1436,7 @@ app.put('/api/comments/:id_comentario', async (req, res) => {
     }
 
     const updateData = {
-      texto_comentario,
+      texto_comentario: sanitizeHTML(texto_comentario),
       editado: true,
       id_usuario_modificacion: editorId,
       fecha_modificacion: new Date()

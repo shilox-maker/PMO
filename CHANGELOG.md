@@ -6,6 +6,21 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [1.7.0] - 2026-06-13
+
+### Añadido
+- **Timeline / Gantt de Portfolio**:
+  - Nueva vista global temporal de todos los proyectos activos.
+  - Representación visual con barras coloreadas según el estado RAG del proyecto.
+  - Hitos de proyecto integrados como diamantes interactivos con tooltips (estado y fecha límite).
+  - Tres niveles de zoom temporal dinámico: Trimestral, Mensual y Semanal.
+  - Filtros en tiempo real por RAG, PM y toggle para mostrar proyectos cerrados.
+  - Marcador dinámico del día "Hoy" y scroll automático a la posición temporal actual.
+  - Desarrollo 100% nativo con CSS/React, manteniendo compatibilidad total con los tres temas del sistema (Claro, Oscuro, Dacsa) sin dependencias de terceros.
+  - Nuevo endpoint en backend (`GET /api/timeline`) optimizado para servir datos de fechas e hitos.
+
+---
+
 ## [1.6.0] - 2026-06-12
 
 ### Añadido
