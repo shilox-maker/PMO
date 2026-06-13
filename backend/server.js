@@ -4,6 +4,8 @@ const { Op } = require('sequelize');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const ExcelJS = require('exceljs');
@@ -197,6 +199,19 @@ async function generateNextId(Model, prefix, keyName) {
   const paddedNum = String(nextNum).padStart(3, '0');
   return `${prefix}-${year}-${paddedNum}`;
 }
+
+// ==========================================
+// 0. System Info / Changelog
+// ==========================================
+app.get('/api/changelog', async (req, res) => {
+  try {
+    const filePath = path.join(__dirname, '..', 'CHANGELOG.md');
+    const content = fs.readFileSync(filePath, 'utf8');
+    res.json({ content });
+  } catch (error) {
+    res.status(500).json({ error: 'Error reading changelog.' });
+  }
+});
 
 // ==========================================
 // 1. Authentication / Login Endpoint

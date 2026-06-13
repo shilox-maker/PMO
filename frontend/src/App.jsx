@@ -11,8 +11,9 @@ import VendorDirectory from './pages/VendorDirectory';
 import AdminPanel from './pages/AdminPanel';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
-  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key
+  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info
 } from 'lucide-react';
+import pkg from '../package.json';
 
 function ChangePasswordModal({ isOpen, onClose }) {
   const { getAuthHeaders } = useAuth();
@@ -225,9 +226,49 @@ function LoginScreen() {
   );
 }
 
+function ChangelogModal({ isOpen, onClose }) {
+  const { getAuthHeaders } = useAuth();
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      fetch(`${import.meta.env.VITE_API_URL}/changelog`, { headers: getAuthHeaders() })
+        .then(r => r.json())
+        .then(data => {
+          setContent(data.content);
+          setLoading(false);
+        })
+        .catch(() => {
+          setContent('Error cargando el changelog.');
+          setLoading(false);
+        });
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 800 }}>
+        <div className="modal-header">
+          <h3 className="modal-title">Notas de Versión (Changelog)</h3>
+          <button className="icon-btn" onClick={onClose}>✕</button>
+        </div>
+        <div style={{ padding: '0 8px', overflowY: 'auto', maxHeight: '60vh', whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--md-sys-color-on-surface)' }}>
+          {loading ? 'Cargando...' : content}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function NavigationRail() {
   const { currentPm, logout, theme, toggleTheme } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -362,6 +403,23 @@ function NavigationRail() {
           {theme === 'dacsa' && <Building2 size={18} />}
           <span>Tema {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Dacsa'}</span>
         </button>
+
+        {/* Version / Changelog */}
+        <div style={{ marginTop: 16, textAlign: 'center' }}>
+          <button
+            onClick={() => setIsChangelogOpen(true)}
+            style={{
+              background: 'none', border: 'none', color: 'var(--md-sys-color-outline)',
+              fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%'
+            }}
+          >
+            <Info size={12} />
+            v{pkg.version} — Notas de versión
+          </button>
+        </div>
+
+        <ChangelogModal isOpen={isChangelogOpen} onClose={() => setIsChangelogOpen(false)} />
       </div>
     </div>
   );
