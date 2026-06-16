@@ -1,4 +1,4 @@
-# Changelog
+# CHANGELOG\n\n## [1.7.4] - 2026-06-16\n### Fixed\n- Duplicate app.listen error.\n- CORS cloudflare issues.\n- Evolutivo UI features complete.\n\n# Changelog
 
 Todas las novedades y cambios notables del sistema **Gobernanza PPM** se registrarán en este archivo.
 
