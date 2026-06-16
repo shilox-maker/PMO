@@ -18,7 +18,7 @@ const DEFAULT_PROJECT_COLUMNS = [
   { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
   { id: 'proveedor', label: 'Socio Tecnológico', fixed: false, visible: false },
   { id: 'pm', label: 'Gestor PM', fixed: false, visible: true },
-  { id: 'sede', label: 'Sede', fixed: false, visible: false }, label: 'PO (Purchase Order)', fixed: false, visible: true },
+  { id: 'sede', label: 'Sede', fixed: false, visible: false },
   { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: true },
   { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: true },
   { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
