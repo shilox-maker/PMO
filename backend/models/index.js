@@ -389,7 +389,7 @@ const Riesgos = sequelize.define('Riesgos', {
   },
   descripcion: {
     type: DataTypes.TEXT,
-    allowNull: false
+    allowNull: true
   },
   probabilidad: {
     type: DataTypes.ENUM('ALTA', 'MEDIA', 'BAJA'),
@@ -404,7 +404,7 @@ const Riesgos = sequelize.define('Riesgos', {
     allowNull: false
   },
   estado_riesgo: {
-    type: DataTypes.ENUM('ACTIVO', 'MITIGADO', 'CERRADO'),
+    type: DataTypes.ENUM('ACTIVO', 'CERRADO'),
     allowNull: false,
     defaultValue: 'ACTIVO'
   },
@@ -416,44 +416,31 @@ const Riesgos = sequelize.define('Riesgos', {
 
 // 9. LeccionesAprendidas Model (Knowledge Base)
 const LeccionesAprendidas = sequelize.define('Lecciones_Aprendidas', {
-  id_leccion: {
-    type: DataTypes.STRING, // Format: LEA-YYYY-XXX
+  id: {
+    type: DataTypes.INTEGER,
     primaryKey: true,
-    allowNull: false
-  },
-  tipo_leccion: {
-    type: DataTypes.ENUM('BUENA_PRACTICA', 'ERROR_A_EVITAR'),
-    allowNull: false
+    autoIncrement: true
   },
   id_proyecto: {
     type: DataTypes.STRING,
-    allowNull: true,
+    allowNull: false,
     references: {
       model: Proyectos,
       key: 'id_proyecto'
     },
-    onDelete: 'SET NULL'
-  },
-  id_proveedor: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: Proveedores,
-      key: 'id_proveedor'
-    },
-    onDelete: 'SET NULL'
+    onDelete: 'CASCADE'
   },
   titulo: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  contexto: {
+  descripcion: {
     type: DataTypes.TEXT,
-    allowNull: false
+    allowNull: true
   },
-  recomendacion_futura: {
-    type: DataTypes.TEXT,
-    allowNull: false
+  fecha_registro: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
 });
 
@@ -548,7 +535,7 @@ const CambiosAlcance = sequelize.define('Cambios_Alcance', {
     }
   },
   estado_cambio: {
-    type: DataTypes.ENUM('SOLICITADO', 'EN_REVISION', 'APROBADO', 'RECHAZADO'),
+    type: DataTypes.ENUM('SOLICITADO', 'APROBADO', 'RECHAZADO'),
     allowNull: false,
     defaultValue: 'SOLICITADO'
   },
@@ -724,12 +711,9 @@ Incidencias.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
 Proyectos.hasMany(Riesgos, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
 Riesgos.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
 
-// Project and Proveedor have optional links to LeccionesAprendidas
-Proyectos.hasMany(LeccionesAprendidas, { foreignKey: 'id_proyecto', onDelete: 'SET NULL' });
-LeccionesAprendidas.belongsTo(Proyectos, { foreignKey: 'id_proyecto', allowNull: true });
-
-Proveedores.hasMany(LeccionesAprendidas, { foreignKey: 'id_proveedor', onDelete: 'SET NULL' });
-LeccionesAprendidas.belongsTo(Proveedores, { foreignKey: 'id_proveedor', allowNull: true });
+// Project has many LeccionesAprendidas
+Proyectos.hasMany(LeccionesAprendidas, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
+LeccionesAprendidas.belongsTo(Proyectos, { foreignKey: 'id_proyecto', allowNull: false });
 
 // Project has many Facturas
 Proyectos.hasMany(Facturas, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });

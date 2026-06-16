@@ -24,6 +24,18 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [issuesSort, setIssuesSort] = useState({ key: 'id_incidencia', direction: 'desc' });
   const [risksSort, setRisksSort] = useState({ key: 'id_riesgo', direction: 'desc' });
   const [tasksSort, setTasksSort] = useState({ key: 'fecha_limite', direction: 'asc' });
+  const [lessonsSort, setLessonsSort] = useState({ key: 'fecha_registro', direction: 'desc' });
+  // 7. Report Generator Modal
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportOptions, setReportOptions] = useState({
+    resumen: true,
+    hitos: true,
+    riesgos: true,
+    incidencias: true,
+    cambios: true,
+    lecciones: true
+  });
+
 
   const renderSortHeader = (label, key, sortConfig, setSortConfig, extraStyle = {}) => {
     const isSorted = sortConfig.key === key;
@@ -76,7 +88,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   // 2. Log / Edit Invoice Modal
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState(null); // If null: creating new, if object: editing existing
-  const [invoiceForm, setInvoiceForm] = useState({ id_interno_factura: '', id_proveedor: '', numero_factura: '', concepto: '', fecha_factura: '', importe: '', estado: 'PENDIENTE_DE_RECIBIR' });
+  const [invoiceForm, setInvoiceForm] = useState({ id_interno_factura: '', id_proveedor: '', numero_factura: '', concepto: '', fecha_factura: '', importe: '', estado: 'PENDIENTE_DE_RECIBIR', PO: '' });
   const [invoiceError, setInvoiceError] = useState('');
 
   // 3. Log / Edit CR Modal
@@ -227,7 +239,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   // ==========================================
   // REPORT ENGINE: Atomic Project Report
   // ==========================================
-  const generateProjectReport = () => {
+  const generateProjectReport = (e) => {
+    if (e) e.preventDefault();
+    setShowReportModal(false);
     if (!project) return;
 
     const importantComments = comments.filter(c => c.es_importante);
@@ -274,7 +288,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       `).join('');
     };
 
-    const commentsHtml = importantComments.length === 0
+    const commentsHtml = reportOptions.resumen ? (importantComments.length === 0
       ? '<p style="color:#999;text-align:center;padding:20px;">No hay comentarios ejecutivos marcados como importantes.</p>'
       : importantComments.map(c => `
         <div style="padding:16px;margin-bottom:12px;background:#fffbf0;border-left:4px solid #f59e0b;border-radius:8px;">
@@ -460,7 +474,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   // ==========================================
   const openAddInvoice = () => {
     setEditingInvoice(null);
-    setInvoiceForm({ id_interno_factura: '', id_proveedor: project.id_proveedor.toString(), numero_factura: '', concepto: '', fecha_factura: new Date().toISOString().split('T')[0], importe: '', estado: 'PENDIENTE_DE_RECIBIR' });
+    setInvoiceForm({ id_interno_factura: '', id_proveedor: project.id_proveedor.toString(), numero_factura: '', concepto: '', fecha_factura: new Date().toISOString().split('T')[0], importe: '', estado: 'PENDIENTE_DE_RECIBIR', PO: '' });
     setInvoiceError('');
     setShowInvoiceModal(true);
   };
@@ -474,7 +488,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       concepto: fac.concepto,
       fecha_factura: fac.fecha_factura,
       importe: fac.importe.toString(),
-      estado: fac.estado
+      estado: fac.estado,
+      PO: fac.PO || ''
     });
     setInvoiceError('');
     setShowInvoiceModal(true);
@@ -683,7 +698,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   };
 
   const handleToggleRiskState = (riskId, currentStatus) => {
-    const nextStatus = currentStatus === 'ACTIVO' ? 'MITIGADO' : currentStatus === 'MITIGADO' ? 'CERRADO' : 'ACTIVO';
+    const nextStatus = currentStatus === 'ACTIVO' ? 'CERRADO' : 'ACTIVO';
     fetch(`${import.meta.env.VITE_API_URL}/risks/${riskId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
@@ -698,7 +713,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   // ==========================================
   const openAddIssue = () => {
     setEditingIssue(null);
-    setIssueForm({ id_incidencia: '', titulo: '', descripcion: '', tipo_incidencias: 'TECNICA', criticidad: 'MEDIA', estado: 'ABIERTA', fecha_apertura: new Date().toISOString().split('T')[0], solucion_aplicada: '' });
+    setIssueForm({ id_incidencia: '', titulo: '', descripcion: '', tipo_incidencias: 'TECNICA', criticidad: 'MEDIA', estado: 'ABIERTA', fecha_apertura: new Date().toISOString().split('T')[0], fecha_cierre: '', solucion_aplicada: '' });
     setIssueError('');
     setShowIssueModal(true);
   };
@@ -713,6 +728,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       criticidad: inc.criticidad,
       estado: inc.estado,
       fecha_apertura: inc.fecha_apertura,
+      fecha_cierre: inc.fecha_cierre || '',
       solucion_aplicada: inc.solucion_aplicada || ''
     });
     setIssueError('');
@@ -781,6 +797,66 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     });
     setTaskError('');
     setShowTaskModal(true);
+  };
+
+  
+  // 8. Log / Edit Lesson Modal
+  const [showLessonModal, setShowLessonModal] = useState(false);
+  const [editingLesson, setEditingLesson] = useState(null);
+  const [lessonForm, setLessonForm] = useState({ titulo: '', descripcion: '' });
+  const [lessonError, setLessonError] = useState('');
+
+  const openAddLesson = () => {
+    setEditingLesson(null);
+    setLessonForm({ titulo: '', descripcion: '' });
+    setLessonError('');
+    setShowLessonModal(true);
+  };
+
+  const openEditLesson = (les) => {
+    setEditingLesson(les);
+    setLessonForm({ titulo: les.titulo, descripcion: les.descripcion || '' });
+    setLessonError('');
+    setShowLessonModal(true);
+  };
+
+  const handleLessonSubmit = (e) => {
+    e.preventDefault();
+    setLessonError('');
+    if (!lessonForm.titulo) {
+      setLessonError('El título es obligatorio.');
+      return;
+    }
+    const payload = { ...lessonForm, id_proyecto: projectId };
+    const isEdit = !!editingLesson;
+    const url = isEdit ? `${import.meta.env.VITE_API_URL}/lessons/${editingLesson.id}` : `${import.meta.env.VITE_API_URL}/lessons`;
+    const method = isEdit ? 'PUT' : 'POST';
+
+    fetch(url, {
+      method,
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload)
+    })
+      .then(async (res) => {
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error);
+        return d;
+      })
+      .then(() => {
+        setShowLessonModal(false);
+        fetchProjectData();
+      })
+      .catch(err => setLessonError(err.message));
+  };
+
+  const handleDeleteLesson = (lessonId) => {
+    if (!window.confirm('¿Seguro que desea eliminar esta lección?')) return;
+    fetch(`${import.meta.env.VITE_API_URL}/lessons/${lessonId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    })
+      .then(() => fetchProjectData())
+      .catch(err => console.error(err));
   };
 
   const handleTaskSubmit = (e) => {
@@ -887,7 +963,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           
           <button 
             className="m3-btn" 
-            onClick={generateProjectReport}
+            onClick={() => setShowReportModal(true)}
             style={{ 
               background: 'linear-gradient(135deg, #f59e0b, #d97706)', 
               color: '#fff', 
@@ -1456,7 +1532,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                               <Edit2 size={16} />
                             </button>
 
-                            {(cr.estado_cambio === 'SOLICITADO' || cr.estado_cambio === 'EN_REVISION') && (
+                            {(cr.estado_cambio === 'SOLICITADO') && (
                               <>
                                 <button 
                                   className="icon-btn" 
@@ -1590,7 +1666,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                     </thead>
                     <tbody>
                       {getSortedData(project.Riesgos || [], risksSort).map(rsg => (
-                        <tr key={rsg.id_riesgo}>
+                        <tr key={rsg.id_riesgo} style={{ opacity: rsg.estado_riesgo === 'CERRADO' ? 0.6 : 1 }}>
                           <td style={{ fontWeight: 700 }}>{rsg.id_riesgo}</td>
                           <td>
                             <div style={{ fontWeight: 600 }}>{rsg.titulo_riesgo}</div>
@@ -1601,7 +1677,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                           <td>{rsg.fecha_proxima_revision}</td>
                           <td>
                             <button 
-                              className={`badge ${rsg.estado_riesgo === 'ACTIVO' ? 'badge-red' : rsg.estado_riesgo === 'MITIGADO' ? 'badge-orange' : 'badge-green'}`}
+                              className={`badge ${rsg.estado_riesgo === 'ACTIVO' ? 'badge-red' : 'badge-green'}`}
                               onClick={() => handleToggleRiskState(rsg.id_riesgo, rsg.estado_riesgo)}
                               style={{ border: 'none', cursor: 'pointer' }}
                             >
@@ -2287,7 +2363,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                     className="user-select"
                   >
                     <option value="SOLICITADO">SOLICITADO</option>
-                    <option value="EN_REVISION">EN REVISION</option>
                     <option value="APROBADO">APROBADO</option>
                     <option value="RECHAZADO">RECHAZADO</option>
                   </select>
@@ -2435,15 +2510,25 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                     <option value="ALTA">ALTA</option>
                   </select>
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Estado *</label>
+                  <select 
+                    value={riskForm.estado_riesgo}
+                    onChange={(e) => setRiskForm({ ...riskForm, estado_riesgo: e.target.value })}
+                    className="user-select"
+                  >
+                    <option value="ACTIVO">ACTIVO</option>
+                    <option value="CERRADO">CERRADO</option>
+                  </select>
+                </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Descripción del Evento de Riesgo *</label>
+                <label className="form-label">Descripción del Evento de Riesgo</label>
                 <textarea 
                   value={riskForm.descripcion}
                   onChange={(e) => setRiskForm({ ...riskForm, descripcion: e.target.value })}
                   placeholder="Detalles sobre qué podría pasar..."
-                  required
                   rows={2}
                   className="m3-input"
                 />
@@ -2561,6 +2646,16 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                     value={issueForm.fecha_apertura}
                     onChange={(e) => setIssueForm({ ...issueForm, fecha_apertura: e.target.value })}
                     required
+                    className="m3-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Fecha de Cierre (Manual)</label>
+                  <input 
+                    type="date" 
+                    value={issueForm.fecha_cierre}
+                    onChange={(e) => setIssueForm({ ...issueForm, fecha_cierre: e.target.value })}
                     className="m3-input"
                   />
                 </div>

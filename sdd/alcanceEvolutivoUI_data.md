@@ -1,0 +1,63 @@
+# Alcance: Evolución UI/UX, Auditoría Automática, y Refactorización Dacsa Group
+
+## 1. Objetivo
+Aplicar correcciones de interfaz (nomenclatura, transparencias, alineaciones) y evolucionar las reglas de negocio del sistema: habilitar la multi-sociedad para el "Grupo Dacsa", añadir auditoría automática en modificaciones de presupuesto/fechas, extender el panel de administración con sedes, e incluir visualizaciones avanzadas (Timeline y control de facturación desglosado) en los proyectos.
+
+## 2. Impacto y Conflictos
+*   **Modifica (BBDD):** Entidad `Proveedores`. Se inyecta semilla (Seed) de limpieza para Key Users.
+*   **Añade (Frontend):** Nueva vista de mantenimiento `Sedes` en el panel de Administración. Componente `Timeline` en la vista de detalle de Proyectos.
+*   **Modifica (Frontend):** `index.html` (Título). Navbar superior (se elimina el perfil de usuario). Sidebar (recibe la acción de cambiar contraseña). Parser del editor WYSIWYG. Dashboard Ejecutivo (nuevas métricas y columnas).
+*   **Modifica (Backend):** Controlador de actualización de Proyectos (para disparar creación automática de comentarios).
+*   **Resuelve Conflicto:** Invalida la ubicación del modal de `alcanceCambioPasswordUsuario.md`, moviéndolo a la barra lateral.
+
+## 3. Modelo de Datos / Estructura (SQLite)
+*   `Proveedores`: `ADD COLUMN es_grupo_dacsa BOOLEAN DEFAULT FALSE`. (Empresas como "Maicerías Españolas" o "Dacsa Atlantic" tendrán este valor en TRUE, las externas en FALSE).
+*   `Sedes`: Activación de sus endpoints CRUD (`GET, POST, PUT, DELETE /api/sedes`) para ser consumidos desde el Panel de Administración.
+*   `Comentarios_Proyecto`: No sufre cambios estructurales, pero recibirá inserciones automáticas con un "usuario del sistema" (ej. ID 0 o System).
+
+## 4. Criterios de Aceptación (BDD)
+
+**Escenario 1: Refactorización "Grupo Dacsa" y Key Users**
+*   **Dado que** un Administrador gestiona los "Socios Tecnológicos" (Proveedores)...
+*   **Cuando** crea o edita un proveedor...
+*   **Entonces** debe existir un checkbox que indique "Pertenece al Grupo Dacsa". 
+*   **Y Cuando** se busca un Key User en el Combobox predictivo...
+*   **Entonces** los usuarios pertenecientes a cualquier empresa marcada con dicho checkbox aparecerán arriba como "Preferentes", eliminando la antigua lógica rígida de "Mi empresa". Los Key Users huérfanos del sistema anterior deberán ser purgados vía script de migración.
+
+**Escenario 2: Auditoría Automática en el Muro de Comentarios**
+*   **Dado que** el PM edita la ficha principal de un Proyecto...
+*   **Cuando** modifica los campos `fecha_fin_base` o `presupuesto_inicial` y guarda los cambios...
+*   **Entonces** el backend debe interceptar el cambio y crear automáticamente un registro en `Comentarios_Proyecto` con el texto: *"El usuario [Nombre] ha modificado el [Campo] de [Valor Antiguo] a [Valor Nuevo]"*.
+
+**Escenario 3: Correcciones de Interfaz y Editor WYSIWYG**
+*   **Dado que** se navega por la interfaz general...
+*   **Cuando** se visualizan los avatares de los Key Users en la ficha del proyecto...
+*   **Entonces** las iniciales deben estar perfectamente centradas (Flexbox/Grid center).
+*   **Y Cuando** se usa el selector de columnas oscurecido en la Vista de Proyectos...
+*   **Entonces** el fondo no debe ser transparente (asignar background sólido en CSS dark mode).
+*   **Y Cuando** se redacta y guarda un comentario en el muro usando los colores Verde, Azul o Morado...
+*   **Entonces** el motor de renderizado (Sanitizer) debe permitir atributos `style="color: ..."` o clases específicas para que los colores persistan en el modo lectura.
+
+**Escenario 4: Rebranding y Reubicación de Menús**
+*   **Dado que** se carga la aplicación web...
+*   **Cuando** se inspecciona el título del navegador y el logotipo/cabecera...
+*   **Entonces** el texto debe decir "PMO Management". La zona superior derecha estará vacía (sin datos de usuario), y la acción de "Cambiar Contraseña" estará ubicada en el pie de la barra de navegación lateral izquierda.
+
+**Escenario 5: Mantenimiento de Sedes**
+*   **Dado que** un usuario con perfil ADMINISTRADOR entra a la configuración...
+*   **Cuando** accede al panel...
+*   **Entonces** debe tener una nueva pestaña "Gestión de Sedes" que permita realizar el CRUD completo (Crear, Leer, Actualizar, Eliminar) sobre la tabla `Sedes`.
+
+**Escenario 6: Enriquecimiento de la Ficha de Proyecto (Timeline y Finanzas)**
+*   **Dado que** el PM revisa el detalle de un proyecto...
+*   **Cuando** observa el nuevo panel de Timeline...
+*   **Entonces** debe visualizar cronológicamente la Fecha Inicial Base, los Hitos (`Tareas` con `es_hito = true`), las aprobaciones de Cambios de Alcance y la Fecha Fin.
+*   **Y Cuando** observa la Gestión Económica...
+*   **Entonces** debe visualizar explícitamente dos sumatorios: "Total Facturado" (Solo facturas en estado `RECIBIDA`) y "Total Facturado + Pendiente" (Facturas `RECIBIDA` + `PENDIENTE_DE_RECIBIR`).
+
+**Escenario 7: Ajustes en el Executive Dashboard (/governance)**
+*   **Dado que** un Director visualiza los KPIs del portfolio...
+*   **Cuando** carga la pantalla...
+*   **Entonces** las tarjetas de "Gobernanza" y "Planes Inactivos" deben estar alineadas horizontalmente junto a "Proyectos en Desborde" y "Alerta Preventiva CAPEX".
+*   **Y Cuando** visualiza la tabla principal del dashboard...
+*   **Entonces** debe existir una nueva columna llamada "Último Comentario" que muestre un extracto truncado del último mensaje publicado en el muro de ese proyecto.

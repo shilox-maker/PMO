@@ -804,6 +804,7 @@ app.get('/api/projects/:id_proyecto', async (req, res) => {
         { model: KeyUsers, as: 'ComSteerCoKUs', through: { attributes: [] } },
         { model: Incidencias, order: [['fecha_apertura', 'DESC']] },
         { model: Riesgos, order: [['fecha_proxima_revision', 'ASC']] },
+        { model: LeccionesAprendidas, order: [['fecha_registro', 'DESC']] },
         { model: Facturas, order: [['fecha_factura', 'DESC']] },
         { model: CambiosAlcance, include: [
           { model: KeyUsers, as: 'Solicitante', attributes: ['nombre', 'apellidos'] },
@@ -1767,7 +1768,44 @@ if (process.env.NODE_ENV !== 'test') {
       } else {
         console.log('✅ Database is up to date');
       }
-      app.listen(PORT, '0.0.0.0', () => {
+      app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+// ==========================================
+// LECCIONES APRENDIDAS CRUD
+// ==========================================
+app.post('/api/lessons', async (req, res) => {
+  try {
+    const lesson = await LeccionesAprendidas.create(req.body);
+    res.status(201).json(lesson);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/lessons/:id', async (req, res) => {
+  try {
+    const lesson = await LeccionesAprendidas.findByPk(req.params.id);
+    if (!lesson) return res.status(404).json({ error: 'Not found' });
+    await lesson.update(req.body);
+    res.json(lesson);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/lessons/:id', async (req, res) => {
+  try {
+    const lesson = await LeccionesAprendidas.findByPk(req.params.id);
+    if (!lesson) return res.status(404).json({ error: 'Not found' });
+    await lesson.destroy();
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+ app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 Server running on port ${PORT} and listening on 0.0.0.0`);
       });
     })
