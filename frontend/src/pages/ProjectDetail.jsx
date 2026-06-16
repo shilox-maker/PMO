@@ -4,7 +4,7 @@ import {
   ArrowLeft, Calendar, Building, User, MapPin, DollarSign, 
   TrendingUp, Activity, CheckSquare, ShieldAlert, AlertTriangle, 
   MessageSquare, FileText, Plus, Trash2, Edit2, Check, X, RefreshCw,
-  Star, FileDown, Printer, ArrowUp, ArrowDown, ArrowUpDown
+  Star, FileDown, Printer, ArrowUp, ArrowDown, ArrowUpDown, BookOpen
 } from 'lucide-react';
 import SearchableKeyUserSelect from '../components/SearchableKeyUserSelect';
 import Timeline from './Timeline';
