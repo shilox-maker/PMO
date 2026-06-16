@@ -18,7 +18,7 @@ function sanitizeHtml(htmlString) {
     const tagName = node.tagName.toLowerCase();
     
     // Allowed tags list
-    const allowedTags = ['b', 'strong', 'i', 'em', 'u', 'span', 'p', 'br', 'ul', 'ol', 'li', 'img'];
+    const allowedTags = ['b', 'strong', 'i', 'em', 'u', 'span', 'p', 'br', 'ul', 'ol', 'li', 'img', 'font'];
     
     if (!allowedTags.includes(tagName)) {
       // If tag is not allowed, recursively keep children

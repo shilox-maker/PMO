@@ -1045,6 +1045,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           <CheckSquare size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
           Checklist PM
         </button>
+        <button className={`m3-tab ${activeTab === 'lecciones' ? 'active' : ''}`} onClick={() => setActiveTab('lecciones')}>
+          <BookOpen size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          Lecciones Aprendidas
+        </button>
       </div>
 
       {/* Tab Panels */}
@@ -1855,6 +1859,61 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         <Trash2 size={14} />
                       </button>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PANEL: LECCIONES APRENDIDAS */}
+        {activeTab === 'lecciones' && (
+          <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Lecciones Aprendidas del Proyecto</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
+                  Buenas prácticas y errores a evitar documentados en este proyecto.
+                </p>
+              </div>
+              <button className="m3-btn m3-btn-primary" onClick={openAddLesson}>
+                <Plus size={16} style={{ marginRight: 8 }} /> Registrar Lección
+              </button>
+            </div>
+
+            {(!project.Lecciones_Aprendidas && !project.LeccionesAprendidas || (project.Lecciones_Aprendidas || project.LeccionesAprendidas || []).length === 0) ? (
+              <p style={{ color: 'var(--md-sys-color-outline)', textAlign: 'center', padding: '24px 0' }}>
+                No se han registrado lecciones aprendidas en este proyecto.
+              </p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: 20 }}>
+                {getSortedData(project.Lecciones_Aprendidas || project.LeccionesAprendidas || [], lessonsSort).map(lesson => (
+                  <div key={lesson.id_leccion} style={{ padding: 20, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '16px', border: '1px solid var(--md-sys-color-outline-variant)', position: 'relative' }}>
+                    <div style={{ position: 'absolute', right: 12, top: 12, display: 'flex', gap: 8 }}>
+                      <button className="icon-btn" onClick={() => openEditLesson(lesson)} style={{ color: 'var(--md-sys-color-primary)', width: 24, height: 24 }} title="Editar lección">
+                        <Edit2 size={12} />
+                      </button>
+                      <button className="icon-btn" onClick={() => handleDeleteLesson(lesson.id_leccion)} style={{ color: 'var(--color-rag-red)', width: 24, height: 24 }} title="Eliminar lección">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                      <span className="project-id-badge">{lesson.id_leccion}</span>
+                      <span className={`badge ${lesson.tipo_leccion === 'BUENA_PRACTICA' ? 'badge-green' : 'badge-red'}`}>
+                        {lesson.tipo_leccion === 'BUENA_PRACTICA' ? 'Buena Práctica' : 'Error a Evitar'}
+                      </span>
+                    </div>
+                    <h4 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 8 }}>{lesson.titulo}</h4>
+                    {lesson.contexto && (
+                      <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>
+                        <strong>Contexto:</strong> {lesson.contexto}
+                      </p>
+                    )}
+                    {lesson.recomendacion_futura && (
+                      <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-on-surface)' }}>
+                        <strong>Recomendación futura:</strong> {lesson.recomendacion_futura}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -2784,6 +2843,82 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 </button>
                 <button type="submit" className="m3-btn m3-btn-primary">
                   {editingTask ? 'Guardar Cambios' : 'Crear Tarea'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Add / Edit Lesson Modal */}
+      {showLessonModal && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">{editingLesson ? 'Editar Lección Aprendida' : 'Registrar Lección Aprendida'}</h3>
+              <button className="icon-btn" onClick={() => setShowLessonModal(false)}>✕</button>
+            </div>
+
+            {lessonError && (
+              <div style={{ backgroundColor: 'rgba(255, 69, 58, 0.1)', color: 'var(--color-rag-red)', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: '0.9rem' }}>
+                {lessonError}
+              </div>
+            )}
+
+            <form onSubmit={handleLessonSubmit}>
+              <div className="form-group">
+                <label className="form-label">Título *</label>
+                <input 
+                  type="text" 
+                  value={lessonForm.titulo}
+                  onChange={(e) => setLessonForm({ ...lessonForm, titulo: e.target.value })}
+                  placeholder="Ej. Realizar pruebas integradas tempranas"
+                  required
+                  className="m3-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Tipo de Lección *</label>
+                <select
+                  value={lessonForm.tipo_leccion}
+                  onChange={(e) => setLessonForm({ ...lessonForm, tipo_leccion: e.target.value })}
+                  className="user-select"
+                  required
+                >
+                  <option value="BUENA_PRACTICA">Buena Práctica</option>
+                  <option value="ERROR_A_EVITAR">Error a Evitar</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Contexto (Problema/Situación)</label>
+                <textarea 
+                  value={lessonForm.contexto}
+                  onChange={(e) => setLessonForm({ ...lessonForm, contexto: e.target.value })}
+                  placeholder="Explica qué sucedió..."
+                  className="m3-input"
+                  rows={3}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Recomendación Futura</label>
+                <textarea 
+                  value={lessonForm.recomendacion_futura}
+                  onChange={(e) => setLessonForm({ ...lessonForm, recomendacion_futura: e.target.value })}
+                  placeholder="Cómo proceder en el futuro..."
+                  className="m3-input"
+                  rows={3}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
+                <button type="button" className="m3-btn m3-btn-outline" onClick={() => setShowLessonModal(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="m3-btn m3-btn-primary">
+                  {editingLesson ? 'Guardar Cambios' : 'Registrar Lección'}
                 </button>
               </div>
             </form>

@@ -421,25 +421,43 @@ const Riesgos = sequelize.define('Riesgos', {
 
 // 9. LeccionesAprendidas Model (Knowledge Base)
 const LeccionesAprendidas = sequelize.define('Lecciones_Aprendidas', {
-  id: {
-    type: DataTypes.INTEGER,
+  id_leccion: {
+    type: DataTypes.STRING,
     primaryKey: true,
-    autoIncrement: true
+    allowNull: false
+  },
+  tipo_leccion: {
+    type: DataTypes.ENUM('BUENA_PRACTICA', 'ERROR_A_EVITAR'),
+    allowNull: false,
+    defaultValue: 'BUENA_PRACTICA'
   },
   id_proyecto: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: Proyectos,
       key: 'id_proyecto'
     },
-    onDelete: 'CASCADE'
+    onDelete: 'SET NULL'
+  },
+  id_proveedor: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Proveedores,
+      key: 'id_proveedor'
+    },
+    onDelete: 'SET NULL'
   },
   titulo: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  descripcion: {
+  contexto: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  recomendacion_futura: {
     type: DataTypes.TEXT,
     allowNull: true
   },
@@ -448,6 +466,7 @@ const LeccionesAprendidas = sequelize.define('Lecciones_Aprendidas', {
     defaultValue: DataTypes.NOW
   }
 });
+
 
 // 10. Facturas Model
 const Facturas = sequelize.define('Facturas', {
@@ -717,8 +736,13 @@ Proyectos.hasMany(Riesgos, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
 Riesgos.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
 
 // Project has many LeccionesAprendidas
-Proyectos.hasMany(LeccionesAprendidas, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
-LeccionesAprendidas.belongsTo(Proyectos, { foreignKey: 'id_proyecto', allowNull: false });
+Proyectos.hasMany(LeccionesAprendidas, { foreignKey: 'id_proyecto', onDelete: 'SET NULL' });
+LeccionesAprendidas.belongsTo(Proyectos, { foreignKey: 'id_proyecto', as: 'Proyecto' });
+
+// Vendor has many LeccionesAprendidas
+Proveedores.hasMany(LeccionesAprendidas, { foreignKey: 'id_proveedor', onDelete: 'SET NULL' });
+LeccionesAprendidas.belongsTo(Proveedores, { foreignKey: 'id_proveedor', as: 'Proveedore' });
+
 
 // Project has many Facturas
 Proyectos.hasMany(Facturas, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });

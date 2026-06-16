@@ -143,13 +143,13 @@ function sanitizeHTML(html) {
   clean = clean.replace(/href\s*=\s*(['"])\s*javascript:(.*?)\1/gi, '');
   clean = clean.replace(/href\s*=\s*javascript:([^\s>]+)/gi, '');
   
-  // 5. Remove other risky protocols
+  // 5. Remove other risky protocols (allow data:image/... for embedded images)
   clean = clean.replace(/href\s*=\s*(['"])\s*(data|vbscript):(.*?)\1/gi, '');
-  clean = clean.replace(/src\s*=\s*(['"])\s*(data|javascript|vbscript):(.*?)\1/gi, '');
+  clean = clean.replace(/src\s*=\s*(['"])\s*(data:(?!image\/)|javascript|vbscript):(.*?)\1/gi, '');
 
   // 6. Strip non-whitelisted HTML tags
   clean = clean.replace(/<[^>]+>/g, (match) => {
-    if (match.match(/^<\/?(p|strong|em|br|ul|ol|li|span|div|h1|h2|h3|h4|h5|h6|blockquote|table|thead|tbody|tr|th|td)(\s[^>]*)?>$/i)) {
+    if (match.match(/^<\/?(p|strong|em|br|ul|ol|li|span|div|h1|h2|h3|h4|h5|h6|blockquote|table|thead|tbody|tr|th|td|b|i|u|s|font|img)(\s[^>]*)?>$/i)) {
       return match.replace(/\s+on\w+\s*=\s*(['"])(.*?)\1/gi, '')
                   .replace(/\s+on\w+\s*=\s*([^\s>]+)/gi, '')
                   .replace(/\s+href\s*=\s*(['"])\s*javascript:(.*?)\1/gi, '')
@@ -510,7 +510,7 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
 
         const lastComment = await ComentariosProyecto.findOne({
           where: { id_proyecto },
-          order: [['fecha_creacion', 'DESC']]
+          order: [['fecha_registro', 'DESC']]
         });
         const ultimo_comentario = lastComment ? lastComment.texto_comentario.replace(/<[^>]+>/g, '').substring(0, 100) + (lastComment.texto_comentario.length > 100 ? '...' : '') : '';
 
@@ -1085,7 +1085,7 @@ app.get('/api/vendors/:id_proveedor', async (req, res) => {
         ]
       },
       include: [
-        { model: Proyectos, attributes: ['nombre_proyecto'] }
+        { model: Proyectos, as: 'Proyecto', attributes: ['nombre_proyecto'] }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -1416,8 +1416,8 @@ app.get('/api/lessons', async (req, res) => {
   try {
     const lessons = await LeccionesAprendidas.findAll({
       include: [
-        { model: Proyectos, attributes: ['nombre_proyecto'] },
-        { model: Proveedores, attributes: ['nombre_razon_social'] }
+        { model: Proyectos, as: 'Proyecto', attributes: ['nombre_proyecto'] },
+        { model: Proveedores, as: 'Proveedore', attributes: ['nombre_razon_social'] }
       ],
       order: [['createdAt', 'DESC']]
     });
