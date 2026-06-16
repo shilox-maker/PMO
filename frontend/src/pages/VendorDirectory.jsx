@@ -76,14 +76,15 @@ export default function VendorDirectory({ onViewVendor }) {
   }, []);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setVendorForm(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setVendorForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const openCreateModal = () => {
     setEditingVendor(null);
     setVendorForm({
       nombre_razon_social: '',
+      es_grupo_dacsa: false,
       telefono_general: '',
       email_general: ''
     });
@@ -351,6 +352,19 @@ export default function VendorDirectory({ onViewVendor }) {
                 />
               </div>
 
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                <input 
+                  type="checkbox" 
+                  name="es_grupo_dacsa"
+                  id="es_grupo_dacsa_create"
+                  checked={vendorForm.es_grupo_dacsa}
+                  onChange={handleInputChange}
+                  className="m3-checkbox"
+                  style={{ width: 18, height: 18 }}
+                />
+                <label htmlFor="es_grupo_dacsa_create" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>Pertenece al Grupo Dacsa</label>
+              </div>
+
               <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
                 <button type="button" className="m3-btn m3-btn-outline" onClick={() => setShowCreateModal(false)}>
                   Cancelar
@@ -412,6 +426,19 @@ export default function VendorDirectory({ onViewVendor }) {
                   onChange={handleInputChange}
                   className="m3-input"
                 />
+              </div>
+
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                <input 
+                  type="checkbox" 
+                  name="es_grupo_dacsa"
+                  id="es_grupo_dacsa_edit"
+                  checked={vendorForm.es_grupo_dacsa}
+                  onChange={handleInputChange}
+                  className="m3-checkbox"
+                  style={{ width: 18, height: 18 }}
+                />
+                <label htmlFor="es_grupo_dacsa_edit" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>Pertenece al Grupo Dacsa</label>
               </div>
 
               <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
