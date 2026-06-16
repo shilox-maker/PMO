@@ -1,4 +1,27 @@
-# CHANGELOG\n\n## [1.7.5] - 2026-06-16\n### Fixed\n- Allow bold (b) and italic (i) tags in sanitizeHTML for comments.\n\n## [1.7.4] - 2026-06-16\n### Fixed\n- Duplicate app.listen error.\n- CORS cloudflare issues.\n- Evolutivo UI features complete.\n\n# Changelog
+# CHANGELOG
+
+## [1.7.6] - 2026-06-17
+### Added
+- Project-specific timeline (miniature) integrated in the General tab of project detail view.
+- Checkbox "Pertenece al Grupo Dacsa" in the Vendor Directory modals (create/edit) to allow multi-society settings for Dacsa.
+- Support in "Planes Inactivos" card to act as a drilldown filter on click.
+- Column header and control for "Último Comentario" in the Governance Dashboard table.
+
+### Fixed
+- Fixed backend database constraint validation by replacing `id_autor` with `id_usuario` inside PUT `/api/projects/:id_proyecto` audit comments hooks.
+- Aligned Governance and Inactive Plans cards horizontally with Overrun and CAPEX cards in a clean layout.
+
+## [1.7.5] - 2026-06-16
+### Fixed
+- Allow bold (b) and italic (i) tags in sanitizeHTML for comments.
+
+## [1.7.4] - 2026-06-16
+### Fixed
+- Duplicate app.listen error.
+- CORS cloudflare issues.
+- Evolutivo UI features complete.
+
+# Changelog
 
 Todas las novedades y cambios notables del sistema **Gobernanza PPM** se registrarán en este archivo.
 
