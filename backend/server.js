@@ -960,7 +960,7 @@ app.put('/api/projects/:id_proyecto', async (req, res) => {
       await ComentariosProyecto.create({
         id_proyecto,
         texto_comentario: `El usuario <strong>${nombreAutor}</strong> ha modificado la <strong>Fecha Fin Base</strong> de ${project.fecha_fin_inicial || 'N/A'} a ${data.fecha_fin_inicial}`,
-        id_autor: autorId,
+        id_usuario: autorId,
         es_importante: true
       });
     }
@@ -969,7 +969,7 @@ app.put('/api/projects/:id_proyecto', async (req, res) => {
       await ComentariosProyecto.create({
         id_proyecto,
         texto_comentario: `El usuario <strong>${nombreAutor}</strong> ha modificado el <strong>Presupuesto Inicial</strong> de ${project.budget_inicial || '0'} a ${data.budget_inicial}`,
-        id_autor: autorId,
+        id_usuario: autorId,
         es_importante: true
       });
     }
