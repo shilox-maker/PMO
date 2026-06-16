@@ -49,7 +49,8 @@ export default function ColumnSelector({ columns, toggleColumn, resetColumns }) 
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+            backgroundColor: 'var(--md-sys-color-surface-container-highest)'
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--md-sys-color-outline-variant)', paddingBottom: 8 }}>

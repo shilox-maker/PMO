@@ -7,6 +7,7 @@ import {
   Star, FileDown, Printer, ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
 import SearchableKeyUserSelect from '../components/SearchableKeyUserSelect';
+import Timeline from './Timeline';
 import RichTextEditor from '../components/RichTextEditor';
 import { getSortedData } from '../utils/sorting';
 
@@ -1125,7 +1126,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {project.InvolvedKeyUsers?.map(ku => (
                       <div key={ku.id_ku} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px' }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)', display: 'flex', alignItems: 'center', justify: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                        <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
                           {ku.nombre[0]}{ku.apellidos[0]}
                         </div>
                         <div>
@@ -1431,27 +1432,27 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
             <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Resumen Presupuestario</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'flex', justify: 'space-between', fontSize: '0.9rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
                   <span style={{ color: 'var(--md-sys-color-outline)' }}>Presupuesto Inicial:</span>
                   <span style={{ fontWeight: 600 }}>{parseFloat(project.budget_inicial).toLocaleString('es-ES')} €</span>
                 </div>
-                <div style={{ display: 'flex', justify: 'space-between', fontSize: '0.9rem', color: 'var(--md-sys-color-primary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--md-sys-color-primary)' }}>
                   <span>Desviación Aprobada:</span>
                   <span style={{ fontWeight: 600 }}>
                     {(calc?.budget_actualizado - parseFloat(project.budget_inicial)).toLocaleString('es-ES', { signDisplay: 'always' })} €
                   </span>
                 </div>
                 <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)' }}></div>
-                <div style={{ display: 'flex', justify: 'space-between', fontSize: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
                   <span style={{ fontWeight: 600 }}>Presupuesto Actualizado:</span>
                   <span style={{ fontWeight: 700 }}>{calc?.budget_actualizado.toLocaleString('es-ES')} €</span>
                 </div>
-                <div style={{ display: 'flex', justify: 'space-between', fontSize: '0.9rem', color: 'var(--priority-alta)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: 'var(--priority-alta)' }}>
                   <span>Consumo Real Total:</span>
                   <span style={{ fontWeight: 600 }}>{calc?.consumo_real.toLocaleString('es-ES')} €</span>
                 </div>
                 <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)' }}></div>
-                <div style={{ display: 'flex', justify: 'space-between', padding: '12px', backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px' }}>
                   <span style={{ fontWeight: 600 }}>Presupuesto Disponible:</span>
                   <span style={{ 
                     fontWeight: 700, 

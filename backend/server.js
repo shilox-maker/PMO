@@ -133,7 +133,7 @@ function sanitizeHTML(html) {
   let clean = html.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '');
   
   // 2. Remove style tags and their content
-  clean = clean.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, '');
+  // clean = clean.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, ''); // Permitted style
   
   // 3. Remove inline events (onmouseover, onclick, onerror, etc.)
   clean = clean.replace(/on\w+\s*=\s*(['"])(.*?)\1/gi, '');
@@ -327,6 +327,39 @@ app.get('/api/pms', async (req, res) => {
 // ==========================================
 // 3. Sedes Endpoints
 // ==========================================
+
+// ==========================================
+// 3.5 Sedes CRUD
+// ==========================================
+app.post('/api/sedes', async (req, res) => {
+  try {
+    const sede = await Sedes.create(req.body);
+    res.status(201).json(sede);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+app.put('/api/sedes/:id', async (req, res) => {
+  try {
+    const sede = await Sedes.findByPk(req.params.id);
+    if (!sede) return res.status(404).json({ error: 'Not found' });
+    await sede.update(req.body);
+    res.json(sede);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+app.delete('/api/sedes/:id', async (req, res) => {
+  try {
+    const sede = await Sedes.findByPk(req.params.id);
+    if (!sede) return res.status(404).json({ error: 'Not found' });
+    await sede.destroy();
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.get('/api/sedes', async (req, res) => {
   try {
     const sedes = await Sedes.findAll({ order: [['nombre_sede', 'ASC']] });
@@ -474,6 +507,13 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
           }
         }
 
+
+        const lastComment = await ComentariosProyecto.findOne({
+          where: { id_proyecto },
+          order: [['fecha_creacion', 'DESC']]
+        });
+        const ultimo_comentario = lastComment ? lastComment.texto_comentario.replace(/<[^>]+>/g, '').substring(0, 100) + (lastComment.texto_comentario.length > 100 ? '...' : '') : '';
+
         return {
           id_proyecto: p.id_proyecto,
           nombre_proyecto: p.nombre_proyecto,
@@ -500,7 +540,8 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
           com_semanal_activo: p.com_semanal_activo,
           com_mensual_activo: p.com_mensual_activo,
           com_steerco_activo: p.com_steerco_activo,
-          ultima_actualizacion: maxUpdated.toISOString()
+          ultima_actualizacion: maxUpdated.toISOString(),
+          ultimo_comentario
         };
       })
     );
@@ -908,6 +949,30 @@ app.put('/api/projects/:id_proyecto', async (req, res) => {
 
     // Resolve state name to state ID if needed
     await resolveStateId(data);
+
+
+    // Auditoría de cambios (Fechas y Presupuesto)
+    const autorId = req.currentPmId || 0;
+    const autorObj = await Usuarios.findByPk(autorId);
+    const nombreAutor = autorObj ? `${autorObj.nombre} ${autorObj.apellidos}` : 'Sistema';
+
+    if (data.fecha_fin_inicial && project.fecha_fin_inicial !== data.fecha_fin_inicial) {
+      await ComentariosProyecto.create({
+        id_proyecto,
+        texto_comentario: `El usuario <strong>${nombreAutor}</strong> ha modificado la <strong>Fecha Fin Base</strong> de ${project.fecha_fin_inicial || 'N/A'} a ${data.fecha_fin_inicial}`,
+        id_autor: autorId,
+        es_importante: true
+      });
+    }
+
+    if (data.budget_inicial !== undefined && parseFloat(project.budget_inicial) !== parseFloat(data.budget_inicial)) {
+      await ComentariosProyecto.create({
+        id_proyecto,
+        texto_comentario: `El usuario <strong>${nombreAutor}</strong> ha modificado el <strong>Presupuesto Inicial</strong> de ${project.budget_inicial || '0'} a ${data.budget_inicial}`,
+        id_autor: autorId,
+        es_importante: true
+      });
+    }
 
     await project.update(data);
 

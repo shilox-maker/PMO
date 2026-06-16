@@ -802,7 +802,14 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                           )}
                         </td>}
 
-                        {/* Actions */}
+                        
+                <td style={{ padding: '12px 16px', fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
+                  <div style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.ultimo_comentario}>
+                    {p.ultimo_comentario || <span style={{ opacity: 0.5 }}>Sin comentarios</span>}
+                  </div>
+                </td>
+
+                {/* Actions */}
                         {visibleColumnsMap.accion && <td>
                           <button 
                             className="icon-btn" 

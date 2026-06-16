@@ -34,6 +34,11 @@ const Proveedores = sequelize.define('Proveedores', {
   email_general: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  es_grupo_dacsa: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
   }
 });
 

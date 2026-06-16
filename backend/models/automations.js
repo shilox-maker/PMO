@@ -40,8 +40,13 @@ async function getProjectCalculations(id_proyecto, budget_inicial, fecha_fin_ini
   });
 
   let consumo_real = 0;
+  let total_facturado = 0;
+  let total_pendiente = 0;
   invoices.forEach(fac => {
-    consumo_real += parseFloat(fac.importe || 0);
+    const amount = parseFloat(fac.importe || 0);
+    consumo_real += amount;
+    if (fac.estado === 'PAGADA') total_facturado += amount;
+    if (fac.estado === 'PENDIENTE_DE_RECIBIR') total_pendiente += amount;
   });
 
   // 3. Calculate budget available
@@ -60,6 +65,8 @@ async function getProjectCalculations(id_proyecto, budget_inicial, fecha_fin_ini
   return {
     budget_actualizado: Number(budget_actualizado.toFixed(2)),
     consumo_real: Number(consumo_real.toFixed(2)),
+    total_facturado: Number(total_facturado.toFixed(2)),
+    total_pendiente: Number(total_pendiente.toFixed(2)),
     presupuesto_disponible: Number(presupuesto_disponible.toFixed(2)),
     fecha_fin_estimada
   };

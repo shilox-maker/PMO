@@ -45,16 +45,18 @@ export default function SearchableKeyUserSelect({
     // 2. Group by company
     const groups = {};
     filtered.forEach(ku => {
-      const company = ku.Proveedore?.nombre_razon_social || ku.Proveedor?.nombre_razon_social || 'Sin Empresa';
+      const companyObj = ku.Proveedore || ku.Proveedor;
+      const company = companyObj?.nombre_razon_social || 'Sin Empresa';
+      const isDacsa = companyObj?.es_grupo_dacsa === true;
       if (!groups[company]) {
-        groups[company] = [];
+        groups[company] = { users: [], isDacsa };
       }
-      groups[company].push(ku);
+      groups[company].users.push(ku);
     });
 
     // 3. Sort key users in each company alphabetically by name + surname
     Object.keys(groups).forEach(company => {
-      groups[company].sort((a, b) => {
+      groups[company].users.sort((a, b) => {
         const nameA = `${a.nombre} ${a.apellidos}`.toLowerCase();
         const nameB = `${b.nombre} ${b.apellidos}`.toLowerCase();
         return nameA.localeCompare(nameB);
@@ -63,14 +65,15 @@ export default function SearchableKeyUserSelect({
 
     // 4. Sort company groups (Dacsa always on top, others alphabetically)
     const sortedCompanies = Object.keys(groups).sort((a, b) => {
-      if (a.toLowerCase() === 'dacsa') return -1;
-      if (b.toLowerCase() === 'dacsa') return 1;
+      if (groups[a].isDacsa && !groups[b].isDacsa) return -1;
+      if (!groups[a].isDacsa && groups[b].isDacsa) return 1;
       return a.localeCompare(b);
     });
 
     return sortedCompanies.map(company => ({
       company,
-      users: groups[company]
+      isDacsa: groups[company].isDacsa,
+      users: groups[company].users
     }));
   }, [keyUsers, search]);
 
@@ -208,16 +211,16 @@ export default function SearchableKeyUserSelect({
                     fontWeight: 'bold', 
                     textTransform: 'uppercase', 
                     letterSpacing: '0.05em',
-                    color: group.company.toLowerCase() === 'dacsa' ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline)',
+                    color: group.isDacsa ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline)',
                     padding: '4px 8px',
-                    backgroundColor: group.company.toLowerCase() === 'dacsa' ? 'rgba(168, 199, 250, 0.08)' : 'transparent',
+                    backgroundColor: group.isDacsa ? 'rgba(168, 199, 250, 0.08)' : 'transparent',
                     borderRadius: '4px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
                   }}>
                     <span>{group.company}</span>
-                    {group.company.toLowerCase() === 'dacsa' && (
+                    {group.isDacsa && (
                       <span style={{ 
                         fontSize: '0.65rem', 
                         fontWeight: 'bold',

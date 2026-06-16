@@ -531,12 +531,7 @@ function MainAppContent() {
           <h1 className="page-title">{getPageTitle()}</h1>
 
           <div className="top-bar-actions">
-            {currentPm && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 16px', backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '16px', fontSize: '0.85rem', fontWeight: 600 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--color-rag-green)' }}></div>
-                <span>Usuario: {currentPm.nombre} {currentPm.apellidos} ({currentPm.perfil})</span>
-              </div>
-            )}
+            {/* Topbar profile removed as per Rebranding requirements */}
           </div>
         </div>
 

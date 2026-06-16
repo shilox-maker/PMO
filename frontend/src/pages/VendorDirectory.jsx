@@ -49,7 +49,7 @@ export default function VendorDirectory({ onViewVendor }) {
   const [editingVendor, setEditingVendor] = useState(null);
   
   const [vendorForm, setVendorForm] = useState({
-    nombre_razon_social: '',
+    nombre_razon_social: '', es_grupo_dacsa: false,
     telefono_general: '',
     email_general: ''
   });
@@ -94,7 +94,7 @@ export default function VendorDirectory({ onViewVendor }) {
   const openEditModal = (vendor) => {
     setEditingVendor(vendor);
     setVendorForm({
-      nombre_razon_social: vendor.nombre_razon_social,
+      nombre_razon_social: vendor.nombre_razon_social, es_grupo_dacsa: vendor.es_grupo_dacsa || false,
       telefono_general: vendor.telefono_general || '',
       email_general: vendor.email_general || ''
     });
@@ -238,6 +238,7 @@ export default function VendorDirectory({ onViewVendor }) {
                       onClick={() => onViewVendor(vendor.id_proveedor)}
                     >
                       {vendor.nombre_razon_social}
+                      {vendor.es_grupo_dacsa && <span style={{ marginLeft: 8, fontSize: '0.65rem', backgroundColor: 'var(--md-sys-color-primary)', color: '#fff', padding: '2px 6px', borderRadius: 100 }}>Dacsa</span>}
                     </span>
                   </td>
                   <td>
