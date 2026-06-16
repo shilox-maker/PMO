@@ -289,6 +289,127 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       `).join('');
     };
 
+    const kpisHtml = reportOptions.resumen ? `
+  <div class="section">
+    <h2>📊 KPIs de Control</h2>
+    <div class="kpi-grid">
+      <div class="kpi-box">
+        <div class="label">Fecha Fin Inicial</div>
+        <div class="value">${formatDate(fechaFinInicial)}</div>
+      </div>
+      <div class="kpi-box">
+        <div class="label">Fecha Fin Estimada</div>
+        <div class="value ${hasDelay ? 'alert-red' : ''}">${formatDate(fechaFinEstimada)} ${hasDelay ? `<span style="font-size:12px;font-weight:500;">(+${diasRetraso} días)</span>` : ''}</div>
+      </div>
+      <div class="kpi-box">
+        <div class="label">Presupuesto Inicial</div>
+        <div class="value">${formatCurrency(budgetInitial)}</div>
+      </div>
+      <div class="kpi-box">
+        <div class="label">Gasto Comprometido (${budgetPercent}%)</div>
+        <div class="value ${budgetOverrun ? 'alert-red' : 'alert-green'}">${formatCurrency(gastoTotal)} ${budgetOverrun ? '<span style="font-size:12px;">⚠️ SOBRECOSTO</span>' : ''}</div>
+      </div>
+    </div>
+  </div>` : '';
+
+    const hitosHtml = reportOptions.hitos ? `
+  <div class="section">
+    <h2>🏁 Hitos del Proyecto</h2>
+    <table>
+      <thead><tr><th>Hito</th><th>Fecha</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${milestoneRows(completed, 'completados')}
+        ${milestoneRows(pending, 'pendientes')}
+      </tbody>
+    </table>
+  </div>` : '';
+
+    const risksList = project.Riesgos || [];
+    const risksHtml = reportOptions.riesgos ? `
+  <div class="section">
+    <h2>⚠️ Matriz de Riesgos</h2>
+    ${risksList.length === 0 ? '<p style="color:#999;padding:8px;">Sin riesgos registrados.</p>' : `
+    <table>
+      <thead><tr><th>Código</th><th>Riesgo</th><th>Prob. / Imp.</th><th>Mitigación</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${risksList.map(r => `
+          <tr>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;font-weight:bold;">${r.id_riesgo}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${r.titulo_riesgo}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">P: ${r.probabilidad} | I: ${r.impacto}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${r.plan_mitigacion}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${r.estado_riesgo}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`}
+  </div>` : '';
+
+    const incidentsList = project.Incidencias || [];
+    const incidentsHtml = reportOptions.incidencias ? `
+  <div class="section">
+    <h2>🛑 Incidencias Técnicas o de Plazos</h2>
+    ${incidentsList.length === 0 ? '<p style="color:#999;padding:8px;">Sin incidencias registradas.</p>' : `
+    <table>
+      <thead><tr><th>Código</th><th>Incidencia</th><th>Tipo</th><th>Criticidad</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${incidentsList.map(i => `
+          <tr>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;font-weight:bold;">${i.id_incidencia}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${i.titulo}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${i.tipo_incidencias}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${i.criticidad}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${i.estado}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`}
+  </div>` : '';
+
+    const crList = project.Cambios_Alcances || [];
+    const crHtml = reportOptions.cambios ? `
+  <div class="section">
+    <h2>📈 Cambios de Alcance (CR)</h2>
+    ${crList.length === 0 ? '<p style="color:#999;padding:8px;">Sin solicitudes de cambio de alcance.</p>' : `
+    <table>
+      <thead><tr><th>Código</th><th>Descripción / Motivo</th><th>Importe</th><th>Tiempo</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${crList.map(c => `
+          <tr>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;font-weight:bold;">${c.id_cambio}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${c.descripcion_motivo}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${c.impacta_importe ? `${formatCurrency(parseFloat(c.importe_impacto))}` : 'Sin impacto'}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${c.impacta_tiempo ? `+${c.dias_impacto} días` : 'Sin impacto'}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${c.estado_cambio}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`}
+  </div>` : '';
+
+    const lessonsList = project.Lecciones_Aprendidas || project.LeccionesAprendidas || [];
+    const lessonsHtml = reportOptions.lecciones ? `
+  <div class="section">
+    <h2>⭐ Lecciones Aprendidas</h2>
+    ${lessonsList.length === 0 ? '<p style="color:#999;padding:8px;">Sin lecciones registradas.</p>' : `
+    <table>
+      <thead><tr><th>Código</th><th>Tipo</th><th>Título</th><th>Contexto / Recomendación</th></tr></thead>
+      <tbody>
+        ${lessonsList.map(l => `
+          <tr>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;font-weight:bold;">${l.id_leccion}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">${l.tipo_leccion === 'BUENA_PRACTICA' ? 'Buena Práctica' : 'Error a Evitar'}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;font-weight:bold;">${l.titulo}</td>
+            <td style="padding:8px;border-bottom:1px solid #e0e0e0;">
+              ${l.contexto ? `<p><strong>Contexto:</strong> ${l.contexto}</p>` : ''}
+              ${l.recomendacion_futura ? `<p><strong>Recomendación:</strong> ${l.recomendacion_futura}</p>` : ''}
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`}
+  </div>` : '';
+
     const commentsHtml = reportOptions.resumen ? (importantComments.length === 0
       ? '<p style="color:#999;text-align:center;padding:20px;">No hay comentarios ejecutivos marcados como importantes.</p>'
       : importantComments.map(c => `
@@ -350,43 +471,17 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     </div>
   </div>
 
-  <div class="section">
-    <h2>📊 KPIs de Control</h2>
-    <div class="kpi-grid">
-      <div class="kpi-box">
-        <div class="label">Fecha Fin Inicial</div>
-        <div class="value">${formatDate(fechaFinInicial)}</div>
-      </div>
-      <div class="kpi-box">
-        <div class="label">Fecha Fin Estimada</div>
-        <div class="value ${hasDelay ? 'alert-red' : ''}">${formatDate(fechaFinEstimada)} ${hasDelay ? `<span style="font-size:12px;font-weight:500;">(+${diasRetraso} días)</span>` : ''}</div>
-      </div>
-      <div class="kpi-box">
-        <div class="label">Presupuesto Inicial</div>
-        <div class="value">${formatCurrency(budgetInitial)}</div>
-      </div>
-      <div class="kpi-box">
-        <div class="label">Gasto Comprometido (${budgetPercent}%)</div>
-        <div class="value ${budgetOverrun ? 'alert-red' : 'alert-green'}">${formatCurrency(gastoTotal)} ${budgetOverrun ? '<span style="font-size:12px;">⚠️ SOBRECOSTO</span>' : ''}</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>🏁 Hitos del Proyecto</h2>
-    <table>
-      <thead><tr><th>Hito</th><th>Fecha</th><th>Estado</th></tr></thead>
-      <tbody>
-        ${milestoneRows(completed, 'completados')}
-        ${milestoneRows(pending, 'pendientes')}
-      </tbody>
-    </table>
-  </div>
-
+  ${kpisHtml}
+  ${hitosHtml}
+  ${risksHtml}
+  ${incidentsHtml}
+  ${crHtml}
+  ${lessonsHtml}
+  ${commentsHtml ? `
   <div class="section">
     <h2>⭐ Muro Ejecutivo — Comentarios Importantes</h2>
     ${commentsHtml}
-  </div>
+  </div>` : ''}
 
   <div style="margin-top:40px;padding-top:16px;border-top:2px solid #eee;font-size:11px;color:#999;text-align:center;">
     PPM Dashboard — Informe generado automáticamente el ${formatDate(new Date().toISOString())} a las ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}
@@ -2930,6 +3025,95 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 8. Report Options Checklist Modal */}
+      {showReportModal && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">Generar Informe de Proyecto</h3>
+              <button className="icon-btn" onClick={() => setShowReportModal(false)}>✕</button>
+            </div>
+
+            <div style={{ padding: '16px 0' }}>
+              <p style={{ marginBottom: 16, color: 'var(--md-sys-color-on-surface-variant)' }}>
+                Selecciona qué secciones deseas incluir en el informe ejecutivo a generar:
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={reportOptions.resumen}
+                    onChange={(e) => setReportOptions({ ...reportOptions, resumen: e.target.checked })}
+                    className="m3-checkbox"
+                  />
+                  <span>Resumen y KPIs de Control</span>
+                </label>
+
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={reportOptions.hitos}
+                    onChange={(e) => setReportOptions({ ...reportOptions, hitos: e.target.checked })}
+                    className="m3-checkbox"
+                  />
+                  <span>Hitos de Proyecto</span>
+                </label>
+
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={reportOptions.riesgos}
+                    onChange={(e) => setReportOptions({ ...reportOptions, riesgos: e.target.checked })}
+                    className="m3-checkbox"
+                  />
+                  <span>Matriz de Riesgos</span>
+                </label>
+
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={reportOptions.incidencias}
+                    onChange={(e) => setReportOptions({ ...reportOptions, incidencias: e.target.checked })}
+                    className="m3-checkbox"
+                  />
+                  <span>Incidencias Técnicas o de Plazos</span>
+                </label>
+
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={reportOptions.cambios}
+                    onChange={(e) => setReportOptions({ ...reportOptions, cambios: e.target.checked })}
+                    className="m3-checkbox"
+                  />
+                  <span>Cambios de Alcance (CR)</span>
+                </label>
+
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={reportOptions.lecciones}
+                    onChange={(e) => setReportOptions({ ...reportOptions, lecciones: e.target.checked })}
+                    className="m3-checkbox"
+                  />
+                  <span>Lecciones Aprendidas</span>
+                </label>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
+              <button type="button" className="m3-btn m3-btn-outline" onClick={() => setShowReportModal(false)}>
+                Cancelar
+              </button>
+              <button type="button" className="m3-btn m3-btn-primary" onClick={() => generateProjectReport()}>
+                Generar Informe
+              </button>
+            </div>
           </div>
         </div>
       )}
