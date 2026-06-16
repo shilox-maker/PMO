@@ -302,7 +302,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           <div style="font-size:13px;line-height:1.6;color:#333;">${c.texto_comentario}</div>
           ${c.editado ? `<div style="font-size:11px;color:#999;margin-top:6px;font-style:italic;">Editado por ${c.Editor?.nombre || ''} ${c.Editor?.apellidos || ''} el ${formatDateTime(c.fecha_modificacion)}</div>` : ''}
         </div>
-      `).join('');
+      `).join('')) : '';
 
     const html = `<!DOCTYPE html>
 <html lang="es">
