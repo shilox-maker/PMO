@@ -1144,6 +1144,14 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
               </div>
             </div>
 
+            {/* TIMELINE MINIATURE */}
+            <div className="m3-card glass-panel" style={{ padding: 24 }}>
+              <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 16 }}>Cronología del Proyecto (Timeline)</h3>
+              <div style={{ border: '1px solid var(--md-sys-color-outline-variant)', borderRadius: 12, overflow: 'hidden', height: 400 }}>
+                <Timeline projectId={projectId} hideHeader={true} />
+              </div>
+            </div>
+
             {/* FEED DE COMENTARIOS AUDITADOS */}
             <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               <div>
