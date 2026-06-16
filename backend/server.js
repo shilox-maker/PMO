@@ -1820,23 +1820,6 @@ app.put('/api/users/me/change-password', async (req, res) => {
 
 const umzug = require('./migrate');
 
-if (process.env.NODE_ENV !== 'test') {
-  // Sync DB connection and start server
-  sequelize.sync()
-    .then(() => {
-      console.log('✅ Connection to database established successfully. Database synced.');
-      return umzug.up();
-    })
-    .then((migrations) => {
-      if (migrations.length > 0) {
-        console.log(`✅ Executed ${migrations.length} migrations`);
-      } else {
-        console.log('✅ Database is up to date');
-      }
-      app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
 // ==========================================
 // LECCIONES APRENDIDAS CRUD
 // ==========================================
@@ -1870,7 +1853,20 @@ app.delete('/api/lessons/:id', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
- app.listen(PORT, '0.0.0.0', () => {
+
+if (process.env.NODE_ENV !== 'test') {
+  sequelize.sync({ alter: false })
+    .then(() => {
+      console.log('✅ Connection to database established successfully. Database synced.');
+      return umzug.up();
+    })
+    .then((migrations) => {
+      if (migrations.length > 0) {
+        console.log(`✅ Executed ${migrations.length} migrations`);
+      } else {
+        console.log('✅ Database is up to date');
+      }
+      app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 Server running on port ${PORT} and listening on 0.0.0.0`);
       });
     })
