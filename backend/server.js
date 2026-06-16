@@ -15,14 +15,14 @@ const {
   ProyectoComSteerCoKU, Incidencias, Riesgos, LeccionesAprendidas, Facturas, 
   CambiosAlcance, Tareas, EstadosProyecto, ComentariosProyecto 
 } = require('./models/index');
-const { getProjectCalcp|strong|b|em|i|u|s|br|ulations } = require('./models/automations');
+const { getProjectCalculations } = require('./models/automations');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 let JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET || JWT_SECRET === 'pmo-secret-key-change-in-production') {
   if (process.env.NODE_ENV === 'production') {
-    console.warn('⚠️ WARNING: JWT_SECRET not set or using defap|strong|b|em|i|u|s|br|ult key in production! Generating a secure random key for this session...');
+    console.warn('⚠️ WARNING: JWT_SECRET not set or using default key in production! Generating a secure random key for this session...');
     JWT_SECRET = crypto.randomBytes(64).toString('hex');
   } else {
     JWT_SECRET = 'pmo-secret-key-change-in-production';
@@ -149,7 +149,7 @@ function sanitizeHTML(html) {
 
   // 6. Strip non-whitelisted HTML tags
   clean = clean.replace(/<[^>]+>/g, (match) => {
-    if (match.match(/^<\/?(p|strong|em|br|p|strong|b|em|i|u|s|br|ul|ol|li|span|div|h1|h2|h3|h4|h5|h6|blockquote|table|thead|tbody|tr|th|td)(\s[^>]*)?>$/i)) {
+    if (match.match(/^<\/?(p|strong|em|br|ul|ol|li|span|div|h1|h2|h3|h4|h5|h6|blockquote|table|thead|tbody|tr|th|td)(\s[^>]*)?>$/i)) {
       return match.replace(/\s+on\w+\s*=\s*(['"])(.*?)\1/gi, '')
                   .replace(/\s+on\w+\s*=\s*([^\s>]+)/gi, '')
                   .replace(/\s+href\s*=\s*(['"])\s*javascript:(.*?)\1/gi, '')
@@ -161,7 +161,7 @@ function sanitizeHTML(html) {
   return clean;
 }
 
-// Helper: Sanitize values for Excel export to prevent Formp|strong|b|em|i|u|s|br|ula / CSV Injection
+// Helper: Sanitize values for Excel export to prevent Formula / CSV Injection
 function sanitizeExcelValue(val) {
   if (typeof val !== 'string') return val;
   if (val.startsWith('=') || val.startsWith('+') || val.startsWith('-') || val.startsWith('@')) {
@@ -172,7 +172,7 @@ function sanitizeExcelValue(val) {
 
 // Helper: Auto-generate code IDs (Format: PREFIX-YYYY-XXX)
 async function generateNextId(Model, prefix, keyName) {
-  const year = new Date().getFp|strong|b|em|i|u|s|br|ullYear();
+  const year = new Date().getFullYear();
   const pattern = `${prefix}-${year}-%`;
   
   const lastRecord = await Model.findOne({
@@ -250,7 +250,7 @@ app.post('/api/login', loginLimiter, async (req, res) => {
         isValid = true;
         // Migrar automáticamente la contraseña a Bcrypt
         const newHash = await hashPassword(password);
-        await user.update({ password: newHash, password_salt: np|strong|b|em|i|u|s|br|ull }); // Salt ya no es necesario con bcrypt
+        await user.update({ password: newHash, password_salt: null }); // Salt ya no es necesario con bcrypt
       }
     }
 
@@ -452,10 +452,10 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
           }
         });
 
-        // Calcp|strong|b|em|i|u|s|br|ulate estimated end date
+        // Calculate estimated end date
         const initialEndDate = new Date(p.fecha_fin_inicial);
         initialEndDate.setDate(initialEndDate.getDate() + totalCRDays);
-        const year = initialEndDate.getFp|strong|b|em|i|u|s|br|ullYear();
+        const year = initialEndDate.getFullYear();
         const month = String(initialEndDate.getMonth() + 1).padStart(2, '0');
         const day = String(initialEndDate.getDate()).padStart(2, '0');
         const fecha_fin_estimada = `${year}-${month}-${day}`;
@@ -512,7 +512,7 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
           where: { id_proyecto },
           order: [['fecha_creacion', 'DESC']]
         });
-        const p|strong|b|em|i|u|s|br|ultimo_comentario = lastComment ? lastComment.texto_comentario.replace(/<[^>]+>/g, '').substring(0, 100) + (lastComment.texto_comentario.length > 100 ? '...' : '') : '';
+        const ultimo_comentario = lastComment ? lastComment.texto_comentario.replace(/<[^>]+>/g, '').substring(0, 100) + (lastComment.texto_comentario.length > 100 ? '...' : '') : '';
 
         return {
           id_proyecto: p.id_proyecto,
@@ -535,18 +535,18 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
           dias_retraso_aprobados: totalCRDays,
           gasto_total_facturas: Number(gasto_total_facturas.toFixed(2)),
           po_list,
-          proximo_hito: nextMilestone ? { titp|strong|b|em|i|u|s|br|ulo_tarea: nextMilestone.titp|strong|b|em|i|u|s|br|ulo_tarea, fecha_limite: nextMilestone.fecha_limite } : np|strong|b|em|i|u|s|br|ull,
+          proximo_hito: nextMilestone ? { titulo_tarea: nextMilestone.titulo_tarea, fecha_limite: nextMilestone.fecha_limite } : null,
           has_hito_vencido: overdueCount > 0,
           com_semanal_activo: p.com_semanal_activo,
           com_mensual_activo: p.com_mensual_activo,
           com_steerco_activo: p.com_steerco_activo,
-          p|strong|b|em|i|u|s|br|ultima_actualizacion: maxUpdated.toISOString(),
-          p|strong|b|em|i|u|s|br|ultimo_comentario
+          ultima_actualizacion: maxUpdated.toISOString(),
+          ultimo_comentario
         };
       })
     );
 
-    // Apply time-range filter on calcp|strong|b|em|i|u|s|br|ulated estimated dates
+    // Apply time-range filter on calculated estimated dates
     let finalData = dashboardData;
     if (fecha_desde || fecha_hasta) {
       finalData = dashboardData.filter(p => {
@@ -572,14 +572,14 @@ app.get('/api/timeline', async (req, res) => {
         { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
         { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
         { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'proyecto_cerrado'] },
-        { model: Tareas, where: { es_hito: true }, required: false, attributes: ['id_tarea', 'titp|strong|b|em|i|u|s|br|ulo_tarea', 'fecha_limite', 'estado'] }
+        { model: Tareas, where: { es_hito: true }, required: false, attributes: ['id_tarea', 'titulo_tarea', 'fecha_limite', 'estado'] }
       ],
       order: [['fecha_inicio', 'ASC']]
     });
 
     const timelineData = await Promise.all(
       projects.map(async (p) => {
-        const calc = await getProjectCalcp|strong|b|em|i|u|s|br|ulations(p.id_proyecto, p.budget_inicial, p.fecha_fin_inicial);
+        const calc = await getProjectCalculations(p.id_proyecto, p.budget_inicial, p.fecha_fin_inicial);
         return {
           id_proyecto: p.id_proyecto,
           nombre_proyecto: p.nombre_proyecto,
@@ -592,7 +592,7 @@ app.get('/api/timeline', async (req, res) => {
           fecha_fin_estimada: calc.fecha_fin_estimada,
           hitos: (p.Tareas || []).map(t => ({
             id_tarea: t.id_tarea,
-            titp|strong|b|em|i|u|s|br|ulo_tarea: t.titp|strong|b|em|i|u|s|br|ulo_tarea,
+            titulo_tarea: t.titulo_tarea,
             fecha_limite: t.fecha_limite,
             estado: t.estado
           }))
@@ -610,7 +610,7 @@ app.get('/api/timeline', async (req, res) => {
 // 6. Proyectos (Portfolio Dashboard & CRUD)
 // ==========================================
 
-// Get all projects with filters and calcp|strong|b|em|i|u|s|br|ulations
+// Get all projects with filters and calculations
 app.get('/api/projects', async (req, res) => {
   try {
     const { pm, vendor, rag, search, state } = req.query;
@@ -641,10 +641,10 @@ app.get('/api/projects', async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
 
-    // Popp|strong|b|em|i|u|s|br|ulate calcp|strong|b|em|i|u|s|br|ulations and next milestone for each project
-    const projectsWithCalcp|strong|b|em|i|u|s|br|ulations = await Promise.all(
+    // Populate calculations and next milestone for each project
+    const projectsWithCalculations = await Promise.all(
       projectsList.map(async (project) => {
-        const calc = await getProjectCalcp|strong|b|em|i|u|s|br|ulations(
+        const calc = await getProjectCalculations(
           project.id_proyecto,
           project.budget_inicial,
           project.fecha_fin_inicial
@@ -661,13 +661,13 @@ app.get('/api/projects', async (req, res) => {
 
         return {
           ...project.toJSON(),
-          calcp|strong|b|em|i|u|s|br|ulations: calc,
-          nextMilestone: nextMilestone ? nextMilestone.toJSON() : np|strong|b|em|i|u|s|br|ull
+          calculations: calc,
+          nextMilestone: nextMilestone ? nextMilestone.toJSON() : null
         };
       })
     );
 
-    res.json(projectsWithCalcp|strong|b|em|i|u|s|br|ulations);
+    res.json(projectsWithCalculations);
   } catch (error) {
     handleErr(res, error);
   }
@@ -742,7 +742,7 @@ app.get('/api/projects/export', async (req, res) => {
     for (const p of projectsList) {
       const id_proyecto = p.id_proyecto;
 
-      // Approved CR calcp|strong|b|em|i|u|s|br|ulations
+      // Approved CR calculations
       const approvedCRs = await CambiosAlcance.findAll({
         where: { id_proyecto, estado_cambio: 'APROBADO' }
       });
@@ -762,7 +762,7 @@ app.get('/api/projects/export', async (req, res) => {
 
       const initialEndDate = new Date(p.fecha_fin_inicial);
       initialEndDate.setDate(initialEndDate.getDate() + totalCRDays);
-      const year = initialEndDate.getFp|strong|b|em|i|u|s|br|ullYear();
+      const year = initialEndDate.getFullYear();
       const month = String(initialEndDate.getMonth() + 1).padStart(2, '0');
       const day = String(initialEndDate.getDate()).padStart(2, '0');
       const fecha_fin_estimada = `${year}-${month}-${day}`;
@@ -860,7 +860,7 @@ app.get('/api/projects/:id_proyecto', async (req, res) => {
       return res.status(404).json({ error: 'Proyecto no encontrado' });
     }
 
-    const calc = await getProjectCalcp|strong|b|em|i|u|s|br|ulations(
+    const calc = await getProjectCalculations(
       project.id_proyecto,
       project.budget_inicial,
       project.fecha_fin_inicial
@@ -868,7 +868,7 @@ app.get('/api/projects/:id_proyecto', async (req, res) => {
 
     res.json({
       ...project.toJSON(),
-      calcp|strong|b|em|i|u|s|br|ulations: calc
+      calculations: calc
     });
   } catch (error) {
     handleErr(res, error);
@@ -1056,16 +1056,16 @@ app.get('/api/vendors/:id_proveedor', async (req, res) => {
       ]
     });
 
-    const projectsWithCalcp|strong|b|em|i|u|s|br|ulations = await Promise.all(
+    const projectsWithCalculations = await Promise.all(
       projects.map(async (project) => {
-        const calc = await getProjectCalcp|strong|b|em|i|u|s|br|ulations(
+        const calc = await getProjectCalculations(
           project.id_proyecto,
           project.budget_inicial,
           project.fecha_fin_inicial
         );
         return {
           ...project.toJSON(),
-          calcp|strong|b|em|i|u|s|br|ulations: calc
+          calculations: calc
         };
       })
     );
@@ -1092,7 +1092,7 @@ app.get('/api/vendors/:id_proveedor', async (req, res) => {
 
     res.json({
       vendor: vendor.toJSON(),
-      projects: projectsWithCalcp|strong|b|em|i|u|s|br|ulations,
+      projects: projectsWithCalculations,
       incidents,
       lessons
     });
@@ -1486,14 +1486,14 @@ app.post('/api/comments', async (req, res) => {
       fecha_registro: new Date()
     });
 
-    const fp|strong|b|em|i|u|s|br|ullComment = await ComentariosProyecto.findByPk(comment.id_comentario, {
+    const fullComment = await ComentariosProyecto.findByPk(comment.id_comentario, {
       include: [
         { model: Usuarios, as: 'Autor', attributes: ['nombre', 'apellidos', 'correo'] },
         { model: Usuarios, as: 'Editor', attributes: ['nombre', 'apellidos', 'correo'] }
       ]
     });
 
-    res.status(201).json(fp|strong|b|em|i|u|s|br|ullComment);
+    res.status(201).json(fullComment);
   } catch (error) {
     handleErr(res, error);
   }
@@ -1528,14 +1528,14 @@ app.put('/api/comments/:id_comentario', async (req, res) => {
 
     await comment.update(updateData);
 
-    const fp|strong|b|em|i|u|s|br|ullComment = await ComentariosProyecto.findByPk(id_comentario, {
+    const fullComment = await ComentariosProyecto.findByPk(id_comentario, {
       include: [
         { model: Usuarios, as: 'Autor', attributes: ['nombre', 'apellidos', 'correo'] },
         { model: Usuarios, as: 'Editor', attributes: ['nombre', 'apellidos', 'correo'] }
       ]
     });
 
-    res.json(fp|strong|b|em|i|u|s|br|ullComment);
+    res.json(fullComment);
   } catch (error) {
     handleErr(res, error);
   }
@@ -1706,7 +1706,7 @@ app.post('/api/admin/users', restrictToAdmin, async (req, res) => {
       apellidos,
       correo,
       password: await hashPassword(password),
-      password_salt: np|strong|b|em|i|u|s|br|ull,
+      password_salt: null,
       perfil,
       activo: activo !== undefined ? activo : true
     });
@@ -1736,7 +1736,7 @@ app.put('/api/admin/users/:id_usuario', restrictToAdmin, async (req, res) => {
       if (!passwordRegex.test(password)) {
         return res.status(400).json({ error: 'La contraseña no cumple con la política de seguridad requerida' });
       }
-      updates.password_salt = np|strong|b|em|i|u|s|br|ull;
+      updates.password_salt = null;
       updates.password = await hashPassword(password);
     }
     await user.update(updates);
@@ -1809,7 +1809,7 @@ app.put('/api/users/me/change-password', async (req, res) => {
     // Generate new hash using bcrypt
     const newHash = await hashPassword(newPassword);
 
-    await user.update({ password: newHash, password_salt: np|strong|b|em|i|u|s|br|ull });
+    await user.update({ password: newHash, password_salt: null });
 
     res.json({ message: 'Contraseña actualizada correctamente.' });
   } catch (error) {
@@ -1857,7 +1857,7 @@ app.delete('/api/lessons/:id', async (req, res) => {
 if (process.env.NODE_ENV !== 'test') {
   sequelize.sync({ alter: false })
     .then(() => {
-      console.log('✅ Connection to database established successfp|strong|b|em|i|u|s|br|ully. Database synced.');
+      console.log('✅ Connection to database established successfully. Database synced.');
       return umzug.up();
     })
     .then((migrations) => {
@@ -1875,4 +1875,4 @@ if (process.env.NODE_ENV !== 'test') {
     });
 }
 
-modp|strong|b|em|i|u|s|br|ule.exports = app;
+module.exports = app;
