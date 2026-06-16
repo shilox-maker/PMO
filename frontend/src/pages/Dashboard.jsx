@@ -18,8 +18,7 @@ const DEFAULT_PROJECT_COLUMNS = [
   { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
   { id: 'proveedor', label: 'Socio Tecnológico', fixed: false, visible: false },
   { id: 'pm', label: 'Gestor PM', fixed: false, visible: true },
-  { id: 'sede', label: 'Sede', fixed: false, visible: false },
-  { id: 'po_list', label: 'PO (Purchase Order)', fixed: false, visible: true },
+  { id: 'sede', label: 'Sede', fixed: false, visible: false }, label: 'PO (Purchase Order)', fixed: false, visible: true },
   { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: true },
   { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: true },
   { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
@@ -489,7 +488,6 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                 {visibleColumnsMap.proveedor && renderSortHeader('Socio Tecnológico', 'Proveedor.nombre_razon_social')}
                 {visibleColumnsMap.pm && renderSortHeader('Gestor PM', 'PM.nombre')}
                 {visibleColumnsMap.sede && renderSortHeader('Sede', 'Sede.nombre_sede')}
-                {visibleColumnsMap.po_list && renderSortHeader('PO (Purchase Order)', 'calculations.po_list')}
                 {visibleColumnsMap.fecha_inicio && renderSortHeader('Fecha Inicio', 'fecha_inicio')}
                 {visibleColumnsMap.fecha_fin_inicial && renderSortHeader('Fecha Fin Base', 'fecha_fin_inicial')}
                 {visibleColumnsMap.fecha_fin_estimada && renderSortHeader('Fecha Fin Est.', 'calculations.fecha_fin_estimada')}
@@ -555,9 +553,6 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
 
                     {/* Sede */}
                     {visibleColumnsMap.sede && <td>{project.Sede?.nombre_sede}</td>}
-
-                    {/* PO List */}
-                    {visibleColumnsMap.po_list && <td>{calc?.po_list || '—'}</td>}
 
                     {/* Dates */}
                     {visibleColumnsMap.fecha_inicio && <td>{project.fecha_inicio ? new Date(project.fecha_inicio).toLocaleDateString('es-ES') : '—'}</td>}

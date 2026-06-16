@@ -16,8 +16,7 @@ const DEFAULT_GOV_COLUMNS = [
   { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
   { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: true },
   { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: true },
-  { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
-  { id: 'po_list', label: 'PO (Purchase Order)', fixed: false, visible: false },
+  { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true }, label: 'PO (Purchase Order)', fixed: false, visible: false },
   { id: 'gasto_total_facturas', label: 'Gasto Facturado', fixed: false, visible: true },
   { id: 'alerta_tiempo', label: 'Alerta de Tiempo', fixed: false, visible: true },
   { id: 'alerta_dinero', label: 'Alerta de Dinero', fixed: false, visible: true },
@@ -697,7 +696,6 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                     {visibleColumnsMap.fecha_inicio && renderSortHeader('Fecha Inicio', 'fecha_inicio')}
                     {visibleColumnsMap.fecha_fin_inicial && renderSortHeader('Fecha Fin Base', 'fecha_fin_inicial')}
                     {visibleColumnsMap.fecha_fin_estimada && renderSortHeader('Fecha Fin Est.', 'fecha_fin_estimada')}
-                    {visibleColumnsMap.po_list && renderSortHeader('PO', 'po_list')}
                     {visibleColumnsMap.gasto_total_facturas && renderSortHeader('Gasto Facturado', 'gasto_total_facturas')}
                     {visibleColumnsMap.alerta_tiempo && renderSortHeader('Alerta de Tiempo', 'dias_retraso_aprobados')}
                     {visibleColumnsMap.alerta_dinero && renderSortHeader('Alerta de Dinero', 'gasto_total_facturas')}
@@ -746,8 +744,6 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                         {visibleColumnsMap.fecha_fin_estimada && <td style={{ color: p.dias_retraso_aprobados > 0 ? 'var(--color-rag-red)' : 'inherit' }}>
                             {p.fecha_fin_estimada ? new Date(p.fecha_fin_estimada).toLocaleDateString('es-ES') : '—'}
                           </td>}
-
-                        {/* PO List */}
                         {visibleColumnsMap.po_list && <td>{p.po_list || '—'}</td>}
 
                         {/* Financials */}
