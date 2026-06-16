@@ -21,6 +21,7 @@ const DEFAULT_GOV_COLUMNS = [
   { id: 'alerta_tiempo', label: 'Alerta de Tiempo', fixed: false, visible: true },
   { id: 'alerta_dinero', label: 'Alerta de Dinero', fixed: false, visible: true },
   { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true },
+  { id: 'ultimo_comentario', label: 'Último Comentario', fixed: false, visible: true },
   { id: 'accion', label: 'Ficha', fixed: true, visible: true }
 ];
 export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
@@ -199,6 +200,12 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
     }
     if (activeKpiFilter === 'capex_warn') {
       if (!p.es_capex || p.gasto_total_facturas < (p.budget_inicial * 0.90)) return false;
+    }
+    if (activeKpiFilter === 'inactive') {
+      const hasPlan = p.com_semanal_activo || p.com_mensual_activo || p.com_steerco_activo;
+      if (!hasPlan) return false;
+      const diffMs = Date.now() - new Date(p.ultima_actualizacion).getTime();
+      if ((diffMs / (1000 * 60 * 60 * 24)) <= 30) return false;
     }
     
     return true;
@@ -618,60 +625,98 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
         </div>
       </div>
 
-      {/* BLOQUE 1: Central KPIs cards + Portfolio Report Button */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 24 }}>
-        <div className="metrics-grid" style={{ flex: 1 }}>
+      {/* BLOQUE 1: Central KPIs cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, marginBottom: 24 }}>
         
-          {/* KPI 1: Overruns */}
-          <div 
-            className="m3-card metric-card glass-panel"
-            onClick={() => setActiveKpiFilter(prev => prev === 'overrun' ? null : 'overrun')}
-            style={{ 
-              cursor: 'pointer',
-              border: activeKpiFilter === 'overrun' ? '2px solid var(--color-rag-red)' : '1px solid var(--md-sys-color-outline-variant)',
-              transition: 'var(--transition-smooth)'
-            }}
-          >
-            <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)' }}>
-              <AlertOctagon size={24} />
-            </div>
-            <div className="metric-info">
-              <span className="metric-value" style={{ color: 'var(--color-rag-red)' }}>{overrunCount}</span>
-              <span className="metric-label" style={{ fontWeight: 600 }}>Proyectos en Desborde</span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)' }}>
-                {activeKpiFilter === 'overrun' ? '🟢 Filtro Activo (Click para limpiar)' : 'Click para filtrar cuadrícula'}
-              </span>
-            </div>
+        {/* KPI 1: Overruns */}
+        <div 
+          className="m3-card metric-card glass-panel"
+          onClick={() => setActiveKpiFilter(prev => prev === 'overrun' ? null : 'overrun')}
+          style={{ 
+            cursor: 'pointer',
+            border: activeKpiFilter === 'overrun' ? '2px solid var(--color-rag-red)' : '1px solid var(--md-sys-color-outline-variant)',
+            transition: 'var(--transition-smooth)'
+          }}
+        >
+          <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)' }}>
+            <AlertOctagon size={24} />
           </div>
-
-          {/* KPI 2: Capex Warning */}
-          <div 
-            className="m3-card metric-card glass-panel"
-            onClick={() => setActiveKpiFilter(prev => prev === 'capex_warn' ? null : 'capex_warn')}
-            style={{ 
-              cursor: 'pointer',
-              border: activeKpiFilter === 'capex_warn' ? '2px solid var(--priority-alta)' : '1px solid var(--md-sys-color-outline-variant)',
-              transition: 'var(--transition-smooth)'
-            }}
-          >
-            <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 159, 10, 0.2)', color: 'var(--priority-alta)' }}>
-              <Coins size={24} />
-            </div>
-            <div className="metric-info">
-              <span className="metric-value" style={{ color: 'var(--priority-alta)' }}>{capexWarnCount}</span>
-              <span className="metric-label" style={{ fontWeight: 600 }}>Alerta Preventiva CAPEX</span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)' }}>
-                {activeKpiFilter === 'capex_warn' ? '🟢 Filtro Activo' : 'Consumo ≥ 90% del inicial'}
-              </span>
-            </div>
+          <div className="metric-info">
+            <span className="metric-value" style={{ color: 'var(--color-rag-red)' }}>{overrunCount}</span>
+            <span className="metric-label" style={{ fontWeight: 600 }}>Proyectos en Desborde</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)' }}>
+              {activeKpiFilter === 'overrun' ? '🟢 Filtro Activo (Click para limpiar)' : 'Click para filtrar'}
+            </span>
           </div>
         </div>
 
-        {/* Action Buttons Container was removed from here */}
+        {/* KPI 2: Capex Warning */}
+        <div 
+          className="m3-card metric-card glass-panel"
+          onClick={() => setActiveKpiFilter(prev => prev === 'capex_warn' ? null : 'capex_warn')}
+          style={{ 
+            cursor: 'pointer',
+            border: activeKpiFilter === 'capex_warn' ? '2px solid var(--priority-alta)' : '1px solid var(--md-sys-color-outline-variant)',
+            transition: 'var(--transition-smooth)'
+          }}
+        >
+          <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 159, 10, 0.2)', color: 'var(--priority-alta)' }}>
+            <Coins size={24} />
+          </div>
+          <div className="metric-info">
+            <span className="metric-value" style={{ color: 'var(--priority-alta)' }}>{capexWarnCount}</span>
+            <span className="metric-label" style={{ fontWeight: 600 }}>Alerta Preventiva CAPEX</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)' }}>
+              {activeKpiFilter === 'capex_warn' ? '🟢 Filtro Activo' : 'Consumo ≥ 90% del inicial'}
+            </span>
+          </div>
+        </div>
+
+        {/* KPI 3: Cobertura Gobernanza */}
+        <div 
+          className="m3-card metric-card glass-panel"
+          style={{ 
+            border: '1px solid var(--md-sys-color-outline-variant)'
+          }}
+        >
+          <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(168, 199, 250, 0.2)', color: 'var(--md-sys-color-primary)' }}>
+            <ShieldCheck size={24} />
+          </div>
+          <div className="metric-info">
+            <span className="metric-value" style={{ color: 'var(--md-sys-color-primary)' }}>{coveragePercent}%</span>
+            <span className="metric-label" style={{ fontWeight: 600 }}>Gobernanza (Cobertura)</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)' }}>
+              {coveredCount} de {projects.length} con plan activo
+            </span>
+          </div>
+        </div>
+
+        {/* KPI 4: Planes Inactivos */}
+        <div 
+          className="m3-card metric-card glass-panel"
+          onClick={() => setActiveKpiFilter(prev => prev === 'inactive' ? null : 'inactive')}
+          style={{ 
+            cursor: 'pointer',
+            border: activeKpiFilter === 'inactive' ? '2px solid var(--priority-alta)' : '1px solid var(--md-sys-color-outline-variant)',
+            transition: 'var(--transition-smooth)'
+          }}
+        >
+          <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 159, 10, 0.2)', color: 'var(--priority-alta)' }}>
+            <Clock size={24} />
+          </div>
+          <div className="metric-info">
+            <span className="metric-value" style={{ color: 'var(--priority-alta)' }}>{inactiveProjects.length}</span>
+            <span className="metric-label" style={{ fontWeight: 600 }}>Planes Inactivos</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)' }}>
+              {activeKpiFilter === 'inactive' ? '🟢 Filtro Activo' : 'Sin actualizar > 30 días'}
+            </span>
+          </div>
+        </div>
+
       </div>
 
-      {/* BLOQUE 3: Grid Control Left & Compliance Right */}
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: 32, alignItems: 'flex-start' }}>
+      {/* BLOQUE 3: Grid Control Full Width */}
+      <div style={{ width: '100%' }}>
         
         {/* Table High Density */}
         <div style={{ minWidth: 0 }}>
@@ -700,6 +745,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                     {visibleColumnsMap.alerta_tiempo && renderSortHeader('Alerta de Tiempo', 'dias_retraso_aprobados')}
                     {visibleColumnsMap.alerta_dinero && renderSortHeader('Alerta de Dinero', 'gasto_total_facturas')}
                     {visibleColumnsMap.proximo_hito && renderSortHeader('Próximo Hito', 'proximo_hito.fecha_limite')}
+                    {visibleColumnsMap.ultimo_comentario && renderSortHeader('Último Comentario', 'ultimo_comentario')}
                     {visibleColumnsMap.accion && <th>Ficha</th>}
                   </tr>
                 </thead>
@@ -798,12 +844,13 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                           )}
                         </td>}
 
-                        
-                <td style={{ padding: '12px 16px', fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
-                  <div style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.ultimo_comentario}>
-                    {p.ultimo_comentario || <span style={{ opacity: 0.5 }}>Sin comentarios</span>}
-                  </div>
-                </td>
+                        {visibleColumnsMap.ultimo_comentario && (
+                          <td style={{ padding: '12px 16px', fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
+                            <div style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.ultimo_comentario}>
+                              {p.ultimo_comentario || <span style={{ opacity: 0.5 }}>Sin comentarios</span>}
+                            </div>
+                          </td>
+                        )}
 
                 {/* Actions */}
                         {visibleColumnsMap.accion && <td>
@@ -822,76 +869,6 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
               </table>
             </div>
           )}
-        </div>
-
-        {/* Right Governance Compliance Sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          
-          {/* Active plan coverage */}
-          <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ShieldCheck size={20} style={{ color: 'var(--md-sys-color-primary)' }} />
-              <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Gobernanza</h3>
-            </div>
-            
-            <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12, textAlign: 'center' }}>
-              <div style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--md-sys-color-primary)' }}>
-                {coveragePercent}%
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>
-                Cobertura Activa Comunicaciones
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)', marginTop: 4 }}>
-                {coveredCount} de {projects.length} con algún plan
-              </div>
-            </div>
-          </div>
-
-          {/* Inactive warn list (>30 days since update) */}
-          <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Clock size={20} style={{ color: 'var(--priority-alta)' }} />
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 600 }}>Planes Inactivos ({inactiveProjects.length})</h3>
-            </div>
-            
-            <p style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
-              Proyectos con planes activos sin registrar actividad en más de 30 días.
-            </p>
-
-            <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '250px', overflowY: 'auto' }}>
-              {inactiveProjects.length === 0 ? (
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-rag-green)', fontWeight: 600, textAlign: 'center' }}>
-                  🟢 Cartera Actualizada
-                </div>
-              ) : (
-                inactiveProjects.map(p => {
-                  const diffDays = Math.round((Date.now() - new Date(p.ultima_actualizacion).getTime()) / (1000 * 60 * 60 * 24));
-                  return (
-                    <div 
-                      key={p.id_proyecto} 
-                      onClick={() => onViewProject(p.id_proyecto)}
-                      style={{ 
-                        padding: 10, 
-                        backgroundColor: 'var(--md-sys-color-surface-container-high)', 
-                        borderRadius: 12, 
-                        cursor: 'pointer',
-                        border: '1px solid var(--md-sys-color-outline-variant)'
-                      }}
-                    >
-                      <div style={{ fontWeight: 600, fontSize: '0.8rem', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                        {p.nombre_proyecto}
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--color-rag-red)', marginTop: 4, fontWeight: 500 }}>
-                        <span>Hace {diffDays} días</span>
-                        <span>{p.id_proyecto}</span>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
         </div>
 
       </div>
