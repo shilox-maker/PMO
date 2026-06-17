@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [1.7.7] - 2026-06-17
+### Added
+- Report generation now includes an interactive Checklist Modal allowing customization of sections (Resumen, Hitos, Timeline, Riesgos, Incidencias, Cambios de Alcance, Lecciones Aprendidas).
+- Timeline section can be optionally included in the report, rendering a beautiful vertical sequence of milestones and tasks.
+
+### Changed
+- Refactored Invoice Status: removed "PAGADA" option and renamed/set the active statuses to "PENDIENTE DE RECIBIR" and "RECIBIDA".
+- Updated all test/seed data invoices to use "RECIBIDA" instead of "PAGADA".
+
 ## [1.7.6] - 2026-06-17
 ### Added
 - Project-specific timeline (miniature) integrated in the General tab of project detail view.
