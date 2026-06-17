@@ -839,7 +839,7 @@ app.get('/api/projects/:id_proyecto', async (req, res) => {
         { model: Proveedores, as: 'Proveedor', attributes: ['id_proveedor', 'nombre_razon_social'] },
         { model: Sedes, as: 'Sede', attributes: ['id_sede', 'nombre_sede'] },
         { model: KeyUsers, as: 'Sponsor', attributes: ['id_ku', 'nombre', 'apellidos', 'correo'] },
-        { model: KeyUsers, as: 'InvolvedKeyUsers', through: { attributes: [] } },
+        { model: KeyUsers, as: 'InvolvedKeyUsers', through: { attributes: ['rol', 'raci'] } },
         { model: KeyUsers, as: 'ComSemanalKUs', through: { attributes: [] } },
         { model: KeyUsers, as: 'ComMensualKUs', through: { attributes: [] } },
         { model: KeyUsers, as: 'ComSteerCoKUs', through: { attributes: [] } },
@@ -893,6 +893,18 @@ app.post('/api/projects', async (req, res) => {
   try {
     const data = req.body;
 
+    // Sanitize rich text inputs
+    const richTextFields = [
+      'alcance_por_que', 'alcance_objetivo', 'alcance_resultados', 
+      'alcance_limitaciones', 'alcance_integraciones', 'alcance_desarrollo',
+      'cierre_aceptacion', 'cierre_exito'
+    ];
+    richTextFields.forEach(field => {
+      if (data[field] !== undefined && data[field] !== null) {
+        data[field] = sanitizeHTML(data[field]);
+      }
+    });
+
     // Validate CAPEX requirements
     if (data.es_capex && (!data.codigo_capex || data.codigo_capex.trim() === '')) {
       return res.status(400).json({ error: 'El código CAPEX es obligatorio para proyectos CAPEX.' });
@@ -936,6 +948,18 @@ app.put('/api/projects/:id_proyecto', async (req, res) => {
   try {
     const { id_proyecto } = req.params;
     const data = req.body;
+
+    // Sanitize rich text inputs
+    const richTextFields = [
+      'alcance_por_que', 'alcance_objetivo', 'alcance_resultados', 
+      'alcance_limitaciones', 'alcance_integraciones', 'alcance_desarrollo',
+      'cierre_aceptacion', 'cierre_exito'
+    ];
+    richTextFields.forEach(field => {
+      if (data[field] !== undefined && data[field] !== null) {
+        data[field] = sanitizeHTML(data[field]);
+      }
+    });
 
     const project = await Proyectos.findByPk(id_proyecto);
     if (!project) {
@@ -1014,6 +1038,52 @@ app.delete('/api/projects/:id_proyecto', async (req, res) => {
 
     await project.destroy();
     res.json({ message: 'Proyecto eliminado con éxito' });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Add or update participant in project RACI matrix
+app.post('/api/projects/:id_proyecto/participants', async (req, res) => {
+  try {
+    const { id_proyecto } = req.params;
+    const { id_ku, rol, raci } = req.body;
+    if (!id_ku || !rol || !raci) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios: id_ku, rol, raci.' });
+    }
+    const project = await Proyectos.findByPk(id_proyecto);
+    if (!project) {
+      return res.status(404).json({ error: 'Proyecto no encontrado.' });
+    }
+    
+    // Check if association exists
+    const [association, created] = await ProyectoKeyUsers.findOrCreate({
+      where: { id_proyecto, id_ku },
+      defaults: { rol, raci }
+    });
+
+    if (!created) {
+      // Update existing association
+      await association.update({ rol, raci });
+    }
+
+    res.json({ message: 'Participante guardado con éxito', association });
+  } catch (error) {
+    handleErr(res, error);
+  }
+});
+
+// Remove participant from project RACI matrix
+app.delete('/api/projects/:id_proyecto/participants/:id_ku', async (req, res) => {
+  try {
+    const { id_proyecto, id_ku } = req.params;
+    const count = await ProyectoKeyUsers.destroy({
+      where: { id_proyecto, id_ku }
+    });
+    if (count === 0) {
+      return res.status(404).json({ error: 'Participante no encontrado en este proyecto.' });
+    }
+    res.json({ message: 'Participante eliminado con éxito.' });
   } catch (error) {
     handleErr(res, error);
   }

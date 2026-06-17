@@ -4,7 +4,8 @@ import {
   ArrowLeft, Calendar, Building, User, MapPin, DollarSign, 
   TrendingUp, Activity, CheckSquare, ShieldAlert, AlertTriangle, 
   MessageSquare, FileText, Plus, Trash2, Edit2, Check, X, RefreshCw,
-  Star, FileDown, Printer, ArrowUp, ArrowDown, ArrowUpDown, BookOpen
+  Star, FileDown, Printer, ArrowUp, ArrowDown, ArrowUpDown, BookOpen,
+  Target, Trophy
 } from 'lucide-react';
 import SearchableKeyUserSelect from '../components/SearchableKeyUserSelect';
 import Timeline from './Timeline';
@@ -35,7 +36,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     incidencias: true,
     cambios: true,
     lecciones: true,
-    timeline: true
+    timeline: true,
+    alcance: true,
+    cierre: true
   });
 
 
@@ -116,6 +119,120 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [editingTask, setEditingTask] = useState(null);
   const [taskForm, setTaskForm] = useState({ id_tarea: '', titulo_tarea: '', descripcion: '', es_hito: false, estado: 'PENDIENTE', fecha_limite: '' });
   const [taskError, setTaskError] = useState('');
+
+  // Inline editing for Alcance/Cierre blocks
+  const [editingBlock, setEditingBlock] = useState(null);
+  const [blockValue, setBlockValue] = useState('');
+
+  const handleSaveBlock = (fieldName) => {
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ [fieldName]: blockValue })
+    })
+      .then(async (res) => {
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Error al guardar el bloque');
+        return d;
+      })
+      .then(() => {
+        setEditingBlock(null);
+        fetchProjectData();
+      })
+      .catch(err => alert(err.message));
+  };
+
+  // RACI Matrix Participant Management
+  const [showRaciModal, setShowRaciModal] = useState(false);
+  const [editingParticipant, setEditingParticipant] = useState(null);
+  const [raciForm, setRaciForm] = useState({ id_ku: '', rol: 'Usuario funcional', r: false, a: false, c: false, i: false });
+  const [raciError, setRaciError] = useState('');
+
+  const handleOpenAddRaci = (kuId) => {
+    const user = keyUsers.find(k => Number(k.id_ku) === Number(kuId));
+    if (!user) return;
+    setEditingParticipant(null);
+    setRaciForm({
+      id_ku: user.id_ku,
+      rol: 'Usuario funcional',
+      r: false,
+      a: false,
+      c: false,
+      i: true
+    });
+    setRaciError('');
+    setShowRaciModal(true);
+  };
+
+  const handleOpenEditRaci = (ku) => {
+    setEditingParticipant(ku);
+    const raciString = ku.Proyecto_KeyUsers?.raci || '';
+    setRaciForm({
+      id_ku: ku.id_ku,
+      rol: ku.Proyecto_KeyUsers?.rol || 'Usuario funcional',
+      r: raciString.includes('R'),
+      a: raciString.includes('A'),
+      c: raciString.includes('C'),
+      i: raciString.includes('I')
+    });
+    setRaciError('');
+    setShowRaciModal(true);
+  };
+
+  const handleRaciSubmit = (e) => {
+    e.preventDefault();
+    setRaciError('');
+
+    let raciVal = '';
+    if (raciForm.r) raciVal += 'R';
+    if (raciForm.a) raciVal += 'A';
+    if (raciForm.c) raciVal += 'C';
+    if (raciForm.i) raciVal += 'I';
+
+    if (!raciVal) {
+      setRaciError('Debe marcar al menos un nivel de responsabilidad RACI.');
+      return;
+    }
+
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/participants`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        id_ku: Number(raciForm.id_ku),
+        rol: raciForm.rol,
+        raci: raciVal
+      })
+    })
+      .then(async (res) => {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const d = isJson ? await res.json() : null;
+        if (!res.ok) throw new Error(d?.error || `Error ${res.status}: ${res.statusText}`);
+        return d;
+      })
+      .then(() => {
+        setShowRaciModal(false);
+        fetchProjectData();
+      })
+      .catch(err => setRaciError(err.message));
+  };
+
+  const handleDeleteParticipant = (kuId) => {
+    if (!window.confirm('¿Seguro que desea retirar a este participante del proyecto?')) return;
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/participants/${kuId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    })
+      .then(async (res) => {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const d = isJson ? await res.json() : null;
+        if (!res.ok) throw new Error(d?.error || `Error ${res.status}: ${res.statusText}`);
+        return d;
+      })
+      .then(() => {
+        fetchProjectData();
+      })
+      .catch(err => alert(err.message));
+  };
 
   const fetchProjectData = () => {
     setLoading(true);
@@ -313,6 +430,52 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     </div>
   </div>` : '';
 
+    const alcanceHtml = reportOptions.alcance ? `
+  <div class="section">
+    <h2>🎯 Alcance del Proyecto</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px;">
+      <div style="padding:12px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px;">
+        <strong style="color:#1a1a2e; font-size:12px;">¿Por qué?</strong>
+        <div style="margin-top:6px; font-size:12px;">${project.alcance_por_que || '<span style="color:#999;font-style:italic;">No definido</span>'}</div>
+      </div>
+      <div style="padding:12px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px;">
+        <strong style="color:#1a1a2e; font-size:12px;">Objetivo principal</strong>
+        <div style="margin-top:6px; font-size:12px;">${project.alcance_objetivo || '<span style="color:#999;font-style:italic;">No definido</span>'}</div>
+      </div>
+      <div style="padding:12px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px;">
+        <strong style="color:#1a1a2e; font-size:12px;">Resultados deseados</strong>
+        <div style="margin-top:6px; font-size:12px;">${project.alcance_resultados || '<span style="color:#999;font-style:italic;">No definido</span>'}</div>
+      </div>
+      <div style="padding:12px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px;">
+        <strong style="color:#1a1a2e; font-size:12px;">Limitaciones e hipótesis</strong>
+        <div style="margin-top:6px; font-size:12px;">${project.alcance_limitaciones || '<span style="color:#999;font-style:italic;">No definido</span>'}</div>
+      </div>
+      <div style="padding:12px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px;">
+        <strong style="color:#1a1a2e; font-size:12px;">Integraciones</strong>
+        <div style="margin-top:6px; font-size:12px;">${project.alcance_integraciones || '<span style="color:#999;font-style:italic;">No definido</span>'}</div>
+      </div>
+      <div style="padding:12px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px;">
+        <strong style="color:#1a1a2e; font-size:12px;">Cómo se desarrollará</strong>
+        <div style="margin-top:6px; font-size:12px;">${project.alcance_desarrollo || '<span style="color:#999;font-style:italic;">No definido</span>'}</div>
+      </div>
+    </div>
+  </div>` : '';
+
+    const cierreHtml = reportOptions.cierre ? `
+  <div class="section">
+    <h2>🏆 Criterios de Cierre</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px;">
+      <div style="padding:12px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px;">
+        <strong style="color:#1a1a2e; font-size:12px;">Criterios de aceptación</strong>
+        <div style="margin-top:6px; font-size:12px;">${project.cierre_aceptacion || '<span style="color:#999;font-style:italic;">No definido</span>'}</div>
+      </div>
+      <div style="padding:12px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:8px;">
+        <strong style="color:#1a1a2e; font-size:12px;">Criterios de éxito</strong>
+        <div style="margin-top:6px; font-size:12px;">${project.cierre_exito || '<span style="color:#999;font-style:italic;">No definido</span>'}</div>
+      </div>
+    </div>
+  </div>` : '';
+
     const hitosHtml = reportOptions.hitos ? `
   <div class="section">
     <h2>🏁 Hitos del Proyecto</h2>
@@ -497,6 +660,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   </div>
 
   ${kpisHtml}
+  ${alcanceHtml}
+  ${cierreHtml}
   ${hitosHtml}
   ${timelineHtml}
   ${risksHtml}
@@ -1146,6 +1311,14 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           <FileText size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
           Ficha General
         </button>
+        <button className={`m3-tab ${activeTab === 'alcance' ? 'active' : ''}`} onClick={() => setActiveTab('alcance')}>
+          <Target size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          Alcance
+        </button>
+        <button className={`m3-tab ${activeTab === 'cierre' ? 'active' : ''}`} onClick={() => setActiveTab('cierre')}>
+          <Trophy size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          Criterios de Cierre
+        </button>
         <button className={`m3-tab ${activeTab === 'finanzas' ? 'active' : ''}`} onClick={() => setActiveTab('finanzas')}>
           <DollarSign size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
           Control Financiero
@@ -1242,24 +1415,100 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 </div>
               </div>
 
-              {/* Right: Key Users Involved */}
-              <div className="m3-card glass-panel">
-                <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 16 }}>Key Users Involucrados</h3>
+              {/* Right: Key Users Involved (RACI Matrix) */}
+              <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                  <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Matriz RACI / Participantes</h3>
+                  <div style={{ width: '220px' }}>
+                    <SearchableKeyUserSelect 
+                      keyUsers={keyUsers.filter(ku => !project.InvolvedKeyUsers?.some(assigned => Number(assigned.id_ku) === Number(ku.id_ku)))}
+                      selected=""
+                      onChange={(val) => {
+                        if (val) handleOpenAddRaci(val);
+                      }}
+                      placeholder="Añadir participante..."
+                    />
+                  </div>
+                </div>
+
                 {project.InvolvedKeyUsers?.length === 0 ? (
-                  <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se han asignado Key Users de negocio a este proyecto.</p>
+                  <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se han asignado Key Users ni roles RACI a este proyecto.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {project.InvolvedKeyUsers?.map(ku => (
-                      <div key={ku.id_ku} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px' }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
-                          {ku.nombre[0]}{ku.apellidos[0]}
+                    {project.InvolvedKeyUsers?.map(ku => {
+                      const raciStr = ku.Proyecto_KeyUsers?.raci || '';
+                      return (
+                        <div key={ku.id_ku} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 12, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px', border: '1px solid var(--md-sys-color-outline-variant)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                              {ku.nombre[0]}{ku.apellidos[0]}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{ku.nombre} {ku.apellidos}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>{ku.Proyecto_KeyUsers?.rol || 'Usuario funcional'}</div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            {/* RACI badges */}
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              {['R', 'A', 'C', 'I'].map(letter => {
+                                const isActive = raciStr.includes(letter);
+                                const getColors = () => {
+                                  if (!isActive) return { bg: 'rgba(128,128,128,0.08)', color: 'rgba(128,128,128,0.4)' };
+                                  switch (letter) {
+                                    case 'R': return { bg: 'rgba(255, 69, 58, 0.25)', color: '#ff453a' };
+                                    case 'A': return { bg: 'rgba(191, 90, 242, 0.25)', color: '#bf5af2' };
+                                    case 'C': return { bg: 'rgba(10, 132, 255, 0.25)', color: '#0a84ff' };
+                                    case 'I': return { bg: 'rgba(48, 209, 88, 0.25)', color: '#30d158' };
+                                    default: return { bg: 'gray', color: 'white' };
+                                  }
+                                };
+                                const colors = getColors();
+                                return (
+                                  <span key={letter} style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '22px',
+                                    height: '22px',
+                                    borderRadius: '50%',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 'bold',
+                                    backgroundColor: colors.bg,
+                                    color: colors.color,
+                                    border: isActive ? `1px solid ${colors.color}` : '1px solid transparent',
+                                    userSelect: 'none'
+                                  }}>
+                                    {letter}
+                                  </span>
+                                );
+                              })}
+                            </div>
+
+                            {/* Actions */}
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <button 
+                                className="icon-btn" 
+                                onClick={() => handleOpenEditRaci(ku)}
+                                style={{ width: 28, height: 28, color: 'var(--md-sys-color-primary)' }}
+                                title="Editar Rol / RACI"
+                              >
+                                <Edit2 size={12} />
+                              </button>
+                              <button 
+                                className="icon-btn" 
+                                onClick={() => handleDeleteParticipant(ku.id_ku)}
+                                style={{ width: 28, height: 28, color: 'var(--color-rag-red)' }}
+                                title="Retirar participante"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{ku.nombre} {ku.apellidos}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>{ku.correo}</div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -1495,6 +1744,156 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   ))
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* PANEL: ALCANCE */}
+        {activeTab === 'alcance' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div>
+              <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Alcance del Proyecto</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
+                Definición del propósito, límites, integraciones y plan de desarrollo.
+              </p>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+              {[
+                { label: '¿Por qué?', field: 'alcance_por_que', placeholder: 'Justificación o necesidad de negocio del proyecto...' },
+                { label: 'Objetivo principal', field: 'alcance_objetivo', placeholder: 'Qué se pretende conseguir con este proyecto...' },
+                { label: 'Resultados deseados', field: 'alcance_resultados', placeholder: 'Productos, servicios o resultados entregables...' },
+                { label: 'Limitaciones e hipótesis', field: 'alcance_limitaciones', placeholder: 'Límites, restricciones o suposiciones del proyecto...' },
+                { label: 'Integraciones', field: 'alcance_integraciones', placeholder: 'Sistemas con los que se conectará o interfaces...' },
+                { label: 'Cómo se desarrollará', field: 'alcance_desarrollo', placeholder: 'Metodología, fases de desarrollo o tecnología...' }
+              ].map(block => {
+                const isEditing = editingBlock === block.field;
+                return (
+                  <div key={block.field} className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--md-sys-color-outline-variant)', paddingBottom: 12 }}>
+                      <h4 style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--md-sys-color-primary)' }}>{block.label}</h4>
+                      {!isEditing && (
+                        <button 
+                          className="m3-btn m3-btn-outline" 
+                          style={{ padding: '4px 12px', fontSize: '0.8rem', height: '30px' }}
+                          onClick={() => {
+                            setEditingBlock(block.field);
+                            setBlockValue(project[block.field] || '');
+                          }}
+                        >
+                          <Edit2 size={12} style={{ marginRight: 6, display: 'inline', verticalAlign: 'middle' }} /> Editar
+                        </button>
+                      )}
+                    </div>
+                    {isEditing ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <RichTextEditor 
+                          value={blockValue} 
+                          onChange={setBlockValue} 
+                          placeholder={block.placeholder}
+                        />
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                          <button 
+                            className="m3-btn m3-btn-outline" 
+                            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                            onClick={() => setEditingBlock(null)}
+                          >
+                            Cancelar
+                          </button>
+                          <button 
+                            className="m3-btn m3-btn-primary" 
+                            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                            onClick={() => handleSaveBlock(block.field)}
+                          >
+                            Guardar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        className="comment-rich-text"
+                        dangerouslySetInnerHTML={{ 
+                          __html: project[block.field] || `<p style="color:var(--md-sys-color-outline); font-style:italic;">Sin información registrada. Haz clic en Editar para agregar contenido.</p>` 
+                        }}
+                        style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface)', minHeight: '60px' }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* PANEL: CRITERIOS DE CIERRE */}
+        {activeTab === 'cierre' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div>
+              <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Criterios de Cierre</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
+                Establece las condiciones y métricas necesarias para dar el proyecto por finalizado con éxito.
+              </p>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+              {[
+                { label: 'Criterios de aceptación', field: 'cierre_aceptacion', placeholder: 'Condiciones técnicas o funcionales que debe cumplir el proyecto para ser aceptado...' },
+                { label: 'Criterios de éxito', field: 'cierre_exito', placeholder: 'Métricas de éxito o valor de negocio aportado por el proyecto...' }
+              ].map(block => {
+                const isEditing = editingBlock === block.field;
+                return (
+                  <div key={block.field} className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--md-sys-color-outline-variant)', paddingBottom: 12 }}>
+                      <h4 style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--md-sys-color-primary)' }}>{block.label}</h4>
+                      {!isEditing && (
+                        <button 
+                          className="m3-btn m3-btn-outline" 
+                          style={{ padding: '4px 12px', fontSize: '0.8rem', height: '30px' }}
+                          onClick={() => {
+                            setEditingBlock(block.field);
+                            setBlockValue(project[block.field] || '');
+                          }}
+                        >
+                          <Edit2 size={12} style={{ marginRight: 6, display: 'inline', verticalAlign: 'middle' }} /> Editar
+                        </button>
+                      )}
+                    </div>
+                    {isEditing ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <RichTextEditor 
+                          value={blockValue} 
+                          onChange={setBlockValue} 
+                          placeholder={block.placeholder}
+                        />
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                          <button 
+                            className="m3-btn m3-btn-outline" 
+                            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                            onClick={() => setEditingBlock(null)}
+                          >
+                            Cancelar
+                          </button>
+                          <button 
+                            className="m3-btn m3-btn-primary" 
+                            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                            onClick={() => handleSaveBlock(block.field)}
+                          >
+                            Guardar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div 
+                        className="comment-rich-text"
+                        dangerouslySetInnerHTML={{ 
+                          __html: project[block.field] || `<p style="color:var(--md-sys-color-outline); font-style:italic;">Sin información registrada. Haz clic en Editar para agregar contenido.</p>` 
+                        }}
+                        style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface)', minHeight: '60px' }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -3083,6 +3482,26 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                   <input
                     type="checkbox"
+                    checked={reportOptions.alcance}
+                    onChange={(e) => setReportOptions({ ...reportOptions, alcance: e.target.checked })}
+                    className="m3-checkbox"
+                  />
+                  <span>Alcance del Proyecto</span>
+                </label>
+
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={reportOptions.cierre}
+                    onChange={(e) => setReportOptions({ ...reportOptions, cierre: e.target.checked })}
+                    className="m3-checkbox"
+                  />
+                  <span>Criterios de Cierre</span>
+                </label>
+
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
                     checked={reportOptions.hitos}
                     onChange={(e) => setReportOptions({ ...reportOptions, hitos: e.target.checked })}
                     className="m3-checkbox"
@@ -3150,6 +3569,104 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 Generar Informe
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 9. RACI Participant Edit/Add Modal */}
+      {showRaciModal && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">{editingParticipant ? 'Editar Participante' : 'Asignar Participante (RACI)'}</h3>
+              <button className="icon-btn" onClick={() => setShowRaciModal(false)}>✕</button>
+            </div>
+
+            {raciError && (
+              <div style={{ backgroundColor: 'rgba(255, 69, 58, 0.1)', color: 'var(--color-rag-red)', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: '0.9rem' }}>
+                {raciError}
+              </div>
+            )}
+
+            <form onSubmit={handleRaciSubmit}>
+              <div className="form-group" style={{ marginBottom: 16 }}>
+                <label className="form-label" style={{ fontWeight: 600 }}>Participante seleccionado</label>
+                <div style={{ padding: '10px 14px', backgroundColor: 'var(--md-sys-color-surface-container)', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface)' }}>
+                  {(() => {
+                    const user = keyUsers.find(k => Number(k.id_ku) === Number(raciForm.id_ku));
+                    return user ? `${user.nombre} ${user.apellidos} (${user.Proveedore?.nombre_razon_social || user.Proveedor?.nombre_razon_social || 'Dacsa'})` : '';
+                  })()}
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 16 }}>
+                <label className="form-label" style={{ fontWeight: 600 }}>Rol Funcional *</label>
+                <select 
+                  value={raciForm.rol}
+                  onChange={(e) => setRaciForm({ ...raciForm, rol: e.target.value })}
+                  required
+                  className="user-select"
+                >
+                  {[
+                    'Key User Local', 'Key User Corporativo', 'PM principal', 'PM partner',
+                    'PM local', 'Sponsor', 'PMO', 'BRM', 'Especialista IT', 'Usuario funcional'
+                  ].map(role => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 24 }}>
+                <label className="form-label" style={{ fontWeight: 600, marginBottom: 12 }}>Matriz de Responsabilidad (RACI)</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input 
+                      type="checkbox" 
+                      checked={raciForm.r}
+                      onChange={(e) => setRaciForm({ ...raciForm, r: e.target.checked })}
+                      className="m3-checkbox"
+                    />
+                    <span>[R]esponsible</span>
+                  </label>
+                  <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input 
+                      type="checkbox" 
+                      checked={raciForm.a}
+                      onChange={(e) => setRaciForm({ ...raciForm, a: e.target.checked })}
+                      className="m3-checkbox"
+                    />
+                    <span>[A]ccountable</span>
+                  </label>
+                  <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input 
+                      type="checkbox" 
+                      checked={raciForm.c}
+                      onChange={(e) => setRaciForm({ ...raciForm, c: e.target.checked })}
+                      className="m3-checkbox"
+                    />
+                    <span>[C]onsulted</span>
+                  </label>
+                  <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input 
+                      type="checkbox" 
+                      checked={raciForm.i}
+                      onChange={(e) => setRaciForm({ ...raciForm, i: e.target.checked })}
+                      className="m3-checkbox"
+                    />
+                    <span>[I]nformed</span>
+                  </label>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
+                <button type="button" className="m3-btn m3-btn-outline" onClick={() => setShowRaciModal(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="m3-btn m3-btn-primary">
+                  {editingParticipant ? 'Guardar Cambios' : 'Confirmar Asignación'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

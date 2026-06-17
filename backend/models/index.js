@@ -304,11 +304,56 @@ const Proyectos = sequelize.define('Proyectos', {
   com_steerco_finalidad: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  // Scope (Alcance) Columns
+  alcance_por_que: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  alcance_objetivo: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  alcance_resultados: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  alcance_limitaciones: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  alcance_integraciones: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  alcance_desarrollo: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  // Closing Criteria (Cierre) Columns
+  cierre_aceptacion: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  cierre_exito: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
 });
 
 // Join tables for Many-to-Many relationships
-const ProyectoKeyUsers = sequelize.define('Proyecto_KeyUsers', {}, { timestamps: false });
+const ProyectoKeyUsers = sequelize.define('Proyecto_KeyUsers', {
+  rol: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'Usuario funcional'
+  },
+  raci: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'I'
+  }
+}, { timestamps: false });
 const ProyectoComSemanalKU = sequelize.define('Proyecto_ComSemanal_KU', {}, { timestamps: false });
 const ProyectoComMensualKU = sequelize.define('Proyecto_ComMensual_KU', {}, { timestamps: false });
 const ProyectoComSteerCoKU = sequelize.define('Proyecto_SteerCo_KU', {}, { timestamps: false });

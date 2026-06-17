@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [1.7.8] - 2026-06-17
+### Added
+- **Matriz RACI para Key Users**: Integración visual avanzada en la vista de detalle del proyecto que sustituye al listado simple de Key Users. Permite definir uno de los 10 roles funcionales para los participantes y configurar responsabilidades RACI individuales (Responsable, Aprobador, Consultado, Informado).
+- **Acciones Rápidas**: Posibilidad de modificar o retirar participantes del proyecto directamente desde la tabla RACI.
+- **Base de Datos y Migración**: Creada la migración `07_add_raci_to_proyecto_keyusers.js` para añadir las columnas `rol` y `raci` a `Proyecto_KeyUsers`, con migración histórica automática para preservar la retrocompatibilidad.
+- **Robustez de Red**: Modificado el parsing de respuestas HTTP del frontend en [ProjectDetail.jsx](file:///c:/PruebasIA/PMO/frontend/src/pages/ProjectDetail.jsx) para validar la cabecera `content-type` de la respuesta y evitar que un error HTTP no-JSON se reporte como fallo de parsing `JSON.parse`.
+
 ## [1.7.7] - 2026-06-17
 ### Added
 - Report generation now includes an interactive Checklist Modal allowing customization of sections (Resumen, Hitos, Timeline, Riesgos, Incidencias, Cambios de Alcance, Lecciones Aprendidas).
