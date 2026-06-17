@@ -1,4 +1,5 @@
 'use strict';
+const { DataTypes } = require('sequelize');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -6,7 +7,7 @@ module.exports = {
     const tableInfo = await queryInterface.describeTable('Estados_Proyecto');
     if (!tableInfo.pasos) {
       await queryInterface.addColumn('Estados_Proyecto', 'pasos', {
-        type: Sequelize.TEXT,
+        type: DataTypes.TEXT,
         allowNull: true
       });
     }
