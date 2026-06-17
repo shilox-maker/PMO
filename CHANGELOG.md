@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [1.7.9] - 2026-06-17
+### Added
+- **Ciclo de Vida de Proyectos (12 estados)**: Refactorización corporativa completa del flujo de estados, reduciendo de 16 a 12 fases estandarizadas: Petición, Alcance, Aprobación, Planificación, Kickoff, En Ejecución, Go Live, Soporte Post-GoLive, Cierre, Cancelado, En Pausa y Deprioritizado.
+- **Trazabilidad de Hitos**: Nuevos campos de fecha en `Proyectos` (`fecha_peticion`, `fecha_alcance_definido`, `fecha_aprobacion`, `fecha_planificacion`, `fecha_kickoff`, `fecha_go_live`, `fecha_cierre`) para registrar la fecha real de cada hito del ciclo de vida.
+- **Tarjeta "Hitos del Ciclo de Vida"**: Nueva sección en la vista de detalle del proyecto con línea de tiempo visual de hitos, indicadores de estado y formulario de edición inline.
+- **Auto-relleno inteligente de fechas**: El backend auto-rellena `fecha_kickoff` y `fecha_go_live` con la fecha actual al cambiar el estado a "Kickoff" o "Go Live" respectivamente (solo si el campo estaba vacío), registrando un comentario de auditoría automático en el muro del proyecto.
+- **Validación ISO 8601**: Validación de formato `YYYY-MM-DD` para todos los campos de fecha del ciclo de vida en los endpoints POST y PUT de proyectos.
+- **Migración `08_lifecycle_migration.js`**: Añade las 7 columnas de fecha a la tabla `Proyectos` y mapea los estados históricos a los 12 nuevos estados corporativos.
+- **Timeline actualizado**: Las barras del timeline de proyectos ahora respetan `fecha_kickoff` (inicio) y `fecha_go_live` (fin) en lugar de las fechas genéricas de proyecto.
+
 ## [1.7.8] - 2026-06-17
 ### Added
 - **Matriz RACI para Key Users**: Integración visual avanzada en la vista de detalle del proyecto que sustituye al listado simple de Key Users. Permite definir uno de los 10 roles funcionales para los participantes y configurar responsabilidades RACI individuales (Responsable, Aprobador, Consultado, Informado).

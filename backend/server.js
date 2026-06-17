@@ -590,6 +590,8 @@ app.get('/api/timeline', async (req, res) => {
           proyecto_cerrado: p.Estado ? p.Estado.proyecto_cerrado : false,
           fecha_inicio: p.fecha_inicio,
           fecha_fin_estimada: calc.fecha_fin_estimada,
+          fecha_kickoff: p.fecha_kickoff,
+          fecha_go_live: p.fecha_go_live,
           hitos: (p.Tareas || []).map(t => ({
             id_tarea: t.id_tarea,
             titulo_tarea: t.titulo_tarea,
@@ -910,6 +912,19 @@ app.post('/api/projects', async (req, res) => {
       return res.status(400).json({ error: 'El código CAPEX es obligatorio para proyectos CAPEX.' });
     }
 
+    // Validate ISO date format for lifecycle dates
+    const dateFields = [
+      'fecha_peticion', 'fecha_alcance_definido', 'fecha_aprobacion', 
+      'fecha_planificacion', 'fecha_kickoff', 'fecha_go_live', 'fecha_cierre'
+    ];
+    for (const field of dateFields) {
+      if (data[field] && data[field].trim() !== '') {
+        if (!isValidISODate(data[field])) {
+          return res.status(400).json({ error: `La fecha ${field} no cumple con el formato ISO 8601 (YYYY-MM-DD).` });
+        }
+      }
+    }
+
     // Auto-generate project code if missing
     if (!data.id_proyecto || data.id_proyecto.trim() === '') {
       data.id_proyecto = await generateNextId(Proyectos, 'PRJ', 'id_proyecto');
@@ -969,16 +984,60 @@ app.put('/api/projects/:id_proyecto', async (req, res) => {
     // Validate CAPEX requirements
     if (data.es_capex && (!data.codigo_capex || data.codigo_capex.trim() === '')) {
       return res.status(400).json({ error: 'El código CAPEX es obligatorio para proyectos CAPEX.' });
+    }    // Validate ISO date format for lifecycle dates
+    const dateFields = [
+      'fecha_peticion', 'fecha_alcance_definido', 'fecha_aprobacion', 
+      'fecha_planificacion', 'fecha_kickoff', 'fecha_go_live', 'fecha_cierre'
+    ];
+    for (const field of dateFields) {
+      if (data[field] && data[field].trim() !== '') {
+        if (!isValidISODate(data[field])) {
+          return res.status(400).json({ error: `La fecha ${field} no cumple con el formato ISO 8601 (YYYY-MM-DD).` });
+        }
+      }
     }
 
     // Resolve state name to state ID if needed
     await resolveStateId(data);
 
-
     // Auditoría de cambios (Fechas y Presupuesto)
     const autorId = req.currentPmId || 0;
     const autorObj = await Usuarios.findByPk(autorId);
     const nombreAutor = autorObj ? `${autorObj.nombre} ${autorObj.apellidos}` : 'Sistema';
+
+    // Auto-fill dates on status change
+    let newStatusName = '';
+    if (data.id_estado !== undefined) {
+      const stateObj = await EstadosProyecto.findByPk(data.id_estado);
+      if (stateObj) {
+        newStatusName = stateObj.nombre_estado;
+      }
+    }
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (newStatusName === 'Kickoff') {
+      const currentKickoff = data.fecha_kickoff !== undefined ? data.fecha_kickoff : project.fecha_kickoff;
+      if (!currentKickoff || currentKickoff.trim() === '') {
+        data.fecha_kickoff = todayStr;
+        await ComentariosProyecto.create({
+          id_proyecto,
+          texto_comentario: `El sistema ha registrado automáticamente la <strong>Fecha de Kickoff</strong> como ${todayStr} al cambiar el estado a Kickoff.`,
+          id_usuario: autorId,
+          es_importante: true
+        });
+      }
+    }
+    if (newStatusName === 'Go Live') {
+      const currentGoLive = data.fecha_go_live !== undefined ? data.fecha_go_live : project.fecha_go_live;
+      if (!currentGoLive || currentGoLive.trim() === '') {
+        data.fecha_go_live = todayStr;
+        await ComentariosProyecto.create({
+          id_proyecto,
+          texto_comentario: `El sistema ha registrado automáticamente la <strong>Fecha de Go Live</strong> como ${todayStr} al cambiar el estado a Go Live.`,
+          id_usuario: autorId,
+          es_importante: true
+        });
+      }
+    }
 
     if (data.fecha_fin_inicial && project.fecha_fin_inicial !== data.fecha_fin_inicial) {
       await ComentariosProyecto.create({

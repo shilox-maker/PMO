@@ -338,6 +338,34 @@ const Proyectos = sequelize.define('Proyectos', {
   cierre_exito: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  fecha_peticion: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  fecha_alcance_definido: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  fecha_aprobacion: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  fecha_planificacion: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  fecha_kickoff: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  fecha_go_live: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  fecha_cierre: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
   }
 });
 

@@ -89,8 +89,8 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
   // Timeline range: earliest start - latest end, with padding
   const { timelineStart, timelineEnd, totalDays } = useMemo(() => {
     if (filtered.length === 0) return { timelineStart: new Date(), timelineEnd: new Date(), totalDays: 365 };
-    const starts = filtered.map(p => parseDate(p.fecha_inicio)).filter(Boolean);
-    const ends = filtered.map(p => parseDate(p.fecha_fin_estimada)).filter(Boolean);
+    const starts = filtered.map(p => parseDate(p.fecha_kickoff || p.fecha_inicio)).filter(Boolean);
+    const ends = filtered.map(p => parseDate(p.fecha_go_live || p.fecha_fin_estimada)).filter(Boolean);
     const allDates = [...starts, ...ends];
     if (allDates.length === 0) return { timelineStart: new Date(), timelineEnd: new Date(), totalDays: 365 };
 
@@ -299,8 +299,8 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
 
               {/* Project bars */}
               {filtered.map((p, i) => {
-                const start = parseDate(p.fecha_inicio);
-                const end = parseDate(p.fecha_fin_estimada);
+                const start = parseDate(p.fecha_kickoff || p.fecha_inicio);
+                const end = parseDate(p.fecha_go_live || p.fecha_fin_estimada);
                 if (!start || !end) return null;
 
                 const barLeft = diffDays(timelineStart, start) * pxPerDay;
@@ -316,7 +316,7 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
                         backgroundColor: RAG_COLORS[p.indicador_rag],
                       }}
                       onClick={() => onViewProject(p.id_proyecto)}
-                      title={`${p.nombre_proyecto}\n${p.fecha_inicio} → ${p.fecha_fin_estimada}\nPM: ${p.pm_nombre}`}
+                      title={`${p.nombre_proyecto}\n${p.fecha_kickoff || p.fecha_inicio} → ${p.fecha_go_live || p.fecha_fin_estimada}\nPM: ${p.pm_nombre}`}
                     >
                       {barWidth > 80 && (
                         <span className="timeline-bar-text">{p.nombre_proyecto}</span>

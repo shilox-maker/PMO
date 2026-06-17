@@ -148,6 +148,18 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [raciForm, setRaciForm] = useState({ id_ku: '', rol: 'Usuario funcional', r: false, a: false, c: false, i: false });
   const [raciError, setRaciError] = useState('');
 
+  // Lifecycle Dates Editing State
+  const [isEditingLifecycle, setIsEditingLifecycle] = useState(false);
+  const [lifecycleForm, setLifecycleForm] = useState({
+    fecha_peticion: '',
+    fecha_alcance_definido: '',
+    fecha_aprobacion: '',
+    fecha_planificacion: '',
+    fecha_kickoff: '',
+    fecha_go_live: '',
+    fecha_cierre: ''
+  });
+
   const handleOpenAddRaci = (kuId) => {
     const user = keyUsers.find(k => Number(k.id_ku) === Number(kuId));
     if (!user) return;
@@ -214,6 +226,39 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         fetchProjectData();
       })
       .catch(err => setRaciError(err.message));
+  };
+
+  const handleOpenEditLifecycle = () => {
+    setLifecycleForm({
+      fecha_peticion: project.fecha_peticion || '',
+      fecha_alcance_definido: project.fecha_alcance_definido || '',
+      fecha_aprobacion: project.fecha_aprobacion || '',
+      fecha_planificacion: project.fecha_planificacion || '',
+      fecha_kickoff: project.fecha_kickoff || '',
+      fecha_go_live: project.fecha_go_live || '',
+      fecha_cierre: project.fecha_cierre || ''
+    });
+    setIsEditingLifecycle(true);
+  };
+
+  const handleSaveLifecycle = (e) => {
+    if (e) e.preventDefault();
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(lifecycleForm)
+    })
+      .then(async (res) => {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const d = isJson ? await res.json() : null;
+        if (!res.ok) throw new Error(d?.error || `Error ${res.status}: ${res.statusText}`);
+        return d;
+      })
+      .then(() => {
+        setIsEditingLifecycle(false);
+        fetchProjectData();
+      })
+      .catch(err => alert(err.message));
   };
 
   const handleDeleteParticipant = (kuId) => {
@@ -1352,66 +1397,212 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         {activeTab === 'ficha' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <div className="detail-grid-split">
-              {/* Left Info */}
-              <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div>
-                  <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 8 }}>Descripción</h3>
-                  <p style={{ color: 'var(--md-sys-color-on-surface)', whiteSpace: 'pre-line' }}>{project.descripcion}</p>
-                </div>
+              {/* Left Column */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {/* Left Info */}
+                <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div>
+                    <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 8 }}>Descripción</h3>
+                    <p style={{ color: 'var(--md-sys-color-on-surface)', whiteSpace: 'pre-line' }}>{project.descripcion}</p>
+                  </div>
 
-                <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 20 }}>
-                  <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 12 }}>Atributos de Gobernanza</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <MapPin size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Sede</div>
-                        <div style={{ fontWeight: 500 }}>{project.Sede?.nombre_sede}</div>
+                  <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 20 }}>
+                    <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 12 }}>Atributos de Gobernanza</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <MapPin size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Sede</div>
+                          <div style={{ fontWeight: 500 }}>{project.Sede?.nombre_sede}</div>
+                        </div>
                       </div>
-                    </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Building size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Partner Adjudicatario</div>
-                        <span 
-                          style={{ fontWeight: 500, textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)' }}
-                          onClick={() => onViewVendor(project.id_proveedor)}
-                        >
-                          {project.Proveedor?.nombre_razon_social}
-                        </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Building size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Partner Adjudicatario</div>
+                          <span 
+                            style={{ fontWeight: 500, textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)' }}
+                            onClick={() => onViewVendor(project.id_proveedor)}
+                          >
+                            {project.Proveedor?.nombre_razon_social}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <User size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Gestor Interno PM</div>
-                        <div style={{ fontWeight: 500 }}>{project.PM?.nombre} {project.PM?.apellidos}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <User size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Gestor Interno PM</div>
+                          <div style={{ fontWeight: 500 }}>{project.PM?.nombre} {project.PM?.apellidos}</div>
+                        </div>
                       </div>
-                    </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <User size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Sponsor / Key User Líder</div>
-                        <div style={{ fontWeight: 500 }}>{project.Sponsor?.nombre} {project.Sponsor?.apellidos}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <User size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Sponsor / Key User Líder</div>
+                          <div style={{ fontWeight: 500 }}>{project.Sponsor?.nombre} {project.Sponsor?.apellidos}</div>
+                        </div>
                       </div>
-                    </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Calendar size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Fechas de Proyecto</div>
-                        <div style={{ fontWeight: 500, fontSize: '0.85rem' }}>
-                          Inicio: {project.fecha_inicio} <br />
-                          Fin Base: {project.fecha_fin_inicial} <br />
-                          Fin Est.: <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 'bold' }}>{calc?.fecha_fin_estimada}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Calendar size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Fechas de Proyecto</div>
+                          <div style={{ fontWeight: 500, fontSize: '0.85rem' }}>
+                            Inicio: {project.fecha_inicio} <br />
+                            Fin Base: {project.fecha_fin_inicial} <br />
+                            Fin Est.: <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 'bold' }}>{calc?.fecha_fin_estimada}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Hitos del Ciclo de Vida */}
+                <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Hitos del Ciclo de Vida</h3>
+                    {!isEditingLifecycle ? (
+                      <button 
+                        className="m3-btn m3-btn-outline" 
+                        onClick={handleOpenEditLifecycle} 
+                        style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 6 }}
+                      >
+                        <Edit2 size={14} /> Editar Hitos
+                      </button>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button 
+                          className="m3-btn m3-btn-outline" 
+                          onClick={() => setIsEditingLifecycle(false)} 
+                          style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+                        >
+                          Cancelar
+                        </button>
+                        <button 
+                          className="m3-btn m3-btn-primary" 
+                          onClick={handleSaveLifecycle} 
+                          style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+                        >
+                          Guardar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {isEditingLifecycle ? (
+                    <form onSubmit={handleSaveLifecycle} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                      <div className="form-group">
+                        <label className="form-label">Fecha de Petición</label>
+                        <input 
+                          type="date" 
+                          value={lifecycleForm.fecha_peticion}
+                          onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_peticion: e.target.value })}
+                          className="m3-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Fecha de Alcance Definido</label>
+                        <input 
+                          type="date" 
+                          value={lifecycleForm.fecha_alcance_definido}
+                          onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_alcance_definido: e.target.value })}
+                          className="m3-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Fecha de Aprobación</label>
+                        <input 
+                          type="date" 
+                          value={lifecycleForm.fecha_aprobacion}
+                          onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_aprobacion: e.target.value })}
+                          className="m3-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Fecha de Planificación</label>
+                        <input 
+                          type="date" 
+                          value={lifecycleForm.fecha_planificacion}
+                          onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_planificacion: e.target.value })}
+                          className="m3-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Fecha de Kickoff</label>
+                        <input 
+                          type="date" 
+                          value={lifecycleForm.fecha_kickoff}
+                          onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_kickoff: e.target.value })}
+                          className="m3-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Fecha de Go-Live</label>
+                        <input 
+                          type="date" 
+                          value={lifecycleForm.fecha_go_live}
+                          onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_go_live: e.target.value })}
+                          className="m3-input"
+                        />
+                      </div>
+                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                        <label className="form-label">Fecha de Cierre</label>
+                        <input 
+                          type="date" 
+                          value={lifecycleForm.fecha_cierre}
+                          onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_cierre: e.target.value })}
+                          className="m3-input"
+                        />
+                      </div>
+                    </form>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      {[
+                        { label: 'Petición', val: project.fecha_peticion, icon: '📩' },
+                        { label: 'Alcance Definido', val: project.fecha_alcance_definido, icon: '📐' },
+                        { label: 'Aprobación', val: project.fecha_aprobacion, icon: '⏳' },
+                        { label: 'Planificación', val: project.fecha_planificacion, icon: '📅' },
+                        { label: 'Kickoff', val: project.fecha_kickoff, icon: '🚀' },
+                        { label: 'Go-Live', val: project.fecha_go_live, icon: '📦' },
+                        { label: 'Cierre', val: project.fecha_cierre, icon: '🏁' }
+                      ].map((item, index) => {
+                        const isSet = !!item.val;
+                        return (
+                          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: '50%',
+                              backgroundColor: isSet ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-high)',
+                              color: isSet ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-outline)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1rem',
+                              fontWeight: 'bold',
+                              border: isSet ? 'none' : '1px dashed var(--md-sys-color-outline-variant)'
+                            }}>
+                              {item.icon}
+                            </div>
+                            <div style={{ flexGrow: 1 }}>
+                              <div style={{ fontWeight: 600, fontSize: '0.85rem', color: isSet ? 'var(--md-sys-color-on-surface)' : 'var(--md-sys-color-outline)' }}>
+                                {item.label}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: isSet ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline)' }}>
+                                {isSet ? item.val : 'Pendiente / No definido'}
+                              </div>
+                            </div>
+                            {isSet && <Check size={16} style={{ color: 'var(--color-rag-green)' }} />}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 

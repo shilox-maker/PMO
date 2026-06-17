@@ -64,22 +64,18 @@ async function seed() {
     // 4. ESTADOS PROYECTO (16 estados)
     // ==========================================
     const statesData = [
-      { nombre_estado: 'Kickoff',                    icono: '🚀', orden: 1,  proyecto_cerrado: false },
-      { nombre_estado: 'Análisis de Viabilidad',     icono: '📋', orden: 2,  proyecto_cerrado: false },
-      { nombre_estado: 'Aprobación de Arquitectura', icono: '📐', orden: 3,  proyecto_cerrado: false },
-      { nombre_estado: 'Diseño Conceptual',          icono: '💡', orden: 4,  proyecto_cerrado: false },
-      { nombre_estado: 'Planificación',              icono: '📅', orden: 5,  proyecto_cerrado: false },
-      { nombre_estado: 'Validación Técnica',         icono: '🔍', orden: 6,  proyecto_cerrado: false },
-      { nombre_estado: 'Desarrollo',                 icono: '🛠️', orden: 7,  proyecto_cerrado: false },
-      { nombre_estado: 'Pruebas QA',                 icono: '🧪', orden: 8,  proyecto_cerrado: false },
-      { nombre_estado: 'UAT (Pruebas de Usuario)',   icono: '👥', orden: 9,  proyecto_cerrado: false },
-      { nombre_estado: 'Despliegue',                 icono: '📦', orden: 10, proyecto_cerrado: false },
-      { nombre_estado: 'Estabilización',             icono: '🛡️', orden: 11, proyecto_cerrado: false },
-      { nombre_estado: 'Cierre',                     icono: '🏁', orden: 12, proyecto_cerrado: true  },
-      { nombre_estado: 'Pausado',                    icono: '⏸️', orden: 13, proyecto_cerrado: false },
-      { nombre_estado: 'Cancelado',                  icono: '❌', orden: 14, proyecto_cerrado: true  },
-      { nombre_estado: 'En Revisión Financiera',     icono: '💰', orden: 15, proyecto_cerrado: false },
-      { nombre_estado: 'Pendiente de Aprobación',   icono: '⏳', orden: 16, proyecto_cerrado: false }
+      { nombre_estado: 'Petición', icono: '📩', orden: 1, proyecto_cerrado: false },
+      { nombre_estado: 'Estudio de viabilidad', icono: '📋', orden: 2, proyecto_cerrado: false },
+      { nombre_estado: 'Buscar propuestas', icono: '🔍', orden: 3, proyecto_cerrado: false },
+      { nombre_estado: 'Tener aprobación', icono: '⏳', orden: 4, proyecto_cerrado: false },
+      { nombre_estado: 'Planificar', icono: '📅', orden: 5, proyecto_cerrado: false },
+      { nombre_estado: 'Kickoff', icono: '🚀', orden: 6, proyecto_cerrado: false },
+      { nombre_estado: 'Ejecución', icono: '🛠️', orden: 7, proyecto_cerrado: false },
+      { nombre_estado: 'Go Live', icono: '📦', orden: 8, proyecto_cerrado: false },
+      { nombre_estado: 'Estabilización', icono: '🛡️', orden: 9, proyecto_cerrado: false },
+      { nombre_estado: 'Cierre', icono: '🏁', orden: 10, proyecto_cerrado: true },
+      { nombre_estado: 'Descartado', icono: '🗑️', orden: 11, proyecto_cerrado: true },
+      { nombre_estado: 'Cancelado', icono: '❌', orden: 12, proyecto_cerrado: true }
     ];
     const seededStates = await EstadosProyecto.bulkCreate(statesData);
     const sm = {};
@@ -129,41 +125,45 @@ async function seed() {
         id_proyecto: 'PRJ-2026-001', nombre_proyecto: 'Renovación ERP Valencia',
         descripcion: 'Migración del sistema ERP local a la plataforma en la nube para mejorar la gestión comercial y financiera.',
         id_pm: pmJaime.id_usuario, id_proveedor: sopra.id_proveedor, id_sede: sedValencia.id_sede,
-        id_sponsor_ku: kuRoberto.id_ku, id_estado: sm['Desarrollo'], indicador_rag: 'VERDE',
+        id_sponsor_ku: kuRoberto.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-01-10', fecha_fin_inicial: '2026-10-31', es_capex: true, codigo_capex: 'CPX-998822', budget_inicial: 250000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Seguimiento técnico de sprints y bloqueos.',
         com_mensual_activo: true, com_mensual_finalidad: 'Comité directivo de hitos y facturación.',
-        com_steerco_activo: true, com_steerco_finalidad: 'SteerCo trimestral con Dirección de Operaciones.'
+        com_steerco_activo: true, com_steerco_finalidad: 'SteerCo trimestral con Dirección de Operaciones.',
+        fecha_peticion: '2026-01-10', fecha_kickoff: '2026-01-10'
       },
       {
         id_proyecto: 'PRJ-2026-002', nombre_proyecto: 'Portal de Clientes Centralizado',
         descripcion: 'Desarrollo de un portal unificado para gestión de clientes a nivel nacional con SSO corporativo.',
         id_pm: pmMarta.id_usuario, id_proveedor: indra.id_proveedor, id_sede: sedMadrid.id_sede,
-        id_sponsor_ku: kuElena.id_ku, id_estado: sm['Pruebas QA'], indicador_rag: 'AMARILLO',
+        id_sponsor_ku: kuElena.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'AMARILLO',
         fecha_inicio: '2026-02-01', fecha_fin_inicial: '2026-09-30', es_capex: false, budget_inicial: 120000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Sincronización de requerimientos de diseño.',
         com_mensual_activo: true, com_mensual_finalidad: 'Revisión de avance con el Comité de Clientes.',
-        com_steerco_activo: false
+        com_steerco_activo: false,
+        fecha_peticion: '2026-02-01', fecha_kickoff: '2026-02-01'
       },
       {
         id_proyecto: 'PRJ-2026-003', nombre_proyecto: 'Automatización Almacén Buñol',
         descripcion: 'Implementación de lectores RFID y software de control logístico en planta. Primera fase de industria 4.0.',
         id_pm: pmJaime.id_usuario, id_proveedor: accenture.id_proveedor, id_sede: sedBunol.id_sede,
-        id_sponsor_ku: kuDiego.id_ku, id_estado: sm['Desarrollo'], indicador_rag: 'AMARILLO',
+        id_sponsor_ku: kuDiego.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'AMARILLO',
         fecha_inicio: '2026-02-15', fecha_fin_inicial: '2026-08-30', es_capex: true, codigo_capex: 'CPX-443311', budget_inicial: 340000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Revisión técnica de despliegue en campo.',
         com_mensual_activo: true, com_mensual_finalidad: 'Revisión de consumo de presupuesto.',
-        com_steerco_activo: true, com_steerco_finalidad: 'Reunión ejecutiva por desviación presupuestaria.'
+        com_steerco_activo: true, com_steerco_finalidad: 'Reunión ejecutiva por desviación presupuestaria.',
+        fecha_peticion: '2026-02-15', fecha_kickoff: '2026-02-15'
       },
       {
         id_proyecto: 'PRJ-2026-004', nombre_proyecto: 'Ciberseguridad Infraestructura Crítica',
         descripcion: 'Auditoría y fortificación perimetral de servidores centrales y endpoints corporativos.',
         id_pm: pmCarlos.id_usuario, id_proveedor: capgemini.id_proveedor, id_sede: sedMadrid.id_sede,
-        id_sponsor_ku: kuRoberto.id_ku, id_estado: sm['UAT (Pruebas de Usuario)'], indicador_rag: 'ROJO',
+        id_sponsor_ku: kuRoberto.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'ROJO',
         fecha_inicio: '2026-03-01', fecha_fin_inicial: '2026-07-15', es_capex: false, budget_inicial: 95000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Actualización semanal de parches críticos.',
         com_mensual_activo: true, com_mensual_finalidad: 'Presentación de informe de vulnerabilidades.',
-        com_steerco_activo: false
+        com_steerco_activo: false,
+        fecha_peticion: '2026-03-01', fecha_kickoff: '2026-03-01'
       },
       {
         id_proyecto: 'PRJ-2026-005', nombre_proyecto: 'Plataforma Analítica Big Data',
@@ -173,74 +173,82 @@ async function seed() {
         fecha_inicio: '2025-06-01', fecha_fin_inicial: '2026-04-30', es_capex: true, codigo_capex: 'CPX-556677', budget_inicial: 420000.00,
         com_semanal_activo: false,
         com_mensual_activo: true, com_mensual_finalidad: 'Cierre formal y entrega a operaciones.',
-        com_steerco_activo: false
+        com_steerco_activo: false,
+        fecha_peticion: '2025-06-01', fecha_kickoff: '2025-06-01', fecha_go_live: '2026-04-30', fecha_cierre: '2026-04-30'
       },
       {
         id_proyecto: 'PRJ-2026-006', nombre_proyecto: 'Migración Telefonía IP',
         descripcion: 'Actualización de centralitas y despliegue de telefonía sobre IP para todas las sedes nacionales.',
         id_pm: pmMarta.id_usuario, id_proveedor: indra.id_proveedor, id_sede: sedValencia.id_sede,
-        id_sponsor_ku: kuDiego.id_ku, id_estado: sm['Pausado'], indicador_rag: 'AMARILLO',
+        id_sponsor_ku: kuDiego.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'AMARILLO',
         fecha_inicio: '2025-11-01', fecha_fin_inicial: '2026-05-30', es_capex: false, budget_inicial: 80000.00,
-        com_semanal_activo: false, com_mensual_activo: false, com_steerco_activo: false
+        com_semanal_activo: false, com_mensual_activo: false, com_steerco_activo: false,
+        fecha_peticion: '2025-11-01', fecha_kickoff: '2025-11-01'
       },
       {
         id_proyecto: 'PRJ-2026-007', nombre_proyecto: 'SAP S/4HANA Rise Migration',
         descripcion: 'Migración del core SAP on-premise a la edición cloud Rise with SAP con adaptación de módulos FI y MM.',
         id_pm: pmRafael.id_usuario, id_proveedor: deloitte.id_proveedor, id_sede: sedValencia.id_sede,
-        id_sponsor_ku: kuAlvaro.id_ku, id_estado: sm['Planificación'], indicador_rag: 'VERDE',
+        id_sponsor_ku: kuAlvaro.id_ku, id_estado: sm['Planificar'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-04-01', fecha_fin_inicial: '2027-03-31', es_capex: true, codigo_capex: 'CPX-112244', budget_inicial: 680000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Control del cronograma de cargas de trabajo.',
         com_mensual_activo: true, com_mensual_finalidad: 'Presentación de avance a la dirección financiera.',
-        com_steerco_activo: true, com_steerco_finalidad: 'Comité trimestral de dirección con CGO y CFO.'
+        com_steerco_activo: true, com_steerco_finalidad: 'Comité trimestral de dirección con CGO y CFO.',
+        fecha_peticion: '2026-04-01'
       },
       {
         id_proyecto: 'PRJ-2026-008', nombre_proyecto: 'Digitalización RRHH y Nóminas',
         descripcion: 'Implantación de SuccessFactors para la gestión del ciclo de vida del empleado y automatización de nóminas.',
         id_pm: pmMarta.id_usuario, id_proveedor: sopra.id_proveedor, id_sede: sedBarcelona.id_sede,
-        id_sponsor_ku: kuPatricia.id_ku, id_estado: sm['Validación Técnica'], indicador_rag: 'VERDE',
+        id_sponsor_ku: kuPatricia.id_ku, id_estado: sm['Planificar'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-03-15', fecha_fin_inicial: '2026-11-30', es_capex: false, budget_inicial: 175000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Revisión de integraciones con sistemas de RRHH legacy.',
         com_mensual_activo: true, com_mensual_finalidad: 'Informe de progreso a Dirección de Personas.',
-        com_steerco_activo: false
+        com_steerco_activo: false,
+        fecha_peticion: '2026-03-15'
       },
       {
         id_proyecto: 'PRJ-2026-009', nombre_proyecto: 'Modernización App Comercial Móvil',
         descripcion: 'Rediseño de la aplicación móvil de ventas para iOS y Android con capacidades offline y geolocalización.',
         id_pm: pmCarlos.id_usuario, id_proveedor: nttData.id_proveedor, id_sede: sedMadrid.id_sede,
-        id_sponsor_ku: kuElena.id_ku, id_estado: sm['Desarrollo'], indicador_rag: 'VERDE',
+        id_sponsor_ku: kuElena.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-04-01', fecha_fin_inicial: '2026-12-15', es_capex: false, budget_inicial: 145000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Daily de progreso de sprints de desarrollo.',
         com_mensual_activo: false,
-        com_steerco_activo: false
+        com_steerco_activo: false,
+        fecha_peticion: '2026-04-01', fecha_kickoff: '2026-04-01'
       },
       {
         id_proyecto: 'PRJ-2026-010', nombre_proyecto: 'Centro de Datos Buñol DC2',
         descripcion: 'Construcción y equipamiento del segundo CPD de la compañía con redundancia N+1 y conectividad Dark Fiber.',
         id_pm: pmRafael.id_usuario, id_proveedor: capgemini.id_proveedor, id_sede: sedBunol.id_sede,
-        id_sponsor_ku: kuAlvaro.id_ku, id_estado: sm['Aprobación de Arquitectura'], indicador_rag: 'AMARILLO',
+        id_sponsor_ku: kuAlvaro.id_ku, id_estado: sm['Tener aprobación'], indicador_rag: 'AMARILLO',
         fecha_inicio: '2026-05-01', fecha_fin_inicial: '2027-06-30', es_capex: true, codigo_capex: 'CPX-889900', budget_inicial: 1200000.00,
         com_semanal_activo: false,
         com_mensual_activo: true, com_mensual_finalidad: 'Comité de infraestructura y seguimiento de obra.',
-        com_steerco_activo: true, com_steerco_finalidad: 'Presentación mensual a Consejo de Administración.'
+        com_steerco_activo: true, com_steerco_finalidad: 'Presentación mensual a Consejo de Administración.',
+        fecha_peticion: '2026-05-01'
       },
       {
         id_proyecto: 'PRJ-2026-011', nombre_proyecto: 'Integración API Marketplace',
         descripcion: 'Desarrollo del hub de integraciones para conectar el ERP con plataformas de marketplace Amazon y Mercadona.',
         id_pm: pmJaime.id_usuario, id_proveedor: sopra.id_proveedor, id_sede: sedValencia.id_sede,
-        id_sponsor_ku: kuRoberto.id_ku, id_estado: sm['Pruebas QA'], indicador_rag: 'VERDE',
+        id_sponsor_ku: kuRoberto.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-02-01', fecha_fin_inicial: '2026-08-31', es_capex: false, budget_inicial: 98000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Revisión de integraciones y errores de mapeo.',
-        com_mensual_activo: false, com_steerco_activo: false
+        com_mensual_activo: false, com_steerco_activo: false,
+        fecha_peticion: '2026-02-01', fecha_kickoff: '2026-02-01'
       },
       {
         id_proyecto: 'PRJ-2026-012', nombre_proyecto: 'Plataforma E-Commerce B2B',
         descripcion: 'Creación de portal de ventas online exclusivo para clientes corporativos con catálogo configurable por segmento.',
         id_pm: pmMarta.id_usuario, id_proveedor: accenture.id_proveedor, id_sede: sedSevilla.id_sede,
-        id_sponsor_ku: kuDiego.id_ku, id_estado: sm['Diseño Conceptual'], indicador_rag: 'VERDE',
+        id_sponsor_ku: kuDiego.id_ku, id_estado: sm['Estudio de viabilidad'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-05-15', fecha_fin_inicial: '2026-12-31', es_capex: false, budget_inicial: 210000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Revisión de wireframes y maquetas de UX.',
         com_mensual_activo: true, com_mensual_finalidad: 'Checkpoint mensual con el área comercial.',
-        com_steerco_activo: false
+        com_steerco_activo: false,
+        fecha_peticion: '2026-05-15'
       },
       {
         id_proyecto: 'PRJ-2026-013', nombre_proyecto: 'IoT Smart Factory Buñol',
@@ -250,17 +258,19 @@ async function seed() {
         fecha_inicio: '2026-06-01', fecha_fin_inicial: '2027-02-28', es_capex: true, codigo_capex: 'CPX-334455', budget_inicial: 380000.00,
         com_semanal_activo: false,
         com_mensual_activo: true, com_mensual_finalidad: 'Seguimiento del plan de despliegue de sensores.',
-        com_steerco_activo: false
+        com_steerco_activo: false,
+        fecha_peticion: '2026-06-01', fecha_kickoff: '2026-06-01'
       },
       {
         id_proyecto: 'PRJ-2026-014', nombre_proyecto: 'Cumplimiento DORA & NIS2',
         descripcion: 'Programa de adecuación normativa al reglamento DORA de resiliencia digital y directiva NIS2 en toda la organización.',
         id_pm: pmRafael.id_usuario, id_proveedor: deloitte.id_proveedor, id_sede: sedMadrid.id_sede,
-        id_sponsor_ku: kuAlvaro.id_ku, id_estado: sm['Análisis de Viabilidad'], indicador_rag: 'ROJO',
+        id_sponsor_ku: kuAlvaro.id_ku, id_estado: sm['Estudio de viabilidad'], indicador_rag: 'ROJO',
         fecha_inicio: '2026-04-01', fecha_fin_inicial: '2026-12-31', es_capex: false, budget_inicial: 155000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Control de entregables de análisis de brecha.',
         com_mensual_activo: true, com_mensual_finalidad: 'Informe de cumplimiento al Comité de Riesgos.',
-        com_steerco_activo: true, com_steerco_finalidad: 'Presentación trimestral al Consejo (obligación regulatoria).'
+        com_steerco_activo: true, com_steerco_finalidad: 'Presentación trimestral al Consejo (obligación regulatoria).',
+        fecha_peticion: '2026-04-01'
       },
       {
         id_proyecto: 'PRJ-2026-015', nombre_proyecto: 'BI Corporativo Reporting Ejecutivo',
@@ -270,7 +280,8 @@ async function seed() {
         fecha_inicio: '2025-09-01', fecha_fin_inicial: '2026-06-30', es_capex: true, codigo_capex: 'CPX-778899', budget_inicial: 290000.00,
         com_semanal_activo: false,
         com_mensual_activo: true, com_mensual_finalidad: 'Validación de informes con los usuarios de dirección.',
-        com_steerco_activo: true, com_steerco_finalidad: 'Presentación del portafolio de dashboards a la alta dirección.'
+        com_steerco_activo: true, com_steerco_finalidad: 'Presentación del portafolio de dashboards a la alta dirección.',
+        fecha_peticion: '2025-09-01', fecha_kickoff: '2025-09-01', fecha_go_live: '2026-06-30'
       }
     ];
 
