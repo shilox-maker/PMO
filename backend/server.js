@@ -460,7 +460,7 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
         const day = String(initialEndDate.getDate()).padStart(2, '0');
         const fecha_fin_estimada = `${year}-${month}-${day}`;
 
-        // 2. Committed budget (status PAGADA or PENDIENTE_DE_RECIBIR) and PO gathering
+        // 2. Committed budget (status RECIBIDA or PENDIENTE_DE_RECIBIR) and PO gathering
         const invoices = await Facturas.findAll({
           where: { id_proyecto }
         });
@@ -468,7 +468,7 @@ app.get('/api/portfolio/dashboard', async (req, res) => {
         let pos = new Set();
         invoices.forEach(f => {
           if (f.PO) pos.add(f.PO);
-          if (f.estado === 'PAGADA' || f.estado === 'PENDIENTE_DE_RECIBIR') {
+          if (f.estado === 'RECIBIDA' || f.estado === 'PENDIENTE_DE_RECIBIR') {
             gasto_total_facturas += parseFloat(f.importe || 0);
           }
         });
@@ -775,7 +775,7 @@ app.get('/api/projects/export', async (req, res) => {
       let pos = new Set();
       invoices.forEach(f => {
         if (f.PO) pos.add(f.PO);
-        if (f.estado === 'PAGADA' || f.estado === 'PENDIENTE_DE_RECIBIR') {
+        if (f.estado === 'RECIBIDA' || f.estado === 'PENDIENTE_DE_RECIBIR') {
           consumo_real += parseFloat(f.importe || 0);
         }
       });

@@ -1538,7 +1538,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                           <td>{fac.fecha_factura}</td>
                           <td style={{ fontWeight: 600 }}>{fac.importe.toLocaleString('es-ES')} €</td>
                           <td>
-                            <span className={`badge ${fac.estado === 'PAGADA' ? 'badge-green' : 'badge-orange'}`}>
+                            <span className={`badge ${fac.estado === 'RECIBIDA' ? 'badge-green' : 'badge-orange'}`}>
                               {fac.estado.replace(/_/g, ' ')}
                             </span>
                           </td>
@@ -2455,7 +2455,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   className="user-select"
                 >
                   <option value="PENDIENTE_DE_RECIBIR">PENDIENTE DE RECIBIR</option>
-                  <option value="PAGADA">PAGADA</option>
+                  <option value="RECIBIDA">RECIBIDA</option>
                 </select>
               </div>
 
