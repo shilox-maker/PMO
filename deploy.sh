@@ -15,8 +15,10 @@ echo "=================================================="
 
 # 1. Obtener los últimos cambios de GitHub de forma forzosa (Evita conflictos locales)
 echo "📥 [1/7] Obteniendo últimos cambios de la rama 'main'..."
+git stash || true
 git fetch origin main
 git reset --hard origin/main
+git clean -fd
 
 # 2. Actualizar Backend y Base de Datos
 echo "⚙️  [2/7] Configurando el Backend y migrando la Base de Datos..."
