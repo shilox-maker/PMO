@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../server');
-const { sequelize, Usuarios, Proyectos, EstadosProyecto, Sedes, Proveedores, KeyUsers } = require('../models');
+const { sequelize, Usuarios, Proyectos, EstadosProyecto, Sedes, Proveedores, ContactosProveedor } = require('../models');
 const bcrypt = require('bcryptjs');
 
 let token = '';
@@ -23,7 +23,7 @@ beforeAll(async () => {
   // Create required foreign entities
   await Sedes.create({ nombre_sede: 'Sede Test' });
   await Proveedores.create({ nombre_razon_social: 'Proveedor Test' });
-  await KeyUsers.create({ id_proveedor_empresa: 1, nombre: 'Sponsor', apellidos: 'Test', correo: 'sponsor@test.com' });
+  await ContactosProveedor.create({ id_proveedor: 1, nombre: 'Sponsor', apellidos: 'Test', puesto: 'Sponsor', telefono: '123456789', email: 'sponsor@test.com' });
 
   // Create mock states
   await EstadosProyecto.create({ id_estado: 1, nombre_estado: 'En Progreso', icono: '🚀', orden: 1, proyecto_cerrado: false });
@@ -37,7 +37,7 @@ beforeAll(async () => {
     id_pm: 1,
     id_proveedor: 1,
     id_sede: 1,
-    id_sponsor_ku: 1,
+    id_sponsor: 1,
     presupuesto_inicial: 10000,
     budget_inicial: 10000,
     fecha_inicio: '2026-01-01',

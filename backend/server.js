@@ -18,6 +18,7 @@ const {
 const { getProjectCalculations } = require('./models/automations');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 let JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET || JWT_SECRET === 'pmo-secret-key-change-in-production') {

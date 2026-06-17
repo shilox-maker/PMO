@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [1.7.11] - 2026-06-18
+### Fixed
+- **Migración 13 para Cambios_Alcance**: Creada la migración `13_add_contactos_to_cambios_alcance.js` para añadir las columnas `id_solicitante_contacto` y `id_aprobador_contacto` a la tabla `Cambios_Alcance`, resolviendo errores de base de datos en producción.
+- **Configuración de Proxy de Confianza**: Habilitada la opción `trust proxy` en Express para asegurar el correcto funcionamiento del limitador de tasa (`express-rate-limit`) detrás de túneles de Cloudflare.
+- **Suite de Pruebas**: Corregida la referencia obsoleta a `KeyUsers` por `ContactosProveedor` en la suite de pruebas unitarias (`api.test.js`).
+
 ## [1.7.10] - 2026-06-18
 ### Added
 - **Filtro de Proyectos Abiertos en KPIs PMO**: Añadido un botón rápido en la vista de KPIs para prefiltrar proyectos "Abiertos" excluyendo automáticamente los estados de cierre (CERRADO, CANCELADO, FINALIZADO, COMPLETADO, PARKING).
