@@ -6,6 +6,7 @@ export function getValueByPath(obj, path) {
 }
 
 export function getSortedData(data, sortConfig) {
+  if (!Array.isArray(data)) return [];
   if (!sortConfig || !sortConfig.key) return data;
   
   const sorted = [...data].sort((a, b) => {
