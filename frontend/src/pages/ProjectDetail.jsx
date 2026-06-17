@@ -34,7 +34,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     riesgos: true,
     incidencias: true,
     cambios: true,
-    lecciones: true
+    lecciones: true,
+    timeline: true
   });
 
 
@@ -410,6 +411,30 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     </table>`}
   </div>` : '';
 
+    const sortedTimelineEvents = [...allTasks]
+      .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
+
+    const timelineHtml = reportOptions.timeline ? `
+  <div class="section">
+    <h2>📅 Cronología del Proyecto (Timeline)</h2>
+    ${sortedTimelineEvents.length === 0 ? '<p style="color:#999;padding:8px;">Sin tareas ni hitos en el cronograma.</p>' : `
+    <div style="position:relative; padding-left: 20px; border-left: 2px solid #1a1a2e; margin: 16px 0 16px 10px;">
+      ${sortedTimelineEvents.map(event => `
+        <div style="position:relative; margin-bottom: 20px;">
+          <div style="position:absolute; left:-27px; top:4px; width:12px; height:12px; border-radius:50%; background:${event.es_hito ? '#e65100' : '#1a1a2e'}; border: 2px solid #fff; box-shadow: 0 0 0 2px ${event.es_hito ? '#e65100' : '#1a1a2e'};"></div>
+          <div style="font-weight: 600; font-size: 13px; color: #1a1a2e;">
+            ${event.titulo_tarea} ${event.es_hito ? '<span style="font-size:10px; background:#ffe0b2; color:#e65100; padding:2px 6px; border-radius:10px; margin-left:6px; font-weight:700;">HITO</span>' : ''}
+          </div>
+          <div style="font-size: 11px; color: #666; margin-top: 2px;">
+            Fecha límite: ${formatDate(event.fecha_limite)} · Estado: <span style="font-weight:600; color:${event.estado === 'COMPLETADA' ? '#2e7d32' : '#e65100'};">${event.estado}</span>
+          </div>
+          ${event.descripcion ? `<div style="font-size: 12px; color: #555; margin-top: 4px; font-style: italic;">${event.descripcion}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+    `}
+  </div>` : '';
+
     const commentsHtml = reportOptions.resumen ? (importantComments.length === 0
       ? '<p style="color:#999;text-align:center;padding:20px;">No hay comentarios ejecutivos marcados como importantes.</p>'
       : importantComments.map(c => `
@@ -473,6 +498,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   ${kpisHtml}
   ${hitosHtml}
+  ${timelineHtml}
   ${risksHtml}
   ${incidentsHtml}
   ${crHtml}
@@ -3062,6 +3088,16 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                     className="m3-checkbox"
                   />
                   <span>Hitos de Proyecto</span>
+                </label>
+
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={reportOptions.timeline}
+                    onChange={(e) => setReportOptions({ ...reportOptions, timeline: e.target.checked })}
+                    className="m3-checkbox"
+                  />
+                  <span>Cronología del Proyecto (Timeline)</span>
                 </label>
 
                 <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
