@@ -7,7 +7,7 @@ import {
   Star, FileDown, Printer, ArrowUp, ArrowDown, ArrowUpDown, BookOpen,
   Target, Trophy
 } from 'lucide-react';
-import SearchableKeyUserSelect from '../components/SearchableKeyUserSelect';
+import SearchableContactSelect from '../components/SearchableContactSelect';
 import Timeline from './Timeline';
 import RichTextEditor from '../components/RichTextEditor';
 import { getSortedData } from '../utils/sorting';
@@ -68,7 +68,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   // Metadata list for dropdowns
   const [sedes, setSedes] = useState([]);
   const [vendors, setVendors] = useState([]);
-  const [keyUsers, setKeyUsers] = useState([]);
+  const [contactosList, setContactosList] = useState([]);
   const [pms, setPms] = useState([]);
   const [workflowStates, setWorkflowStates] = useState([]);
 
@@ -145,7 +145,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   // RACI Matrix Participant Management
   const [showRaciModal, setShowRaciModal] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState(null);
-  const [raciForm, setRaciForm] = useState({ id_ku: '', rol: 'Usuario funcional', r: false, a: false, c: false, i: false });
+  const [raciForm, setRaciForm] = useState({ id_contacto: '', rol: 'Usuario funcional', r: false, a: false, c: false, i: false });
   const [raciError, setRaciError] = useState('');
 
   // Lifecycle Dates Editing State
@@ -161,11 +161,11 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   });
 
   const handleOpenAddRaci = (kuId) => {
-    const user = keyUsers.find(k => Number(k.id_ku) === Number(kuId));
+    const user = contactosList.find(k => Number(k.id_contacto) === Number(kuId));
     if (!user) return;
     setEditingParticipant(null);
     setRaciForm({
-      id_ku: user.id_ku,
+      id_contacto: user.id_contacto,
       rol: 'Usuario funcional',
       r: false,
       a: false,
@@ -178,10 +178,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   const handleOpenEditRaci = (ku) => {
     setEditingParticipant(ku);
-    const raciString = ku.Proyecto_KeyUsers?.raci || '';
+    const raciString = ku.Proyecto_Contactos?.raci || '';
     setRaciForm({
-      id_ku: ku.id_ku,
-      rol: ku.Proyecto_KeyUsers?.rol || 'Usuario funcional',
+      id_contacto: ku.id_contacto,
+      rol: ku.Proyecto_Contactos?.rol || 'Usuario funcional',
       r: raciString.includes('R'),
       a: raciString.includes('A'),
       c: raciString.includes('C'),
@@ -210,7 +210,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
-        id_ku: Number(raciForm.id_ku),
+        id_contacto: Number(raciForm.id_contacto),
         rol: raciForm.rol,
         raci: raciVal
       })
@@ -314,7 +314,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const fetchMetadata = () => {
     fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedes(data));
     fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendors(data));
-    fetch(`${import.meta.env.VITE_API_URL}/key-users`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setKeyUsers(data));
+    fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data));
     fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPms(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowStates(data));
   };
@@ -736,10 +736,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const openEditProject = () => {
     setEditProjectForm({
       ...project,
-      involvedKus: project.InvolvedKeyUsers?.map(k => k.id_ku) || [],
-      comSemanalKus: project.ComSemanalKUs?.map(k => k.id_ku) || [],
-      comMensualKus: project.ComMensualKUs?.map(k => k.id_ku) || [],
-      comSteercoKus: project.ComSteerCoKUs?.map(k => k.id_ku) || []
+      involvedContactos: project.InvolvedContacts?.map(k => k.id_contacto) || [],
+      comSemanalContactos: project.ComSemanalContactos?.map(k => k.id_contacto) || [],
+      comMensualContactos: project.ComMensualContactos?.map(k => k.id_contacto) || [],
+      comSteerCoContactos: project.ComSteerCoContactos?.map(k => k.id_contacto) || []
     });
     setEditProjectError('');
     setShowEditProjectModal(true);
@@ -1285,6 +1285,11 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
               ) : (
                 <span className="badge badge-orange">OPEX</span>
               )}
+              {project.Estado && (
+                <span className="badge" style={{ backgroundColor: 'var(--md-sys-color-surface-container-highest)', color: 'var(--md-sys-color-on-surface)', fontWeight: 600 }}>
+                  {project.Estado.icono || ''} {project.Estado.nombre_estado}
+                </span>
+              )}
             </div>
             <h2 className="page-title" style={{ marginTop: 4 }}>{project.nombre_proyecto}</h2>
           </div>
@@ -1401,6 +1406,16 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 {/* Left Info */}
                 <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  
+                  {project.Estado && (
+                    <div style={{ backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)', padding: '16px 20px', borderRadius: '12px', marginBottom: 8, borderLeft: '4px solid var(--md-sys-color-primary)' }}>
+                      <h3 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span>📘</span> Descripción del Estado ({project.Estado.nombre_estado})
+                      </h3>
+                      <div className="wysiwyg-content" dangerouslySetInnerHTML={{ __html: project.Estado.pasos || '<p style="font-style: italic; opacity: 0.8;">Sin descripción de estado detallada.</p>' }} style={{ fontSize: '0.9rem', lineHeight: '1.5' }} />
+                    </div>
+                  )}
+
                   <div>
                     <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 8 }}>Descripción</h3>
                     <p style={{ color: 'var(--md-sys-color-on-surface)', whiteSpace: 'pre-line' }}>{project.descripcion}</p>
@@ -1611,8 +1626,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Matriz RACI / Participantes</h3>
                   <div style={{ width: '220px' }}>
-                    <SearchableKeyUserSelect 
-                      keyUsers={keyUsers.filter(ku => !project.InvolvedKeyUsers?.some(assigned => Number(assigned.id_ku) === Number(ku.id_ku)))}
+                    <SearchableContactSelect 
+                      contacts={contactosList.filter(ku => !project.InvolvedContacts?.some(assigned => Number(assigned.id_contacto) === Number(ku.id_contacto)))}
                       selected=""
                       onChange={(val) => {
                         if (val) handleOpenAddRaci(val);
@@ -1622,21 +1637,21 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   </div>
                 </div>
 
-                {project.InvolvedKeyUsers?.length === 0 ? (
+                {project.InvolvedContacts?.length === 0 ? (
                   <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>No se han asignado Key Users ni roles RACI a este proyecto.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {project.InvolvedKeyUsers?.map(ku => {
-                      const raciStr = ku.Proyecto_KeyUsers?.raci || '';
+                    {project.InvolvedContacts?.map(ku => {
+                      const raciStr = ku.Proyecto_Contactos?.raci || '';
                       return (
-                        <div key={ku.id_ku} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 12, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px', border: '1px solid var(--md-sys-color-outline-variant)' }}>
+                        <div key={ku.id_contacto} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 12, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px', border: '1px solid var(--md-sys-color-outline-variant)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
                               {ku.nombre[0]}{ku.apellidos[0]}
                             </div>
                             <div>
                               <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{ku.nombre} {ku.apellidos}</div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>{ku.Proyecto_KeyUsers?.rol || 'Usuario funcional'}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>{ku.Proyecto_Contactos?.rol || 'Usuario funcional'}</div>
                             </div>
                           </div>
 
@@ -1689,7 +1704,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                               </button>
                               <button 
                                 className="icon-btn" 
-                                onClick={() => handleDeleteParticipant(ku.id_ku)}
+                                onClick={() => handleDeleteParticipant(ku.id_contacto)}
                                 style={{ width: 28, height: 28, color: 'var(--color-rag-red)' }}
                                 title="Retirar participante"
                               >
@@ -2445,11 +2460,11 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                     <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12 }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes de Negocio:</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {project.ComSemanalKUs?.length === 0 ? (
+                        {project.ComSemanalContactos?.length === 0 ? (
                           <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Sin participantes asignados.</span>
                         ) : (
-                          project.ComSemanalKUs?.map(ku => (
-                            <div key={ku.id_ku} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
+                          project.ComSemanalContactos?.map(ku => (
+                            <div key={ku.id_contacto} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
                           ))
                         )}
                       </div>
@@ -2477,11 +2492,11 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                     <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12 }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes de Negocio:</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {project.ComMensualKUs?.length === 0 ? (
+                        {project.ComMensualContactos?.length === 0 ? (
                           <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Sin participantes asignados.</span>
                         ) : (
-                          project.ComMensualKUs?.map(ku => (
-                            <div key={ku.id_ku} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
+                          project.ComMensualContactos?.map(ku => (
+                            <div key={ku.id_contacto} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
                           ))
                         )}
                       </div>
@@ -2509,11 +2524,11 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                     <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12 }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes de Negocio:</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {project.ComSteerCoKUs?.length === 0 ? (
+                        {project.ComSteerCoContactos?.length === 0 ? (
                           <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Sin participantes asignados.</span>
                         ) : (
-                          project.ComSteerCoKUs?.map(ku => (
-                            <div key={ku.id_ku} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
+                          project.ComSteerCoContactos?.map(ku => (
+                            <div key={ku.id_contacto} style={{ fontSize: '0.85rem', fontWeight: 500 }}>• {ku.nombre} {ku.apellidos}</div>
                           ))
                         )}
                       </div>
@@ -2724,10 +2739,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 {/* Sponsor */}
                 <div className="form-group">
                   <label className="form-label">Sponsor / KU Líder</label>
-                  <SearchableKeyUserSelect 
-                    keyUsers={keyUsers}
-                    selected={editProjectForm.id_sponsor_ku}
-                    onChange={(val) => setEditProjectForm(prev => ({ ...prev, id_sponsor_ku: val }))}
+                  <SearchableContactSelect 
+                    contacts={contactosList}
+                    selected={editProjectForm.id_sponsor}
+                    onChange={(val) => setEditProjectForm(prev => ({ ...prev, id_sponsor: val }))}
                     multiple={false}
                     placeholder="Seleccione Sponsor / Key User Líder..."
                   />
@@ -2767,8 +2782,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                   />
                 </div>
 
-                {/* CAPEX Toggle (Corrigiendo: cambiar Nº Capex si no lo se) */}
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                {/* CAPEX and Estratégico switches */}
+                <div className="form-group" style={{ gridColumn: 'span 2', display: 'flex', gap: 24 }}>
                   <label className="m3-checkbox-label">
                     <input 
                       type="checkbox" 
@@ -2777,6 +2792,16 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                       className="m3-checkbox"
                     />
                     <span>¿Es Proyecto CAPEX?</span>
+                  </label>
+                  
+                  <label className="m3-checkbox-label" style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
+                    <input 
+                      type="checkbox" 
+                      checked={!!editProjectForm.es_estrategico}
+                      onChange={(e) => setEditProjectForm({ ...editProjectForm, es_estrategico: e.target.checked })}
+                      className="m3-checkbox"
+                    />
+                    <span>¿Es Proyecto Estratégico?</span>
                   </label>
                 </div>
 
@@ -2797,10 +2822,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 {/* Involved Key Users */}
                 <div className="form-group" style={{ gridColumn: 'span 2', borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 16 }}>
                   <label className="form-label" style={{ marginBottom: 8 }}>Key Users de negocio Involucrados</label>
-                  <SearchableKeyUserSelect 
-                    keyUsers={keyUsers}
-                    selected={editProjectForm.involvedKus || []}
-                    onChange={(val) => setEditProjectForm(prev => ({ ...prev, involvedKus: val }))}
+                  <SearchableContactSelect 
+                    contacts={contactosList}
+                    selected={editProjectForm.involvedContactos || []}
+                    onChange={(val) => setEditProjectForm(prev => ({ ...prev, involvedContactos: val }))}
                     multiple={true}
                     placeholder="Seleccione Key Users Involucrados..."
                   />
@@ -2828,10 +2853,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         style={{ marginTop: 6 }}
                       />
                       <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes Semanales (solo miembros RACI):</div>
-                      <SearchableKeyUserSelect 
-                        keyUsers={(project.InvolvedKeyUsers || []).map(ku => keyUsers.find(k => Number(k.id_ku) === Number(ku.id_ku)) || ku)}
-                        selected={editProjectForm.comSemanalKus || []}
-                        onChange={(val) => setEditProjectForm(prev => ({ ...prev, comSemanalKus: val }))}
+                      <SearchableContactSelect 
+                        contacts={(project.InvolvedContacts || []).map(ku => contactosList.find(k => Number(k.id_contacto) === Number(ku.id_contacto)) || ku)}
+                        selected={editProjectForm.comSemanalContactos || []}
+                        onChange={(val) => setEditProjectForm(prev => ({ ...prev, comSemanalContactos: val }))}
                         multiple={true}
                         placeholder="Seleccione Participantes Semanales..."
                       />
@@ -2861,10 +2886,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         style={{ marginTop: 6 }}
                       />
                       <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes Mensuales (solo miembros RACI):</div>
-                      <SearchableKeyUserSelect 
-                        keyUsers={(project.InvolvedKeyUsers || []).map(ku => keyUsers.find(k => Number(k.id_ku) === Number(ku.id_ku)) || ku)}
-                        selected={editProjectForm.comMensualKus || []}
-                        onChange={(val) => setEditProjectForm(prev => ({ ...prev, comMensualKus: val }))}
+                      <SearchableContactSelect 
+                        contacts={(project.InvolvedContacts || []).map(ku => contactosList.find(k => Number(k.id_contacto) === Number(ku.id_contacto)) || ku)}
+                        selected={editProjectForm.comMensualContactos || []}
+                        onChange={(val) => setEditProjectForm(prev => ({ ...prev, comMensualContactos: val }))}
                         multiple={true}
                         placeholder="Seleccione Participantes Mensuales..."
                       />
@@ -2894,10 +2919,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         style={{ marginTop: 6 }}
                       />
                       <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes SteerCo (solo miembros RACI):</div>
-                      <SearchableKeyUserSelect 
-                        keyUsers={(project.InvolvedKeyUsers || []).map(ku => keyUsers.find(k => Number(k.id_ku) === Number(ku.id_ku)) || ku)}
-                        selected={editProjectForm.comSteercoKus || []}
-                        onChange={(val) => setEditProjectForm(prev => ({ ...prev, comSteercoKus: val }))}
+                      <SearchableContactSelect 
+                        contacts={(project.InvolvedContacts || []).map(ku => contactosList.find(k => Number(k.id_contacto) === Number(ku.id_contacto)) || ku)}
+                        selected={editProjectForm.comSteerCoContactos || []}
+                        onChange={(val) => setEditProjectForm(prev => ({ ...prev, comSteerCoContactos: val }))}
                         multiple={true}
                         placeholder="Seleccione Participantes SteerCo..."
                       />
@@ -3098,8 +3123,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                     className="user-select"
                   >
                     <option value="">Seleccione Solicitante</option>
-                    {keyUsers.map(ku => (
-                      <option key={ku.id_ku} value={ku.id_ku}>{ku.nombre} {ku.apellidos}</option>
+                    {contactosList.map(ku => (
+                      <option key={ku.id_contacto} value={ku.id_contacto}>{ku.nombre} {ku.apellidos}</option>
                     ))}
                   </select>
                 </div>
@@ -3113,8 +3138,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                     className="user-select"
                   >
                     <option value="">Seleccione Aprobador</option>
-                    {keyUsers.map(ku => (
-                      <option key={ku.id_ku} value={ku.id_ku}>{ku.nombre} {ku.apellidos}</option>
+                    {contactosList.map(ku => (
+                      <option key={ku.id_contacto} value={ku.id_contacto}>{ku.nombre} {ku.apellidos}</option>
                     ))}
                   </select>
                 </div>
@@ -3780,7 +3805,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 <label className="form-label" style={{ fontWeight: 600 }}>Participante seleccionado</label>
                 <div style={{ padding: '10px 14px', backgroundColor: 'var(--md-sys-color-surface-container)', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface)' }}>
                   {(() => {
-                    const user = keyUsers.find(k => Number(k.id_ku) === Number(raciForm.id_ku));
+                    const user = contactosList.find(k => Number(k.id_contacto) === Number(raciForm.id_contacto));
                     return user ? `${user.nombre} ${user.apellidos} (${user.Proveedore?.nombre_razon_social || user.Proveedor?.nombre_razon_social || 'Dacsa'})` : '';
                   })()}
                 </div>

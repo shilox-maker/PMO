@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
 
-import SearchableKeyUserSelect from '../components/SearchableKeyUserSelect';
+import SearchableContactSelect from '../components/SearchableContactSelect';
 import { useTableColumns } from '../hooks/useTableColumns';
 import ColumnSelector from '../components/ColumnSelector';
 
@@ -106,6 +106,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   const [filterPm, setFilterPm] = useState('');
   const [filterVendor, setFilterVendor] = useState('');
   const [filterRag, setFilterRag] = useState('');
+  const [filterEstrategico, setFilterEstrategico] = useState('');
   const [filterStates, setFilterStates] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isStatesOpen, setIsStatesOpen] = useState(false);
@@ -114,7 +115,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   const [pmsList, setPmsList] = useState([]);
   const [vendorsList, setVendorsList] = useState([]);
   const [sedesList, setSedesList] = useState([]);
-  const [keyUsersList, setKeyUsersList] = useState([]);
+  const [contactosList, setContactosList] = useState([]);
   const [statesList, setStatesList] = useState([]);
 
   // Modal creation state
@@ -126,13 +127,14 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     id_pm: '',
     id_proveedor: '',
     id_sede: '',
-    id_sponsor_ku: '',
+    id_sponsor: '',
     estado_proyecto: 'Kickoff',
     indicador_rag: 'VERDE',
     fecha_inicio: '',
     fecha_fin_inicial: '',
     es_capex: false,
     codigo_capex: '',
+    es_estrategico: false,
     budget_inicial: '',
     com_semanal_activo: false,
     com_semanal_finalidad: '',
@@ -149,6 +151,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     if (filterPm) params.append('pm', filterPm);
     if (filterVendor) params.append('vendor', filterVendor);
     if (filterRag) params.append('rag', filterRag);
+    if (filterEstrategico) params.append('estrategico', filterEstrategico);
     if (filterStates.length > 0) params.append('state', filterStates.join(','));
     if (searchTerm) params.append('search', searchTerm);
 
@@ -170,13 +173,13 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(data));
     fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(data));
     fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedesList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/key-users`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setKeyUsersList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
   };
 
   useEffect(() => {
     fetchProjects();
-  }, [filterPm, filterVendor, filterRag, filterStates, searchTerm]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterStates, searchTerm]);
 
   useEffect(() => {
     fetchMetadata();
@@ -213,7 +216,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       return;
     }
 
-    if (!newProject.nombre_proyecto || !newProject.id_pm || !newProject.id_proveedor || !newProject.id_sede || !newProject.id_sponsor_ku || !newProject.budget_inicial) {
+    if (!newProject.nombre_proyecto || !newProject.id_pm || !newProject.id_proveedor || !newProject.id_sede || !newProject.id_sponsor || !newProject.budget_inicial) {
       setFormError('Por favor, rellene todos los campos obligatorios.');
       return;
     }
@@ -224,7 +227,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       id_pm: parseInt(newProject.id_pm, 10),
       id_proveedor: parseInt(newProject.id_proveedor, 10),
       id_sede: parseInt(newProject.id_sede, 10),
-      id_sponsor_ku: parseInt(newProject.id_sponsor_ku, 10)
+      id_sponsor: parseInt(newProject.id_sponsor, 10)
     };
 
     if (!payload.id_proyecto || payload.id_proyecto.trim() === '') {
@@ -251,13 +254,14 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
           id_pm: currentPm ? currentPm.id_usuario.toString() : '',
           id_proveedor: '',
           id_sede: '',
-          id_sponsor_ku: '',
+          id_sponsor: '',
           estado_proyecto: 'Kickoff',
           indicador_rag: 'VERDE',
           fecha_inicio: '',
           fecha_fin_inicial: '',
           es_capex: false,
           codigo_capex: '',
+          es_estrategico: false,
           budget_inicial: '',
           com_semanal_activo: false,
           com_semanal_finalidad: '',
@@ -342,6 +346,20 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
             <option value="VERDE">VERDE 🟢</option>
             <option value="AMARILLO">AMARILLO 🟡</option>
             <option value="ROJO">ROJO 🔴</option>
+          </select>
+        </div>
+
+        {/* Estratégico Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <select 
+            value={filterEstrategico} 
+            onChange={(e) => setFilterEstrategico(e.target.value)}
+            className="user-select"
+            style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+          >
+            <option value="">¿Estratégico?</option>
+            <option value="true">Sí</option>
+            <option value="false">No</option>
           </select>
         </div>
         
@@ -702,10 +720,10 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                 {/* Sponsor Key User */}
                 <div className="form-group">
                   <label className="form-label">Sponsor / Key User Líder *</label>
-                  <SearchableKeyUserSelect 
-                    keyUsers={keyUsersList}
-                    selected={newProject.id_sponsor_ku}
-                    onChange={(val) => setNewProject(prev => ({ ...prev, id_sponsor_ku: val }))}
+                  <SearchableContactSelect 
+                    contacts={contactosList}
+                    selected={newProject.id_sponsor}
+                    onChange={(val) => setNewProject(prev => ({ ...prev, id_sponsor: val }))}
                     multiple={false}
                     placeholder="Seleccione Sponsor / Key User Líder..."
                   />
@@ -784,8 +802,8 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                   </select>
                 </div>
 
-                {/* CAPEX switches */}
-                <div className="form-group" style={{ gridColumn: 'span 2', justifyContent: 'center' }}>
+                {/* CAPEX and Estratégico switches */}
+                <div className="form-group" style={{ gridColumn: 'span 2', display: 'flex', gap: 24, justifyContent: 'center' }}>
                   <label className="m3-checkbox-label">
                     <input 
                       type="checkbox" 
@@ -795,6 +813,17 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                       className="m3-checkbox"
                     />
                     <span>¿Es Proyecto CAPEX?</span>
+                  </label>
+                  
+                  <label className="m3-checkbox-label" style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
+                    <input 
+                      type="checkbox" 
+                      name="es_estrategico"
+                      checked={newProject.es_estrategico}
+                      onChange={handleInputChange}
+                      className="m3-checkbox"
+                    />
+                    <span>¿Es Proyecto Estratégico?</span>
                   </label>
                 </div>
 

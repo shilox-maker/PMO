@@ -10,9 +10,9 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const ExcelJS = require('exceljs');
 const { 
-  sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios, KeyUsers, 
-  Proyectos, ProyectoKeyUsers, ProyectoComSemanalKU, ProyectoComMensualKU, 
-  ProyectoComSteerCoKU, Incidencias, Riesgos, LeccionesAprendidas, Facturas, 
+  sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios, 
+  Proyectos, ProyectoContactos, ProyectoComSemanalContacto, ProyectoComMensualContacto, 
+  ProyectoComSteerCoContacto, Incidencias, Riesgos, LeccionesAprendidas, Facturas, 
   CambiosAlcance, Tareas, EstadosProyecto, ComentariosProyecto 
 } = require('./models/index');
 const { getProjectCalculations } = require('./models/automations');
@@ -372,9 +372,9 @@ app.get('/api/sedes', async (req, res) => {
 // ==========================================
 // 4. Key Users Endpoints
 // ==========================================
-app.get('/api/key-users', async (req, res) => {
+app.get('/api/contactos', async (req, res) => {
   try {
-    const kus = await KeyUsers.findAll({
+    const kus = await ContactosProveedor.findAll({
       include: [{ model: Proveedores, attributes: ['nombre_razon_social'] }],
       order: [['nombre', 'ASC']]
     });
@@ -571,7 +571,7 @@ app.get('/api/timeline', async (req, res) => {
       include: [
         { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
         { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
-        { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'proyecto_cerrado'] },
+        { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'proyecto_cerrado', 'pasos'] },
         { model: Tareas, where: { es_hito: true }, required: false, attributes: ['id_tarea', 'titulo_tarea', 'fecha_limite', 'estado'] }
       ],
       order: [['fecha_inicio', 'ASC']]
@@ -615,13 +615,16 @@ app.get('/api/timeline', async (req, res) => {
 // Get all projects with filters and calculations
 app.get('/api/projects', async (req, res) => {
   try {
-    const { pm, vendor, rag, search, state } = req.query;
+    const { pm, vendor, rag, search, state, estrategico } = req.query;
     
     // Construct query filters
     const where = {};
     if (pm) where.id_pm = pm;
     if (vendor) where.id_proveedor = vendor;
     if (rag) where.indicador_rag = rag;
+    if (estrategico) {
+      where.es_estrategico = estrategico === 'true';
+    }
     if (search) {
       where.nombre_proyecto = { [Op.like]: `%${search}%` };
     }
@@ -632,7 +635,7 @@ app.get('/api/projects', async (req, res) => {
         { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos', 'correo'] },
         { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
         { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
-        { model: KeyUsers, as: 'Sponsor', attributes: ['nombre', 'apellidos'] },
+        { model: ContactosProveedor, as: 'Sponsor', attributes: ['nombre', 'apellidos'] },
         { 
           model: EstadosProyecto, 
           as: 'Estado', 
@@ -678,12 +681,15 @@ app.get('/api/projects', async (req, res) => {
 // Export projects list to Excel format (.xlsx)
 app.get('/api/projects/export', async (req, res) => {
   try {
-    const { pm, vendor, rag, search, state, cols } = req.query;
+    const { pm, vendor, rag, search, state, cols, estrategico } = req.query;
 
     const where = {};
     if (pm) where.id_pm = pm;
     if (vendor) where.id_proveedor = vendor;
     if (rag) where.indicador_rag = rag;
+    if (estrategico) {
+      where.es_estrategico = estrategico === 'true';
+    }
     if (search) {
       where.nombre_proyecto = { [Op.like]: `%${search}%` };
     }
@@ -840,21 +846,21 @@ app.get('/api/projects/:id_proyecto', async (req, res) => {
         { model: Usuarios, as: 'PM', attributes: ['id_usuario', 'nombre', 'apellidos', 'correo'] },
         { model: Proveedores, as: 'Proveedor', attributes: ['id_proveedor', 'nombre_razon_social'] },
         { model: Sedes, as: 'Sede', attributes: ['id_sede', 'nombre_sede'] },
-        { model: KeyUsers, as: 'Sponsor', attributes: ['id_ku', 'nombre', 'apellidos', 'correo'] },
-        { model: KeyUsers, as: 'InvolvedKeyUsers', through: { attributes: ['rol', 'raci'] } },
-        { model: KeyUsers, as: 'ComSemanalKUs', through: { attributes: [] } },
-        { model: KeyUsers, as: 'ComMensualKUs', through: { attributes: [] } },
-        { model: KeyUsers, as: 'ComSteerCoKUs', through: { attributes: [] } },
+        { model: ContactosProveedor, as: 'Sponsor', attributes: ['id_contacto', 'nombre', 'apellidos', 'email'] },
+        { model: ContactosProveedor, as: 'InvolvedContacts', through: { attributes: ['rol', 'raci'] } },
+        { model: ContactosProveedor, as: 'ComSemanalContactos', through: { attributes: [] } },
+        { model: ContactosProveedor, as: 'ComMensualContactos', through: { attributes: [] } },
+        { model: ContactosProveedor, as: 'ComSteerCoContactos', through: { attributes: [] } },
         { model: Incidencias, order: [['fecha_apertura', 'DESC']] },
         { model: Riesgos, order: [['fecha_proxima_revision', 'ASC']] },
         { model: LeccionesAprendidas, order: [['fecha_registro', 'DESC']] },
         { model: Facturas, order: [['fecha_factura', 'DESC']] },
         { model: CambiosAlcance, include: [
-          { model: KeyUsers, as: 'Solicitante', attributes: ['nombre', 'apellidos'] },
-          { model: KeyUsers, as: 'Aprobador', attributes: ['nombre', 'apellidos'] }
+          { model: ContactosProveedor, as: 'Solicitante', attributes: ['nombre', 'apellidos'] },
+          { model: ContactosProveedor, as: 'Aprobador', attributes: ['nombre', 'apellidos'] }
         ], order: [['fecha_solicitud', 'DESC']] },
         { model: Tareas, order: [['fecha_limite', 'ASC']] },
-        { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono'] }
+        { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'pasos'] }
       ]
     });
 
@@ -947,10 +953,10 @@ app.post('/api/projects', async (req, res) => {
     const project = await Proyectos.create(data);
 
     // Add Many-to-Many associations if provided
-    if (data.involvedKus) await project.setInvolvedKeyUsers(data.involvedKus);
-    if (data.comSemanalKus) await project.setComSemanalKUs(data.comSemanalKus);
-    if (data.comMensualKus) await project.setComMensualKUs(data.comMensualKus);
-    if (data.comSteercoKus) await project.setComSteerCoKUs(data.comSteercoKus);
+    if (data.involvedKus) await project.setInvolvedContacts(data.involvedKus);
+    if (data.comSemanalKus) await project.setComSemanalContactos(data.comSemanalKus);
+    if (data.comMensualKus) await project.setComMensualContactos(data.comMensualKus);
+    if (data.comSteercoKus) await project.setComSteerCoContactos(data.comSteercoKus);
 
     res.status(201).json(project);
   } catch (error) {
@@ -1060,10 +1066,10 @@ app.put('/api/projects/:id_proyecto', async (req, res) => {
     await project.update(data);
 
     // Update Many-to-Many relations
-    if (data.involvedKus) await project.setInvolvedKeyUsers(data.involvedKus);
-    if (data.comSemanalKus) await project.setComSemanalKUs(data.comSemanalKus);
-    if (data.comMensualKus) await project.setComMensualKUs(data.comMensualKus);
-    if (data.comSteercoKus) await project.setComSteerCoKUs(data.comSteercoKus);
+    if (data.involvedKus) await project.setInvolvedContacts(data.involvedKus);
+    if (data.comSemanalKus) await project.setComSemanalContactos(data.comSemanalKus);
+    if (data.comMensualKus) await project.setComMensualContactos(data.comMensualKus);
+    if (data.comSteercoKus) await project.setComSteerCoContactos(data.comSteercoKus);
 
     res.json(project);
   } catch (error) {
@@ -1106,9 +1112,9 @@ app.delete('/api/projects/:id_proyecto', async (req, res) => {
 app.post('/api/projects/:id_proyecto/participants', async (req, res) => {
   try {
     const { id_proyecto } = req.params;
-    const { id_ku, rol, raci } = req.body;
-    if (!id_ku || !rol || !raci) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios: id_ku, rol, raci.' });
+    const { id_contacto, rol, raci } = req.body;
+    if (!id_contacto || !rol || !raci) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios: id_contacto, rol, raci.' });
     }
     const project = await Proyectos.findByPk(id_proyecto);
     if (!project) {
@@ -1116,8 +1122,8 @@ app.post('/api/projects/:id_proyecto/participants', async (req, res) => {
     }
     
     // Check if association exists
-    const [association, created] = await ProyectoKeyUsers.findOrCreate({
-      where: { id_proyecto, id_ku },
+    const [association, created] = await ProyectoContactos.findOrCreate({
+      where: { id_proyecto, id_contacto },
       defaults: { rol, raci }
     });
 
@@ -1133,11 +1139,11 @@ app.post('/api/projects/:id_proyecto/participants', async (req, res) => {
 });
 
 // Remove participant from project RACI matrix
-app.delete('/api/projects/:id_proyecto/participants/:id_ku', async (req, res) => {
+app.delete('/api/projects/:id_proyecto/participants/:id_contacto', async (req, res) => {
   try {
-    const { id_proyecto, id_ku } = req.params;
-    const count = await ProyectoKeyUsers.destroy({
-      where: { id_proyecto, id_ku }
+    const { id_proyecto, id_contacto } = req.params;
+    const count = await ProyectoContactos.destroy({
+      where: { id_proyecto, id_contacto }
     });
     if (count === 0) {
       return res.status(404).json({ error: 'Participante no encontrado en este proyecto.' });
@@ -1756,7 +1762,7 @@ app.get('/api/admin/states', restrictToAdmin, async (req, res) => {
 
 app.post('/api/admin/states', restrictToAdmin, async (req, res) => {
   try {
-    const { nombre_estado, icono, orden, proyecto_cerrado } = req.body;
+    const { nombre_estado, icono, orden, proyecto_cerrado, pasos } = req.body;
     if (!nombre_estado || orden === undefined) {
       return res.status(400).json({ error: 'El nombre del estado y el orden son obligatorios.' });
     }
@@ -1764,7 +1770,8 @@ app.post('/api/admin/states', restrictToAdmin, async (req, res) => {
       nombre_estado,
       icono,
       orden: parseInt(orden, 10),
-      proyecto_cerrado: proyecto_cerrado !== undefined ? !!proyecto_cerrado : false
+      proyecto_cerrado: proyecto_cerrado !== undefined ? !!proyecto_cerrado : false,
+      pasos: pasos !== undefined ? pasos : null
     });
     res.status(201).json(state);
   } catch (error) {
@@ -1775,7 +1782,7 @@ app.post('/api/admin/states', restrictToAdmin, async (req, res) => {
 app.put('/api/admin/states/:id_estado', restrictToAdmin, async (req, res) => {
   try {
     const { id_estado } = req.params;
-    const { nombre_estado, icono, orden, proyecto_cerrado } = req.body;
+    const { nombre_estado, icono, orden, proyecto_cerrado, pasos } = req.body;
     const state = await EstadosProyecto.findByPk(id_estado);
     if (!state) {
       return res.status(404).json({ error: 'Estado no encontrado.' });
@@ -1784,7 +1791,8 @@ app.put('/api/admin/states/:id_estado', restrictToAdmin, async (req, res) => {
       nombre_estado: nombre_estado !== undefined ? nombre_estado : state.nombre_estado,
       icono: icono !== undefined ? icono : state.icono,
       orden: orden !== undefined ? parseInt(orden, 10) : state.orden,
-      proyecto_cerrado: proyecto_cerrado !== undefined ? !!proyecto_cerrado : state.proyecto_cerrado
+      proyecto_cerrado: proyecto_cerrado !== undefined ? !!proyecto_cerrado : state.proyecto_cerrado,
+      pasos: pasos !== undefined ? pasos : state.pasos
     });
     res.json(state);
   } catch (error) {

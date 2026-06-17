@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [1.7.10] - 2026-06-18
+### Added
+- **Filtro de Proyectos Abiertos en KPIs PMO**: Añadido un botón rápido en la vista de KPIs para prefiltrar proyectos "Abiertos" excluyendo automáticamente los estados de cierre (CERRADO, CANCELADO, FINALIZADO, COMPLETADO, PARKING).
+- **Mejora de Detalles de KPI**: Al hacer clic en las tarjetas de KPI (Desborde, CAPEX, Gobernanza, etc.) se muestran en detalle los proyectos que componen el KPI y sus estados.
 ## [1.7.9] - 2026-06-17
 ### Added
 - **Ciclo de Vida de Proyectos (12 estados)**: Refactorización corporativa completa del flujo de estados, reduciendo de 16 a 12 fases estandarizadas: Petición, Alcance, Aprobación, Planificación, Kickoff, En Ejecución, Go Live, Soporte Post-GoLive, Cierre, Cancelado, En Pausa y Deprioritizado.

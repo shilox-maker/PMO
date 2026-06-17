@@ -1,8 +1,8 @@
 const { 
-  sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios, KeyUsers, 
-  Proyectos, Incidencias, Riesgos, LeccionesAprendidas, Facturas, 
-  CambiosAlcance, Tareas, ProyectoKeyUsers, ProyectoComSemanalKU, 
-  ProyectoComMensualKU, ProyectoComSteerCoKU, EstadosProyecto, ComentariosProyecto 
+  sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios,
+  Proyectos, Incidencias, Riesgos, LeccionesAprendidas, Facturas,
+  CambiosAlcance, Tareas, ProyectoContactosProveedor, ProyectoComSemanalContacto, 
+  ProyectoComMensualContacto, ProyectoComSteerCoContacto, EstadosProyecto, ComentariosProyecto 
 } = require('./models/index');
 
 const crypto = require('crypto');
@@ -14,7 +14,9 @@ function hashPassword(password) {
 async function seed() {
   try {
     console.log('Synchronizing database models...');
+    await sequelize.query('PRAGMA foreign_keys = OFF;');
     await sequelize.sync({ force: true });
+    await sequelize.query('PRAGMA foreign_keys = ON;');
     console.log('Database synced. Seeding tables...');
 
     // ==========================================
@@ -99,23 +101,23 @@ async function seed() {
     // ==========================================
     // 6. KEY USERS
     // ==========================================
-    const keyUsers = await KeyUsers.bulkCreate([
+    const keyUsers = await ContactosProveedor.bulkCreate([
       // Dacsa internos (stakeholders)
-      { nombre: 'Roberto',  apellidos: 'Ramos',    correo: 'rramos@dacsa.com',    id_proveedor_empresa: dacsa.id_proveedor },
-      { nombre: 'Elena',    apellidos: 'Vargas',   correo: 'evargas@dacsa.com',   id_proveedor_empresa: dacsa.id_proveedor },
-      { nombre: 'Diego',    apellidos: 'Torres',   correo: 'dtorres@dacsa.com',   id_proveedor_empresa: dacsa.id_proveedor },
-      { nombre: 'Patricia', apellidos: 'Campos',   correo: 'pcampos@dacsa.com',   id_proveedor_empresa: dacsa.id_proveedor },
-      { nombre: 'Álvaro',   apellidos: 'Reyes',    correo: 'areyes@dacsa.com',    id_proveedor_empresa: dacsa.id_proveedor },
+      { nombre: 'Roberto',  apellidos: 'Ramos',    email: 'rramos@dacsa.com',    id_proveedor: dacsa.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' },
+      { nombre: 'Elena',    apellidos: 'Vargas',   email: 'evargas@dacsa.com',   id_proveedor: dacsa.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' },
+      { nombre: 'Diego',    apellidos: 'Torres',   email: 'dtorres@dacsa.com',   id_proveedor: dacsa.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' },
+      { nombre: 'Patricia', apellidos: 'Campos',   email: 'pcampos@dacsa.com',   id_proveedor: dacsa.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' },
+      { nombre: 'Álvaro',   apellidos: 'Reyes',    email: 'areyes@dacsa.com',    id_proveedor: dacsa.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' },
       // Vendor KUs
-      { nombre: 'Pedro',    apellidos: 'Gutiérrez',correo: 'pgutierrez@sopra.com',id_proveedor_empresa: sopra.id_proveedor },
-      { nombre: 'Sofía',    apellidos: 'Nieto',    correo: 'snieto@minsait.com',  id_proveedor_empresa: indra.id_proveedor },
-      { nombre: 'Tomás',    apellidos: 'Marín',    correo: 'tmarin@accenture.com',id_proveedor_empresa: accenture.id_proveedor },
-      { nombre: 'Iván',     apellidos: 'Cano',     correo: 'icano@capgemini.com', id_proveedor_empresa: capgemini.id_proveedor },
-      { nombre: 'Nuria',    apellidos: 'Esteve',   correo: 'nesteve@nttdata.com', id_proveedor_empresa: nttData.id_proveedor },
-      { nombre: 'Marcos',   apellidos: 'Pardo',    correo: 'mpardo@deloitte.com', id_proveedor_empresa: deloitte.id_proveedor }
+      { nombre: 'Pedro',    apellidos: 'Gutiérrez',email: 'pgutierrez@sopra.com',id_proveedor: sopra.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' },
+      { nombre: 'Sofía',    apellidos: 'Nieto',    email: 'snieto@minsait.com',  id_proveedor: indra.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' },
+      { nombre: 'Tomás',    apellidos: 'Marín',    email: 'tmarin@accenture.com',id_proveedor: accenture.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' },
+      { nombre: 'Iván',     apellidos: 'Cano',     email: 'icano@capgemini.com', id_proveedor: capgemini.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' },
+      { nombre: 'Nuria',    apellidos: 'Esteve',   email: 'nesteve@nttdata.com', id_proveedor: nttData.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' },
+      { nombre: 'Marcos',   apellidos: 'Pardo',    email: 'mpardo@deloitte.com', id_proveedor: deloitte.id_proveedor, puesto: 'Stakeholder', telefono: '600000000' }
     ]);
     const [kuRoberto, kuElena, kuDiego, kuPatricia, kuAlvaro, kuPedro, kuSofia, kuTomas, kuIvan, kuNuria, kuMarcos] = keyUsers;
-    console.log('KeyUsers seeded.');
+    console.log('ContactosProveedor seeded.');
 
     // ==========================================
     // 7. PROYECTOS (15 proyectos)
@@ -125,7 +127,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-001', nombre_proyecto: 'Renovación ERP Valencia',
         descripcion: 'Migración del sistema ERP local a la plataforma en la nube para mejorar la gestión comercial y financiera.',
         id_pm: pmJaime.id_usuario, id_proveedor: sopra.id_proveedor, id_sede: sedValencia.id_sede,
-        id_sponsor_ku: kuRoberto.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'VERDE',
+        id_sponsor: kuRoberto.id_contacto, id_estado: sm['Ejecución'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-01-10', fecha_fin_inicial: '2026-10-31', es_capex: true, codigo_capex: 'CPX-998822', budget_inicial: 250000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Seguimiento técnico de sprints y bloqueos.',
         com_mensual_activo: true, com_mensual_finalidad: 'Comité directivo de hitos y facturación.',
@@ -136,7 +138,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-002', nombre_proyecto: 'Portal de Clientes Centralizado',
         descripcion: 'Desarrollo de un portal unificado para gestión de clientes a nivel nacional con SSO corporativo.',
         id_pm: pmMarta.id_usuario, id_proveedor: indra.id_proveedor, id_sede: sedMadrid.id_sede,
-        id_sponsor_ku: kuElena.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'AMARILLO',
+        id_sponsor: kuElena.id_contacto, id_estado: sm['Ejecución'], indicador_rag: 'AMARILLO',
         fecha_inicio: '2026-02-01', fecha_fin_inicial: '2026-09-30', es_capex: false, budget_inicial: 120000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Sincronización de requerimientos de diseño.',
         com_mensual_activo: true, com_mensual_finalidad: 'Revisión de avance con el Comité de Clientes.',
@@ -147,7 +149,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-003', nombre_proyecto: 'Automatización Almacén Buñol',
         descripcion: 'Implementación de lectores RFID y software de control logístico en planta. Primera fase de industria 4.0.',
         id_pm: pmJaime.id_usuario, id_proveedor: accenture.id_proveedor, id_sede: sedBunol.id_sede,
-        id_sponsor_ku: kuDiego.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'AMARILLO',
+        id_sponsor: kuDiego.id_contacto, id_estado: sm['Ejecución'], indicador_rag: 'AMARILLO',
         fecha_inicio: '2026-02-15', fecha_fin_inicial: '2026-08-30', es_capex: true, codigo_capex: 'CPX-443311', budget_inicial: 340000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Revisión técnica de despliegue en campo.',
         com_mensual_activo: true, com_mensual_finalidad: 'Revisión de consumo de presupuesto.',
@@ -158,7 +160,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-004', nombre_proyecto: 'Ciberseguridad Infraestructura Crítica',
         descripcion: 'Auditoría y fortificación perimetral de servidores centrales y endpoints corporativos.',
         id_pm: pmCarlos.id_usuario, id_proveedor: capgemini.id_proveedor, id_sede: sedMadrid.id_sede,
-        id_sponsor_ku: kuRoberto.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'ROJO',
+        id_sponsor: kuRoberto.id_contacto, id_estado: sm['Ejecución'], indicador_rag: 'ROJO',
         fecha_inicio: '2026-03-01', fecha_fin_inicial: '2026-07-15', es_capex: false, budget_inicial: 95000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Actualización semanal de parches críticos.',
         com_mensual_activo: true, com_mensual_finalidad: 'Presentación de informe de vulnerabilidades.',
@@ -169,7 +171,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-005', nombre_proyecto: 'Plataforma Analítica Big Data',
         descripcion: 'Implementación de arquitectura de datos moderna sobre Databricks y Power BI para reporting ejecutivo.',
         id_pm: pmJaime.id_usuario, id_proveedor: nttData.id_proveedor, id_sede: sedBarcelona.id_sede,
-        id_sponsor_ku: kuElena.id_ku, id_estado: sm['Cierre'], indicador_rag: 'VERDE',
+        id_sponsor: kuElena.id_contacto, id_estado: sm['Cierre'], indicador_rag: 'VERDE',
         fecha_inicio: '2025-06-01', fecha_fin_inicial: '2026-04-30', es_capex: true, codigo_capex: 'CPX-556677', budget_inicial: 420000.00,
         com_semanal_activo: false,
         com_mensual_activo: true, com_mensual_finalidad: 'Cierre formal y entrega a operaciones.',
@@ -180,7 +182,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-006', nombre_proyecto: 'Migración Telefonía IP',
         descripcion: 'Actualización de centralitas y despliegue de telefonía sobre IP para todas las sedes nacionales.',
         id_pm: pmMarta.id_usuario, id_proveedor: indra.id_proveedor, id_sede: sedValencia.id_sede,
-        id_sponsor_ku: kuDiego.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'AMARILLO',
+        id_sponsor: kuDiego.id_contacto, id_estado: sm['Ejecución'], indicador_rag: 'AMARILLO',
         fecha_inicio: '2025-11-01', fecha_fin_inicial: '2026-05-30', es_capex: false, budget_inicial: 80000.00,
         com_semanal_activo: false, com_mensual_activo: false, com_steerco_activo: false,
         fecha_peticion: '2025-11-01', fecha_kickoff: '2025-11-01'
@@ -189,7 +191,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-007', nombre_proyecto: 'SAP S/4HANA Rise Migration',
         descripcion: 'Migración del core SAP on-premise a la edición cloud Rise with SAP con adaptación de módulos FI y MM.',
         id_pm: pmRafael.id_usuario, id_proveedor: deloitte.id_proveedor, id_sede: sedValencia.id_sede,
-        id_sponsor_ku: kuAlvaro.id_ku, id_estado: sm['Planificar'], indicador_rag: 'VERDE',
+        id_sponsor: kuAlvaro.id_contacto, id_estado: sm['Planificar'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-04-01', fecha_fin_inicial: '2027-03-31', es_capex: true, codigo_capex: 'CPX-112244', budget_inicial: 680000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Control del cronograma de cargas de trabajo.',
         com_mensual_activo: true, com_mensual_finalidad: 'Presentación de avance a la dirección financiera.',
@@ -200,7 +202,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-008', nombre_proyecto: 'Digitalización RRHH y Nóminas',
         descripcion: 'Implantación de SuccessFactors para la gestión del ciclo de vida del empleado y automatización de nóminas.',
         id_pm: pmMarta.id_usuario, id_proveedor: sopra.id_proveedor, id_sede: sedBarcelona.id_sede,
-        id_sponsor_ku: kuPatricia.id_ku, id_estado: sm['Planificar'], indicador_rag: 'VERDE',
+        id_sponsor: kuPatricia.id_contacto, id_estado: sm['Planificar'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-03-15', fecha_fin_inicial: '2026-11-30', es_capex: false, budget_inicial: 175000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Revisión de integraciones con sistemas de RRHH legacy.',
         com_mensual_activo: true, com_mensual_finalidad: 'Informe de progreso a Dirección de Personas.',
@@ -211,7 +213,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-009', nombre_proyecto: 'Modernización App Comercial Móvil',
         descripcion: 'Rediseño de la aplicación móvil de ventas para iOS y Android con capacidades offline y geolocalización.',
         id_pm: pmCarlos.id_usuario, id_proveedor: nttData.id_proveedor, id_sede: sedMadrid.id_sede,
-        id_sponsor_ku: kuElena.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'VERDE',
+        id_sponsor: kuElena.id_contacto, id_estado: sm['Ejecución'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-04-01', fecha_fin_inicial: '2026-12-15', es_capex: false, budget_inicial: 145000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Daily de progreso de sprints de desarrollo.',
         com_mensual_activo: false,
@@ -222,7 +224,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-010', nombre_proyecto: 'Centro de Datos Buñol DC2',
         descripcion: 'Construcción y equipamiento del segundo CPD de la compañía con redundancia N+1 y conectividad Dark Fiber.',
         id_pm: pmRafael.id_usuario, id_proveedor: capgemini.id_proveedor, id_sede: sedBunol.id_sede,
-        id_sponsor_ku: kuAlvaro.id_ku, id_estado: sm['Tener aprobación'], indicador_rag: 'AMARILLO',
+        id_sponsor: kuAlvaro.id_contacto, id_estado: sm['Tener aprobación'], indicador_rag: 'AMARILLO',
         fecha_inicio: '2026-05-01', fecha_fin_inicial: '2027-06-30', es_capex: true, codigo_capex: 'CPX-889900', budget_inicial: 1200000.00,
         com_semanal_activo: false,
         com_mensual_activo: true, com_mensual_finalidad: 'Comité de infraestructura y seguimiento de obra.',
@@ -233,7 +235,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-011', nombre_proyecto: 'Integración API Marketplace',
         descripcion: 'Desarrollo del hub de integraciones para conectar el ERP con plataformas de marketplace Amazon y Mercadona.',
         id_pm: pmJaime.id_usuario, id_proveedor: sopra.id_proveedor, id_sede: sedValencia.id_sede,
-        id_sponsor_ku: kuRoberto.id_ku, id_estado: sm['Ejecución'], indicador_rag: 'VERDE',
+        id_sponsor: kuRoberto.id_contacto, id_estado: sm['Ejecución'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-02-01', fecha_fin_inicial: '2026-08-31', es_capex: false, budget_inicial: 98000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Revisión de integraciones y errores de mapeo.',
         com_mensual_activo: false, com_steerco_activo: false,
@@ -243,7 +245,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-012', nombre_proyecto: 'Plataforma E-Commerce B2B',
         descripcion: 'Creación de portal de ventas online exclusivo para clientes corporativos con catálogo configurable por segmento.',
         id_pm: pmMarta.id_usuario, id_proveedor: accenture.id_proveedor, id_sede: sedSevilla.id_sede,
-        id_sponsor_ku: kuDiego.id_ku, id_estado: sm['Estudio de viabilidad'], indicador_rag: 'VERDE',
+        id_sponsor: kuDiego.id_contacto, id_estado: sm['Estudio de viabilidad'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-05-15', fecha_fin_inicial: '2026-12-31', es_capex: false, budget_inicial: 210000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Revisión de wireframes y maquetas de UX.',
         com_mensual_activo: true, com_mensual_finalidad: 'Checkpoint mensual con el área comercial.',
@@ -254,7 +256,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-013', nombre_proyecto: 'IoT Smart Factory Buñol',
         descripcion: 'Despliegue de sensores IoT en líneas de producción para monitorización en tiempo real y mantenimiento predictivo.',
         id_pm: pmCarlos.id_usuario, id_proveedor: nttData.id_proveedor, id_sede: sedBunol.id_sede,
-        id_sponsor_ku: kuPatricia.id_ku, id_estado: sm['Kickoff'], indicador_rag: 'VERDE',
+        id_sponsor: kuPatricia.id_contacto, id_estado: sm['Kickoff'], indicador_rag: 'VERDE',
         fecha_inicio: '2026-06-01', fecha_fin_inicial: '2027-02-28', es_capex: true, codigo_capex: 'CPX-334455', budget_inicial: 380000.00,
         com_semanal_activo: false,
         com_mensual_activo: true, com_mensual_finalidad: 'Seguimiento del plan de despliegue de sensores.',
@@ -265,7 +267,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-014', nombre_proyecto: 'Cumplimiento DORA & NIS2',
         descripcion: 'Programa de adecuación normativa al reglamento DORA de resiliencia digital y directiva NIS2 en toda la organización.',
         id_pm: pmRafael.id_usuario, id_proveedor: deloitte.id_proveedor, id_sede: sedMadrid.id_sede,
-        id_sponsor_ku: kuAlvaro.id_ku, id_estado: sm['Estudio de viabilidad'], indicador_rag: 'ROJO',
+        id_sponsor: kuAlvaro.id_contacto, id_estado: sm['Estudio de viabilidad'], indicador_rag: 'ROJO',
         fecha_inicio: '2026-04-01', fecha_fin_inicial: '2026-12-31', es_capex: false, budget_inicial: 155000.00,
         com_semanal_activo: true, com_semanal_finalidad: 'Control de entregables de análisis de brecha.',
         com_mensual_activo: true, com_mensual_finalidad: 'Informe de cumplimiento al Comité de Riesgos.',
@@ -276,7 +278,7 @@ async function seed() {
         id_proyecto: 'PRJ-2026-015', nombre_proyecto: 'BI Corporativo Reporting Ejecutivo',
         descripcion: 'Construcción del data warehouse corporativo y cuadros de mando ejecutivos sobre Power BI Premium.',
         id_pm: pmJaime.id_usuario, id_proveedor: indra.id_proveedor, id_sede: sedBarcelona.id_sede,
-        id_sponsor_ku: kuElena.id_ku, id_estado: sm['Estabilización'], indicador_rag: 'VERDE',
+        id_sponsor: kuElena.id_contacto, id_estado: sm['Estabilización'], indicador_rag: 'VERDE',
         fecha_inicio: '2025-09-01', fecha_fin_inicial: '2026-06-30', es_capex: true, codigo_capex: 'CPX-778899', budget_inicial: 290000.00,
         com_semanal_activo: false,
         com_mensual_activo: true, com_mensual_finalidad: 'Validación de informes con los usuarios de dirección.',
@@ -296,48 +298,48 @@ async function seed() {
     // ==========================================
     // 8. RELACIONES MANY-TO-MANY (KUs)
     // ==========================================
-    await p1.addInvolvedKeyUsers([kuRoberto.id_ku, kuElena.id_ku, kuPedro.id_ku]);
-    await p1.addComSemanalKUs([kuRoberto.id_ku, kuPedro.id_ku]);
-    await p1.addComMensualKUs([kuRoberto.id_ku, kuElena.id_ku]);
-    await p1.addComSteerCoKUs([kuRoberto.id_ku]);
+    await p1.addInvolvedContacts([kuRoberto.id_contacto, kuElena.id_contacto, kuPedro.id_contacto]);
+    await p1.addComSemanalContactos([kuRoberto.id_contacto, kuPedro.id_contacto]);
+    await p1.addComMensualContactos([kuRoberto.id_contacto, kuElena.id_contacto]);
+    await p1.addComSteerCoContactos([kuRoberto.id_contacto]);
 
-    await p2.addInvolvedKeyUsers([kuElena.id_ku, kuSofia.id_ku, kuDiego.id_ku]);
-    await p2.addComSemanalKUs([kuSofia.id_ku]);
-    await p2.addComMensualKUs([kuElena.id_ku, kuDiego.id_ku]);
+    await p2.addInvolvedContacts([kuElena.id_contacto, kuSofia.id_contacto, kuDiego.id_contacto]);
+    await p2.addComSemanalContactos([kuSofia.id_contacto]);
+    await p2.addComMensualContactos([kuElena.id_contacto, kuDiego.id_contacto]);
 
-    await p3.addInvolvedKeyUsers([kuDiego.id_ku, kuTomas.id_ku, kuPatricia.id_ku]);
-    await p3.addComSemanalKUs([kuTomas.id_ku]);
-    await p3.addComMensualKUs([kuDiego.id_ku, kuTomas.id_ku]);
-    await p3.addComSteerCoKUs([kuDiego.id_ku]);
+    await p3.addInvolvedContacts([kuDiego.id_contacto, kuTomas.id_contacto, kuPatricia.id_contacto]);
+    await p3.addComSemanalContactos([kuTomas.id_contacto]);
+    await p3.addComMensualContactos([kuDiego.id_contacto, kuTomas.id_contacto]);
+    await p3.addComSteerCoContactos([kuDiego.id_contacto]);
 
-    await p4.addInvolvedKeyUsers([kuRoberto.id_ku, kuIvan.id_ku]);
-    await p4.addComSemanalKUs([kuIvan.id_ku]);
-    await p4.addComMensualKUs([kuRoberto.id_ku]);
+    await p4.addInvolvedContacts([kuRoberto.id_contacto, kuIvan.id_contacto]);
+    await p4.addComSemanalContactos([kuIvan.id_contacto]);
+    await p4.addComMensualContactos([kuRoberto.id_contacto]);
 
-    await p5.addInvolvedKeyUsers([kuElena.id_ku, kuNuria.id_ku, kuAlvaro.id_ku]);
-    await p5.addComMensualKUs([kuElena.id_ku]);
+    await p5.addInvolvedContacts([kuElena.id_contacto, kuNuria.id_contacto, kuAlvaro.id_contacto]);
+    await p5.addComMensualContactos([kuElena.id_contacto]);
 
-    await p7.addInvolvedKeyUsers([kuAlvaro.id_ku, kuMarcos.id_ku, kuRoberto.id_ku]);
-    await p7.addComSemanalKUs([kuMarcos.id_ku]);
-    await p7.addComMensualKUs([kuAlvaro.id_ku, kuMarcos.id_ku]);
-    await p7.addComSteerCoKUs([kuAlvaro.id_ku]);
+    await p7.addInvolvedContacts([kuAlvaro.id_contacto, kuMarcos.id_contacto, kuRoberto.id_contacto]);
+    await p7.addComSemanalContactos([kuMarcos.id_contacto]);
+    await p7.addComMensualContactos([kuAlvaro.id_contacto, kuMarcos.id_contacto]);
+    await p7.addComSteerCoContactos([kuAlvaro.id_contacto]);
 
-    await p8.addInvolvedKeyUsers([kuPatricia.id_ku, kuPedro.id_ku]);
-    await p8.addComSemanalKUs([kuPedro.id_ku]);
-    await p8.addComMensualKUs([kuPatricia.id_ku]);
+    await p8.addInvolvedContacts([kuPatricia.id_contacto, kuPedro.id_contacto]);
+    await p8.addComSemanalContactos([kuPedro.id_contacto]);
+    await p8.addComMensualContactos([kuPatricia.id_contacto]);
 
-    await p10.addInvolvedKeyUsers([kuAlvaro.id_ku, kuIvan.id_ku]);
-    await p10.addComMensualKUs([kuAlvaro.id_ku]);
-    await p10.addComSteerCoKUs([kuAlvaro.id_ku]);
+    await p10.addInvolvedContacts([kuAlvaro.id_contacto, kuIvan.id_contacto]);
+    await p10.addComMensualContactos([kuAlvaro.id_contacto]);
+    await p10.addComSteerCoContactos([kuAlvaro.id_contacto]);
 
-    await p14.addInvolvedKeyUsers([kuAlvaro.id_ku, kuMarcos.id_ku, kuRoberto.id_ku, kuElena.id_ku]);
-    await p14.addComSemanalKUs([kuMarcos.id_ku]);
-    await p14.addComMensualKUs([kuAlvaro.id_ku, kuMarcos.id_ku]);
-    await p14.addComSteerCoKUs([kuAlvaro.id_ku]);
+    await p14.addInvolvedContacts([kuAlvaro.id_contacto, kuMarcos.id_contacto, kuRoberto.id_contacto, kuElena.id_contacto]);
+    await p14.addComSemanalContactos([kuMarcos.id_contacto]);
+    await p14.addComMensualContactos([kuAlvaro.id_contacto, kuMarcos.id_contacto]);
+    await p14.addComSteerCoContactos([kuAlvaro.id_contacto]);
 
-    await p15.addInvolvedKeyUsers([kuElena.id_ku, kuSofia.id_ku]);
-    await p15.addComMensualKUs([kuElena.id_ku]);
-    await p15.addComSteerCoKUs([kuElena.id_ku]);
+    await p15.addInvolvedContacts([kuElena.id_contacto, kuSofia.id_contacto]);
+    await p15.addComMensualContactos([kuElena.id_contacto]);
+    await p15.addComSteerCoContactos([kuElena.id_contacto]);
 
     console.log('Relaciones Many-to-Many configuradas.');
 
@@ -437,27 +439,27 @@ async function seed() {
     // ==========================================
     await CambiosAlcance.bulkCreate([
       // PRJ-2026-001
-      { id_cambio: 'CR-2026-001', id_proyecto: 'PRJ-2026-001', fecha_solicitud: '2026-03-15', fecha_resolucion: '2026-03-22', id_solicitante_ku: kuRoberto.id_ku, id_aprobador_ku: kuElena.id_ku, estado_cambio: 'APROBADO', descripcion_motivo: 'Inclusión de flujos contables para filial europea no contemplada inicialmente.', impacta_importe: true, importe_impacto: 30000.00, impacta_tiempo: true, dias_impacto: 45 },
-      { id_cambio: 'CR-2026-002', id_proyecto: 'PRJ-2026-001', fecha_solicitud: '2026-05-10', id_solicitante_ku: kuPedro.id_ku, id_aprobador_ku: kuRoberto.id_ku, estado_cambio: 'SOLICITADO', descripcion_motivo: 'Integración API con courier logístico local no prevista en el alcance original.', impacta_importe: true, importe_impacto: 12500.00, impacta_tiempo: true, dias_impacto: 15 },
+      { id_cambio: 'CR-2026-001', id_proyecto: 'PRJ-2026-001', fecha_solicitud: '2026-03-15', fecha_resolucion: '2026-03-22', id_solicitante_contacto: kuRoberto.id_contacto, id_aprobador_contacto: kuElena.id_contacto, estado_cambio: 'APROBADO', descripcion_motivo: 'Inclusión de flujos contables para filial europea no contemplada inicialmente.', impacta_importe: true, importe_impacto: 30000.00, impacta_tiempo: true, dias_impacto: 45 },
+      { id_cambio: 'CR-2026-002', id_proyecto: 'PRJ-2026-001', fecha_solicitud: '2026-05-10', id_solicitante_contacto: kuPedro.id_contacto, id_aprobador_contacto: kuRoberto.id_contacto, estado_cambio: 'SOLICITADO', descripcion_motivo: 'Integración API con courier logístico local no prevista en el alcance original.', impacta_importe: true, importe_impacto: 12500.00, impacta_tiempo: true, dias_impacto: 15 },
       // PRJ-2026-002
-      { id_cambio: 'CR-2026-003', id_proyecto: 'PRJ-2026-002', fecha_solicitud: '2026-04-01', fecha_resolucion: '2026-04-08', id_solicitante_ku: kuElena.id_ku, id_aprobador_ku: kuDiego.id_ku, estado_cambio: 'APROBADO', descripcion_motivo: 'Añadir módulo de gestión de reclamaciones de clientes al portal.', impacta_importe: true, importe_impacto: 18000.00, impacta_tiempo: true, dias_impacto: 20 },
-      { id_cambio: 'CR-2026-004', id_proyecto: 'PRJ-2026-002', fecha_solicitud: '2026-05-20', id_solicitante_ku: kuSofia.id_ku, id_aprobador_ku: kuElena.id_ku, estado_cambio: 'EN_REVISION', descripcion_motivo: 'Integración con la nueva app móvil (PRJ-2026-009) para compartir sesión de usuario.', impacta_importe: true, importe_impacto: 9500.00, impacta_tiempo: true, dias_impacto: 10 },
+      { id_cambio: 'CR-2026-003', id_proyecto: 'PRJ-2026-002', fecha_solicitud: '2026-04-01', fecha_resolucion: '2026-04-08', id_solicitante_contacto: kuElena.id_contacto, id_aprobador_contacto: kuDiego.id_contacto, estado_cambio: 'APROBADO', descripcion_motivo: 'Añadir módulo de gestión de reclamaciones de clientes al portal.', impacta_importe: true, importe_impacto: 18000.00, impacta_tiempo: true, dias_impacto: 20 },
+      { id_cambio: 'CR-2026-004', id_proyecto: 'PRJ-2026-002', fecha_solicitud: '2026-05-20', id_solicitante_contacto: kuSofia.id_contacto, id_aprobador_contacto: kuElena.id_contacto, estado_cambio: 'EN_REVISION', descripcion_motivo: 'Integración con la nueva app móvil (PRJ-2026-009) para compartir sesión de usuario.', impacta_importe: true, importe_impacto: 9500.00, impacta_tiempo: true, dias_impacto: 10 },
       // PRJ-2026-003
-      { id_cambio: 'CR-2026-005', id_proyecto: 'PRJ-2026-003', fecha_solicitud: '2026-04-01', fecha_resolucion: '2026-04-08', id_solicitante_ku: kuDiego.id_ku, id_aprobador_ku: kuRoberto.id_ku, estado_cambio: 'APROBADO', descripcion_motivo: 'Soporte IP-67 para lectores logísticos expuestos a humedad y temperatura extrema.', impacta_importe: true, importe_impacto: 15000.00, impacta_tiempo: false, dias_impacto: 0 },
-      { id_cambio: 'CR-2026-006', id_proyecto: 'PRJ-2026-003', fecha_solicitud: '2026-05-15', fecha_resolucion: '2026-05-22', id_solicitante_ku: kuTomas.id_ku, id_aprobador_ku: kuDiego.id_ku, estado_cambio: 'APROBADO', descripcion_motivo: 'Ampliación del número de zonas monitorizadas de 4 a 6 por petición de operaciones.', impacta_importe: true, importe_impacto: 22000.00, impacta_tiempo: true, dias_impacto: 30 },
+      { id_cambio: 'CR-2026-005', id_proyecto: 'PRJ-2026-003', fecha_solicitud: '2026-04-01', fecha_resolucion: '2026-04-08', id_solicitante_contacto: kuDiego.id_contacto, id_aprobador_contacto: kuRoberto.id_contacto, estado_cambio: 'APROBADO', descripcion_motivo: 'Soporte IP-67 para lectores logísticos expuestos a humedad y temperatura extrema.', impacta_importe: true, importe_impacto: 15000.00, impacta_tiempo: false, dias_impacto: 0 },
+      { id_cambio: 'CR-2026-006', id_proyecto: 'PRJ-2026-003', fecha_solicitud: '2026-05-15', fecha_resolucion: '2026-05-22', id_solicitante_contacto: kuTomas.id_contacto, id_aprobador_contacto: kuDiego.id_contacto, estado_cambio: 'APROBADO', descripcion_motivo: 'Ampliación del número de zonas monitorizadas de 4 a 6 por petición de operaciones.', impacta_importe: true, importe_impacto: 22000.00, impacta_tiempo: true, dias_impacto: 30 },
       // PRJ-2026-004
-      { id_cambio: 'CR-2026-007', id_proyecto: 'PRJ-2026-004', fecha_solicitud: '2026-03-20', fecha_resolucion: '2026-03-25', id_solicitante_ku: kuIvan.id_ku, id_aprobador_ku: kuRoberto.id_ku, estado_cambio: 'RECHAZADO', descripcion_motivo: 'Ampliación de auditoría a dispositivos móviles corporativos. Rechazado por priorizar servidores.', impacta_importe: true, importe_impacto: 25000.00, impacta_tiempo: true, dias_impacto: 20 },
+      { id_cambio: 'CR-2026-007', id_proyecto: 'PRJ-2026-004', fecha_solicitud: '2026-03-20', fecha_resolucion: '2026-03-25', id_solicitante_contacto: kuIvan.id_contacto, id_aprobador_contacto: kuRoberto.id_contacto, estado_cambio: 'RECHAZADO', descripcion_motivo: 'Ampliación de auditoría a dispositivos móviles corporativos. Rechazado por priorizar servidores.', impacta_importe: true, importe_impacto: 25000.00, impacta_tiempo: true, dias_impacto: 20 },
       // PRJ-2026-007
-      { id_cambio: 'CR-2026-008', id_proyecto: 'PRJ-2026-007', fecha_solicitud: '2026-05-15', fecha_resolucion: '2026-05-25', id_solicitante_ku: kuMarcos.id_ku, id_aprobador_ku: kuAlvaro.id_ku, estado_cambio: 'APROBADO', descripcion_motivo: 'Añadir integración del módulo de Gestión de Calidad (QM) no contemplada en blueprint inicial.', impacta_importe: true, importe_impacto: 45000.00, impacta_tiempo: true, dias_impacto: 30 },
-      { id_cambio: 'CR-2026-009', id_proyecto: 'PRJ-2026-007', fecha_solicitud: '2026-06-01', id_solicitante_ku: kuAlvaro.id_ku, id_aprobador_ku: kuRoberto.id_ku, estado_cambio: 'EN_REVISION', descripcion_motivo: 'Extensión del alcance a plantas internacionales (Portugal y Rumanía).', impacta_importe: true, importe_impacto: 95000.00, impacta_tiempo: true, dias_impacto: 90 },
+      { id_cambio: 'CR-2026-008', id_proyecto: 'PRJ-2026-007', fecha_solicitud: '2026-05-15', fecha_resolucion: '2026-05-25', id_solicitante_contacto: kuMarcos.id_contacto, id_aprobador_contacto: kuAlvaro.id_contacto, estado_cambio: 'APROBADO', descripcion_motivo: 'Añadir integración del módulo de Gestión de Calidad (QM) no contemplada en blueprint inicial.', impacta_importe: true, importe_impacto: 45000.00, impacta_tiempo: true, dias_impacto: 30 },
+      { id_cambio: 'CR-2026-009', id_proyecto: 'PRJ-2026-007', fecha_solicitud: '2026-06-01', id_solicitante_contacto: kuAlvaro.id_contacto, id_aprobador_contacto: kuRoberto.id_contacto, estado_cambio: 'EN_REVISION', descripcion_motivo: 'Extensión del alcance a plantas internacionales (Portugal y Rumanía).', impacta_importe: true, importe_impacto: 95000.00, impacta_tiempo: true, dias_impacto: 90 },
       // PRJ-2026-008
-      { id_cambio: 'CR-2026-010', id_proyecto: 'PRJ-2026-008', fecha_solicitud: '2026-05-10', fecha_resolucion: '2026-05-18', id_solicitante_ku: kuPatricia.id_ku, id_aprobador_ku: kuRoberto.id_ku, estado_cambio: 'APROBADO', descripcion_motivo: 'Añadir módulo de onboarding digital para nuevas incorporaciones.', impacta_importe: true, importe_impacto: 22000.00, impacta_tiempo: true, dias_impacto: 25 },
+      { id_cambio: 'CR-2026-010', id_proyecto: 'PRJ-2026-008', fecha_solicitud: '2026-05-10', fecha_resolucion: '2026-05-18', id_solicitante_contacto: kuPatricia.id_contacto, id_aprobador_contacto: kuRoberto.id_contacto, estado_cambio: 'APROBADO', descripcion_motivo: 'Añadir módulo de onboarding digital para nuevas incorporaciones.', impacta_importe: true, importe_impacto: 22000.00, impacta_tiempo: true, dias_impacto: 25 },
       // PRJ-2026-010
-      { id_cambio: 'CR-2026-011', id_proyecto: 'PRJ-2026-010', fecha_solicitud: '2026-05-20', id_solicitante_ku: kuIvan.id_ku, id_aprobador_ku: kuAlvaro.id_ku, estado_cambio: 'SOLICITADO', descripcion_motivo: 'Incrementar la capacidad de refrigeración a 500kW en lugar de 350kW previsto.', impacta_importe: true, importe_impacto: 180000.00, impacta_tiempo: true, dias_impacto: 60 },
+      { id_cambio: 'CR-2026-011', id_proyecto: 'PRJ-2026-010', fecha_solicitud: '2026-05-20', id_solicitante_contacto: kuIvan.id_contacto, id_aprobador_contacto: kuAlvaro.id_contacto, estado_cambio: 'SOLICITADO', descripcion_motivo: 'Incrementar la capacidad de refrigeración a 500kW en lugar de 350kW previsto.', impacta_importe: true, importe_impacto: 180000.00, impacta_tiempo: true, dias_impacto: 60 },
       // PRJ-2026-014
-      { id_cambio: 'CR-2026-012', id_proyecto: 'PRJ-2026-014', fecha_solicitud: '2026-05-05', fecha_resolucion: '2026-05-12', id_solicitante_ku: kuMarcos.id_ku, id_aprobador_ku: kuAlvaro.id_ku, estado_cambio: 'APROBADO', descripcion_motivo: 'Ampliar el programa a filiales de Portugal y Marruecos por requerimiento del regulador europeo.', impacta_importe: true, importe_impacto: 35000.00, impacta_tiempo: true, dias_impacto: 30 },
+      { id_cambio: 'CR-2026-012', id_proyecto: 'PRJ-2026-014', fecha_solicitud: '2026-05-05', fecha_resolucion: '2026-05-12', id_solicitante_contacto: kuMarcos.id_contacto, id_aprobador_contacto: kuAlvaro.id_contacto, estado_cambio: 'APROBADO', descripcion_motivo: 'Ampliar el programa a filiales de Portugal y Marruecos por requerimiento del regulador europeo.', impacta_importe: true, importe_impacto: 35000.00, impacta_tiempo: true, dias_impacto: 30 },
       // PRJ-2026-015
-      { id_cambio: 'CR-2026-013', id_proyecto: 'PRJ-2026-015', fecha_solicitud: '2026-02-15', fecha_resolucion: '2026-02-20', id_solicitante_ku: kuElena.id_ku, id_aprobador_ku: kuRoberto.id_ku, estado_cambio: 'APROBADO', descripcion_motivo: 'Añadir 5 cuadros de mando adicionales para áreas de Compras y Producción.', impacta_importe: true, importe_impacto: 18000.00, impacta_tiempo: true, dias_impacto: 20 }
+      { id_cambio: 'CR-2026-013', id_proyecto: 'PRJ-2026-015', fecha_solicitud: '2026-02-15', fecha_resolucion: '2026-02-20', id_solicitante_contacto: kuElena.id_contacto, id_aprobador_contacto: kuRoberto.id_contacto, estado_cambio: 'APROBADO', descripcion_motivo: 'Añadir 5 cuadros de mando adicionales para áreas de Compras y Producción.', impacta_importe: true, importe_impacto: 18000.00, impacta_tiempo: true, dias_impacto: 20 }
     ]);
     console.log('CambiosAlcance seeded (13 CRs).');
 
@@ -634,7 +636,7 @@ async function seed() {
     console.log('\n🎉 Seeding successfully completed!');
     console.log('📊 Summary:');
     console.log('  - 15 Proyectos');
-    console.log('  - 11 KeyUsers');
+    console.log('  - 11 ContactosProveedor');
     console.log('  - 27 Facturas');
     console.log('  - 13 Cambios de Alcance');
     console.log('  - 70+ Tareas e Hitos');

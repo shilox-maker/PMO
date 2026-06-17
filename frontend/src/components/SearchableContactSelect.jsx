@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, ChevronDown, Check, X } from 'lucide-react';
 
-export default function SearchableKeyUserSelect({ 
-  keyUsers = [], 
+export default function SearchableContactSelect({ 
+  contacts = [], 
   selected = [], // Can be a single ID (number/string) or an array of IDs
   onChange, 
   multiple = false, 
-  placeholder = "Seleccione Key User..." 
+  placeholder = "Seleccione Contacto..." 
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -36,7 +36,7 @@ export default function SearchableKeyUserSelect({
   const groupedKeyUsers = useMemo(() => {
     // 1. Filter by search query
     const query = search.toLowerCase().trim();
-    const filtered = keyUsers.filter(ku => {
+    const filtered = contacts.filter(ku => {
       const fullName = `${ku.nombre} ${ku.apellidos}`.toLowerCase();
       const company = (ku.Proveedore?.nombre_razon_social || ku.Proveedor?.nombre_razon_social || '').toLowerCase();
       return fullName.includes(query) || company.includes(query);
@@ -75,10 +75,10 @@ export default function SearchableKeyUserSelect({
       isDacsa: groups[company].isDacsa,
       users: groups[company].users
     }));
-  }, [keyUsers, search]);
+  }, [contacts, search]);
 
   const handleSelect = (user) => {
-    const id = Number(user.id_ku);
+    const id = Number(user.id_contacto);
     if (multiple) {
       const newSelected = selectedIds.includes(id)
         ? selectedIds.filter(selectedId => selectedId !== id)
@@ -97,7 +97,7 @@ export default function SearchableKeyUserSelect({
       return `${selectedIds.length} seleccionado(s)`;
     } else {
       const selectedId = selectedIds[0];
-      const user = keyUsers.find(ku => Number(ku.id_ku) === selectedId);
+      const user = contacts.find(ku => Number(ku.id_contacto) === selectedId);
       if (user) {
         const companyName = user.Proveedore?.nombre_razon_social || user.Proveedor?.nombre_razon_social;
         const compStr = companyName ? ` (${companyName})` : '';
@@ -105,7 +105,7 @@ export default function SearchableKeyUserSelect({
       }
       return placeholder;
     }
-  }, [selectedIds, keyUsers, multiple, placeholder]);
+  }, [selectedIds, contacts, multiple, placeholder]);
 
   return (
     <div className="combobox-container" ref={containerRef} style={{ position: 'relative', width: '100%' }}>
@@ -238,10 +238,10 @@ export default function SearchableKeyUserSelect({
                   {/* Users under this company */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
                     {group.users.map(user => {
-                      const isSelected = selectedIds.includes(Number(user.id_ku));
+                      const isSelected = selectedIds.includes(Number(user.id_contacto));
                       return (
                         <div 
-                          key={user.id_ku}
+                          key={user.id_contacto}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleSelect(user);
@@ -299,7 +299,7 @@ export default function SearchableKeyUserSelect({
       {multiple && selectedIds.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
           {selectedIds.map(id => {
-            const user = keyUsers.find(ku => Number(ku.id_ku) === id);
+            const user = contacts.find(ku => Number(ku.id_contacto) === id);
             if (!user) return null;
             return (
               <span 

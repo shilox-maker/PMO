@@ -6,6 +6,8 @@ import {
   ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 const validatePassword = (pwd) => {
   if (!pwd) return [];
@@ -63,7 +65,7 @@ export default function AdminPanel() {
   // States list
   const [states, setStates] = useState([]);
   const [statesLoading, setStatesLoading] = useState(false);
-  const [stateForm, setStateForm] = useState({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false });
+  const [stateForm, setStateForm] = useState({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false, pasos: '' });
   const [editingStateId, setEditingStateId] = useState(null);
   const [stateError, setStateError] = useState('');
   const [stateSuccess, setStateSuccess] = useState('');
@@ -172,7 +174,8 @@ export default function AdminPanel() {
       nombre_estado: stateForm.nombre_estado,
       icono: stateForm.icono || null,
       orden: parseInt(stateForm.orden, 10),
-      proyecto_cerrado: !!stateForm.proyecto_cerrado
+      proyecto_cerrado: !!stateForm.proyecto_cerrado,
+      pasos: stateForm.pasos || ''
     };
 
     const isEdit = editingStateId !== null;
@@ -193,7 +196,7 @@ export default function AdminPanel() {
       })
       .then(() => {
         setStateSuccess(isEdit ? 'Estado actualizado correctamente.' : 'Estado creado correctamente.');
-        setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false });
+        setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false, pasos: '' });
         setEditingStateId(null);
         fetchStates();
       })
@@ -206,7 +209,8 @@ export default function AdminPanel() {
       nombre_estado: state.nombre_estado,
       icono: state.icono || '',
       orden: state.orden.toString(),
-      proyecto_cerrado: !!state.proyecto_cerrado
+      proyecto_cerrado: !!state.proyecto_cerrado,
+      pasos: state.pasos || ''
     });
     setEditingStateId(state.id_estado);
     setStateError('');
@@ -537,6 +541,19 @@ export default function AdminPanel() {
                 </label>
               </div>
 
+              <div className="form-group" style={{ marginBottom: '40px' }}>
+                <label className="form-label">Pasos a seguir en esta fase (Guía para el usuario)</label>
+                <div style={{ background: 'var(--md-sys-color-surface)' }}>
+                  <ReactQuill 
+                    theme="snow"
+                    value={stateForm.pasos || ''}
+                    onChange={(val) => setStateForm(prev => ({ ...prev, pasos: val }))}
+                    placeholder="Describe las acciones, entregables o checklist para esta fase..."
+                    style={{ height: '150px' }}
+                  />
+                </div>
+              </div>
+
               <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
                 {editingStateId && (
                   <button 
@@ -545,7 +562,7 @@ export default function AdminPanel() {
                     style={{ flexGrow: 1 }}
                     onClick={() => {
                       setEditingStateId(null);
-                      setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false });
+                      setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false, pasos: '' });
                     }}
                   >
                     Cancelar

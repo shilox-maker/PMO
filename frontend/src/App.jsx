@@ -9,6 +9,7 @@ import Timeline from './pages/Timeline';
 import Vendor360 from './pages/Vendor360';
 import VendorDirectory from './pages/VendorDirectory';
 import AdminPanel from './pages/AdminPanel';
+import KpisPmo from './pages/KpisPmo';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
   Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info
@@ -287,15 +288,15 @@ function NavigationRail() {
           onClick={() => navigate('/dashboard')}
         >
           <Briefcase className="nav-link-icon" />
-          <span>Proyectos</span>
+          <span>Seguimiento de proyectos</span>
         </a>
 
         <a
-          className={`nav-link ${isActive('/governance') ? 'active' : ''}`}
-          onClick={() => navigate('/governance')}
+          className={`nav-link ${isActive('/kpis-pmo') ? 'active' : ''}`}
+          onClick={() => navigate('/kpis-pmo')}
         >
           <Activity className="nav-link-icon" />
-          <span>KPIs de Portfolio</span>
+          <span>KPIs PMO</span>
         </a>
 
         <a
@@ -510,8 +511,9 @@ function MainAppContent() {
   const handleBack = () => navigate(-1);
 
   const getPageTitle = () => {
-    if (location.pathname.startsWith('/dashboard') || location.pathname === '/') return 'Gobernanza Técnica (Listado de Cartera)';
+    if (location.pathname.startsWith('/dashboard') || location.pathname === '/') return 'Seguimiento de Proyectos (Cartera Operativa)';
     if (location.pathname.startsWith('/governance')) return 'Control Ejecutivo de Cartera';
+    if (location.pathname.startsWith('/kpis-pmo')) return 'KPIs PMO (Cuadro de Mando Integrado)';
     if (location.pathname.startsWith('/timeline')) return 'Timeline de Portfolio';
     if (location.pathname === '/proveedores') return 'Socios Tecnológicos (Directorio)';
     if (location.pathname.startsWith('/proyecto/')) return 'Detalle de Proyecto';
@@ -546,6 +548,10 @@ function MainAppContent() {
             
             <Route path="/governance" element={
               <GovernanceDashboard onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+            } />
+
+            <Route path="/kpis-pmo" element={
+              <KpisPmo />
             } />
 
             <Route path="/timeline" element={

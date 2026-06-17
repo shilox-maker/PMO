@@ -141,6 +141,10 @@ const EstadosProyecto = sequelize.define('Estados_Proyecto', {
     allowNull: false,
     unique: true
   },
+  pasos: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   icono: {
     type: DataTypes.STRING,
     allowNull: true
@@ -158,35 +162,7 @@ const EstadosProyecto = sequelize.define('Estados_Proyecto', {
   timestamps: false
 });
 
-// 5. KeyUsers Model
-const KeyUsers = sequelize.define('Key_Users', {
-  id_ku: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  nombre: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  apellidos: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  correo: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
-  },
-  id_proveedor_empresa: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: Proveedores,
-      key: 'id_proveedor'
-    }
-  }
-});
+// 5. [Eliminado] KeyUsers model fue reemplazado por ContactosProveedor
 
 // 6. Proyectos Model
 const Proyectos = sequelize.define('Proyectos', {
@@ -227,12 +203,12 @@ const Proyectos = sequelize.define('Proyectos', {
       key: 'id_sede'
     }
   },
-  id_sponsor_ku: {
+  id_sponsor: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: KeyUsers,
-      key: 'id_ku'
+      model: ContactosProveedor,
+      key: 'id_contacto'
     }
   },
   id_estado: {
@@ -270,6 +246,11 @@ const Proyectos = sequelize.define('Proyectos', {
   codigo_capex: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  es_estrategico: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
   },
   budget_inicial: {
     type: DataTypes.DECIMAL(15, 2),
@@ -369,8 +350,8 @@ const Proyectos = sequelize.define('Proyectos', {
   }
 });
 
-// Join tables for Many-to-Many relationships
-const ProyectoKeyUsers = sequelize.define('Proyecto_KeyUsers', {
+// Join tables for Many-to-Many// Association tables
+const ProyectoContactos = sequelize.define('Proyecto_Contactos', {
   rol: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -382,9 +363,9 @@ const ProyectoKeyUsers = sequelize.define('Proyecto_KeyUsers', {
     defaultValue: 'I'
   }
 }, { timestamps: false });
-const ProyectoComSemanalKU = sequelize.define('Proyecto_ComSemanal_KU', {}, { timestamps: false });
-const ProyectoComMensualKU = sequelize.define('Proyecto_ComMensual_KU', {}, { timestamps: false });
-const ProyectoComSteerCoKU = sequelize.define('Proyecto_SteerCo_KU', {}, { timestamps: false });
+const ProyectoComSemanalContacto = sequelize.define('Proyecto_ComSemanal_Contacto', {}, { timestamps: false });
+const ProyectoComMensualContacto = sequelize.define('Proyecto_ComMensual_Contacto', {}, { timestamps: false });
+const ProyectoComSteerCoContacto = sequelize.define('Proyecto_SteerCo_Contacto', {}, { timestamps: false });
 
 // 7. Incidencias Model
 const Incidencias = sequelize.define('Incidencias', {
@@ -615,20 +596,20 @@ const CambiosAlcance = sequelize.define('Cambios_Alcance', {
     type: DataTypes.DATEONLY,
     allowNull: true
   },
-  id_solicitante_ku: {
+  id_solicitante_contacto: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: KeyUsers,
-      key: 'id_ku'
+      model: ContactosProveedor,
+      key: 'id_contacto'
     }
   },
-  id_aprobador_ku: {
+  id_aprobador_contacto: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: KeyUsers,
-      key: 'id_ku'
+      model: ContactosProveedor,
+      key: 'id_contacto'
     }
   },
   estado_cambio: {
@@ -764,10 +745,6 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
 Proveedores.hasMany(ContactosProveedor, { foreignKey: 'id_proveedor', onDelete: 'CASCADE' });
 ContactosProveedor.belongsTo(Proveedores, { foreignKey: 'id_proveedor' });
 
-// Proveedor has many KeyUsers
-Proveedores.hasMany(KeyUsers, { foreignKey: 'id_proveedor_empresa' });
-KeyUsers.belongsTo(Proveedores, { foreignKey: 'id_proveedor_empresa' });
-
 // PM/Usuario has many Projects
 Usuarios.hasMany(Proyectos, { foreignKey: 'id_pm' });
 Proyectos.belongsTo(Usuarios, { foreignKey: 'id_pm', as: 'PM' });
@@ -780,25 +757,25 @@ Proyectos.belongsTo(Proveedores, { foreignKey: 'id_proveedor', as: 'Proveedor' }
 Sedes.hasMany(Proyectos, { foreignKey: 'id_sede' });
 Proyectos.belongsTo(Sedes, { foreignKey: 'id_sede', as: 'Sede' });
 
-// KeyUser Sponsor has many Projects
-KeyUsers.hasMany(Proyectos, { foreignKey: 'id_sponsor_ku' });
-Proyectos.belongsTo(KeyUsers, { foreignKey: 'id_sponsor_ku', as: 'Sponsor' });
+// Sponsor Contact has many Projects
+ContactosProveedor.hasMany(Proyectos, { foreignKey: 'id_sponsor' });
+Proyectos.belongsTo(ContactosProveedor, { foreignKey: 'id_sponsor', as: 'Sponsor' });
 
-// Many-to-Many involved Key Users
-Proyectos.belongsToMany(KeyUsers, { through: ProyectoKeyUsers, foreignKey: 'id_proyecto', as: 'InvolvedKeyUsers' });
-KeyUsers.belongsToMany(Proyectos, { through: ProyectoKeyUsers, foreignKey: 'id_ku' });
+// Many-to-Many involved Contacts
+Proyectos.belongsToMany(ContactosProveedor, { through: ProyectoContactos, foreignKey: 'id_proyecto', as: 'InvolvedContacts' });
+ContactosProveedor.belongsToMany(Proyectos, { through: ProyectoContactos, foreignKey: 'id_contacto' });
 
 // Many-to-Many for Weekly Communication
-Proyectos.belongsToMany(KeyUsers, { through: ProyectoComSemanalKU, foreignKey: 'id_proyecto', as: 'ComSemanalKUs' });
-KeyUsers.belongsToMany(Proyectos, { through: ProyectoComSemanalKU, foreignKey: 'id_ku' });
+Proyectos.belongsToMany(ContactosProveedor, { through: ProyectoComSemanalContacto, foreignKey: 'id_proyecto', as: 'ComSemanalContactos' });
+ContactosProveedor.belongsToMany(Proyectos, { through: ProyectoComSemanalContacto, foreignKey: 'id_contacto' });
 
 // Many-to-Many for Monthly Communication
-Proyectos.belongsToMany(KeyUsers, { through: ProyectoComMensualKU, foreignKey: 'id_proyecto', as: 'ComMensualKUs' });
-KeyUsers.belongsToMany(Proyectos, { through: ProyectoComMensualKU, foreignKey: 'id_ku' });
+Proyectos.belongsToMany(ContactosProveedor, { through: ProyectoComMensualContacto, foreignKey: 'id_proyecto', as: 'ComMensualContactos' });
+ContactosProveedor.belongsToMany(Proyectos, { through: ProyectoComMensualContacto, foreignKey: 'id_contacto' });
 
 // Many-to-Many for SteerCo Communication
-Proyectos.belongsToMany(KeyUsers, { through: ProyectoComSteerCoKU, foreignKey: 'id_proyecto', as: 'ComSteerCoKUs' });
-KeyUsers.belongsToMany(Proyectos, { through: ProyectoComSteerCoKU, foreignKey: 'id_ku' });
+Proyectos.belongsToMany(ContactosProveedor, { through: ProyectoComSteerCoContacto, foreignKey: 'id_proyecto', as: 'ComSteerCoContactos' });
+ContactosProveedor.belongsToMany(Proyectos, { through: ProyectoComSteerCoContacto, foreignKey: 'id_contacto' });
 
 // Project has many Incidencias
 Proyectos.hasMany(Incidencias, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
@@ -829,12 +806,12 @@ Facturas.belongsTo(Proveedores, { foreignKey: 'id_proveedor' });
 Proyectos.hasMany(CambiosAlcance, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
 CambiosAlcance.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
 
-// Key Users link to CambiosAlcance
-KeyUsers.hasMany(CambiosAlcance, { foreignKey: 'id_solicitante_ku' });
-CambiosAlcance.belongsTo(KeyUsers, { foreignKey: 'id_solicitante_ku', as: 'Solicitante' });
+// Contacts link to CambiosAlcance
+ContactosProveedor.hasMany(CambiosAlcance, { foreignKey: 'id_solicitante_contacto' });
+CambiosAlcance.belongsTo(ContactosProveedor, { foreignKey: 'id_solicitante_contacto', as: 'Solicitante' });
 
-KeyUsers.hasMany(CambiosAlcance, { foreignKey: 'id_aprobador_ku' });
-CambiosAlcance.belongsTo(KeyUsers, { foreignKey: 'id_aprobador_ku', as: 'Aprobador' });
+ContactosProveedor.hasMany(CambiosAlcance, { foreignKey: 'id_aprobador_contacto' });
+CambiosAlcance.belongsTo(ContactosProveedor, { foreignKey: 'id_aprobador_contacto', as: 'Aprobador' });
 
 // Project has many Tareas
 Proyectos.hasMany(Tareas, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
@@ -862,12 +839,12 @@ module.exports = {
   Proveedores,
   ContactosProveedor,
   Usuarios,
-  KeyUsers,
+  EstadosProyecto,
   Proyectos,
-  ProyectoKeyUsers,
-  ProyectoComSemanalKU,
-  ProyectoComMensualKU,
-  ProyectoComSteerCoKU,
+  ProyectoContactos,
+  ProyectoComSemanalContacto,
+  ProyectoComMensualContacto,
+  ProyectoComSteerCoContacto,
   Incidencias,
   Riesgos,
   LeccionesAprendidas,
