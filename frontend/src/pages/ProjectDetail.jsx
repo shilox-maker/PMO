@@ -831,15 +831,15 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     e.preventDefault();
     setInvoiceError('');
 
-    if (!invoiceForm.numero_factura || !invoiceForm.id_proveedor || !invoiceForm.concepto || !invoiceForm.fecha_factura || !invoiceForm.importe) {
-      setInvoiceError('Todos los campos son obligatorios.');
+    if (!invoiceForm.concepto || !invoiceForm.fecha_factura || !invoiceForm.importe) {
+      setInvoiceError('Concepto, Fecha e Importe son obligatorios.');
       return;
     }
 
     const payload = {
       ...invoiceForm,
       id_proyecto: projectId,
-      id_proveedor: parseInt(invoiceForm.id_proveedor, 10),
+      id_proveedor: invoiceForm.id_proveedor ? parseInt(invoiceForm.id_proveedor, 10) : null,
       importe: parseFloat(invoiceForm.importe)
     };
 
@@ -2693,13 +2693,13 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
                 {/* Proveedor */}
                 <div className="form-group">
-                  <label className="form-label">Socio Tecnológico *</label>
+                  <label className="form-label">Socio Tecnológico</label>
                   <select 
                     value={editProjectForm.id_proveedor || ''}
-                    onChange={(e) => setEditProjectForm({ ...editProjectForm, id_proveedor: parseInt(e.target.value, 10) })}
-                    required
+                    onChange={(e) => setEditProjectForm({ ...editProjectForm, id_proveedor: e.target.value ? parseInt(e.target.value, 10) : null })}
                     className="user-select"
                   >
+                    <option value="">Sin socio asignado</option>
                     {vendors.map(v => (
                       <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
                     ))}
@@ -2723,7 +2723,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
                 {/* Sponsor */}
                 <div className="form-group">
-                  <label className="form-label">Sponsor / KU Líder *</label>
+                  <label className="form-label">Sponsor / KU Líder</label>
                   <SearchableKeyUserSelect 
                     keyUsers={keyUsers}
                     selected={editProjectForm.id_sponsor_ku}
@@ -2746,25 +2746,23 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Fecha Fin Inicial (Inmutable Línea Base) *</label>
+                  <label className="form-label">Fecha Fin Inicial (Línea Base)</label>
                   <input 
                     type="date" 
                     value={editProjectForm.fecha_fin_inicial || ''}
                     onChange={(e) => setEditProjectForm({ ...editProjectForm, fecha_fin_inicial: e.target.value })}
-                    required
                     className="m3-input"
                   />
                 </div>
 
                 {/* Presupuesto Inicial */}
                 <div className="form-group">
-                  <label className="form-label">Presupuesto Inicial (€) *</label>
+                  <label className="form-label">Presupuesto Inicial (€)</label>
                   <input 
                     type="number" 
                     step="0.01"
                     value={editProjectForm.budget_inicial || ''}
                     onChange={(e) => setEditProjectForm({ ...editProjectForm, budget_inicial: parseFloat(e.target.value) })}
-                    required
                     className="m3-input"
                   />
                 </div>
@@ -2829,9 +2827,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         className="m3-input"
                         style={{ marginTop: 6 }}
                       />
-                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes Semanales:</div>
+                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes Semanales (solo miembros RACI):</div>
                       <SearchableKeyUserSelect 
-                        keyUsers={keyUsers}
+                        keyUsers={(project.InvolvedKeyUsers || []).map(ku => keyUsers.find(k => Number(k.id_ku) === Number(ku.id_ku)) || ku)}
                         selected={editProjectForm.comSemanalKus || []}
                         onChange={(val) => setEditProjectForm(prev => ({ ...prev, comSemanalKus: val }))}
                         multiple={true}
@@ -2862,9 +2860,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         className="m3-input"
                         style={{ marginTop: 6 }}
                       />
-                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes Mensuales:</div>
+                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes Mensuales (solo miembros RACI):</div>
                       <SearchableKeyUserSelect 
-                        keyUsers={keyUsers}
+                        keyUsers={(project.InvolvedKeyUsers || []).map(ku => keyUsers.find(k => Number(k.id_ku) === Number(ku.id_ku)) || ku)}
                         selected={editProjectForm.comMensualKus || []}
                         onChange={(val) => setEditProjectForm(prev => ({ ...prev, comMensualKus: val }))}
                         multiple={true}
@@ -2895,9 +2893,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
                         className="m3-input"
                         style={{ marginTop: 6 }}
                       />
-                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes SteerCo:</div>
+                      <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 8 }}>Participantes SteerCo (solo miembros RACI):</div>
                       <SearchableKeyUserSelect 
-                        keyUsers={keyUsers}
+                        keyUsers={(project.InvolvedKeyUsers || []).map(ku => keyUsers.find(k => Number(k.id_ku) === Number(ku.id_ku)) || ku)}
                         selected={editProjectForm.comSteercoKus || []}
                         onChange={(val) => setEditProjectForm(prev => ({ ...prev, comSteercoKus: val }))}
                         multiple={true}
@@ -2964,14 +2962,13 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Socio Emisor (Proveedor) *</label>
+                <label className="form-label">Socio Emisor (Proveedor)</label>
                 <select 
                   value={invoiceForm.id_proveedor}
                   onChange={(e) => setInvoiceForm({ ...invoiceForm, id_proveedor: e.target.value })}
-                  required
                   className="user-select"
                 >
-                  <option value="">Seleccione Emisor</option>
+                  <option value="">Sin proveedor asignado</option>
                   {vendors.map(v => (
                     <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
                   ))}
@@ -2979,13 +2976,12 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Nº Factura Oficial del Socio *</label>
+                <label className="form-label">Nº Factura Oficial del Socio</label>
                 <input 
                   type="text" 
                   value={invoiceForm.numero_factura}
                   onChange={(e) => setInvoiceForm({ ...invoiceForm, numero_factura: e.target.value })}
                   placeholder="FAC-SOP-2026-022"
-                  required
                   className="m3-input"
                 />
               </div>

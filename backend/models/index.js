@@ -213,7 +213,7 @@ const Proyectos = sequelize.define('Proyectos', {
   },
   id_proveedor: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: Proveedores,
       key: 'id_proveedor'
@@ -229,7 +229,7 @@ const Proyectos = sequelize.define('Proyectos', {
   },
   id_sponsor_ku: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: KeyUsers,
       key: 'id_ku'
@@ -260,7 +260,7 @@ const Proyectos = sequelize.define('Proyectos', {
   },
   fecha_fin_inicial: {
     type: DataTypes.DATEONLY,
-    allowNull: false
+    allowNull: true
   },
   es_capex: {
     type: DataTypes.BOOLEAN,
@@ -273,7 +273,7 @@ const Proyectos = sequelize.define('Proyectos', {
   },
   budget_inicial: {
     type: DataTypes.DECIMAL(15, 2),
-    allowNull: false
+    allowNull: true
   },
   // Weekly Communication Plan
   com_semanal_activo: {
@@ -559,7 +559,7 @@ const Facturas = sequelize.define('Facturas', {
   },
   id_proveedor: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: Proveedores,
       key: 'id_proveedor'
@@ -567,7 +567,7 @@ const Facturas = sequelize.define('Facturas', {
   },
   numero_factura: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   concepto: {
     type: DataTypes.TEXT,
