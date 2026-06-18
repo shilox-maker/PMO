@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [2.0.0] - 2026-06-18
+### Added
+- **Configuración de Comités Centralizada e Inline**:
+  - Toda la configuración de comités y gobernanza (Semanal, Mensual y SteerCo) se gestiona de forma interactiva e inline directamente en la pestaña de **Comunicaciones** mediante el componente modular `CommitteeEditForm`.
+  - Se eliminó la sección "Comités y Canales de Comunicación" del modal general de edición del proyecto (`ProjectEditModal.jsx`).
+- **Integración de Empresa en Participantes**:
+  - Los participantes de los comités y de la matriz RACI ahora se listan mostrando su empresa asociada (obtenida de partner/proveedor) además de su nombre y rol técnico.
+- **Rango de Selección Limitado a RACI**:
+  - Al editar comités, los participantes seleccionables se restringen estrictamente a los miembros de la **Matriz RACI** del proyecto.
+- **Colores Personalizados en Matriz RACI**:
+  - Los badges visuales de la matriz RACI muestran colores diferenciados cuando están activos: **R** (Responsable) en Rojo, **A** (Aprobador) en Azul, **C** (Consultado) en Verde e **I** (Informado) en Amarillo.
+
+### Fixed
+- **Despliegue del Selector de Colores en Comentarios**:
+  - Se resolvió el recorte visual del selector de color de texto en el muro de comentarios (`RichTextEditor.jsx`) eliminando `overflow: hidden` del contenedor del editor y redondeando las esquinas superiores del Toolbar.
+
 ## [1.7.11] - 2026-06-18
 ### Fixed
 - **Migración 13 para Cambios_Alcance**: Creada la migración `13_add_contactos_to_cambios_alcance.js` para añadir las columnas `id_solicitante_contacto` y `id_aprobador_contacto` a la tabla `Cambios_Alcance`, resolviendo errores de base de datos en producción.

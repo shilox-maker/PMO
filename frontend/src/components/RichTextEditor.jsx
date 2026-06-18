@@ -162,7 +162,6 @@ export default function RichTextEditor({ value, onChange, placeholder = "Escribe
       border: '1px solid var(--md-sys-color-outline-variant)',
       borderRadius: 'var(--md-shape-corner-large)',
       backgroundColor: 'var(--md-sys-color-surface-container)',
-      overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
       minHeight: '180px',
@@ -177,7 +176,9 @@ export default function RichTextEditor({ value, onChange, placeholder = "Escribe
         borderBottom: '1px solid var(--md-sys-color-outline-variant)',
         backgroundColor: 'var(--md-sys-color-surface-container-high)',
         flexWrap: 'wrap',
-        zIndex: 2
+        zIndex: 2,
+        borderTopLeftRadius: 'var(--md-shape-corner-large)',
+        borderTopRightRadius: 'var(--md-shape-corner-large)'
       }}>
         <button 
           type="button"

@@ -551,7 +551,7 @@ function MainAppContent() {
             } />
 
             <Route path="/kpis-pmo" element={
-              <KpisPmo />
+              <KpisPmo onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
             } />
 
             <Route path="/timeline" element={

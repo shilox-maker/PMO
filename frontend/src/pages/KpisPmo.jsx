@@ -7,8 +7,9 @@ import {
 import { 
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer 
 } from 'recharts';
+import ProjectTable from '../components/ProjectTable';
 
-export default function KpisPmo() {
+export default function KpisPmo({ onViewProject, onViewVendor }) {
   const { getAuthHeaders } = useAuth();
   
   const [projects, setProjects] = useState([]);
@@ -469,41 +470,18 @@ export default function KpisPmo() {
           {selectedKpi && (
             <div className="m3-card glass-panel" style={{ marginTop: 24, padding: 24 }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 600, marginBottom: 16 }}>Proyectos Seleccionados</h3>
-              <div className="m3-table-wrapper">
-                <table className="m3-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '80px', textAlign: 'center' }}>ID</th>
-                      <th>Nombre de Proyecto</th>
-                      <th>Estado</th>
-                      <th>Project Manager</th>
-                      <th style={{ width: '100px', textAlign: 'center' }}>RAG</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getFilteredProjects().map(p => (
-                      <tr key={p.id_proyecto}>
-                        <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{p.id_proyecto}</td>
-                        <td style={{ fontWeight: 600 }}>{p.nombre_proyecto}</td>
-                        <td>{p.estado_proyecto}</td>
-                        <td>{p.pm_nombre || 'Sin Asignar'}</td>
-                        <td style={{ textAlign: 'center' }}>
-                          <span className={`badge badge-${p.indicador_rag === 'VERDE' ? 'green' : p.indicador_rag === 'AMARILLO' ? 'yellow' : 'red'}`} style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>
-                            {p.indicador_rag}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    {getFilteredProjects().length === 0 && (
-                      <tr>
-                        <td colSpan="5" style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>
-                          No hay proyectos que cumplan con este KPI.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              {getFilteredProjects().length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>
+                  No hay proyectos que cumplan con este KPI.
+                </div>
+              ) : (
+                <ProjectTable 
+                  projects={getFilteredProjects()} 
+                  onViewProject={onViewProject} 
+                  onViewVendor={onViewVendor} 
+                  showHeaderSelector={false} 
+                />
+              )}
             </div>
           )}
         </>

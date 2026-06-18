@@ -27,7 +27,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const fetchActiveUsers = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/pms`)
+    const savedToken = token || localStorage.getItem('pm_token');
+    fetch(`${import.meta.env.VITE_API_URL}/pms`, {
+      headers: savedToken ? { 'Authorization': `Bearer ${savedToken}` } : {}
+    })
       .then(res => res.json())
       .then(data => {
         setPms(data);
