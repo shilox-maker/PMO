@@ -9,6 +9,7 @@
   - Los participantes de los comités y de la matriz RACI ahora se listan mostrando su empresa asociada (obtenida de partner/proveedor) además de su nombre y rol técnico.
 - **Rango de Selección Limitado a RACI**:
   - Al editar comités, los participantes seleccionables se restringen estrictamente a los miembros de la **Matriz RACI** del proyecto.
+  - La selección de **Sponsor / Key User Líder** en la edición básica del proyecto se ha restringido de igual forma únicamente a las personas agregadas a la **Matriz RACI** del proyecto.
 - **Colores Personalizados en Matriz RACI**:
   - Los badges visuales de la matriz RACI muestran colores diferenciados cuando están activos: **R** (Responsable) en Rojo, **A** (Aprobador) en Azul, **C** (Consultado) en Verde e **I** (Informado) en Amarillo.
 

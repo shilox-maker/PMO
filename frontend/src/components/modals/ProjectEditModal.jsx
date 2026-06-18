@@ -173,7 +173,7 @@ export default function ProjectEditModal({
             <div className="form-group">
               <label className="form-label">Sponsor / Key User Líder *</label>
               <SearchableContactSelect 
-                contacts={contactosList}
+                contacts={project?.InvolvedContacts || []}
                 selected={form.id_sponsor}
                 onChange={(val) => setForm(prev => ({ ...prev, id_sponsor: val }))}
                 multiple={false}
