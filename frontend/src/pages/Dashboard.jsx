@@ -3,8 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import { 
   Plus, Search, Building, AlertTriangle, TrendingUp, Calendar, 
   MapPin, User, Filter, AlertOctagon, CheckSquare, RefreshCw, Eye,
-  ArrowUp, ArrowDown, ArrowUpDown, FileDown, ChevronDown, ChevronUp
+  ArrowUp, ArrowDown, ArrowUpDown, FileDown, ChevronDown, ChevronUp, MessageSquare, Printer
 } from 'lucide-react';
+import QuickCommentModal from '../components/modals/QuickCommentModal';
+import DashboardReportModal from '../components/modals/DashboardReportModal';
 import { getSortedData } from '../utils/sorting';
 
 import SearchableContactSelect from '../components/SearchableContactSelect';
@@ -30,6 +32,7 @@ const DEFAULT_PROJECT_COLUMNS = [
 
 export default function Dashboard({ onViewProject, onViewVendor }) {
   const { getAuthHeaders, currentPm } = useAuth();
+  const canSeeDireccion = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR');
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +41,15 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
+
+  // Quick Comment state
+  const [quickCommentProjectId, setQuickCommentProjectId] = useState(null);
+  const [isQuickCommentOpen, setIsQuickCommentOpen] = useState(false);
+
+  const handleOpenQuickComment = (pid) => {
+    setQuickCommentProjectId(pid);
+    setIsQuickCommentOpen(true);
+  };
 
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -65,41 +77,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     );
   };
 
-  const handleExportExcel = () => {
-    const params = new URLSearchParams();
-    if (filterPm) params.append('pm', filterPm);
-    if (filterVendor) params.append('vendor', filterVendor);
-    if (filterRag) params.append('rag', filterRag);
-    if (filterState) params.append('state', filterState);
-    if (searchTerm) params.append('search', searchTerm);
-    
-    // Add visible columns
-    const visibleKeys = tableCols.filter(c => c.visible).map(c => c.id).join(',');
-    if (visibleKeys) params.append('cols', visibleKeys);
-
-    fetch(`${import.meta.env.VITE_API_URL}/projects/export?${params.toString()}`, {
-      headers: getAuthHeaders()
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Error al exportar a Excel');
-        return res.blob();
-      })
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Reporte_Proyectos.xlsx';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(err => {
-        console.error('Error al descargar el Excel:', err);
-        alert(err.message);
-      });
-  };
-
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   
   // Technical List Filters
@@ -366,9 +344,18 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto', position: 'relative', zIndex: 50 }}>
           <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
           
-          <button className="m3-btn m3-btn-tonal" onClick={handleExportExcel} style={{ height: '40px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <FileDown size={18} />
-            Exportar a Excel
+          <button 
+            className="m3-btn m3-btn-tonal" 
+            onClick={() => setIsReportOpen(true)}
+            style={{ 
+              height: '40px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 8
+            }}
+          >
+            <Printer size={18} />
+            <span>Generar Informe</span>
           </button>
 
           <button className="m3-btn m3-btn-primary" onClick={() => setShowCreateModal(true)} style={{ height: '40px' }}>
@@ -621,14 +608,25 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
 
                     {/* Action */}
                     {visibleColumnsMap.accion && <td>
-                      <button 
-                        className="m3-btn m3-btn-tonal" 
-                        onClick={() => onViewProject(project.id_proyecto)}
-                        style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px' }}
-                      >
-                        <Eye size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                        Ficha
-                      </button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button 
+                          className="m3-btn m3-btn-tonal" 
+                          onClick={() => onViewProject(project.id_proyecto)}
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px' }}
+                        >
+                          <Eye size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                          Ficha
+                        </button>
+                        <button 
+                          className="m3-btn m3-btn-tonal"
+                          onClick={() => handleOpenQuickComment(project.id_proyecto)}
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 4 }}
+                          title="Actualizar estado / comentario rápido"
+                        >
+                          <MessageSquare size={14} />
+                          <span>Comentar</span>
+                        </button>
+                      </div>
                     </td>}
                   </tr>
                 );
@@ -871,6 +869,25 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
           </div>
         </div>
       )}
+      {/* Quick Comment Modal */}
+      <QuickCommentModal 
+        isOpen={isQuickCommentOpen}
+        onClose={() => {
+          setIsQuickCommentOpen(false);
+          setQuickCommentProjectId(null);
+        }}
+        projectId={quickCommentProjectId}
+        getAuthHeaders={getAuthHeaders}
+        onSuccess={fetchProjects}
+        canSeeDireccion={canSeeDireccion}
+      />
+      {/* Dashboard Report Modal */}
+      <DashboardReportModal 
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        projects={projects}
+        getAuthHeaders={getAuthHeaders}
+      />
     </div>
   );
 }

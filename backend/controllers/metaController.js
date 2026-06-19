@@ -102,6 +102,12 @@ const getPortfolioDashboard = async (req, res) => {
       projectsList.map(async (p) => {
         const id_proyecto = p.id_proyecto;
         
+        const calc = await getProjectCalculations(
+          id_proyecto,
+          p.budget_inicial,
+          p.fecha_fin_inicial
+        );
+
         const approvedCRs = await CambiosAlcance.findAll({
           where: { id_proyecto, estado_cambio: 'APROBADO' }
         });
@@ -112,23 +118,12 @@ const getPortfolioDashboard = async (req, res) => {
           }
         });
 
-        const initialEndDate = new Date(p.fecha_fin_inicial);
-        initialEndDate.setDate(initialEndDate.getDate() + totalCRDays);
-        const year = initialEndDate.getFullYear();
-        const month = String(initialEndDate.getMonth() + 1).padStart(2, '0');
-        const day = String(initialEndDate.getDate()).padStart(2, '0');
-        const fecha_fin_estimada = `${year}-${month}-${day}`;
-
         const invoices = await Facturas.findAll({
           where: { id_proyecto }
         });
-        let gasto_total_facturas = 0;
         let pos = new Set();
         invoices.forEach(f => {
           if (f.PO) pos.add(f.PO);
-          if (f.estado === 'RECIBIDA' || f.estado === 'PENDIENTE_DE_RECIBIR') {
-            gasto_total_facturas += parseFloat(f.importe || 0);
-          }
         });
         const po_list = Array.from(pos).join(', ');
 
@@ -169,6 +164,8 @@ const getPortfolioDashboard = async (req, res) => {
         const ultimo_comentario = lastComment ? lastComment.texto_comentario.replace(/<[^>]+>/g, '').substring(0, 100) + (lastComment.texto_comentario.length > 100 ? '...' : '') : '';
 
         return {
+          ...p.toJSON(),
+          calculations: calc,
           id_proyecto: p.id_proyecto,
           nombre_proyecto: p.nombre_proyecto,
           id_pm: p.id_pm,
@@ -185,9 +182,9 @@ const getPortfolioDashboard = async (req, res) => {
           budget_inicial: parseFloat(p.budget_inicial),
           fecha_inicio: p.fecha_inicio,
           fecha_fin_inicial: p.fecha_fin_inicial,
-          fecha_fin_estimada,
+          fecha_fin_estimada: calc.fecha_fin_estimada,
           dias_retraso_aprobados: totalCRDays,
-          gasto_total_facturas: Number(gasto_total_facturas.toFixed(2)),
+          gasto_total_facturas: calc.consumo_real,
           po_list,
           proximo_hito: nextMilestone ? { titulo_tarea: nextMilestone.titulo_tarea, fecha_limite: nextMilestone.fecha_limite } : null,
           has_hito_vencido: overdueCount > 0,

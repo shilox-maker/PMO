@@ -27,7 +27,8 @@ import ProjectChecklistTab from './project-detail/tabs/ProjectChecklistTab';
 import ProjectLeccionesTab from './project-detail/tabs/ProjectLeccionesTab';
 
 export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, currentPm } = useAuth();
+  const canSeeDireccion = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR');
   
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -53,9 +54,11 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
   const [newCommentImportant, setNewCommentImportant] = useState(false);
+  const [newCommentDireccion, setNewCommentDireccion] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [editingCommentImportant, setEditingCommentImportant] = useState(false);
+  const [editingCommentDireccion, setEditingCommentDireccion] = useState(false);
 
   // Modals Visibility
   const [showEditProjectModal, setShowEditProjectModal] = useState(false);
@@ -262,7 +265,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       body: JSON.stringify({
         id_proyecto: projectId,
         texto_comentario: newCommentText,
-        es_importante: newCommentImportant
+        es_importante: newCommentImportant,
+        para_direccion: newCommentDireccion
       })
     })
       .then(res => {
@@ -272,6 +276,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       .then(() => {
         setNewCommentText('');
         setNewCommentImportant(false);
+        setNewCommentDireccion(false);
         fetchComments();
       })
       .catch(err => alert(err.message));
@@ -284,7 +289,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       headers: getAuthHeaders(),
       body: JSON.stringify({
         texto_comentario: editingCommentText,
-        es_importante: editingCommentImportant
+        es_importante: editingCommentImportant,
+        para_direccion: editingCommentDireccion
       })
     })
       .then(res => {
@@ -295,6 +301,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         setEditingCommentId(null);
         setEditingCommentText('');
         setEditingCommentImportant(false);
+        setEditingCommentDireccion(false);
         fetchComments();
       })
       .catch(err => alert(err.message));
@@ -572,14 +579,17 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
             project={project} comments={comments} commentsLoading={commentsLoading}
             newCommentText={newCommentText} setNewCommentText={setNewCommentText}
             newCommentImportant={newCommentImportant} setNewCommentImportant={setNewCommentImportant}
+            newCommentDireccion={newCommentDireccion} setNewCommentDireccion={setNewCommentDireccion}
             handleAddComment={handleAddComment} handleDeleteComment={handleDeleteComment}
             editingCommentId={editingCommentId} setEditingCommentId={setEditingCommentId}
             editingCommentText={editingCommentText} setEditingCommentText={setEditingCommentText}
             editingCommentImportant={editingCommentImportant} setEditingCommentImportant={setEditingCommentImportant}
+            editingCommentDireccion={editingCommentDireccion} setEditingCommentDireccion={setEditingCommentDireccion}
             handleUpdateComment={handleUpdateComment} isEditingLifecycle={isEditingLifecycle}
             handleOpenEditLifecycle={handleOpenEditLifecycle} handleDeleteParticipant={handleDeleteParticipant}
             handleOpenAddRaci={handleOpenAddRaci} handleOpenEditRaci={handleOpenEditRaci}
             onViewVendor={onViewVendor} contactosList={contactosList}
+            canSeeDireccion={canSeeDireccion}
           />
         )}
 

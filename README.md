@@ -110,6 +110,7 @@ Vista global interactiva que mapea todos los proyectos en un eje temporal horizo
   * Tabla de Hitos: Últimos 3 completados y próximos 3 pendientes.
   * **Muro Ejecutivo:** Solo los comentarios marcados como `es_importante = true` se imprimen en el informe. Los comentarios operativos ordinarios se omiten.
 * **Informe de Portfolio Concatenado (`📊 Exportar Informe de Portfolio`):** Ejecuta el motor atómico para cada proyecto filtrado en la cuadrícula del Dashboard Ejecutivo, concatena los bloques HTML y aplica `page-break-after: always` entre cada uno.
+* **Informe Consolidado de Seguimiento (`🖨️ Generar Informe`):** Desde el Dashboard (Seguimiento de Proyectos), genera un informe configurable de los proyectos filtrados. Permite seleccionar qué secciones incluir (Resumen, Alcance, Riesgos) y configurar la fecha "Remarcar a partir de" para añadir un distintivo rojo `A REVISAR` en los comentarios nuevos.
 
 ### 3. Buscador Predictivo Combobox de Key Users
 * Reemplaza las listas de checkboxes e inputs obsoletos por un componente autocomplete con buscador predictivo.
@@ -122,6 +123,8 @@ Vista global interactiva que mapea todos los proyectos en un eje temporal horizo
   - **Copiado de Listas**: Genera etiquetas de lista con estilos en línea (`list-style-type: disc` / `decimal`) asegurando que el copiado directo de comentarios a correos electrónicos de Outlook no rompa el diseño.
 * **Historial Auditado**: Muestra una marca `(Editado)` visible con un tooltip que expone el usuario editor y el timestamp exacto de la última modificación.
 * **Flag de Importancia (`es_importante`)**: Checkbox/toggle visual junto al botón de publicación: `[ ] Marcar como Importante (Incluir en Informe)`. Los comentarios marcados como importantes se resaltan visualmente con un borde dorado/ámbar y un badge "⭐ Informe". Solo estos comentarios aparecen en los informes ejecutivos generados.
+* **Visibilidad Limitada ("Para Dirección")**: Permite restringir comentarios para que únicamente sean visibles por los roles `ADMINISTRADOR` y `DIRECTOR` (tanto en la interfaz web como en los reportes e informes). Los comentarios de dirección se identifican con un fondo azul claro y la etiqueta `⭐ DIRECCIÓN`.
+
 
 ## Pruebas Funcionales (E2E y API)
 

@@ -265,12 +265,19 @@ const deleteLesson = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
-
 // --- COMENTARIOS ---
 const getProjectComments = async (req, res) => {
   try {
+    const user = await Usuarios.findByPk(req.currentPmId);
+    const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
+
+    const where = { id_proyecto: req.params.id_proyecto };
+    if (!canSeeDireccion) {
+      where.para_direccion = false;
+    }
+
     const comments = await ComentariosProyecto.findAll({
-      where: { id_proyecto: req.params.id_proyecto },
+      where,
       include: [
         { model: Usuarios, as: 'Autor', attributes: ['nombre', 'apellidos', 'correo'] },
         { model: Usuarios, as: 'Editor', attributes: ['nombre', 'apellidos', 'correo'] }
@@ -285,7 +292,7 @@ const getProjectComments = async (req, res) => {
 
 const createComment = async (req, res) => {
   try {
-    const { id_proyecto, texto_comentario, es_importante } = req.body;
+    const { id_proyecto, texto_comentario, es_importante, para_direccion } = req.body;
     const authorId = req.currentPmId;
     if (!authorId) {
       return res.status(401).json({ error: 'No autorizado. Inicie sesión.' });
@@ -294,11 +301,15 @@ const createComment = async (req, res) => {
       return res.status(400).json({ error: 'El código del proyecto y el texto del comentario son obligatorios.' });
     }
 
+    const user = await Usuarios.findByPk(authorId);
+    const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
+
     const comment = await ComentariosProyecto.create({
       id_proyecto,
       id_usuario: authorId,
       texto_comentario: sanitizeHTML(texto_comentario),
       es_importante: es_importante !== undefined ? !!es_importante : false,
+      para_direccion: (para_direccion !== undefined && canSeeDireccion) ? !!para_direccion : false,
       fecha_registro: new Date()
     });
 
@@ -318,7 +329,7 @@ const createComment = async (req, res) => {
 const updateComment = async (req, res) => {
   try {
     const { id_comentario } = req.params;
-    const { texto_comentario, es_importante } = req.body;
+    const { texto_comentario, es_importante, para_direccion } = req.body;
     const editorId = req.currentPmId;
     if (!editorId) {
       return res.status(401).json({ error: 'No autorizado. Inicie sesión.' });
@@ -332,6 +343,9 @@ const updateComment = async (req, res) => {
       return res.status(404).json({ error: 'Comentario no encontrado.' });
     }
 
+    const user = await Usuarios.findByPk(editorId);
+    const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
+
     const updateData = {
       texto_comentario: sanitizeHTML(texto_comentario),
       editado: true,
@@ -340,6 +354,9 @@ const updateComment = async (req, res) => {
     };
     if (es_importante !== undefined) {
       updateData.es_importante = !!es_importante;
+    }
+    if (para_direccion !== undefined) {
+      updateData.para_direccion = canSeeDireccion ? !!para_direccion : false;
     }
 
     await comment.update(updateData);

@@ -7,11 +7,13 @@ import SearchableContactSelect from '../../../components/SearchableContactSelect
 
 export default function ProjectFichaTab({
   project, comments, commentsLoading, newCommentText, setNewCommentText,
-  newCommentImportant, setNewCommentImportant, handleAddComment, handleDeleteComment,
+  newCommentImportant, setNewCommentImportant, newCommentDireccion, setNewCommentDireccion,
+  handleAddComment, handleDeleteComment,
   editingCommentId, setEditingCommentId, editingCommentText, setEditingCommentText,
-  editingCommentImportant, setEditingCommentImportant, handleUpdateComment,
-  isEditingLifecycle, handleOpenEditLifecycle, handleDeleteParticipant,
-  handleOpenAddRaci, handleOpenEditRaci, onViewVendor, contactosList
+  editingCommentImportant, setEditingCommentImportant, editingCommentDireccion, setEditingCommentDireccion,
+  handleUpdateComment, isEditingLifecycle, handleOpenEditLifecycle, handleDeleteParticipant,
+  handleOpenAddRaci, handleOpenEditRaci, onViewVendor, contactosList,
+  canSeeDireccion
 }) {
   const calc = project.calculations;
 
@@ -280,17 +282,32 @@ export default function ProjectFichaTab({
             placeholder="Añada un comentario o acuerdo ejecutivo aquí..."
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
-              <input 
-                type="checkbox" 
-                checked={newCommentImportant} 
-                onChange={(e) => setNewCommentImportant(e.target.checked)}
-                className="m3-checkbox"
-              />
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--priority-alta)', fontWeight: 600 }}>
-                <Star size={14} fill={newCommentImportant ? 'var(--priority-alta)' : 'none'} /> Marcar como importante / ejecutivo (PDF)
-              </span>
-            </label>
+            <div style={{ display: 'flex', gap: 20 }}>
+              <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                <input 
+                  type="checkbox" 
+                  checked={newCommentImportant} 
+                  onChange={(e) => setNewCommentImportant(e.target.checked)}
+                  className="m3-checkbox"
+                />
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--priority-alta)', fontWeight: 600 }}>
+                  <Star size={14} fill={newCommentImportant ? 'var(--priority-alta)' : 'none'} /> Marcar como importante / ejecutivo (PDF)
+                </span>
+              </label>
+              {canSeeDireccion && (
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={newCommentDireccion} 
+                    onChange={(e) => setNewCommentDireccion(e.target.checked)}
+                    className="m3-checkbox"
+                  />
+                  <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
+                    📢 Para dirección
+                  </span>
+                </label>
+              )}
+            </div>
             <button className="m3-btn m3-btn-primary" onClick={handleAddComment} style={{ height: '36px' }}>
               Publicar Comentario
             </button>
@@ -314,8 +331,12 @@ export default function ProjectFichaTab({
                   key={c.id_comentario} 
                   style={{ 
                     padding: 16, 
-                    backgroundColor: c.es_importante ? 'rgba(245, 158, 11, 0.08)' : 'var(--md-sys-color-surface-container)', 
-                    borderLeft: c.es_importante ? '4px solid #f59e0b' : '4px solid var(--md-sys-color-outline-variant)',
+                    backgroundColor: c.para_direccion 
+                      ? 'rgba(10, 132, 255, 0.08)' 
+                      : (c.es_importante ? 'rgba(245, 158, 11, 0.08)' : 'var(--md-sys-color-surface-container)'), 
+                    borderLeft: c.para_direccion 
+                      ? '4px solid #007aff' 
+                      : (c.es_importante ? '4px solid #f59e0b' : '4px solid var(--md-sys-color-outline-variant)'),
                     borderRadius: '0 16px 16px 0',
                     transition: 'var(--transition-smooth)'
                   }}
@@ -327,15 +348,28 @@ export default function ProjectFichaTab({
                         onChange={setEditingCommentText}
                       />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={editingCommentImportant}
-                            onChange={(e) => setEditingCommentImportant(e.target.checked)}
-                            className="m3-checkbox"
-                          />
-                          <span style={{ color: '#f59e0b', fontWeight: 600 }}>Importante</span>
-                        </label>
+                        <div style={{ display: 'flex', gap: 16 }}>
+                          <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={editingCommentImportant}
+                              onChange={(e) => setEditingCommentImportant(e.target.checked)}
+                              className="m3-checkbox"
+                            />
+                            <span style={{ color: '#f59e0b', fontWeight: 600 }}>Importante</span>
+                          </label>
+                          {canSeeDireccion && (
+                            <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                              <input 
+                                type="checkbox" 
+                                checked={editingCommentDireccion}
+                                onChange={(e) => setEditingCommentDireccion(e.target.checked)}
+                                className="m3-checkbox"
+                              />
+                              <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>Para dirección</span>
+                            </label>
+                          )}
+                        </div>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button className="m3-btn m3-btn-outline" onClick={() => setEditingCommentId(null)} style={{ height: '32px', fontSize: '0.8rem' }}>
                             Cancelar
@@ -349,11 +383,16 @@ export default function ProjectFichaTab({
                   ) : (
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <strong style={{ fontSize: '0.9rem' }}>{c.Autor?.nombre} {c.Autor?.apellidos}</strong>
                           {c.es_importante && (
                             <span style={{ fontSize: '0.7rem', backgroundColor: '#ffe0b2', color: '#e65100', padding: '2px 8px', borderRadius: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
                               <Star size={10} fill="#e65100" /> IMPORTANTE
+                            </span>
+                          )}
+                          {c.para_direccion && (
+                            <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)', padding: '2px 8px', borderRadius: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <Star size={10} fill="var(--md-sys-color-primary)" /> DIRECCIÓN
                             </span>
                           )}
                         </div>
@@ -377,6 +416,7 @@ export default function ProjectFichaTab({
                             setEditingCommentId(c.id_comentario);
                             setEditingCommentText(c.texto_comentario);
                             setEditingCommentImportant(c.es_importante);
+                            setEditingCommentDireccion(c.para_direccion || false);
                           }}
                           title="Editar comentario"
                         >

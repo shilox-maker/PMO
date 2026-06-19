@@ -62,7 +62,10 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
     );
   };
 
+  const [exportingExcel, setExportingExcel] = useState(false);
+
   const handleExportExcel = () => {
+    setExportingExcel(true);
     const params = new URLSearchParams();
     if (filters.pm) params.append('pm', filters.pm);
     if (filters.vendor) params.append('vendor', filters.vendor);
@@ -96,6 +99,9 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
       .catch(err => {
         console.error('Error al descargar el Excel:', err);
         alert(err.message);
+      })
+      .finally(() => {
+        setExportingExcel(false);
       });
   };
 
@@ -505,16 +511,16 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
 
             <button
               onClick={handleExportExcel}
-              disabled={filteredGridData.length === 0}
+              disabled={exportingExcel || filteredGridData.length === 0}
               className="m3-btn m3-btn-tonal"
               style={{
                 height: '40px',
-                opacity: filteredGridData.length === 0 ? 0.5 : 1
+                opacity: (exportingExcel || filteredGridData.length === 0) ? 0.5 : 1
               }}
               title="Exportar a Excel"
             >
-              <FileDown size={18} style={{ color: 'var(--md-sys-color-primary)' }} />
-              <span>Excel</span>
+              {exportingExcel ? <RefreshCw className="animate-spin" size={18} /> : <FileDown size={18} style={{ color: 'var(--md-sys-color-primary)' }} />}
+              <span>{exportingExcel ? 'Exportando...' : 'Excel'}</span>
             </button>
           </div>
         </div>

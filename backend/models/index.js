@@ -716,6 +716,11 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
     allowNull: false,
     defaultValue: false
   },
+  para_direccion: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
   fecha_registro: {
     type: DataTypes.DATE,
     allowNull: false,

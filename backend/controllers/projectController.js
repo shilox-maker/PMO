@@ -349,20 +349,24 @@ const deleteProject = async (req, res) => {
 
 const exportProjects = async (req, res) => {
   try {
-    const { pm, vendor, rag, search, state, cols, estrategico } = req.query;
+    const { pm, vendor, rag, search, state, cols, estrategico, ids } = req.query;
 
     const where = {};
-    if (pm) where.id_pm = pm;
-    if (vendor) where.id_proveedor = vendor;
-    if (rag) where.indicador_rag = rag;
-    if (estrategico) {
-      where.es_estrategico = estrategico === 'true';
-    }
-    if (search) {
-      where.nombre_proyecto = { [Op.like]: `%${search}%` };
-    }
-    if (state) {
-      where['$Estado.nombre_estado$'] = state;
+    if (ids) {
+      where.id_proyecto = { [Op.in]: ids.split(',') };
+    } else {
+      if (pm) where.id_pm = pm;
+      if (vendor) where.id_proveedor = vendor;
+      if (rag) where.indicador_rag = rag;
+      if (estrategico) {
+        where.es_estrategico = estrategico === 'true';
+      }
+      if (search) {
+        where.nombre_proyecto = { [Op.like]: `%${search}%` };
+      }
+      if (state) {
+        where['$Estado.nombre_estado$'] = { [Op.in]: state.split(',') };
+      }
     }
 
     const projectsList = await Proyectos.findAll({
@@ -399,7 +403,26 @@ const exportProjects = async (req, res) => {
 
     if (cols) {
       const allowedCols = cols.split(',');
-      exportCols = exportCols.filter(c => allowedCols.includes(c.key) || c.key === 'id_proyecto' || c.key === 'nombre_proyecto');
+      const mappedAllowed = new Set(allowedCols);
+      if (mappedAllowed.has('budget')) {
+        mappedAllowed.add('budget_inicial');
+        mappedAllowed.add('budget_actualizado');
+        mappedAllowed.add('presupuesto_disponible');
+      }
+      if (mappedAllowed.has('progreso')) {
+        mappedAllowed.add('consumo_real');
+      }
+      if (mappedAllowed.has('proveedor')) {
+        mappedAllowed.add('proveedor');
+      }
+      if (mappedAllowed.has('pm')) {
+        mappedAllowed.add('pm');
+      }
+      if (mappedAllowed.has('estado_proyecto')) {
+        mappedAllowed.add('estado_proyecto');
+      }
+
+      exportCols = exportCols.filter(c => mappedAllowed.has(c.key) || c.key === 'id_proyecto' || c.key === 'nombre_proyecto');
     }
 
     worksheet.columns = exportCols;
@@ -413,70 +436,77 @@ const exportProjects = async (req, res) => {
     };
     headerRow.alignment = { vertical: 'middle', horizontal: 'left' };
 
-    for (const p of projectsList) {
-      const id_proyecto = p.id_proyecto;
+    const rowsData = await Promise.all(
+      projectsList.map(async (p) => {
+        const id_proyecto = p.id_proyecto;
 
-      const approvedCRs = await CambiosAlcance.findAll({
-        where: { id_proyecto, estado_cambio: 'APROBADO' }
-      });
-      let totalCRDays = 0;
-      let totalCRAmount = 0;
-      approvedCRs.forEach(cr => {
-        if (cr.impacta_tiempo) {
-          totalCRDays += parseInt(cr.dias_impacto || 0, 10);
-        }
-        if (cr.impacta_importe) {
-          totalCRAmount += parseFloat(cr.importe_impacto || 0);
-        }
-      });
+        const approvedCRs = await CambiosAlcance.findAll({
+          where: { id_proyecto, estado_cambio: 'APROBADO' }
+        });
+        let totalCRDays = 0;
+        let totalCRAmount = 0;
+        approvedCRs.forEach(cr => {
+          if (cr.impacta_tiempo) {
+            totalCRDays += parseInt(cr.dias_impacto || 0, 10);
+          }
+          if (cr.impacta_importe) {
+            totalCRAmount += parseFloat(cr.importe_impacto || 0);
+          }
+        });
 
-      const budget_inicial = parseFloat(p.budget_inicial) || 0;
-      const budget_actualizado = budget_inicial + totalCRAmount;
+        const budget_inicial = parseFloat(p.budget_inicial) || 0;
+        const budget_actualizado = budget_inicial + totalCRAmount;
 
-      const initialEndDate = new Date(p.fecha_fin_inicial);
-      initialEndDate.setDate(initialEndDate.getDate() + totalCRDays);
-      const year = initialEndDate.getFullYear();
-      const month = String(initialEndDate.getMonth() + 1).padStart(2, '0');
-      const day = String(initialEndDate.getDate()).padStart(2, '0');
-      const fecha_fin_estimada = `${year}-${month}-${day}`;
+        const initialEndDate = new Date(p.fecha_fin_inicial);
+        initialEndDate.setDate(initialEndDate.getDate() + totalCRDays);
+        const year = initialEndDate.getFullYear();
+        const month = String(initialEndDate.getMonth() + 1).padStart(2, '0');
+        const day = String(initialEndDate.getDate()).padStart(2, '0');
+        const fecha_fin_estimada = `${year}-${month}-${day}`;
 
-      const invoices = await Facturas.findAll({
-        where: { id_proyecto }
-      });
-      let consumo_real = 0;
-      let pos = new Set();
-      invoices.forEach(f => {
-        if (f.PO) pos.add(f.PO);
-        if (f.estado === 'RECIBIDA' || f.estado === 'PENDIENTE_DE_RECIBIR') {
-          consumo_real += parseFloat(f.importe || 0);
-        }
-      });
-      const po_list = Array.from(pos).join(', ');
+        const invoices = await Facturas.findAll({
+          where: { id_proyecto }
+        });
+        let consumo_real = 0;
+        let pos = new Set();
+        invoices.forEach(f => {
+          if (f.PO) pos.add(f.PO);
+          if (f.estado === 'RECIBIDA' || f.estado === 'PENDIENTE_DE_RECIBIR') {
+            consumo_real += parseFloat(f.importe || 0);
+          }
+        });
+        const po_list = Array.from(pos).join(', ');
 
-      const presupuesto_disponible = budget_actualizado - consumo_real;
+        const presupuesto_disponible = budget_actualizado - consumo_real;
 
-      const row = worksheet.addRow({
-        id_proyecto: sanitizeExcelValue(p.id_proyecto),
-        nombre_proyecto: sanitizeExcelValue(p.nombre_proyecto),
-        estado_proyecto: sanitizeExcelValue(p.Estado ? p.Estado.nombre_estado : 'Sin Estado'),
-        indicador_rag: sanitizeExcelValue(p.indicador_rag),
-        proveedor: sanitizeExcelValue(p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner'),
-        pm: sanitizeExcelValue(p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin PM'),
-        sede: sanitizeExcelValue(p.Sede ? p.Sede.nombre_sede : ''),
-        po_list: sanitizeExcelValue(po_list),
-        budget_inicial,
-        budget_actualizado,
-        consumo_real,
-        presupuesto_disponible,
-        fecha_inicio: p.fecha_inicio,
-        fecha_fin_inicial: p.fecha_fin_inicial,
-        fecha_fin_estimada
-      });
+        return {
+          id_proyecto: sanitizeExcelValue(p.id_proyecto),
+          nombre_proyecto: sanitizeExcelValue(p.nombre_proyecto),
+          estado_proyecto: sanitizeExcelValue(p.Estado ? p.Estado.nombre_estado : 'Sin Estado'),
+          indicador_rag: sanitizeExcelValue(p.indicador_rag),
+          proveedor: sanitizeExcelValue(p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner'),
+          pm: sanitizeExcelValue(p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin PM'),
+          sede: sanitizeExcelValue(p.Sede ? p.Sede.nombre_sede : ''),
+          po_list: sanitizeExcelValue(po_list),
+          budget_inicial,
+          budget_actualizado,
+          consumo_real,
+          presupuesto_disponible,
+          fecha_inicio: p.fecha_inicio,
+          fecha_fin_inicial: p.fecha_fin_inicial,
+          fecha_fin_estimada
+        };
+      })
+    );
 
-      row.getCell('budget_inicial').numFmt = '#,##0.00" €"';
-      row.getCell('budget_actualizado').numFmt = '#,##0.00" €"';
-      row.getCell('consumo_real').numFmt = '#,##0.00" €"';
-      row.getCell('presupuesto_disponible').numFmt = '#,##0.00" €"';
+    const hasCol = (key) => exportCols.some(c => c.key === key);
+
+    for (const data of rowsData) {
+      const row = worksheet.addRow(data);
+      if (hasCol('budget_inicial')) row.getCell('budget_inicial').numFmt = '#,##0.00" €"';
+      if (hasCol('budget_actualizado')) row.getCell('budget_actualizado').numFmt = '#,##0.00" €"';
+      if (hasCol('consumo_real')) row.getCell('consumo_real').numFmt = '#,##0.00" €"';
+      if (hasCol('presupuesto_disponible')) row.getCell('presupuesto_disponible').numFmt = '#,##0.00" €"';
     }
 
     res.setHeader(

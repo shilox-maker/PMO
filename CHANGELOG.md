@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [2.1.0] - 2026-06-19
+### Added
+- **Exportación con Selección de Campos**:
+  - Implementación de un modal interactivo (`ExportProjectsModal`) que permite elegir qué campos del proyecto exportar a Excel en el listado principal de proyectos.
+- **Comentarios "Para Dirección" Seguros**:
+  - Incorporación del campo `para_direccion` en los comentarios de proyectos.
+  - Los comentarios marcados como "Para dirección" solo son visibles e interactivos para usuarios con perfiles `ADMINISTRADOR` o `DIRECTOR` en la interfaz y en las exportaciones/informes.
+  - Diseño visual premium distintivo para comentarios de dirección (fondo azul translúcido, borde azul y etiqueta `⭐ DIRECCIÓN`).
+- **Informe Consolidado con Filtros y Tags**:
+  - Opción de generar un informe PDF/HTML consolidado de toda la cartera de proyectos en la vista de Seguimiento (Dashboard).
+  - Incluye un selector de secciones (Resumen, Alcance, Riesgos).
+  - Campo "Remarcar a partir de" para añadir automáticamente una etiqueta roja `A REVISAR` en los comentarios registrados a partir de la fecha seleccionada.
+
 ## [2.0.0] - 2026-06-18
 ### Added
 - **Configuración de Comités Centralizada e Inline**:

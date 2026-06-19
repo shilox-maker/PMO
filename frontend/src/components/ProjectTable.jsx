@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Eye, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Eye, ArrowUp, ArrowDown, ArrowUpDown, FileDown } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
 import { useTableColumns } from '../hooks/useTableColumns';
 import ColumnSelector from './ColumnSelector';
+import ExportProjectsModal from './modals/ExportProjectsModal';
+import { useAuth } from '../context/AuthContext';
 
 const DEFAULT_PROJECT_COLUMNS = [
   { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
@@ -22,8 +24,10 @@ const DEFAULT_PROJECT_COLUMNS = [
 ];
 
 export default function ProjectTable({ projects, onViewProject, onViewVendor, showHeaderSelector = true }) {
+  const { getAuthHeaders } = useAuth();
   const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns', DEFAULT_PROJECT_COLUMNS);
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -60,7 +64,20 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
   return (
     <div>
       {showHeaderSelector && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12, gap: 12 }}>
+          <button 
+            className="m3-btn m3-btn-tonal"
+            onClick={() => setIsExportOpen(true)}
+            style={{ 
+              height: '40px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 8 
+            }}
+          >
+            <FileDown size={18} />
+            <span>Exportar Excel</span>
+          </button>
           <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
         </div>
       )}
@@ -86,9 +103,14 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
           </thead>
           <tbody>
             {getSortedData(projects, sortConfig).map((project) => {
-              const calc = project.calculations;
-              const consumptionPercent = calc ? Math.min((calc.consumo_real / calc.budget_actualizado) * 100, 100) : 0;
-              const displayedPercent = calc ? Math.round((calc.consumo_real / calc.budget_actualizado) * 100) : 0;
+              const calc = project.calculations || {
+                budget_actualizado: project.budget_actualizado || project.budget_inicial || 0,
+                consumo_real: project.gasto_total_facturas || 0,
+                presupuesto_disponible: (project.budget_actualizado || project.budget_inicial || 0) - (project.gasto_total_facturas || 0),
+                fecha_fin_estimada: project.fecha_fin_estimada || project.fecha_fin_inicial
+              };
+              const consumptionPercent = calc.budget_actualizado > 0 ? Math.min((calc.consumo_real / calc.budget_actualizado) * 100, 100) : 0;
+              const displayedPercent = calc.budget_actualizado > 0 ? Math.round((calc.consumo_real / calc.budget_actualizado) * 100) : 0;
 
               return (
                 <tr key={project.id_proyecto}>
@@ -131,15 +153,17 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                       style={{ textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)', fontWeight: 500 }}
                       onClick={() => onViewVendor && onViewVendor(project.id_proveedor)}
                     >
-                      {project.Proveedor?.nombre_razon_social}
+                      {project.Proveedor?.nombre_razon_social || project.prov_nombre || 'Sin Partner'}
                     </span>
                   </td>}
 
                   {/* PM */}
-                  {visibleColumnsMap.pm && <td>{project.PM?.nombre} {project.PM?.apellidos}</td>}
+                  {visibleColumnsMap.pm && <td>
+                    {project.PM ? `${project.PM.nombre} ${project.PM.apellidos}` : (project.pm_nombre || 'Sin PM')}
+                  </td>}
 
                   {/* Sede */}
-                  {visibleColumnsMap.sede && <td>{project.Sede?.nombre_sede}</td>}
+                  {visibleColumnsMap.sede && <td>{project.Sede?.nombre_sede || project.sede_nombre}</td>}
 
                   {/* Dates */}
                   {visibleColumnsMap.fecha_inicio && <td>{project.fecha_inicio ? new Date(project.fecha_inicio).toLocaleDateString('es-ES') : '—'}</td>}
@@ -205,6 +229,12 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
           </tbody>
         </table>
       </div>
+      <ExportProjectsModal 
+        isOpen={isExportOpen} 
+        onClose={() => setIsExportOpen(false)} 
+        projects={projects} 
+        getAuthHeaders={getAuthHeaders} 
+      />
     </div>
   );
 }

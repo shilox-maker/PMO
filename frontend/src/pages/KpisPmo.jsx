@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Filter, Search, AlertOctagon, Coins, ShieldCheck, Clock, CheckCircle2,
-  RefreshCw, ChevronDown, ChevronUp
+  Filter, Search, AlertOctagon, Coins, ShieldCheck, ShieldAlert, Clock, CheckCircle2,
+  RefreshCw, ChevronDown, ChevronUp, AlertTriangle
 } from 'lucide-react';
 import { 
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer 
@@ -29,24 +29,66 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
 
   const [isStatesOpen, setIsStatesOpen] = useState(false);
   const [selectedKpi, setSelectedKpi] = useState(null);
+  const [selectedChartFilter, setSelectedChartFilter] = useState(null);
 
   const getFilteredProjects = () => {
-    if (!selectedKpi) return [];
-    switch(selectedKpi) {
-      case 'overrun': return projects.filter(p => p.gasto_total_facturas > p.budget_inicial);
-      case 'capex': return projects.filter(p => p.es_capex && p.gasto_total_facturas >= (p.budget_inicial * 0.90));
-      case 'governance': return projects.filter(p => p.com_semanal_activo || p.com_mensual_activo || p.com_steerco_activo);
-      case 'inactive': return projects.filter(p => {
-        const hasPlan = p.com_semanal_activo || p.com_mensual_activo || p.com_steerco_activo;
-        if (!hasPlan) return false;
-        const diffMs = Date.now() - new Date(p.ultima_actualizacion).getTime();
-        return (diffMs / (1000 * 60 * 60 * 24)) > 30;
-      });
-      case 'rag_verde': return projects.filter(p => p.indicador_rag === 'VERDE');
-      case 'rag_amarillo': return projects.filter(p => p.indicador_rag === 'AMARILLO');
-      case 'rag_rojo': return projects.filter(p => p.indicador_rag === 'ROJO');
-      default: return [];
+    let res = [...projects];
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (selectedKpi) {
+      switch(selectedKpi) {
+        case 'overrun': 
+          res = res.filter(p => p.gasto_total_facturas > p.budget_inicial);
+          break;
+        case 'capex': 
+          res = res.filter(p => p.es_capex && p.gasto_total_facturas >= (p.budget_inicial * 0.90));
+          break;
+        case 'governance': 
+          res = res.filter(p => !p.com_semanal_activo && !p.com_mensual_activo && !p.com_steerco_activo);
+          break;
+        case 'inactive': 
+          res = res.filter(p => {
+            const hasPlan = p.com_semanal_activo || p.com_mensual_activo || p.com_steerco_activo;
+            if (!hasPlan) return false;
+            const diffMs = Date.now() - new Date(p.ultima_actualizacion).getTime();
+            return (diffMs / (1000 * 60 * 60 * 24)) > 30;
+          });
+          break;
+        case 'delayed': 
+          res = res.filter(p => {
+            const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(p.estado_proyecto?.toUpperCase());
+            return !isClosed && p.fecha_fin_estimada && p.fecha_fin_estimada < todayStr;
+          });
+          break;
+        case 'rag_verde': 
+          res = res.filter(p => p.indicador_rag === 'VERDE');
+          break;
+        case 'rag_amarillo': 
+          res = res.filter(p => p.indicador_rag === 'AMARILLO');
+          break;
+        case 'rag_rojo': 
+          res = res.filter(p => p.indicador_rag === 'ROJO');
+          break;
+        default: 
+          break;
+      }
     }
+    if (selectedChartFilter) {
+      const { type, value } = selectedChartFilter;
+      if (type === 'estado') {
+        res = res.filter(p => p.estado_proyecto === value);
+      } else if (type === 'pm') {
+        res = res.filter(p => (p.pm_nombre || 'Sin Asignar') === value);
+      } else if (type === 'partner') {
+        res = res.filter(p => (p.prov_nombre || p.Proveedor?.nombre_razon_social || 'Desconocido') === value);
+      } else if (type === 'finanzas') {
+        if (value === 'Gastado') {
+          res = res.filter(p => (p.gasto_total_facturas || 0) > 0);
+        } else if (value === 'Disponible') {
+          res = res.filter(p => (p.budget_inicial || 0) > (p.gasto_total_facturas || 0));
+        }
+      }
+    }
+    return res;
   };
 
   // Dropdowns
@@ -105,9 +147,8 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
   // 2. Alerta Preventiva CAPEX
   const capexWarnCount = projects.filter(p => p.es_capex && p.gasto_total_facturas >= (p.budget_inicial * 0.90)).length;
 
-  // 3. Gobernanza
-  const coveredCount = projects.filter(p => p.com_semanal_activo || p.com_mensual_activo || p.com_steerco_activo).length;
-  const coveragePercent = projects.length > 0 ? Math.round((coveredCount / projects.length) * 100) : 0;
+  // 3. Gobernanza (Proyectos sin Gobernanza)
+  const nonGovernedCount = projects.filter(p => !p.com_semanal_activo && !p.com_mensual_activo && !p.com_steerco_activo).length;
 
   // 4. Planes Inactivos (>30 días sin actualización)
   const inactiveProjects = projects.filter(p => {
@@ -117,7 +158,15 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
     return (diffMs / (1000 * 60 * 60 * 24)) > 30;
   });
 
-  // 5. Distribución RAG
+  // 5. Proyectos Retrasados
+  const todayStr = new Date().toISOString().split('T')[0];
+  const delayedProjects = projects.filter(p => {
+    const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(p.estado_proyecto?.toUpperCase());
+    return !isClosed && p.fecha_fin_estimada && p.fecha_fin_estimada < todayStr;
+  });
+  const delayedCount = delayedProjects.length;
+
+  // 6. Distribución RAG
   const ragVerde = projects.filter(p => p.indicador_rag === 'VERDE').length;
   const ragAmarillo = projects.filter(p => p.indicador_rag === 'AMARILLO').length;
   const ragRojo = projects.filter(p => p.indicador_rag === 'ROJO').length;
@@ -153,7 +202,7 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
   // 4. Carga por Proveedor (Barras)
   const vendorCounts = {};
   projects.forEach(p => {
-    const vendorName = p.Proveedor?.nombre_razon_social || 'Desconocido';
+    const vendorName = p.prov_nombre || p.Proveedor?.nombre_razon_social || 'Desconocido';
     vendorCounts[vendorName] = (vendorCounts[vendorName] || 0) + 1;
   });
   const dataVendor = Object.keys(vendorCounts).map(key => ({ name: key, proyectos: vendorCounts[key] })).sort((a,b) => b.proyectos - a.proyectos).slice(0, 10);
@@ -322,7 +371,21 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
               </div>
               <div className="metric-info">
                 <span className="metric-value" style={{ color: 'var(--color-rag-red)' }}>{overrunCount}</span>
-                <span className="metric-label" style={{ fontWeight: 600 }}>Proyectos en Desborde</span>
+                <span className="metric-label" style={{ fontWeight: 600 }}>Proyectos excedidos en coste</span>
+              </div>
+            </div>
+
+            <div 
+              className="m3-card metric-card glass-panel" 
+              onClick={() => setSelectedKpi(selectedKpi === 'delayed' ? null : 'delayed')}
+              style={{ cursor: 'pointer', border: selectedKpi === 'delayed' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent' }}
+            >
+              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)' }}>
+                <AlertTriangle size={24} />
+              </div>
+              <div className="metric-info">
+                <span className="metric-value" style={{ color: 'var(--color-rag-red)' }}>{delayedCount}</span>
+                <span className="metric-label" style={{ fontWeight: 600 }}>Proyectos Retrasados</span>
               </div>
             </div>
 
@@ -345,12 +408,12 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
               onClick={() => setSelectedKpi(selectedKpi === 'governance' ? null : 'governance')}
               style={{ cursor: 'pointer', border: selectedKpi === 'governance' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent' }}
             >
-              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(168, 199, 250, 0.2)', color: 'var(--md-sys-color-primary)' }}>
-                <ShieldCheck size={24} />
+              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)' }}>
+                <ShieldAlert size={24} />
               </div>
               <div className="metric-info">
-                <span className="metric-value" style={{ color: 'var(--md-sys-color-primary)' }}>{coveragePercent}%</span>
-                <span className="metric-label" style={{ fontWeight: 600 }}>Gobernanza Activa</span>
+                <span className="metric-value" style={{ color: 'var(--color-rag-red)' }}>{nonGovernedCount}</span>
+                <span className="metric-label" style={{ fontWeight: 600 }}>Proyectos sin Gobernanza</span>
               </div>
             </div>
 
@@ -409,8 +472,31 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
               {dataStatus.length === 0 ? <p style={{ color: '#999' }}>Sin datos</p> : (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={dataStatus} innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value">
-                      {dataStatus.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                    <Pie 
+                      data={dataStatus} 
+                      innerRadius={80} 
+                      outerRadius={120} 
+                      paddingAngle={5} 
+                      dataKey="value"
+                      onClick={(data) => {
+                        if (data && data.name) {
+                          setSelectedChartFilter(prev => 
+                            prev && prev.type === 'estado' && prev.value === data.name ? null : { type: 'estado', value: data.name }
+                          );
+                        }
+                      }}
+                    >
+                      {dataStatus.map((entry, index) => {
+                        const isSelected = selectedChartFilter && selectedChartFilter.type === 'estado' && selectedChartFilter.value === entry.name;
+                        return (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={COLORS[index % COLORS.length]} 
+                            stroke={isSelected ? 'var(--md-sys-color-primary)' : 'none'}
+                            strokeWidth={isSelected ? 3 : 0}
+                          />
+                        );
+                      })}
                     </Pie>
                     <RechartsTooltip />
                     <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '0.8rem' }} />
@@ -424,8 +510,31 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
               <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 16 }}>Salud Financiera</h3>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={dataFinances} innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value">
-                    {dataFinances.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                  <Pie 
+                    data={dataFinances} 
+                    innerRadius={80} 
+                    outerRadius={120} 
+                    paddingAngle={5} 
+                    dataKey="value"
+                    onClick={(data) => {
+                      if (data && data.name) {
+                        setSelectedChartFilter(prev => 
+                          prev && prev.type === 'finanzas' && prev.value === data.name ? null : { type: 'finanzas', value: data.name }
+                        );
+                      }
+                    }}
+                  >
+                    {dataFinances.map((entry, index) => {
+                      const isSelected = selectedChartFilter && selectedChartFilter.type === 'finanzas' && selectedChartFilter.value === entry.name;
+                      return (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.color} 
+                          stroke={isSelected ? 'var(--md-sys-color-primary)' : 'none'}
+                          strokeWidth={isSelected ? 3 : 0}
+                        />
+                      );
+                    })}
                   </Pie>
                   <RechartsTooltip formatter={(value) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)} />
                   <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '0.8rem' }} />
@@ -443,7 +552,30 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
                     <RechartsTooltip />
-                    <Bar dataKey="proyectos" fill="var(--md-sys-color-primary)" radius={[0, 4, 4, 0]} />
+                    <Bar 
+                      dataKey="proyectos" 
+                      fill="var(--md-sys-color-primary)" 
+                      radius={[0, 4, 4, 0]}
+                      onClick={(data) => {
+                        if (data && data.name) {
+                          setSelectedChartFilter(prev => 
+                            prev && prev.type === 'pm' && prev.value === data.name ? null : { type: 'pm', value: data.name }
+                          );
+                        }
+                      }}
+                    >
+                      {dataPM.map((entry, index) => {
+                        const isSelected = selectedChartFilter && selectedChartFilter.type === 'pm' && selectedChartFilter.value === entry.name;
+                        return (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={isSelected ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-primary)'}
+                            stroke={isSelected ? 'var(--md-sys-color-primary)' : 'none'}
+                            strokeWidth={isSelected ? 2 : 0}
+                          />
+                        );
+                      })}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -459,7 +591,30 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} angle={-25} textAnchor="end" height={60} />
                     <YAxis />
                     <RechartsTooltip />
-                    <Bar dataKey="proyectos" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                    <Bar 
+                      dataKey="proyectos" 
+                      fill="#f59e0b" 
+                      radius={[4, 4, 0, 0]}
+                      onClick={(data) => {
+                        if (data && data.name) {
+                          setSelectedChartFilter(prev => 
+                            prev && prev.type === 'partner' && prev.value === data.name ? null : { type: 'partner', value: data.name }
+                          );
+                        }
+                      }}
+                    >
+                      {dataVendor.map((entry, index) => {
+                        const isSelected = selectedChartFilter && selectedChartFilter.type === 'partner' && selectedChartFilter.value === entry.name;
+                        return (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={isSelected ? '#d97706' : '#f59e0b'}
+                            stroke={isSelected ? 'var(--md-sys-color-primary)' : 'none'}
+                            strokeWidth={isSelected ? 2 : 0}
+                          />
+                        );
+                      })}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -467,23 +622,85 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
 
           </div>
 
-          {selectedKpi && (
-            <div className="m3-card glass-panel" style={{ marginTop: 24, padding: 24 }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 600, marginBottom: 16 }}>Proyectos Seleccionados</h3>
-              {getFilteredProjects().length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>
-                  No hay proyectos que cumplan con este KPI.
-                </div>
-              ) : (
-                <ProjectTable 
-                  projects={getFilteredProjects()} 
-                  onViewProject={onViewProject} 
-                  onViewVendor={onViewVendor} 
-                  showHeaderSelector={false} 
-                />
-              )}
+          <div className="m3-card glass-panel" style={{ marginTop: 24, padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 600, margin: 0 }}>
+                Proyectos ({getFilteredProjects().length})
+              </h3>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {selectedKpi && (
+                  <span 
+                    style={{ 
+                      padding: '4px 10px', 
+                      backgroundColor: 'var(--md-sys-color-primary-container)', 
+                      color: 'var(--md-sys-color-on-primary-container)', 
+                      borderRadius: 12, 
+                      fontSize: '0.8rem', 
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setSelectedKpi(null)}
+                  >
+                    KPI: {selectedKpi === 'overrun' ? 'Coste Excedido' : 
+                          selectedKpi === 'capex' ? 'Alerta CAPEX' : 
+                          selectedKpi === 'governance' ? 'Sin Gobernanza' : 
+                          selectedKpi === 'inactive' ? 'Planes Inactivos' : 
+                          selectedKpi === 'delayed' ? 'Retrasados' : 
+                          selectedKpi === 'rag_verde' ? 'Verde' : 
+                          selectedKpi === 'rag_amarillo' ? 'Amarillo' : 
+                          selectedKpi === 'rag_rojo' ? 'Rojo' : ''} ✕
+                  </span>
+                )}
+                {selectedChartFilter && (
+                  <span 
+                    style={{ 
+                      padding: '4px 10px', 
+                      backgroundColor: 'var(--md-sys-color-secondary-container)', 
+                      color: 'var(--md-sys-color-on-secondary-container)', 
+                      borderRadius: 12, 
+                      fontSize: '0.8rem', 
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setSelectedChartFilter(null)}
+                  >
+                    Gráfico: {selectedChartFilter.value} ✕
+                  </span>
+                )}
+                {(selectedKpi || selectedChartFilter) && (
+                  <button 
+                    className="m3-btn m3-btn-text" 
+                    style={{ padding: '2px 8px', fontSize: '0.8rem' }}
+                    onClick={() => {
+                      setSelectedKpi(null);
+                      setSelectedChartFilter(null);
+                    }}
+                  >
+                    Limpiar Filtros KPI/Gráfico
+                  </button>
+                )}
+              </div>
             </div>
-          )}
+            
+            {getFilteredProjects().length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>
+                No hay proyectos que cumplan con los filtros seleccionados.
+              </div>
+            ) : (
+              <ProjectTable 
+                projects={getFilteredProjects()} 
+                onViewProject={onViewProject} 
+                onViewVendor={onViewVendor} 
+                showHeaderSelector={false} 
+              />
+            )}
+          </div>
         </>
       )}
     </div>
