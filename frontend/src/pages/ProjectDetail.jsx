@@ -18,7 +18,6 @@ import RaciModal from '../components/modals/RaciModal';
 // Import Tabs
 import ProjectFichaTab from './project-detail/tabs/ProjectFichaTab';
 import ProjectAlcanceTab from './project-detail/tabs/ProjectAlcanceTab';
-import ProjectCierreTab from './project-detail/tabs/ProjectCierreTab';
 import ProjectFinanzasTab from './project-detail/tabs/ProjectFinanzasTab';
 import ProjectCambiosTab from './project-detail/tabs/ProjectCambiosTab';
 import ProjectRiesgosTab from './project-detail/tabs/ProjectRiesgosTab';
@@ -540,11 +539,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         </button>
         <button className={`m3-tab ${activeTab === 'alcance' ? 'active' : ''}`} onClick={() => setActiveTab('alcance')}>
           <Target size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Alcance
-        </button>
-        <button className={`m3-tab ${activeTab === 'cierre' ? 'active' : ''}`} onClick={() => setActiveTab('cierre')}>
-          <Trophy size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Criterios de Cierre
+          Alcance y Cierre
         </button>
         <button className={`m3-tab ${activeTab === 'finanzas' ? 'active' : ''}`} onClick={() => setActiveTab('finanzas')}>
           <DollarSign size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
@@ -595,13 +590,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
         {activeTab === 'alcance' && (
           <ProjectAlcanceTab 
-            project={project} editingBlock={editingBlock} setEditingBlock={setEditingBlock}
-            blockValue={blockValue} setBlockValue={setBlockValue} handleSaveBlock={handleSaveBlock}
-          />
-        )}
-
-        {activeTab === 'cierre' && (
-          <ProjectCierreTab 
             project={project} editingBlock={editingBlock} setEditingBlock={setEditingBlock}
             blockValue={blockValue} setBlockValue={setBlockValue} handleSaveBlock={handleSaveBlock}
           />

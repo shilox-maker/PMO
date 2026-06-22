@@ -11,15 +11,17 @@ export default function ProjectAlcanceTab({
     { key: 'alcance_resultados', label: 'Resultados específicos del proyecto (Entregables tangibles)' },
     { key: 'alcance_limitaciones', label: 'Limitaciones, exclusiones e hipótesis (Fuera de alcance)' },
     { key: 'alcance_integraciones', label: 'Integraciones con otros sistemas o dependencias' },
-    { key: 'alcance_desarrollo', label: 'Cómo se desarrollará (Fases y metodología del socio)' }
+    { key: 'alcance_desarrollo', label: 'Cómo se desarrollará (Fases y metodología del socio)' },
+    { key: 'cierre_aceptacion', label: 'Criterios de Aceptación (Condiciones necesarias para validar la entrega)' },
+    { key: 'cierre_exito', label: 'Criterios de Éxito (Métricas, KPIs y objetivos logrados)' }
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ marginBottom: 8 }}>
-        <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Definición del Alcance</h3>
+        <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Alcance y Criterios de Cierre</h3>
         <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
-          Haga doble clic en cualquier bloque o use el botón editar para redactar las especificaciones del alcance del proyecto.
+          Haga doble clic en cualquier bloque o use el botón editar para redactar las especificaciones de alcance y de aceptación/cierre.
         </p>
       </div>
 
