@@ -134,92 +134,178 @@ function LoginScreen() {
       });
   };
 
+  const handleAzureLogin = () => {
+    alert('Funcionalidad no implementada');
+  };
+
   return (
     <div className="login-container" style={{
+      position: 'relative',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '100vh',
-      backgroundColor: 'var(--md-sys-color-background)',
-      padding: '20px'
+      backgroundColor: '#ffffff',
+      padding: '20px',
+      fontFamily: "'Outfit', sans-serif"
     }}>
-      <div className="m3-card glass-panel" style={{
-        maxWidth: '400px',
+      {/* Top Header Bar Banner */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '42px',
+        display: 'flex',
+        alignItems: 'center',
+        zIndex: 10
+      }}>
+        <div style={{
+          backgroundColor: '#FFB800',
+          color: '#ffffff',
+          fontWeight: 700,
+          fontSize: '0.85rem',
+          padding: '0 24px',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          borderRight: '1px solid rgba(255, 255, 255, 0.4)'
+        }}>
+          PMO Control Tower
+        </div>
+        <div style={{
+          backgroundColor: '#1A5B36',
+          flexGrow: 1,
+          height: '100%'
+        }}></div>
+      </div>
+
+      <div style={{
+        maxWidth: '440px',
         width: '100%',
-        padding: '32px',
+        padding: '36px',
         display: 'flex',
         flexDirection: 'column',
         gap: '24px',
-        borderRadius: '28px',
-        border: '1px solid var(--md-sys-color-outline-variant)'
+        borderRadius: '16px',
+        backgroundColor: '#ffffff',
+        border: '1px solid #e0e4ec',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
+        textAlign: 'center',
+        marginTop: '42px'
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '16px',
-            backgroundColor: 'var(--md-sys-color-primary)',
-            color: 'var(--md-sys-color-on-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            margin: '0 auto 16px auto'
-          }}>P</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--md-sys-color-on-surface)' }}>DACSA IT PPM</h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', marginTop: '4px' }}>Inicia sesión en tu cuenta de Dacsa</p>
+        {/* SVG Dacsa Group Logo */}
+        <div style={{ margin: '0 auto' }}>
+          <svg width="220" height="70" viewBox="0 0 220 70">
+            <g transform="translate(5, 5)">
+              <g transform="translate(30, 30)">
+                {/* 5 Petals of DACSA Star */}
+                <path d="M -4,-8 L -15,-20 L -8,-25 L 0,-15 L 8,-25 L 15,-20 L 4,-8 L 0,-12 Z" fill="#1A5B36" transform="rotate(-60)" />
+                <path d="M -4,-8 L -15,-20 L -8,-25 L 0,-15 L 8,-25 L 15,-20 L 4,-8 L 0,-12 Z" fill="#FFB800" transform="rotate(12)" />
+                <path d="M -4,-8 L -15,-20 L -8,-25 L 0,-15 L 8,-25 L 15,-20 L 4,-8 L 0,-12 Z" fill="#E28C00" transform="rotate(84)" />
+                <path d="M -4,-8 L -15,-20 L -8,-25 L 0,-15 L 8,-25 L 15,-20 L 4,-8 L 0,-12 Z" fill="#FFB800" transform="rotate(156)" />
+                <path d="M -4,-8 L -15,-20 L -8,-25 L 0,-15 L 8,-25 L 15,-20 L 4,-8 L 0,-12 Z" fill="#FFA800" transform="rotate(228)" />
+              </g>
+            </g>
+            <text x="75" y="36" fill="#1A5B36" style={{ fontFamily: "'Outfit', sans-serif", fontSize: '26px', fontWeight: 'bold', letterSpacing: '0.05em' }}>DACSA</text>
+            <text x="75" y="52" fill="#757575" style={{ fontFamily: "'Outfit', sans-serif", fontSize: '13px', fontWeight: '300', letterSpacing: '0.25em' }}>GROUP</text>
+          </svg>
+        </div>
+
+        <div>
+          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#3c4858', margin: '4px 0 2px 0' }}>Dacsa Group – PMO Control Tower</h3>
+          <p style={{ fontSize: '0.75rem', color: '#8898aa', margin: 0 }}>PMO governance tool by SopraSteria</p>
         </div>
 
         {error && (
           <div style={{
             backgroundColor: 'rgba(255, 69, 58, 0.1)',
-            color: 'var(--color-rag-red)',
-            padding: '12px 16px',
-            borderRadius: '12px',
-            fontSize: '0.85rem',
+            color: '#ff3b30',
+            padding: '10px 14px',
+            borderRadius: '8px',
+            fontSize: '0.8rem',
             fontWeight: 500,
             border: '1px solid rgba(255, 69, 58, 0.2)'
           }}>{error}</div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="form-group">
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Mail size={14} /> Correo Electrónico
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: '#525f7f' }}>
+              <Mail size={12} /> Correo Electrónico
             </label>
             <input
               type="email"
               required
               className="m3-input"
+              style={{ padding: '10px 14px', fontSize: '0.9rem', color: '#333', backgroundColor: '#f4f5f7', border: '1px solid #cad1d7' }}
               placeholder="usuario@dacsa.com"
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Lock size={14} /> Contraseña
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: '#525f7f' }}>
+              <Lock size={12} /> Contraseña
             </label>
             <input
               type="password"
               required
               className="m3-input"
+              style={{ padding: '10px 14px', fontSize: '0.9rem', color: '#333', backgroundColor: '#f4f5f7', border: '1px solid #cad1d7' }}
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          <button type="submit" disabled={loading} className="m3-btn m3-btn-primary" style={{ marginTop: '8px', height: '48px', borderRadius: '100px', width: '100%' }}>
+          <button type="submit" disabled={loading} className="m3-btn" style={{ marginTop: '8px', height: '42px', backgroundColor: '#1A5B36', color: '#ffffff', borderRadius: '6px', fontSize: '0.9rem', width: '100%' }}>
             {loading ? 'Accediendo...' : 'Entrar'}
           </button>
         </form>
 
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <button className="m3-btn m3-btn-tonal" onClick={toggleTheme} style={{ borderRadius: '100px', width: '100%' }}>
-            Tema Actual: {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Corporativo Dacsa'}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, borderTop: '1px solid #e9ecef', paddingTop: '16px' }}>
+          <span style={{ fontSize: '0.8rem', color: '#8898aa' }}>Sign in with</span>
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: 8, 
+              cursor: 'pointer', 
+              color: '#0078d4', 
+              fontWeight: 600, 
+              fontSize: '0.85rem' 
+            }} 
+            onClick={handleAzureLogin}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16">
+              <rect x="0" y="0" width="7" height="7" fill="#f25022" />
+              <rect x="9" y="0" width="7" height="7" fill="#7fba00" />
+              <rect x="0" y="9" width="7" height="7" fill="#00a4ef" />
+              <rect x="9" y="9" width="7" height="7" fill="#ffb900" />
+            </svg>
+            <span style={{ textDecoration: 'underline' }}>Azure AD</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+          <button 
+            className="m3-btn m3-btn-tonal" 
+            onClick={toggleTheme} 
+            style={{ 
+              borderRadius: '6px', 
+              fontSize: '0.75rem', 
+              padding: '6px 12px', 
+              backgroundColor: '#f4f5f7', 
+              color: '#525f7f',
+              border: '1px solid #cad1d7'
+            }}
+          >
+            Tema: {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Corporativo Dacsa'}
           </button>
         </div>
       </div>
@@ -278,8 +364,8 @@ function NavigationRail() {
   return (
     <div className="nav-rail">
       <div className="brand-section">
-        <div className="brand-icon">P</div>
-        <span className="brand-name">Gobernanza PPM</span>
+        <div className="brand-icon" style={{ fontSize: '1rem' }}>CT</div>
+        <span className="brand-name">PMO Control Tower</span>
       </div>
 
       <div className="nav-links">
