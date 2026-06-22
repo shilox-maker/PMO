@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [2.2.0] - 2026-06-22
+### Added
+- **Rediseño Corporativo de la Pantalla de Login**:
+  - Implementada una nueva maquetación alineada al estilo visual corporativo (banner dorado/verde superior y logo SVG oficial de Dacsa Group en el centro de la tarjeta).
+  - Integrada la opción de inicio de sesión con **Azure AD** (mockup interactivo con el logo de Microsoft que muestra un aviso de funcionalidad no implementada).
+  - Renombrada la aplicación a **PMO Control Tower** tanto en la cabecera, la pestaña del navegador como en la barra de navegación del sistema.
+- **Línea de Tiempo Unificada (Timeline)**:
+  - Creado un componente de línea de tiempo cronológica en la pestaña **Ficha General** del proyecto que unifica los hitos del ciclo de vida del proyecto con las tareas y entregables de la lista de control (**Checklist PM**).
+  - Muestra estados de finalización de hitos, etiquetas de origen (`Ciclo` o `Checklist`), fechas límite, descripciones y alertas en rojo para tareas pendientes que se encuentran retrasadas.
+  - Agrupa en una sección inferior aquellos hitos del ciclo que aún no disponen de fecha planificada asignada.
+- **Fusión de Pestañas (Alcance y Cierre)**:
+  - Unificados los contenidos de las pestañas **Alcance** y **Criterios de Cierre** bajo una única opción de menú: **Alcance y Cierre**, permitiendo visualizar y editar todas las especificaciones y métricas del proyecto en un mismo lugar.
+
 ## [2.1.0] - 2026-06-19
 ### Added
 - **Exportación con Selección de Campos**:
