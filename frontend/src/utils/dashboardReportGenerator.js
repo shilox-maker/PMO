@@ -47,6 +47,55 @@ export const generateDashboardReport = (detailedProjects, reportOptions, highlig
         </div>
       </div>` : '';
 
+    const cierreHtml = reportOptions.cierre ? `
+      <div class="sub-section">
+        <h3>🏆 Criterios de Cierre</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px;">
+          <div style="padding:10px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:6px;"><strong>Criterios de aceptación</strong><div style="margin-top:4px; font-size:11px;">${project.cierre_aceptacion || 'No definido'}</div></div>
+          <div style="padding:10px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:6px;"><strong>Criterios de éxito</strong><div style="margin-top:4px; font-size:11px;">${project.cierre_exito || 'No definido'}</div></div>
+        </div>
+      </div>` : '';
+
+    const hitosHtml = reportOptions.hitos ? `
+      <div class="sub-section">
+        <h3>🏁 Hitos del Proyecto</h3>
+        <table>
+          <thead><tr><th>Hito</th><th>Fecha</th><th>Estado</th></tr></thead>
+          <tbody>
+            ${completed.length === 0 && pending.length === 0 ? '<tr><td colspan="3" style="text-align:center;color:#999;padding:8px;">Sin hitos</td></tr>' : ''}
+            ${completed.map(m => `
+              <tr>
+                <td>${m.titulo_tarea}</td>
+                <td>${formatDate(m.fecha_limite)}</td>
+                <td><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;background:#e8f5e9;color:#2e7d32;">✅ Completado</span></td>
+              </tr>
+            `).join('')}
+            ${pending.map(m => `
+              <tr>
+                <td>${m.titulo_tarea}</td>
+                <td>${formatDate(m.fecha_limite)}</td>
+                <td><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;background:#fff3e0;color:#e65100;">⏳ Pendiente</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>` : '';
+
+    const timelineHtml = reportOptions.timeline ? `
+      <div class="sub-section">
+        <h3>📅 Cronología del Proyecto (Timeline)</h3>
+        ${allTasks.length === 0 ? '<p style="color:#999;font-size:11px;font-style:italic;">Sin cronograma.</p>' : `
+        <div style="position:relative; padding-left: 15px; border-left: 2px solid #1a1a2e; margin: 12px 0 12px 5px;">
+          ${allTasks.sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite)).slice(0, 8).map(event => `
+            <div style="position:relative; margin-bottom: 12px;">
+              <div style="position:absolute; left:-21px; top:3px; width:10px; height:10px; border-radius:50%; background:${event.es_hito ? '#e65100' : '#1a1a2e'}; border: 2px solid #fff; box-shadow: 0 0 0 1.5px ${event.es_hito ? '#e65100' : '#1a1a2e'};"></div>
+              <div style="font-weight: 600; font-size: 11.5px;">${event.titulo_tarea} ${event.es_hito ? '<span style="font-size:8.5px; background:#ffe0b2; color:#e65100; padding:1px 4px; border-radius:8px; margin-left:4px; font-weight:700;">HITO</span>' : ''}</div>
+              <div style="font-size:10px; color:#666;">F. Límite: ${formatDate(event.fecha_limite)} · Estado: ${event.estado}</div>
+            </div>
+          `).join('')}
+        </div>`}
+      </div>` : '';
+
     const risksList = project.Riesgos || [];
     const risksHtml = (reportOptions.riesgos && risksList.length > 0) ? `
       <div class="sub-section">
@@ -61,6 +110,65 @@ export const generateDashboardReport = (detailedProjects, reportOptions, highlig
                 <td>${r.probabilidad} / ${r.impacto}</td>
                 <td>${r.plan_mitigacion}</td>
                 <td>${r.estado_riesgo}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>` : '';
+
+    const incidentsList = project.Incidencias || [];
+    const incidentsHtml = (reportOptions.incidencias && incidentsList.length > 0) ? `
+      <div class="sub-section">
+        <h3>🛑 Incidencias</h3>
+        <table>
+          <thead><tr><th>Código</th><th>Incidencia</th><th>Tipo</th><th>Criticidad</th><th>Estado</th></tr></thead>
+          <tbody>
+            ${incidentsList.map(i => `
+              <tr>
+                <td><strong>${i.id_incidencia}</strong></td>
+                <td>${i.titulo}</td>
+                <td>${i.tipo_incidencias}</td>
+                <td>${i.criticidad}</td>
+                <td>${i.estado}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>` : '';
+
+    const crList = project.CambiosAlcance || [];
+    const crHtml = (reportOptions.cambios && crList.length > 0) ? `
+      <div class="sub-section">
+        <h3>📈 Cambios de Alcance (CR)</h3>
+        <table>
+          <thead><tr><th>Código</th><th>Descripción / Motivo</th><th>Importe</th><th>Tiempo</th><th>Estado</th></tr></thead>
+          <tbody>
+            ${crList.map(c => `
+              <tr>
+                <td><strong>${c.id_cambio}</strong></td>
+                <td>${c.descripcion_motivo}</td>
+                <td>${c.impacta_importe ? `${formatCurrency(parseFloat(c.importe_impacto))}` : 'Sin impacto'}</td>
+                <td>${c.impacta_tiempo ? `+${c.dias_impacto} días` : 'Sin impacto'}</td>
+                <td>${c.estado_cambio}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>` : '';
+
+    const lessonsList = project.LeccionesAprendidas || [];
+    const lessonsHtml = (reportOptions.lecciones && lessonsList.length > 0) ? `
+      <div class="sub-section">
+        <h3>⭐ Lecciones Aprendidas</h3>
+        <table>
+          <thead><tr><th>Código</th><th>Tipo</th><th>Título</th><th>Recomendación</th></tr></thead>
+          <tbody>
+            ${lessonsList.map(l => `
+              <tr>
+                <td><strong>${l.id_leccion}</strong></td>
+                <td>${l.tipo_leccion === 'BUENA_PRACTICA' ? 'Buena Práctica' : 'Error a Evitar'}</td>
+                <td><strong>${l.titulo}</strong></td>
+                <td>${l.recomendacion_futura || l.contexto || ''}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -104,7 +212,13 @@ export const generateDashboardReport = (detailedProjects, reportOptions, highlig
         <p style="margin-bottom:12px; color:#555; font-size:12px;"><strong>PM:</strong> ${project.PM?.nombre || ''} ${project.PM?.apellidos || ''} | <strong>Partner:</strong> ${project.Proveedor?.nombre_razon_social || '—'}</p>
         ${kpisHtml}
         ${alcanceHtml}
+        ${cierreHtml}
+        ${hitosHtml}
+        ${timelineHtml}
         ${risksHtml}
+        ${incidentsHtml}
+        ${crHtml}
+        ${lessonsHtml}
         ${commentsHtml}
       </div>
     `;

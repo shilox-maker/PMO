@@ -34,8 +34,8 @@ export default function ProjectCambiosTab({
               <tr>
                 {renderSortHeader('Código', 'id_cambio', crSort, setCrSort)}
                 {renderSortHeader('Fecha Solicitud', 'fecha_solicitud', crSort, setCrSort)}
-                {renderSortHeader('Solicitante', 'id_solicitante_ku', crSort, setCrSort)}
-                {renderSortHeader('Aprobador', 'id_aprobador_ku', crSort, setCrSort)}
+                {renderSortHeader('Solicitante', 'id_solicitante_contacto', crSort, setCrSort)}
+                {renderSortHeader('Aprobador', 'id_aprobador_contacto', crSort, setCrSort)}
                 {renderSortHeader('Impacto Importe', 'impacta_importe', crSort, setCrSort)}
                 {renderSortHeader('Impacto Tiempo', 'impacta_tiempo', crSort, setCrSort)}
                 {renderSortHeader('Estado', 'estado_cambio', crSort, setCrSort)}
@@ -47,8 +47,8 @@ export default function ProjectCambiosTab({
                 <tr key={cr.id_cambio}>
                   <td style={{ fontWeight: 700 }}>{cr.id_cambio}</td>
                   <td>{cr.fecha_solicitud}</td>
-                  <td>{cr.Solicitante ? `${cr.Solicitante.nombre} ${cr.Solicitante.apellidos}` : `ID: ${cr.id_solicitante_ku}`}</td>
-                  <td>{cr.Aprobador ? `${cr.Aprobador.nombre} ${cr.Aprobador.apellidos}` : `ID: ${cr.id_aprobador_ku}`}</td>
+                  <td>{cr.Solicitante ? `${cr.Solicitante.nombre} ${cr.Solicitante.apellidos}` : `ID: ${cr.id_solicitante_contacto}`}</td>
+                  <td>{cr.Aprobador ? `${cr.Aprobador.nombre} ${cr.Aprobador.apellidos}` : `ID: ${cr.id_aprobador_contacto}`}</td>
                   <td style={{ fontWeight: cr.impacta_importe ? 600 : 'normal' }}>
                     {cr.impacta_importe ? formatCurrency(parseFloat(cr.importe_impacto)) : '—'}
                   </td>

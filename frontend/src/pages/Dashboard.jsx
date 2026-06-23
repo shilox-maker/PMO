@@ -85,6 +85,8 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   const [filterVendor, setFilterVendor] = useState('');
   const [filterRag, setFilterRag] = useState('');
   const [filterEstrategico, setFilterEstrategico] = useState('');
+  const [filterPortfolio, setFilterPortfolio] = useState('');
+  const [filterTag, setFilterTag] = useState('');
   const [filterStates, setFilterStates] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isStatesOpen, setIsStatesOpen] = useState(false);
@@ -95,6 +97,8 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   const [sedesList, setSedesList] = useState([]);
   const [contactosList, setContactosList] = useState([]);
   const [statesList, setStatesList] = useState([]);
+  const [portfoliosList, setPortfoliosList] = useState([]);
+  const [tagsList, setTagsList] = useState([]);
 
   // Modal creation state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -106,6 +110,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     id_proveedor: '',
     id_sede: '',
     id_sponsor: '',
+    portfolio_id: '',
     estado_proyecto: 'Kickoff',
     indicador_rag: 'VERDE',
     fecha_inicio: '',
@@ -131,6 +136,8 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     if (filterRag) params.append('rag', filterRag);
     if (filterEstrategico) params.append('estrategico', filterEstrategico);
     if (filterStates.length > 0) params.append('state', filterStates.join(','));
+    if (filterPortfolio) params.append('portfolio', filterPortfolio);
+    if (filterTag) params.append('tag', filterTag);
     if (searchTerm) params.append('search', searchTerm);
 
     fetch(`${import.meta.env.VITE_API_URL}/projects?${params.toString()}`, {
@@ -153,11 +160,13 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedesList(data));
     fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(data));
   };
 
   useEffect(() => {
     fetchProjects();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterStates, searchTerm]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterPortfolio, filterTag, filterStates, searchTerm]);
 
   useEffect(() => {
     fetchMetadata();
@@ -205,7 +214,8 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       id_pm: parseInt(newProject.id_pm, 10),
       id_proveedor: parseInt(newProject.id_proveedor, 10),
       id_sede: parseInt(newProject.id_sede, 10),
-      id_sponsor: parseInt(newProject.id_sponsor, 10)
+      id_sponsor: parseInt(newProject.id_sponsor, 10),
+      portfolio_id: newProject.portfolio_id ? parseInt(newProject.portfolio_id, 10) : null
     };
 
     if (!payload.id_proyecto || payload.id_proyecto.trim() === '') {
@@ -233,6 +243,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
           id_proveedor: '',
           id_sede: '',
           id_sponsor: '',
+          portfolio_id: '',
           estado_proyecto: 'Kickoff',
           indicador_rag: 'VERDE',
           fecha_inicio: '',
@@ -338,6 +349,36 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
             <option value="">¿Estratégico?</option>
             <option value="true">Sí</option>
             <option value="false">No</option>
+          </select>
+        </div>
+
+        {/* Portfolio Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <select 
+            value={filterPortfolio} 
+            onChange={(e) => setFilterPortfolio(e.target.value)}
+            className="user-select"
+            style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+          >
+            <option value="">Todos los Portfolios</option>
+            {portfoliosList.map(p => (
+              <option key={p.id} value={p.id}>{p.nombre}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Tag Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <select 
+            value={filterTag} 
+            onChange={(e) => setFilterTag(e.target.value)}
+            className="user-select"
+            style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+          >
+            <option value="">Todos los Tags</option>
+            {tagsList.map(t => (
+              <option key={t.id} value={t.id}>{t.nombre}</option>
+            ))}
           </select>
         </div>
         
@@ -536,10 +577,13 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                     </td>}
 
                     {/* RAG */}
-                    {visibleColumnsMap.indicador_rag && <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div className={`project-rag-dot ${project.indicador_rag}`} style={{ width: 10, height: 10 }}></div>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{project.indicador_rag}</span>
+                    {visibleColumnsMap.indicador_rag && <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <div 
+                          className={`project-rag-dot ${project.indicador_rag}`} 
+                          style={{ width: 18, height: 18 }}
+                          title={project.indicador_rag}
+                        ></div>
                       </div>
                     </td>}
 
@@ -740,6 +784,22 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                     <option value="">Seleccione PM</option>
                     {pmsList.map(p => (
                       <option key={p.id_usuario} value={p.id_usuario}>{p.nombre} {p.apellidos}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Portfolio */}
+                <div className="form-group">
+                  <label className="form-label">Portfolio</label>
+                  <select 
+                    name="portfolio_id" 
+                    value={newProject.portfolio_id} 
+                    onChange={handleInputChange}
+                    className="user-select"
+                  >
+                    <option value="">Sin asignar</option>
+                    {portfoliosList.map(p => (
+                      <option key={p.id} value={p.id}>{p.nombre}</option>
                     ))}
                   </select>
                 </div>

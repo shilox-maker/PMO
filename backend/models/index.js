@@ -162,6 +162,38 @@ const EstadosProyecto = sequelize.define('Estados_Proyecto', {
   timestamps: false
 });
 
+// 4.6 Portfolios Model
+const Portfolios = sequelize.define('Portfolios', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  nombre: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  descripcion: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
+});
+
+// 4.7 Tags Model
+const Tags = sequelize.define('Tags', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  nombre: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  }
+});
+
 // 5. [Eliminado] KeyUsers model fue reemplazado por ContactosProveedor
 
 // 6. Proyectos Model
@@ -217,6 +249,14 @@ const Proyectos = sequelize.define('Proyectos', {
     references: {
       model: 'Estados_Proyecto',
       key: 'id_estado'
+    }
+  },
+  portfolio_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Portfolios',
+      key: 'id'
     }
   },
   estado_proyecto: {
@@ -838,6 +878,14 @@ ComentariosProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario', as: 'Autor' 
 Usuarios.hasMany(ComentariosProyecto, { foreignKey: 'id_usuario_modificacion' });
 ComentariosProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario_modificacion', as: 'Editor' });
 
+// Portfolios associations
+Portfolios.hasMany(Proyectos, { foreignKey: 'portfolio_id', as: 'Proyectos' });
+Proyectos.belongsTo(Portfolios, { foreignKey: 'portfolio_id', as: 'Portfolio' });
+
+// Tags associations (Many-to-Many)
+Proyectos.belongsToMany(Tags, { through: 'Proyecto_Tags', foreignKey: 'proyecto_id', otherKey: 'tag_id', as: 'Tags' });
+Tags.belongsToMany(Proyectos, { through: 'Proyecto_Tags', foreignKey: 'tag_id', otherKey: 'proyecto_id', as: 'Proyectos' });
+
 module.exports = {
   sequelize,
   Sedes,
@@ -857,5 +905,7 @@ module.exports = {
   CambiosAlcance,
   Tareas,
   EstadosProyecto,
-  ComentariosProyecto
+  ComentariosProyecto,
+  Portfolios,
+  Tags
 };

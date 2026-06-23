@@ -24,7 +24,9 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
     estrategico: '',
     fechaDesde: '2026-01-01',
     fechaHasta: '2026-12-31',
-    states: []
+    states: [],
+    portfolio: '',
+    tag: ''
   });
 
   const [isStatesOpen, setIsStatesOpen] = useState(false);
@@ -95,11 +97,15 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
   const [pmsList, setPmsList] = useState([]);
   const [vendorsList, setVendorsList] = useState([]);
   const [statesList, setStatesList] = useState([]);
+  const [portfoliosList, setPortfoliosList] = useState([]);
+  const [tagsList, setTagsList] = useState([]);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(data));
     fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(data));
   }, []);
 
   const fetchDashboardData = () => {
@@ -113,6 +119,8 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
     if (filters.fechaDesde) params.append('fecha_desde', filters.fechaDesde);
     if (filters.fechaHasta) params.append('fecha_hasta', filters.fechaHasta);
     if (filters.states && filters.states.length > 0) params.append('state', filters.states.join(','));
+    if (filters.portfolio) params.append('portfolio', filters.portfolio);
+    if (filters.tag) params.append('tag', filters.tag);
 
     // Fetch from the governance/dashboard endpoint to get calculations and basic grouping easily
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/dashboard?${params.toString()}`, {
@@ -290,6 +298,36 @@ export default function KpisPmo({ onViewProject, onViewVendor }) {
               <option value="">¿Estratégico?</option>
               <option value="true">Sí</option>
               <option value="false">No</option>
+            </select>
+          </div>
+
+          {/* Portfolio Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filters.portfolio} 
+              onChange={(e) => handleFilterChange('portfolio', e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">Todos los Portfolios</option>
+              {portfoliosList.map(p => (
+                <option key={p.id} value={p.id}>{p.nombre}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Tag Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filters.tag} 
+              onChange={(e) => handleFilterChange('tag', e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">Todos los Tags</option>
+              {tagsList.map(t => (
+                <option key={t.id} value={t.id}>{t.nombre}</option>
+              ))}
             </select>
           </div>
         </div>

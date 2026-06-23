@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import RichTextEditor from '../../../components/RichTextEditor';
 import SearchableContactSelect from '../../../components/SearchableContactSelect';
+import ProjectTagsSelect from '../../../components/ProjectTagsSelect';
 
 export default function ProjectFichaTab({
   project, comments, commentsLoading, newCommentText, setNewCommentText,
@@ -13,7 +14,7 @@ export default function ProjectFichaTab({
   editingCommentImportant, setEditingCommentImportant, editingCommentDireccion, setEditingCommentDireccion,
   handleUpdateComment, isEditingLifecycle, handleOpenEditLifecycle, handleDeleteParticipant,
   handleOpenAddRaci, handleOpenEditRaci, onViewVendor, contactosList,
-  canSeeDireccion
+  canSeeDireccion, getAuthHeaders, handleUpdateProject
 }) {
   const calc = project.calculations;
 
@@ -40,7 +41,7 @@ export default function ProjectFichaTab({
         
         {/* Left Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20, overflow: 'visible', zIndex: 10 }}>
             {project.Estado && (
               <div style={{ 
                 backgroundColor: 'var(--md-sys-color-primary-container)', 
@@ -112,7 +113,24 @@ export default function ProjectFichaTab({
                     </div>
                   </div>
                 </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Building size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Portfolio</div>
+                    <div style={{ fontWeight: 500 }}>{project.Portfolio?.nombre || 'Sin asignar'}</div>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 20 }}>
+              <ProjectTagsSelect 
+                projectId={project.id_proyecto}
+                projectTags={project.Tags || []}
+                getAuthHeaders={getAuthHeaders}
+                onUpdateProject={handleUpdateProject}
+              />
             </div>
           </div>
 

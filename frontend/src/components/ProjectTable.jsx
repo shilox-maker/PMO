@@ -140,10 +140,13 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                   </td>}
 
                   {/* RAG */}
-                  {visibleColumnsMap.indicador_rag && <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div className={`project-rag-dot ${project.indicador_rag}`} style={{ width: 10, height: 10 }}></div>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{project.indicador_rag}</span>
+                  {visibleColumnsMap.indicador_rag && <td style={{ textAlign: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <div 
+                        className={`project-rag-dot ${project.indicador_rag}`} 
+                        style={{ width: 18, height: 18 }}
+                        title={project.indicador_rag}
+                      ></div>
                     </div>
                   </td>}
 

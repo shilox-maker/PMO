@@ -47,6 +47,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [contactosList, setContactosList] = useState([]);
   const [pms, setPms] = useState([]);
   const [workflowStates, setWorkflowStates] = useState([]);
+  const [portfoliosList, setPortfoliosList] = useState([]);
 
   // Comments states
   const [comments, setComments] = useState([]);
@@ -150,6 +151,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data));
     fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPms(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowStates(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
   };
 
   useEffect(() => {
@@ -585,6 +587,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
             handleOpenAddRaci={handleOpenAddRaci} handleOpenEditRaci={handleOpenEditRaci}
             onViewVendor={onViewVendor} contactosList={contactosList}
             canSeeDireccion={canSeeDireccion}
+            getAuthHeaders={getAuthHeaders}
+            handleUpdateProject={handleUpdateProject}
           />
         )}
 
@@ -648,6 +652,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         isOpen={showEditProjectModal} onClose={() => setShowEditProjectModal(false)}
         project={project} getAuthHeaders={getAuthHeaders} onSuccess={fetchProjectData}
         sedes={sedes} vendors={vendors} contactosList={contactosList} pms={pms} workflowStates={workflowStates}
+        portfolios={portfoliosList}
       />
 
       <InvoiceModal 

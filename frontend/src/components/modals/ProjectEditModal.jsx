@@ -3,7 +3,7 @@ import SearchableContactSelect from '../SearchableContactSelect';
 
 export default function ProjectEditModal({
   isOpen, onClose, project, getAuthHeaders, onSuccess,
-  sedes, vendors, contactosList, pms, workflowStates
+  sedes, vendors, contactosList, pms, workflowStates, portfolios = []
 }) {
   const [form, setForm] = useState({
     nombre_proyecto: '',
@@ -16,6 +16,7 @@ export default function ProjectEditModal({
     codigo_capex: '',
     es_estrategico: false,
     budget_inicial: '',
+    portfolio_id: '',
     involvedKus: []
   });
   const [error, setError] = useState('');
@@ -33,6 +34,7 @@ export default function ProjectEditModal({
         codigo_capex: project.codigo_capex || '',
         es_estrategico: !!project.es_estrategico,
         budget_inicial: project.budget_inicial || '',
+        portfolio_id: project.portfolio_id ? project.portfolio_id.toString() : '',
         involvedKus: project.InvolvedContacts?.map(k => k.id_contacto) || []
       });
     }
@@ -74,7 +76,8 @@ export default function ProjectEditModal({
       id_pm: form.id_pm ? parseInt(form.id_pm, 10) : null,
       id_proveedor: form.id_proveedor ? parseInt(form.id_proveedor, 10) : null,
       id_sede: form.id_sede ? parseInt(form.id_sede, 10) : null,
-      id_sponsor: form.id_sponsor ? parseInt(form.id_sponsor, 10) : null
+      id_sponsor: form.id_sponsor ? parseInt(form.id_sponsor, 10) : null,
+      portfolio_id: form.portfolio_id ? parseInt(form.portfolio_id, 10) : null
     };
 
     fetch(`${import.meta.env.VITE_API_URL}/projects/${project.id_proyecto}`, {
@@ -166,6 +169,21 @@ export default function ProjectEditModal({
                 <option value="">Seleccione PM</option>
                 {pms.map(p => (
                   <option key={p.id_usuario} value={p.id_pm || p.id_usuario}>{p.nombre} {p.apellidos}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Portfolio</label>
+              <select 
+                name="portfolio_id"
+                value={form.portfolio_id}
+                onChange={handleInputChange}
+                className="user-select"
+              >
+                <option value="">Sin asignar</option>
+                {portfolios.map(p => (
+                  <option key={p.id} value={p.id}>{p.nombre}</option>
                 ))}
               </select>
             </div>

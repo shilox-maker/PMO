@@ -10,5 +10,8 @@ router.get('/changelog', metaController.getChangelog);
 router.get('/portfolio/states', metaController.getPortfolioStates);
 router.get('/portfolio/dashboard', metaController.getPortfolioDashboard);
 router.get('/timeline', metaController.getTimeline);
+router.get('/portfolios', metaController.getPortfolios);
+router.get('/tags', metaController.getTags);
+router.post('/tags', metaController.createTag);
 
 module.exports = router;

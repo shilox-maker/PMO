@@ -6,8 +6,8 @@ export default function CrModal({
   const [form, setForm] = useState({
     id_cambio: '',
     fecha_solicitud: '',
-    id_solicitante_ku: '',
-    id_aprobador_ku: '',
+    id_solicitante_contacto: '',
+    id_aprobador_contacto: '',
     descripcion_motivo: '',
     impacta_importe: false,
     importe_impacto: '0',
@@ -22,8 +22,8 @@ export default function CrModal({
       setForm({
         id_cambio: editingCr.id_cambio,
         fecha_solicitud: editingCr.fecha_solicitud || '',
-        id_solicitante_ku: editingCr.id_solicitante_ku || '',
-        id_aprobador_ku: editingCr.id_aprobador_ku || '',
+        id_solicitante_contacto: editingCr.id_solicitante_contacto || '',
+        id_aprobador_contacto: editingCr.id_aprobador_contacto || '',
         descripcion_motivo: editingCr.descripcion_motivo || '',
         impacta_importe: !!editingCr.impacta_importe,
         importe_impacto: editingCr.importe_impacto || '0',
@@ -35,8 +35,8 @@ export default function CrModal({
       setForm({
         id_cambio: '',
         fecha_solicitud: '',
-        id_solicitante_ku: '',
-        id_aprobador_ku: '',
+        id_solicitante_contacto: '',
+        id_aprobador_contacto: '',
         descripcion_motivo: '',
         impacta_importe: false,
         importe_impacto: '0',
@@ -54,7 +54,7 @@ export default function CrModal({
     e.preventDefault();
     setError('');
 
-    if (!form.id_solicitante_ku || !form.id_aprobador_ku || !form.fecha_solicitud || !form.descripcion_motivo) {
+    if (!form.id_solicitante_contacto || !form.id_aprobador_contacto || !form.fecha_solicitud || !form.descripcion_motivo) {
       setError('Por favor, rellene todos los campos obligatorios.');
       return;
     }
@@ -62,8 +62,8 @@ export default function CrModal({
     const payload = { 
       ...form, 
       id_proyecto: projectId,
-      id_solicitante_ku: parseInt(form.id_solicitante_ku, 10),
-      id_aprobador_ku: parseInt(form.id_aprobador_ku, 10),
+      id_solicitante_contacto: parseInt(form.id_solicitante_contacto, 10),
+      id_aprobador_contacto: parseInt(form.id_aprobador_contacto, 10),
       importe_impacto: parseFloat(form.importe_impacto),
       dias_impacto: parseInt(form.dias_impacto, 10)
     };
@@ -126,8 +126,8 @@ export default function CrModal({
             <div className="form-group">
               <label className="form-label">Key User Solicitante *</label>
               <select 
-                value={form.id_solicitante_ku}
-                onChange={(e) => setForm({ ...form, id_solicitante_ku: e.target.value })}
+                value={form.id_solicitante_contacto}
+                onChange={(e) => setForm({ ...form, id_solicitante_contacto: e.target.value })}
                 required
                 className="user-select"
               >
@@ -141,8 +141,8 @@ export default function CrModal({
             <div className="form-group">
               <label className="form-label">Key User Aprobador *</label>
               <select 
-                value={form.id_aprobador_ku}
-                onChange={(e) => setForm({ ...form, id_aprobador_ku: e.target.value })}
+                value={form.id_aprobador_contacto}
+                onChange={(e) => setForm({ ...form, id_aprobador_contacto: e.target.value })}
                 required
                 className="user-select"
               >

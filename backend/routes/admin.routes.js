@@ -24,4 +24,9 @@ router.post('/admin/users', adminController.createUser);
 router.put('/admin/users/:id_usuario', adminController.updateUser);
 router.delete('/admin/users/:id_usuario', adminController.deleteUser);
 
+// Portfolios admin
+router.post('/admin/portfolios', adminController.createPortfolio);
+router.put('/admin/portfolios/:id', adminController.updatePortfolio);
+router.delete('/admin/portfolios/:id', adminController.deletePortfolio);
+
 module.exports = router;

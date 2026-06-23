@@ -8,7 +8,13 @@ export default function DashboardReportModal({ isOpen, onClose, projects, getAut
   const [reportOptions, setReportOptions] = useState({
     resumen: true,
     alcance: true,
-    riesgos: true
+    cierre: true,
+    hitos: true,
+    timeline: true,
+    riesgos: true,
+    incidencias: true,
+    cambios: true,
+    lecciones: true
   });
 
   if (!isOpen) return null;
@@ -70,9 +76,15 @@ export default function DashboardReportModal({ isOpen, onClose, projects, getAut
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {[
-                  { id: 'resumen', label: 'Resumen y Muro de Comentarios' },
+                  { id: 'resumen', label: 'Resumen y KPIs de Control / Muro de Comentarios' },
                   { id: 'alcance', label: 'Alcance del Proyecto' },
-                  { id: 'riesgos', label: 'Matriz de Riesgos' }
+                  { id: 'cierre', label: 'Criterios de Cierre' },
+                  { id: 'hitos', label: 'Hitos del Proyecto' },
+                  { id: 'timeline', label: 'Cronología del Proyecto (Timeline)' },
+                  { id: 'riesgos', label: 'Matriz de Riesgos' },
+                  { id: 'incidencias', label: 'Incidencias Técnicas o de Plazos' },
+                  { id: 'cambios', label: 'Cambios de Alcance (CR)' },
+                  { id: 'lecciones', label: 'Lecciones Aprendidas' }
                 ].map((opt) => (
                   <label 
                     key={opt.id} 

@@ -1,4 +1,4 @@
-const { Sedes, Proyectos, EstadosProyecto, Usuarios } = require('../models/index');
+const { Sedes, Proyectos, EstadosProyecto, Usuarios, Portfolios } = require('../models/index');
 const { hashPassword, handleErr } = require('../utils/helpers');
 
 // --- SEDES ---
@@ -207,6 +207,69 @@ const deleteUser = async (req, res) => {
     handleErr(res, error);
   }
 };
+// --- PORTFOLIOS ---
+const createPortfolio = async (req, res) => {
+  try {
+    const { nombre, descripcion } = req.body;
+    if (!nombre || !nombre.trim()) {
+      return res.status(400).json({ error: 'El nombre del portfolio es obligatorio.' });
+    }
+    const existing = await Portfolios.findOne({ where: { nombre: nombre.trim() } });
+    if (existing) {
+      return res.status(400).json({ error: 'Ya existe un portfolio con ese nombre.' });
+    }
+    const portfolio = await Portfolios.create({
+      nombre: nombre.trim(),
+      descripcion: descripcion ? descripcion.trim() : null
+    });
+    res.json(portfolio);
+  } catch (error) {
+    handleErr(res, error);
+  }
+};
+
+const updatePortfolio = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nombre, descripcion } = req.body;
+    if (!nombre || !nombre.trim()) {
+      return res.status(400).json({ error: 'El nombre del portfolio es obligatorio.' });
+    }
+    const portfolio = await Portfolios.findByPk(id);
+    if (!portfolio) {
+      return res.status(404).json({ error: 'Portfolio no encontrado.' });
+    }
+    const existing = await Portfolios.findOne({ where: { nombre: nombre.trim() } });
+    if (existing && existing.id !== portfolio.id) {
+      return res.status(400).json({ error: 'Ya existe otro portfolio con ese nombre.' });
+    }
+    await portfolio.update({
+      nombre: nombre.trim(),
+      descripcion: descripcion !== undefined ? (descripcion ? descripcion.trim() : null) : portfolio.descripcion
+    });
+    res.json(portfolio);
+  } catch (error) {
+    handleErr(res, error);
+  }
+};
+
+const deletePortfolio = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const portfolio = await Portfolios.findByPk(id);
+    if (!portfolio) {
+      return res.status(404).json({ error: 'Portfolio no encontrado.' });
+    }
+    const inUse = await Proyectos.count({ where: { portfolio_id: id } });
+    if (inUse > 0) {
+      return res.status(400).json({ error: 'No se puede eliminar el portfolio porque tiene proyectos asociados.' });
+    }
+    await portfolio.destroy();
+    res.json({ message: 'Portfolio eliminado con éxito.' });
+  } catch (error) {
+    handleErr(res, error);
+  }
+};
 
 module.exports = {
   createSede,
@@ -219,5 +282,8 @@ module.exports = {
   getUsers,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  createPortfolio,
+  updatePortfolio,
+  deletePortfolio
 };

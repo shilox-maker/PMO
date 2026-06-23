@@ -3,7 +3,8 @@ const path = require('path');
 const { Op } = require('sequelize');
 const { 
   Sedes, ContactosProveedor, Proveedores, Usuarios, EstadosProyecto, 
-  Proyectos, Facturas, CambiosAlcance, Riesgos, Incidencias, Tareas, ComentariosProyecto 
+  Proyectos, Facturas, CambiosAlcance, Riesgos, Incidencias, Tareas, ComentariosProyecto,
+  Portfolios, Tags
 } = require('../models/index');
 const { getProjectCalculations } = require('../models/automations');
 const { handleErr } = require('../utils/helpers');
@@ -64,7 +65,7 @@ const getPortfolioStates = async (req, res) => {
 
 const getPortfolioDashboard = async (req, res) => {
   try {
-    const { pm, fecha_desde, fecha_hasta, search, vendor, rag, state } = req.query;
+    const { pm, fecha_desde, fecha_hasta, search, vendor, rag, state, portfolio, tag } = req.query;
     
     const where = {};
     if (pm) {
@@ -76,8 +77,25 @@ const getPortfolioDashboard = async (req, res) => {
     if (rag) {
       where.indicador_rag = rag;
     }
+    if (portfolio) {
+      where.portfolio_id = parseInt(portfolio, 10);
+    }
     if (search) {
       where.nombre_proyecto = { [Op.like]: `%${search}%` };
+    }
+    if (tag) {
+      const projectIdsWithTag = await Proyectos.findAll({
+        attributes: ['id_proyecto'],
+        include: [{
+          model: Tags,
+          as: 'Tags',
+          where: { id: tag },
+          attributes: []
+        }],
+        raw: true
+      });
+      const ids = projectIdsWithTag.map(p => p.id_proyecto);
+      where.id_proyecto = { [Op.in]: ids };
     }
 
     const projectsList = await Proyectos.findAll({
@@ -86,6 +104,8 @@ const getPortfolioDashboard = async (req, res) => {
         { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
         { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
         { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
+        { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre'] },
+        { model: Tags, as: 'Tags', through: { attributes: [] } },
         { 
           model: EstadosProyecto, 
           as: 'Estado', 
@@ -254,6 +274,40 @@ const getTimeline = async (req, res) => {
     handleErr(res, error);
   }
 };
+const getPortfolios = async (req, res) => {
+  try {
+    const portfolios = await Portfolios.findAll({ order: [['nombre', 'ASC']] });
+    res.json(portfolios);
+  } catch (error) {
+    handleErr(res, error);
+  }
+};
+
+const getTags = async (req, res) => {
+  try {
+    const tags = await Tags.findAll({ order: [['nombre', 'ASC']] });
+    res.json(tags);
+  } catch (error) {
+    handleErr(res, error);
+  }
+};
+
+const createTag = async (req, res) => {
+  try {
+    const { nombre } = req.body;
+    if (!nombre || !nombre.trim()) {
+      return res.status(400).json({ error: 'El nombre del tag es obligatorio.' });
+    }
+    const existing = await Tags.findOne({ where: { nombre: nombre.trim() } });
+    if (existing) {
+      return res.json(existing);
+    }
+    const tag = await Tags.create({ nombre: nombre.trim() });
+    res.status(201).json(tag);
+  } catch (error) {
+    handleErr(res, error);
+  }
+};
 
 module.exports = {
   getSedes,
@@ -262,5 +316,8 @@ module.exports = {
   getChangelog,
   getPortfolioStates,
   getPortfolioDashboard,
-  getTimeline
+  getTimeline,
+  getPortfolios,
+  getTags,
+  createTag
 };

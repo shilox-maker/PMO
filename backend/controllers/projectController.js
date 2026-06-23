@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 const { 
   Proyectos, Usuarios, Proveedores, Sedes, ContactosProveedor,
   ProyectoContactos, Tareas, EstadosProyecto, CambiosAlcance, Facturas, ComentariosProyecto,
-  Incidencias, Riesgos, LeccionesAprendidas
+  Incidencias, Riesgos, LeccionesAprendidas, Portfolios, Tags
 } = require('../models/index');
 const { getProjectCalculations } = require('../models/automations');
 const { 
@@ -25,7 +25,7 @@ async function resolveStateId(data) {
 
 const getProjects = async (req, res) => {
   try {
-    const { pm, vendor, rag, search, state, estrategico } = req.query;
+    const { pm, vendor, rag, search, state, estrategico, portfolio, tag } = req.query;
     
     const where = {};
     if (pm) where.id_pm = pm;
@@ -34,8 +34,25 @@ const getProjects = async (req, res) => {
     if (estrategico) {
       where.es_estrategico = estrategico === 'true';
     }
+    if (portfolio) {
+      where.portfolio_id = portfolio;
+    }
     if (search) {
       where.nombre_proyecto = { [Op.like]: `%${search}%` };
+    }
+    if (tag) {
+      const projectIdsWithTag = await Proyectos.findAll({
+        attributes: ['id_proyecto'],
+        include: [{
+          model: Tags,
+          as: 'Tags',
+          where: { id: tag },
+          attributes: []
+        }],
+        raw: true
+      });
+      const ids = projectIdsWithTag.map(p => p.id_proyecto);
+      where.id_proyecto = { [Op.in]: ids };
     }
 
     const projectsList = await Proyectos.findAll({
@@ -45,6 +62,8 @@ const getProjects = async (req, res) => {
         { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
         { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
         { model: ContactosProveedor, as: 'Sponsor', attributes: ['nombre', 'apellidos'] },
+        { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre'] },
+        { model: Tags, as: 'Tags', through: { attributes: [] } },
         { 
           model: EstadosProyecto, 
           as: 'Estado', 
@@ -96,6 +115,8 @@ const getProjectDetail = async (req, res) => {
         { model: Proveedores, as: 'Proveedor', attributes: ['id_proveedor', 'nombre_razon_social'] },
         { model: Sedes, as: 'Sede', attributes: ['id_sede', 'nombre_sede'] },
         { model: ContactosProveedor, as: 'Sponsor', attributes: ['id_contacto', 'nombre', 'apellidos', 'email'] },
+        { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre', 'descripcion'] },
+        { model: Tags, as: 'Tags', through: { attributes: [] } },
         { 
           model: ContactosProveedor, 
           as: 'InvolvedContacts', 
@@ -205,6 +226,7 @@ const createProject = async (req, res) => {
     if (data.comSemanalKus) await project.setComSemanalContactos(data.comSemanalKus);
     if (data.comMensualKus) await project.setComMensualContactos(data.comMensualKus);
     if (data.comSteercoKus) await project.setComSteerCoContactos(data.comSteercoKus);
+    if (data.tagIds) await project.setTags(data.tagIds);
 
     res.status(201).json(project);
   } catch (error) {
@@ -312,6 +334,7 @@ const updateProject = async (req, res) => {
     if (data.comSemanalKus) await project.setComSemanalContactos(data.comSemanalKus);
     if (data.comMensualKus) await project.setComMensualContactos(data.comMensualKus);
     if (data.comSteercoKus) await project.setComSteerCoContactos(data.comSteercoKus);
+    if (data.tagIds !== undefined) await project.setTags(data.tagIds);
 
     res.json(project);
   } catch (error) {

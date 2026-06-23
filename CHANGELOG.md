@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [2.2.1] - 2026-06-23
+### Added
+- **Agrupación por Portfolios y Sistema de Etiquetas (Tags)**:
+  - Creadas las nuevas entidades `Portfolios`, `Tags` y la tabla pivote `Proyecto_Tags` en la base de datos.
+  - Añadida la columna opcional `portfolio_id` a la tabla `Proyectos`.
+  - Incorporada una nueva pestaña de "Portfolios" en el Panel de Administración para realizar operaciones CRUD completas por administradores.
+  - Implementado el componente interactivo de multiselección con autocompletado y creación en línea para `Tags` (`ProjectTagsSelect.jsx`) en la ficha y modal de edición de proyectos.
+  - Añadido soporte de filtros por Portfolio y por Tags en el listado y KPIs del Dashboard principal.
+  - Creada la migración de datos `15_add_portfolios_and_tags.js` para inicializar el esquema correspondiente.
+
+### Fixed
+- **Registro de Cambio de Alcance (CR)**: Corregido el envío y renderizado de solicitante y aprobador en el formulario y la tabla histórica de Cambios de Alcance. Se reemplazaron las propiedades obsoletas `id_solicitante_ku` e `id_aprobador_ku` por `id_solicitante_contacto` e `id_aprobador_contacto` para adecuarse al modelo de base de datos actual y evitar fallos de restricción no nula (`notNull Violation`).
+
 ## [2.2.0] - 2026-06-22
 ### Added
 - **Rediseño Corporativo de la Pantalla de Login**:
