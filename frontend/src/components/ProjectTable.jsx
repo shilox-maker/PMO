@@ -44,12 +44,13 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
 
   const renderSortHeader = (label, key, extraStyle = {}) => {
     const isSorted = sortConfig.key === key;
+    const isCentered = extraStyle.textAlign === 'center';
     return (
       <th 
         onClick={() => handleSort(key)} 
         style={{ cursor: 'pointer', userSelect: 'none', ...extraStyle }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: isCentered ? 'center' : 'flex-start' }}>
           {label}
           {isSorted ? (
             sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
@@ -88,7 +89,7 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
               {visibleColumnsMap.id_proyecto && renderSortHeader('Código', 'id_proyecto')}
               {visibleColumnsMap.nombre_proyecto && renderSortHeader('Nombre del Proyecto', 'nombre_proyecto')}
               {visibleColumnsMap.estado_proyecto && renderSortHeader('Estado/Fase', 'estado_proyecto')}
-              {visibleColumnsMap.indicador_rag && renderSortHeader('RAG', 'indicador_rag')}
+              {visibleColumnsMap.indicador_rag && renderSortHeader('RAG', 'indicador_rag', { textAlign: 'center' })}
               {visibleColumnsMap.proveedor && renderSortHeader('Socio Tecnológico', 'Proveedor.nombre_razon_social')}
               {visibleColumnsMap.pm && renderSortHeader('Gestor PM', 'PM.nombre')}
               {visibleColumnsMap.sede && renderSortHeader('Sede', 'Sede.nombre_sede')}
