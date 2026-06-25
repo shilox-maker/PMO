@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## [2.3.0] - 2026-06-25
+### Added
+- **Soporte de Despliegue en Windows Server 2022**:
+  - Implementación de scripts PowerShell automatizados para la configuración inicial del servidor (`setup-server.ps1`), configuración de IIS Reverse Proxy con URL Rewrite/ARR (`setup-iis.ps1`), creación de esquemas en Azure SQL (`create-schemas.sql`) y healthcheck (`health-check.ps1`).
+  - Creación de flujos de despliegue automatizados para PRE (`deploy-pre.ps1`) y PRO con confirmación manual (`deploy-pro.ps1`), integrando copia de seguridad de base de datos previa a las migraciones.
+  - Script para la promoción y merge seguro de la rama `develop` a `main` desde el servidor (`promote-to-main.ps1`).
+- **Utilidad de Backup & Restore**:
+  - Script modular [backup.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/utils/backup.js) para exportar bases de datos completas a archivos JSON timestamped y restaurarlas para rollback automático. Compatible con SQLite y Azure SQL.
+  - Comandos de npm configurados en `package.json` para facilitar el uso.
+
 ## [2.2.2] - 2026-06-25
 ### Added
 - **Trazabilidad Global y Auditoría de Registros**:

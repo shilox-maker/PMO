@@ -206,10 +206,41 @@ Al desplegar en un servidor o Raspberry Pi accesible desde otros equipos de la r
 3. **Recompilación Obligatoria**:
    - En Vite/React, las variables de entorno se inyectan en tiempo de compilación. **Siempre que cambies el `.env` debes recompilar** ejecutando:
      ```bash
-     npm run build
-     ```
+      npm run build
+      ```
 
-## 🚀 Automatización de Despliegue (`deploy.sh`)
+## 🖥️ Despliegue en Windows Server 2022 (IIS + SSL + Azure SQL)
+
+El proyecto está preparado para desplegarse de manera profesional en un entorno Windows Server 2022 compartiendo la máquina con otros sitios IIS activos:
+
+* **IIS** actúa como Reverse Proxy (puertos 80/443), direccionando el tráfico a los puertos locales de Node.js mediante reglas de reescritura de URL (`URL Rewrite` y `ARR`).
+* **Certificados SSL** generados de forma automática y gratuita mediante `win-acme` (Let's Encrypt).
+* **PM2** gestiona las aplicaciones en segundo plano como servicios de Windows:
+  - **PRE** (`prepmo.dacsa.com`): Puerto local `5000`, apuntando al esquema Azure SQL `PREPMO`.
+  - **PRO** (`pmo.dacsa.com`): Puerto local `5100`, apuntando al esquema Azure SQL `PROPMO`.
+* **Base de datos**: Alojada en Azure SQL Server utilizando esquemas lógicos separados para mayor seguridad y aislamiento.
+
+### 🛠️ Scripts en Directorio `/scripts`
+
+En la carpeta [/scripts](file:///c:/PruebasIA/Proyectos/PMO-1/scripts) se proporcionan las herramientas de automatización:
+1. **[create-schemas.sql](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/create-schemas.sql)**: Creación de esquemas y usuarios de base de datos en Azure SQL.
+2. **[setup-server.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/setup-server.ps1)**: Instalación automatizada de dependencias globales (Node, Git, PM2), creación de carpetas en `C:\Apps\PMO\` y clonado del repositorio.
+3. **[setup-iis.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/setup-iis.ps1)**: Configura ARR, URL Rewrite y crea los sitios IIS con bindings y certificados win-acme.
+4. **[deploy-pre.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/deploy-pre.ps1)**: Descarga la rama `develop`, realiza backup previo de la base de datos, ejecuta migraciones y recompila el frontend.
+5. **[deploy-pro.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/deploy-pro.ps1)**: Muestra commits pendientes, requiere confirmación explícita (`DEPLOY`), realiza backup, corre migraciones de producción y recompila.
+6. **[promote-to-main.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/promote-to-main.ps1)**: Realiza el merge seguro de `develop` a `main` desde el servidor.
+7. **[health-check.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/health-check.ps1)**: Diagnóstico general del estado de PM2, HTTP API y frontend dist.
+
+### 💾 Utilidad de Copias de Seguridad (Rollback)
+
+Se incluye la utilidad en [backup.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/utils/backup.js) (integrada de forma automática antes de cada migración de base de datos):
+* **Hacer backup**: `node utils/backup.js export` (o `npm run db:backup`)
+* **Listar backups**: `node utils/backup.js list` (o `npm run db:backups`)
+* **Restaurar snapshot**: `node utils/backup.js restore <fichero.json>` (o `npm run db:restore <fichero.json>`)
+
+---
+
+## 🚀 Automatización de Despliegue en Linux/Raspberry Pi (`deploy.sh`)
 
 La plataforma incluye un script maestro en la raíz (`deploy.sh`) para automatizar el ciclo de actualización en producción (ej: Raspberry Pi).
 
