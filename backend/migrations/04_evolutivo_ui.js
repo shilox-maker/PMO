@@ -19,7 +19,7 @@ module.exports = {
 
     // 2. Purge orphan Key Users (Those without a provider or whose provider does not exist)
     await queryInterface.sequelize.query(
-      `DELETE FROM "Key_Users" WHERE "id_proveedor_empresa" IS NULL OR "id_proveedor_empresa" NOT IN (SELECT "id_proveedor" FROM "Proveedores")`
+      `DELETE FROM Key_Users WHERE id_proveedor_empresa IS NULL OR id_proveedor_empresa NOT IN (SELECT id_proveedor FROM Proveedores)`
     );
   },
 

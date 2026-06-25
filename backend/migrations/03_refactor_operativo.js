@@ -29,13 +29,13 @@ module.exports = {
     // 3. Riesgos: Update existing records and change schema
     // Convert 'MITIGADO' -> 'ACTIVO'
     await queryInterface.sequelize.query(
-      `UPDATE "Riesgos" SET "estado_riesgo" = 'ACTIVO' WHERE "estado_riesgo" = 'MITIGADO'`
+      `UPDATE Riesgos SET estado_riesgo = 'ACTIVO' WHERE estado_riesgo = 'MITIGADO'`
     );
     // Note: SQLite doesn't strictly enforce ENUM constraints on ALTER TABLE, so changing the DataTypes model is often enough for the application layer.
 
     // 4. Cambios de Alcance: Convert 'EN_REVISION' -> 'SOLICITADO'
     await queryInterface.sequelize.query(
-      `UPDATE "Cambios_Alcance" SET "estado_cambio" = 'SOLICITADO' WHERE "estado_cambio" = 'EN_REVISION'`
+      `UPDATE Cambios_Alcance SET estado_cambio = 'SOLICITADO' WHERE estado_cambio = 'EN_REVISION'`
     );
 
     // 5. Lecciones_Aprendidas: Drop and Recreate

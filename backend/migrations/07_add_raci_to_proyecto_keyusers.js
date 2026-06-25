@@ -23,10 +23,10 @@ module.exports = {
 
     // Update existing rows
     await queryInterface.sequelize.query(
-      `UPDATE "Proyecto_KeyUsers" SET "rol" = 'Usuario funcional' WHERE "rol" IS NULL`
+      `UPDATE Proyecto_KeyUsers SET rol = 'Usuario funcional' WHERE rol IS NULL`
     );
     await queryInterface.sequelize.query(
-      `UPDATE "Proyecto_KeyUsers" SET "raci" = 'I' WHERE "raci" IS NULL`
+      `UPDATE Proyecto_KeyUsers SET raci = 'I' WHERE raci IS NULL`
     );
   },
 
