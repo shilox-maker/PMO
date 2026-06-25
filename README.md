@@ -2,6 +2,9 @@
 
 Plataforma de gobernanza de cartera de proyectos de alto nivel diseñada para que **Project Managers (PMs)** controlen de forma macro alrededor de **60 proyectos paralelos**, con soporte multiperfil, estados de flujo de trabajo dinámicos, búsquedas ágiles de Key Users e historial de comentarios auditado compatible con Microsoft Outlook.
 
+> [!NOTE]
+> Para detalles sobre las directivas de seguridad, protección de la API, políticas de contraseñas y mitigación de ataques web, consulte nuestra [Guía de Seguridad](file:///c:/PruebasIA/Proyectos/PMO-1/security.md).
+
 ---
 
 ## 🚀 Filosofía del Sistema: Macro-Gestión Preventiva
