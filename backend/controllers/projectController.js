@@ -176,6 +176,8 @@ const getProjectDetail = async (req, res) => {
 const createProject = async (req, res) => {
   try {
     const data = req.body;
+    data.createdBy = req.currentPmId;
+    data.modifiedBy = req.currentPmId;
 
     const richTextFields = [
       'alcance_por_que', 'alcance_objetivo', 'alcance_resultados', 
@@ -238,6 +240,8 @@ const updateProject = async (req, res) => {
   try {
     const { id_proyecto } = req.params;
     const data = req.body;
+    delete data.createdBy;
+    data.modifiedBy = req.currentPmId;
 
     const richTextFields = [
       'alcance_por_que', 'alcance_objetivo', 'alcance_resultados', 

@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [2.2.2] - 2026-06-25
+### Added
+- **Trazabilidad Global y Auditoría de Registros**:
+  - Añadidas las columnas `createdBy` y `modifiedBy` (referenciando a la tabla de `Usuarios`) en las entidades transaccionales del sistema: `Proyectos`, `Facturas`, `Riesgos`, `Incidencias` y `Cambios_Alcance`.
+  - Implementada la inyección automática del ID del usuario autenticado en las operaciones de creación (`POST`) y modificación (`PUT`) en el backend.
+  - Protección de seguridad para ignorar/sobrescribir intentos manuales del cliente de inyectar valores manipulados en las columnas de auditoría.
+  - Creada e integrada la migración `17_add_audit_fields_to_tables.js` para añadir las columnas correspondientes en la base de datos de manera retrocompatible.
+
 ## [2.2.1] - 2026-06-23
 ### Added
 - **Agrupación por Portfolios y Sistema de Etiquetas (Tags)**:

@@ -387,6 +387,22 @@ const Proyectos = sequelize.define('Proyectos', {
   fecha_cierre: {
     type: DataTypes.DATEONLY,
     allowNull: true
+  },
+  createdBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
+  },
+  modifiedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
   }
 });
 
@@ -455,6 +471,22 @@ const Incidencias = sequelize.define('Incidencias', {
   solucion_aplicada: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  createdBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
+  },
+  modifiedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
   }
 }, {
   validate: {
@@ -510,6 +542,22 @@ const Riesgos = sequelize.define('Riesgos', {
   fecha_proxima_revision: {
     type: DataTypes.DATEONLY,
     allowNull: false
+  },
+  createdBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
+  },
+  modifiedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
   }
 });
 
@@ -609,6 +657,22 @@ const Facturas = sequelize.define('Facturas', {
   PO: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  createdBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
+  },
+  modifiedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
   }
 });
 
@@ -680,6 +744,22 @@ const CambiosAlcance = sequelize.define('Cambios_Alcance', {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0
+  },
+  createdBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
+  },
+  modifiedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
   }
 });
 
@@ -885,6 +965,12 @@ Proyectos.belongsTo(Portfolios, { foreignKey: 'portfolio_id', as: 'Portfolio' })
 // Tags associations (Many-to-Many)
 Proyectos.belongsToMany(Tags, { through: 'Proyecto_Tags', foreignKey: 'proyecto_id', otherKey: 'tag_id', as: 'Tags' });
 Tags.belongsToMany(Proyectos, { through: 'Proyecto_Tags', foreignKey: 'tag_id', otherKey: 'proyecto_id', as: 'Proyectos' });
+
+// Audit associations
+[Proyectos, Facturas, Riesgos, Incidencias, CambiosAlcance].forEach(Model => {
+  Model.belongsTo(Usuarios, { foreignKey: 'createdBy', as: 'Creator' });
+  Model.belongsTo(Usuarios, { foreignKey: 'modifiedBy', as: 'Modifier' });
+});
 
 module.exports = {
   sequelize,

@@ -8,6 +8,8 @@ const { generateNextId, sanitizeHTML, handleErr } = require('../utils/helpers');
 const createInvoice = async (req, res) => {
   try {
     const data = req.body;
+    data.createdBy = req.currentPmId;
+    data.modifiedBy = req.currentPmId;
     if (!data.id_interno_factura || data.id_interno_factura.trim() === '') {
       data.id_interno_factura = await generateNextId(Facturas, 'FAC', 'id_interno_factura');
     } else {
@@ -26,11 +28,14 @@ const createInvoice = async (req, res) => {
 const updateInvoice = async (req, res) => {
   try {
     const { id_interno_factura } = req.params;
+    const data = req.body;
+    delete data.createdBy;
+    data.modifiedBy = req.currentPmId;
     const fac = await Facturas.findByPk(id_interno_factura);
     if (!fac) {
       return res.status(404).json({ error: 'Factura no encontrada' });
     }
-    await fac.update(req.body);
+    await fac.update(data);
     res.json(fac);
   } catch (error) {
     handleErr(res, error);
@@ -55,6 +60,8 @@ const deleteInvoice = async (req, res) => {
 const createScopeChange = async (req, res) => {
   try {
     const data = req.body;
+    data.createdBy = req.currentPmId;
+    data.modifiedBy = req.currentPmId;
     if (!data.id_cambio || data.id_cambio.trim() === '') {
       data.id_cambio = await generateNextId(CambiosAlcance, 'CR', 'id_cambio');
     } else {
@@ -80,6 +87,8 @@ const updateScopeChange = async (req, res) => {
   try {
     const { id_cambio } = req.params;
     const data = req.body;
+    delete data.createdBy;
+    data.modifiedBy = req.currentPmId;
     const cr = await CambiosAlcance.findByPk(id_cambio);
     if (!cr) {
       return res.status(404).json({ error: 'Cambio de alcance no encontrado' });
@@ -101,6 +110,8 @@ const updateScopeChange = async (req, res) => {
 const createRisk = async (req, res) => {
   try {
     const data = req.body;
+    data.createdBy = req.currentPmId;
+    data.modifiedBy = req.currentPmId;
     if (!data.id_riesgo || data.id_riesgo.trim() === '') {
       data.id_riesgo = await generateNextId(Riesgos, 'RSG', 'id_riesgo');
     } else {
@@ -119,11 +130,14 @@ const createRisk = async (req, res) => {
 const updateRisk = async (req, res) => {
   try {
     const { id_riesgo } = req.params;
+    const data = req.body;
+    delete data.createdBy;
+    data.modifiedBy = req.currentPmId;
     const rsg = await Riesgos.findByPk(id_riesgo);
     if (!rsg) {
       return res.status(404).json({ error: 'Riesgo no encontrado' });
     }
-    await rsg.update(req.body);
+    await rsg.update(data);
     res.json(rsg);
   } catch (error) {
     handleErr(res, error);
@@ -134,6 +148,8 @@ const updateRisk = async (req, res) => {
 const createIssue = async (req, res) => {
   try {
     const data = req.body;
+    data.createdBy = req.currentPmId;
+    data.modifiedBy = req.currentPmId;
     if (!data.id_incidencia || data.id_incidencia.trim() === '') {
       data.id_incidencia = await generateNextId(Incidencias, 'INC', 'id_incidencia');
     } else {
@@ -156,6 +172,8 @@ const updateIssue = async (req, res) => {
   try {
     const { id_incidencia } = req.params;
     const data = req.body;
+    delete data.createdBy;
+    data.modifiedBy = req.currentPmId;
     const inc = await Incidencias.findByPk(id_incidencia);
     if (!inc) {
       return res.status(404).json({ error: 'Incidencia no encontrada' });

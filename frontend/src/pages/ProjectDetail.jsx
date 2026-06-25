@@ -664,7 +664,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       <CrModal 
         isOpen={showCrModal} onClose={() => setShowCrModal(false)}
         projectId={projectId} editingCr={editingCr} getAuthHeaders={getAuthHeaders}
-        onSuccess={fetchProjectData} contactosList={contactosList}
+        onSuccess={fetchProjectData} contactosList={project?.InvolvedContacts || []}
       />
 
       <RiskModal 

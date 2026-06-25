@@ -124,7 +124,7 @@ export default function CrModal({
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div className="form-group">
-              <label className="form-label">Key User Solicitante *</label>
+              <label className="form-label">Solicitante *</label>
               <select 
                 value={form.id_solicitante_contacto}
                 onChange={(e) => setForm({ ...form, id_solicitante_contacto: e.target.value })}
@@ -139,7 +139,7 @@ export default function CrModal({
             </div>
 
             <div className="form-group">
-              <label className="form-label">Key User Aprobador *</label>
+              <label className="form-label">Aprobador *</label>
               <select 
                 value={form.id_aprobador_contacto}
                 onChange={(e) => setForm({ ...form, id_aprobador_contacto: e.target.value })}

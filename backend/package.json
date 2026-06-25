@@ -1,6 +1,6 @@
 {
   "name": "ppm-backend",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "PPM Governance Dashboard Backend API",
   "main": "server.js",
   "type": "commonjs",
