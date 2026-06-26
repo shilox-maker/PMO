@@ -560,8 +560,7 @@ async function seed() {
       { id_proyecto: 'PRJ-2026-015', titulo_tarea: 'Desarrollo ETL ventas y finanzas', es_hito: false, estado: 'COMPLETADA', fecha_limite: '2025-12-31' },
       { id_proyecto: 'PRJ-2026-015', titulo_tarea: 'Entrega dashboards ejecutivos v1.0', es_hito: true, estado: 'COMPLETADA', fecha_limite: '2026-02-28' },
       { id_proyecto: 'PRJ-2026-015', titulo_tarea: 'Validación con Dirección y ajustes finales', es_hito: true, estado: 'COMPLETADA', fecha_limite: '2026-05-31' },
-      { id_proyecto: 'PRJ-2026-015', titulo_tarea: 'Pase a modo operación (soporte L2)', es_hito: true, estado: 'PENDIENTE', fecha_limite: '2026-06-30' }
-    ]);
+    ], { individualHooks: true });
     console.log('Tareas seeded (70+).');
 
     // ==========================================

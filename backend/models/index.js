@@ -800,6 +800,18 @@ const Tareas = sequelize.define('Tareas', {
   fecha_limite: {
     type: DataTypes.DATEONLY,
     allowNull: false
+  },
+  fecha_original_cierre: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  fecha_actual_cierre: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  fecha_real_cierre: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
   }
 });
 

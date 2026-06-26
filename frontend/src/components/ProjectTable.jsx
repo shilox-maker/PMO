@@ -113,8 +113,14 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
               const consumptionPercent = calc.budget_actualizado > 0 ? Math.min((calc.consumo_real / calc.budget_actualizado) * 100, 100) : 0;
               const displayedPercent = calc.budget_actualizado > 0 ? Math.round((calc.consumo_real / calc.budget_actualizado) * 100) : 0;
 
+              const todayStr = new Date().toISOString().split('T')[0];
+              const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(project.estado_proyecto?.toUpperCase());
+              const isProjectOverdue = !isClosed && calc?.fecha_fin_estimada && calc.fecha_fin_estimada < todayStr;
+              const milestone = project.nextMilestone || project.proximo_hito;
+              const isMilestoneOverdue = milestone && milestone.fecha_limite && milestone.fecha_limite < todayStr;
+
               return (
-                <tr key={project.id_proyecto}>
+                <tr key={project.id_proyecto} style={isProjectOverdue ? { backgroundColor: 'rgba(255, 69, 58, 0.1)' } : {}}>
                   {/* ID */}
                   {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{project.id_proyecto}</td>}
                   
@@ -205,11 +211,11 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                   </td>}
 
                   {/* Milestone */}
-                  {visibleColumnsMap.proximo_hito && <td style={{ fontSize: '0.8rem', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {project.nextMilestone ? (
-                      <div title={`${project.nextMilestone.titulo_tarea} (${project.nextMilestone.fecha_limite})`}>
-                        <strong>{project.nextMilestone.titulo_tarea}</strong>
-                        <div style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.75rem' }}>{project.nextMilestone.fecha_limite}</div>
+                  {visibleColumnsMap.proximo_hito && <td style={{ fontSize: '0.8rem', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: isMilestoneOverdue ? 'var(--color-rag-red)' : 'inherit' }}>
+                    {milestone ? (
+                      <div title={`${milestone.titulo_tarea} (${milestone.fecha_limite})`}>
+                        <strong>{milestone.titulo_tarea}</strong>
+                        <div style={{ color: isMilestoneOverdue ? 'var(--color-rag-red)' : 'var(--md-sys-color-outline)', fontSize: '0.75rem' }}>{milestone.fecha_limite}</div>
                       </div>
                     ) : (
                       <span style={{ color: 'var(--md-sys-color-outline)' }}>Ninguno</span>

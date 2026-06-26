@@ -99,4 +99,81 @@ describe('API Endpoints', () => {
     expect(res.body[0]).toHaveProperty('fecha_inicio');
     expect(res.body[0]).toHaveProperty('hitos');
   });
+  it('should create a milestone and automatically sync dates', async () => {
+    const res = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        id_proyecto: 'PRJ-2026-001',
+        titulo_tarea: 'Hito Test',
+        es_hito: true,
+        fecha_original_cierre: '2026-06-30',
+        fecha_actual_cierre: '2026-07-15',
+        estado: 'PENDIENTE'
+      });
+    
+    expect(res.statusCode).toEqual(201);
+    expect(res.body.fecha_original_cierre).toBe('2026-06-30');
+    expect(res.body.fecha_actual_cierre).toBe('2026-07-15');
+    expect(res.body.fecha_limite).toBe('2026-07-15'); // Synced to actual
+    expect(res.body.fecha_real_cierre).toBeNull();
+  });
+
+  it('should automatically set fecha_real_cierre on milestone completion', async () => {
+    // 1. Create a pending milestone
+    const createRes = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        id_proyecto: 'PRJ-2026-001',
+        titulo_tarea: 'Hito Completable',
+        es_hito: true,
+        fecha_original_cierre: '2026-06-30',
+        fecha_actual_cierre: '2026-06-30',
+        estado: 'PENDIENTE'
+      });
+
+    const taskId = createRes.body.id_tarea;
+
+    // 2. Complete it
+    const updateRes = await request(app)
+      .put(`/api/tasks/${taskId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        estado: 'COMPLETADA'
+      });
+
+    expect(updateRes.statusCode).toEqual(200);
+    expect(updateRes.body.estado).toBe('COMPLETADA');
+    expect(updateRes.body.fecha_real_cierre).not.toBeNull();
+    expect(updateRes.body.fecha_real_cierre).toBe(new Date().toISOString().split('T')[0]);
+
+    // 3. Revert to PENDIENTE
+    const revertRes = await request(app)
+      .put(`/api/tasks/${taskId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        estado: 'PENDIENTE'
+      });
+
+    expect(revertRes.statusCode).toEqual(200);
+    expect(revertRes.body.estado).toBe('PENDIENTE');
+    expect(revertRes.body.fecha_real_cierre).toBeNull();
+  });
+
+  it('should fail if invalid dates are sent', async () => {
+    const res = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        id_proyecto: 'PRJ-2026-001',
+        titulo_tarea: 'Hito Malo',
+        es_hito: true,
+        fecha_original_cierre: 'invalid-date',
+        fecha_actual_cierre: '2026-06-30',
+        estado: 'PENDIENTE'
+      });
+
+    expect(res.statusCode).toEqual(400);
+  });
 });

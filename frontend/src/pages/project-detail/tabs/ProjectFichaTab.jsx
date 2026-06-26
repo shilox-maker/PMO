@@ -321,7 +321,7 @@ export default function ProjectFichaTab({
                                 {ev.icon} {ev.title}
                               </span>
                               <span className="badge" style={{ fontSize: '0.7rem', padding: '2px 6px', backgroundColor: ev.type === 'lifecycle' ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-highest)', color: ev.type === 'lifecycle' ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface-variant)' }}>
-                                {ev.type === 'lifecycle' ? 'Ciclo' : 'Checklist'}
+                                {ev.type === 'lifecycle' ? 'Ciclo' : 'Tareas'}
                               </span>
                             </div>
 

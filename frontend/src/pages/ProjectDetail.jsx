@@ -539,6 +539,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           <FileText size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
           Ficha General
         </button>
+        <button className={`m3-tab ${activeTab === 'checklist' ? 'active' : ''}`} onClick={() => setActiveTab('checklist')}>
+          <CheckSquare size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          Tareas
+        </button>
         <button className={`m3-tab ${activeTab === 'alcance' ? 'active' : ''}`} onClick={() => setActiveTab('alcance')}>
           <Target size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
           Alcance y Cierre
@@ -558,10 +562,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         <button className={`m3-tab ${activeTab === 'comunicaciones' ? 'active' : ''}`} onClick={() => setActiveTab('comunicaciones')}>
           <MessageSquare size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
           Comunicaciones
-        </button>
-        <button className={`m3-tab ${activeTab === 'checklist' ? 'active' : ''}`} onClick={() => setActiveTab('checklist')}>
-          <CheckSquare size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Checklist PM
         </button>
         <button className={`m3-tab ${activeTab === 'lecciones' ? 'active' : ''}`} onClick={() => setActiveTab('lecciones')}>
           <BookOpen size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />

@@ -12,8 +12,8 @@ export default function ProjectChecklistTab({
     <div className="m3-card glass-panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div>
-          <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Checklist Interno y Tareas del Gestor (PM)</h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Lista de control interna para el seguimiento de hitos de entrega y gobernanza</p>
+          <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Tareas del Proyecto</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Seguimiento y control de tareas y hitos de gobernanza del proyecto</p>
         </div>
         <button className="m3-btn m3-btn-primary" onClick={openAddTask}>
           <Plus size={16} /> Crear Tarea / Hito
@@ -22,33 +22,24 @@ export default function ProjectChecklistTab({
 
       {(!project.Tareas || project.Tareas.length === 0) ? (
         <p style={{ color: 'var(--md-sys-color-outline)', fontStyle: 'italic', textAlign: 'center', padding: '24px 0' }}>
-          No hay tareas registradas en el checklist del proyecto.
+          No hay tareas registradas en el proyecto.
         </p>
       ) : (
         <div className="m3-table-wrapper" style={{ border: '1px solid var(--md-sys-color-outline-variant)', borderRadius: 12 }}>
           <table className="m3-table">
             <thead>
               <tr>
-                <th style={{ width: 50 }}>Check</th>
                 {renderSortHeader('Tarea / Entregable', 'titulo_tarea', tasksSort, setTasksSort)}
                 {renderSortHeader('Descripción', 'descripcion', tasksSort, setTasksSort)}
-                {renderSortHeader('Fecha Límite', 'fecha_limite', tasksSort, setTasksSort)}
+                {renderSortHeader('Fecha Límite / Cierre', 'fecha_limite', tasksSort, setTasksSort)}
                 {renderSortHeader('Hito?', 'es_hito', tasksSort, setTasksSort)}
                 {renderSortHeader('Estado', 'estado', tasksSort, setTasksSort)}
-                <th>Acciones</th>
+                <th style={{ width: 110 }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {sortedTasks.map((t) => (
                 <tr key={t.id_tarea} style={{ opacity: t.estado === 'COMPLETADA' ? 0.6 : 1 }}>
-                  <td>
-                    <input 
-                      type="checkbox" 
-                      checked={t.estado === 'COMPLETADA'}
-                      onChange={() => handleToggleTask(t.id_tarea, t.estado)}
-                      style={{ width: 18, height: 18, cursor: 'pointer' }}
-                    />
-                  </td>
                   <td style={{ 
                     fontWeight: 600, 
                     textDecoration: t.estado === 'COMPLETADA' ? 'line-through' : 'none' 
@@ -60,7 +51,15 @@ export default function ProjectChecklistTab({
                     color: t.estado === 'PENDIENTE' && new Date(t.fecha_limite) < new Date() ? 'var(--color-rag-red)' : 'inherit',
                     fontWeight: t.estado === 'PENDIENTE' && new Date(t.fecha_limite) < new Date() ? 700 : 'normal'
                   }}>
-                    {t.fecha_limite}
+                    {t.es_hito ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: '0.8rem', lineHeight: '1.2' }}>
+                        <div><span style={{ opacity: 0.65 }}>Original:</span> <span>{t.fecha_original_cierre || '—'}</span></div>
+                        <div><span style={{ opacity: 0.65 }}>Actual:</span> <span style={{ fontWeight: 600 }}>{t.fecha_actual_cierre || '—'}</span></div>
+                        <div><span style={{ opacity: 0.65 }}>Real:</span> <span style={{ color: t.fecha_real_cierre ? 'var(--color-rag-green)' : 'inherit' }}>{t.fecha_real_cierre || '—'}</span></div>
+                      </div>
+                    ) : (
+                      t.fecha_limite
+                    )}
                   </td>
                   <td>
                     {t.es_hito ? (
@@ -73,7 +72,14 @@ export default function ProjectChecklistTab({
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <input 
+                        type="checkbox" 
+                        checked={t.estado === 'COMPLETADA'}
+                        onChange={() => handleToggleTask(t.id_tarea, t.estado)}
+                        style={{ width: 18, height: 18, cursor: 'pointer', margin: 0 }}
+                        title={t.estado === 'COMPLETADA' ? "Marcar como pendiente" : "Marcar como completada"}
+                      />
                       <button className="icon-btn" onClick={() => openEditTask(t)} title="Editar tarea">
                         <Edit2 size={14} />
                       </button>

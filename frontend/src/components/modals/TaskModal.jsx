@@ -9,7 +9,10 @@ export default function TaskModal({
     descripcion: '',
     es_hito: false,
     estado: 'PENDIENTE',
-    fecha_limite: ''
+    fecha_limite: '',
+    fecha_original_cierre: '',
+    fecha_actual_cierre: '',
+    fecha_real_cierre: ''
   });
   const [error, setError] = useState('');
 
@@ -21,16 +24,23 @@ export default function TaskModal({
         descripcion: editingTask.descripcion || '',
         es_hito: !!editingTask.es_hito,
         estado: editingTask.estado || 'PENDIENTE',
-        fecha_limite: editingTask.fecha_limite || ''
+        fecha_limite: editingTask.fecha_limite || '',
+        fecha_original_cierre: editingTask.fecha_original_cierre || '',
+        fecha_actual_cierre: editingTask.fecha_actual_cierre || '',
+        fecha_real_cierre: editingTask.fecha_real_cierre || ''
       });
     } else {
+      const today = new Date().toISOString().split('T')[0];
       setForm({
         id_tarea: '',
         titulo_tarea: '',
         descripcion: '',
         es_hito: false,
         estado: 'PENDIENTE',
-        fecha_limite: new Date().toISOString().split('T')[0]
+        fecha_limite: today,
+        fecha_original_cierre: today,
+        fecha_actual_cierre: today,
+        fecha_real_cierre: ''
       });
     }
     setError('');
@@ -42,9 +52,21 @@ export default function TaskModal({
     e.preventDefault();
     setError('');
 
-    if (!form.titulo_tarea || !form.fecha_limite) {
-      setError('Por favor, rellene todos los campos obligatorios.');
+    // Validations
+    if (!form.titulo_tarea) {
+      setError('El título es obligatorio.');
       return;
+    }
+    if (form.es_hito) {
+      if (!form.fecha_original_cierre || !form.fecha_actual_cierre) {
+        setError('Las fechas original y actual de cierre son obligatorias para un hito.');
+        return;
+      }
+    } else {
+      if (!form.fecha_limite) {
+        setError('La fecha límite es obligatoria.');
+        return;
+      }
     }
 
     const payload = { ...form, id_proyecto: projectId };
@@ -56,6 +78,18 @@ export default function TaskModal({
 
     if (!isEdit) {
       delete payload.id_tarea;
+    }
+
+    // Sync fecha_limite with actual completion date for milestones
+    if (payload.es_hito) {
+      payload.fecha_limite = payload.fecha_actual_cierre;
+      if (payload.estado !== 'COMPLETADA') {
+        payload.fecha_real_cierre = '';
+      }
+    } else {
+      payload.fecha_original_cierre = '';
+      payload.fecha_actual_cierre = '';
+      payload.fecha_real_cierre = '';
     }
 
     fetch(url, {
@@ -79,7 +113,7 @@ export default function TaskModal({
     <div className="modal-overlay">
       <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
         <div className="modal-header">
-          <h3 className="modal-title">{editingTask ? 'Editar Tarea' : 'Crear Tarea Checklist PM'}</h3>
+          <h3 className="modal-title">{editingTask ? 'Editar Tarea / Hito' : 'Crear Tarea / Hito'}</h3>
           <button className="icon-btn" onClick={onClose}>✕</button>
         </div>
 
@@ -91,12 +125,12 @@ export default function TaskModal({
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Título de Tarea *</label>
+            <label className="form-label">Título de Tarea / Hito *</label>
             <input 
               type="text" 
               value={form.titulo_tarea}
               onChange={(e) => setForm({ ...form, titulo_tarea: e.target.value })}
-              placeholder="Reunión técnica"
+              placeholder="Ej. Taller de diseño técnico"
               required
               className="m3-input"
             />
@@ -113,27 +147,94 @@ export default function TaskModal({
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Fecha Límite *</label>
-            <input 
-              type="date" 
-              value={form.fecha_limite}
-              onChange={(e) => setForm({ ...form, fecha_limite: e.target.value })}
-              required
-              className="m3-input"
-            />
-          </div>
-
           <div className="form-group" style={{ margin: '12px 0' }}>
             <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <input 
                 type="checkbox" 
                 checked={form.es_hito}
-                onChange={(e) => setForm({ ...form, es_hito: e.target.checked })}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  const today = new Date().toISOString().split('T')[0];
+                  setForm({ 
+                    ...form, 
+                    es_hito: checked,
+                    fecha_original_cierre: checked ? (form.fecha_original_cierre || form.fecha_limite || today) : '',
+                    fecha_actual_cierre: checked ? (form.fecha_actual_cierre || form.fecha_limite || today) : ''
+                  });
+                }}
                 className="m3-checkbox"
               />
               <span>¿Es un Hito? (Visible en Dashboard de Cartera)</span>
             </label>
+          </div>
+
+          {form.es_hito ? (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">F. Original Cierre *</label>
+                  <input 
+                    type="date" 
+                    value={form.fecha_original_cierre}
+                    onChange={(e) => setForm({ ...form, fecha_original_cierre: e.target.value })}
+                    required
+                    className="m3-input"
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">F. Actual Cierre *</label>
+                  <input 
+                    type="date" 
+                    value={form.fecha_actual_cierre}
+                    onChange={(e) => setForm({ ...form, fecha_actual_cierre: e.target.value })}
+                    required
+                    className="m3-input"
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">F. Real Cierre {form.estado !== 'COMPLETADA' && '(Solo si está COMPLETADA)'}</label>
+                <input 
+                  type="date" 
+                  value={form.fecha_real_cierre}
+                  onChange={(e) => setForm({ ...form, fecha_real_cierre: e.target.value })}
+                  disabled={form.estado !== 'COMPLETADA'}
+                  className="m3-input"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="form-group">
+              <label className="form-label">Fecha Límite *</label>
+              <input 
+                type="date" 
+                value={form.fecha_limite}
+                onChange={(e) => setForm({ ...form, fecha_limite: e.target.value })}
+                required
+                className="m3-input"
+              />
+            </div>
+          )}
+
+          <div className="form-group">
+            <label className="form-label">Estado</label>
+            <select
+              value={form.estado}
+              onChange={(e) => {
+                const newEstado = e.target.value;
+                const today = new Date().toISOString().split('T')[0];
+                setForm({ 
+                  ...form, 
+                  estado: newEstado,
+                  fecha_real_cierre: newEstado === 'COMPLETADA' ? (form.fecha_real_cierre || today) : ''
+                });
+              }}
+              className="m3-input"
+              style={{ width: '100%' }}
+            >
+              <option value="PENDIENTE">PENDIENTE 🟡</option>
+              <option value="COMPLETADA">COMPLETADA 🟢</option>
+            </select>
           </div>
 
           <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>

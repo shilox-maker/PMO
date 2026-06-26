@@ -764,8 +764,13 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                       devPercent = Math.round(((p.gasto_total_facturas - p.budget_inicial) / p.budget_inicial) * 100);
                     }
 
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(p.estado_proyecto?.toUpperCase());
+                    const isProjectOverdue = !isClosed && p.fecha_fin_estimada && p.fecha_fin_estimada < todayStr;
+                    const isMilestoneOverdue = p.proximo_hito && p.proximo_hito.fecha_limite && p.proximo_hito.fecha_limite < todayStr;
+
                     return (
-                      <tr key={p.id_proyecto}>
+                      <tr key={p.id_proyecto} style={isProjectOverdue ? { backgroundColor: 'rgba(255, 69, 58, 0.1)' } : {}}>
                         {/* ID */}
                         {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.8rem' }}>{p.id_proyecto}</td>}
 
@@ -839,11 +844,11 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                         </td>}
 
                         {/* Next Milestone */}
-                        {visibleColumnsMap.proximo_hito && <td style={{ fontSize: '0.8rem' }}>
+                        {visibleColumnsMap.proximo_hito && <td style={{ fontSize: '0.8rem', color: isMilestoneOverdue ? 'var(--color-rag-red)' : 'inherit' }}>
                           {p.proximo_hito ? (
                             <div>
                               <div style={{ fontWeight: 600 }}>{p.proximo_hito.titulo_tarea}</div>
-                              <div style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.7rem' }}>{p.proximo_hito.fecha_limite}</div>
+                              <div style={{ color: isMilestoneOverdue ? 'var(--color-rag-red)' : 'var(--md-sys-color-outline)', fontSize: '0.7rem' }}>{p.proximo_hito.fecha_limite}</div>
                             </div>
                           ) : (
                             <span style={{ color: 'var(--md-sys-color-outline)' }}>Sin hitos</span>
