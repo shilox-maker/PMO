@@ -9,12 +9,22 @@
 ## 📦 4. Implementadas
 - [x] **IDEA-01**: Resaltado de hitos y proyectos vencidos (en rojo) (2026-06-26)
 - [x] **IDEA-02**: Tareas e Hitos de Gobernanza del Proyecto (2026-06-26)
+- [x] **IDEA-04**: Robustecer la sanitización de seguridad en WYSIWYG sustituyendo la sanitización manual XSS por una biblioteca especializada (como `sanitize-html` o validador robusto). (2026-07-06)
+- [x] **IDEA-05**: Incrementar la cobertura de pruebas automatizadas añadiendo tests de integración para las reglas financieras en backend y tests de flujos E2E con Playwright en frontend. (2026-07-07)
+- [x] **IDEA-06**: Implementar validación estricta de esquemas de entrada (payload validation) en el backend para todas las peticiones POST/PUT de proyectos, facturas, incidencias, etc. (2026-07-06)
+- [x] **IDEA-07**: Centralizar el manejo de errores mediante un middleware global de Express y un wrapper asíncrono para eliminar la duplicación de bloques try/catch en los controladores. (2026-07-06)
+- [x] **IDEA-08**: Optimizar el rendimiento de la base de datos definiendo índices explícitos en Sequelize para las llaves foráneas y limitando los campos recuperados en las consultas del dashboard. (2026-07-06)
 
 ## 🧪 5. En Testeo / Pruebas
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
-- [ ] **IDEA-01**: Resaltado de hitos y proyectos vencidos (en rojo)
-- [ ] **IDEA-02**: Tareas e Hitos de Gobernanza del Proyecto
-*Las features funcionan correctamente en local, pendientes de subir a la rama principal de GitHub.*
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **IDEA-01**: Resaltado de hitos y proyectos vencidos (en rojo) (2026-06-26)
+- [x] **IDEA-02**: Tareas e Hitos de Gobernanza del Proyecto (2026-06-26)
+- [x] **IDEA-03**: Preparar un análisis técnico para que el conocimiento de la herramienta no dependa de mí (Documento de requisitos funcionales, diagrama entidad-relación, arquitectura técnica, etc.) (2026-07-06)
+- [x] **IDEA-04**: Robustecer la sanitización de seguridad en WYSIWYG sustituyendo la sanitización manual XSS por una biblioteca especializada (como `sanitize-html` o validador robusto). (2026-07-06)
+- [x] **IDEA-05**: Incrementar la cobertura de pruebas automatizadas añadiendo tests de integración para las reglas financieras en backend y tests de flujos E2E con Playwright en frontend. (2026-07-07)
+- [x] **IDEA-06**: Implementar validación estricta de esquemas de entrada (payload validation) en el backend para todas las peticiones POST/PUT de proyectos, facturas, incidencias, etc. (2026-07-06)
+- [x] **IDEA-07**: Centralizar el manejo de errores mediante un middleware global de Express y un wrapper asíncrono para eliminar la duplicación de bloques try/catch en los controladores. (2026-07-06)
+- [x] **IDEA-08**: Optimizar el rendimiento de la base de datos definiendo índices explícitos en Sequelize para las llaves foráneas y limitando los campos recuperados en las consultas del dashboard. (2026-07-06)

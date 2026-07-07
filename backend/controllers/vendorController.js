@@ -3,21 +3,16 @@ const {
   Proveedores, ContactosProveedor, Proyectos, Usuarios, Sedes, EstadosProyecto, Incidencias, LeccionesAprendidas 
 } = require('../models/index');
 const { getProjectCalculations } = require('../models/automations');
-const { handleErr } = require('../utils/helpers');
+const { asyncHandler } = require('../middlewares/errorHandler');
 
-const getVendors = async (req, res) => {
-  try {
+const getVendors = asyncHandler(async (req, res) => {
     const vendors = await Proveedores.findAll({
       order: [['nombre_razon_social', 'ASC']]
     });
     res.json(vendors);
-  } catch (error) {
-    handleErr(res, error);
-  }
-};
+});
 
-const getVendorDetail = async (req, res) => {
-  try {
+const getVendorDetail = asyncHandler(async (req, res) => {
     const { id_proveedor } = req.params;
     const vendor = await Proveedores.findByPk(id_proveedor, {
       include: [
@@ -78,22 +73,14 @@ const getVendorDetail = async (req, res) => {
       incidents,
       lessons
     });
-  } catch (error) {
-    handleErr(res, error);
-  }
-};
+});
 
-const createVendor = async (req, res) => {
-  try {
+const createVendor = asyncHandler(async (req, res) => {
     const vendor = await Proveedores.create(req.body);
     res.status(201).json(vendor);
-  } catch (error) {
-    handleErr(res, error);
-  }
-};
+});
 
-const updateVendor = async (req, res) => {
-  try {
+const updateVendor = asyncHandler(async (req, res) => {
     const { id_proveedor } = req.params;
     const vendor = await Proveedores.findByPk(id_proveedor);
     if (!vendor) {
@@ -101,13 +88,9 @@ const updateVendor = async (req, res) => {
     }
     await vendor.update(req.body);
     res.json(vendor);
-  } catch (error) {
-    handleErr(res, error);
-  }
-};
+});
 
-const deleteVendor = async (req, res) => {
-  try {
+const deleteVendor = asyncHandler(async (req, res) => {
     const { id_proveedor } = req.params;
     const vendor = await Proveedores.findByPk(id_proveedor);
     if (!vendor) {
@@ -121,22 +104,14 @@ const deleteVendor = async (req, res) => {
 
     await vendor.destroy();
     res.json({ message: 'Proveedor eliminado con éxito' });
-  } catch (error) {
-    handleErr(res, error);
-  }
-};
+});
 
-const createContact = async (req, res) => {
-  try {
+const createContact = asyncHandler(async (req, res) => {
     const contact = await ContactosProveedor.create(req.body);
     res.status(201).json(contact);
-  } catch (error) {
-    handleErr(res, error);
-  }
-};
+});
 
-const deleteContact = async (req, res) => {
-  try {
+const deleteContact = asyncHandler(async (req, res) => {
     const { id_contacto } = req.params;
     const contact = await ContactosProveedor.findByPk(id_contacto);
     if (!contact) {
@@ -144,10 +119,7 @@ const deleteContact = async (req, res) => {
     }
     await contact.destroy();
     res.json({ message: 'Contacto eliminado con éxito' });
-  } catch (error) {
-    handleErr(res, error);
-  }
-};
+});
 
 module.exports = {
   getVendors,

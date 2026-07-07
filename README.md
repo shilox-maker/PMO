@@ -129,23 +129,39 @@ Vista global interactiva que mapea todos los proyectos en un eje temporal horizo
 * **Visibilidad Limitada ("Para Dirección")**: Permite restringir comentarios para que únicamente sean visibles por los roles `ADMINISTRADOR` y `DIRECTOR` (tanto en la interfaz web como en los reportes e informes). Los comentarios de dirección se identifican con un fondo azul claro y la etiqueta `⭐ DIRECCIÓN`.
 
 
-## Pruebas Funcionales (E2E y API)
+## 🧪 Pruebas Funcionales (E2E, API y Financieras)
 
-La aplicación cuenta con una suite de pruebas para verificar el funcionamiento del Frontend (E2E) y Backend (API).
+El proyecto cuenta con suites de pruebas robustas tanto en el frontend como en el backend para validar el sistema ante cualquier cambio:
 
-### 1. Pruebas de Backend (API)
-Se utiliza **Jest** y **Supertest** contra una base de datos SQLite en memoria (`:memory:`).
+### 1. Pruebas de Backend (API, Sanitización, Validación y Finanzas)
+Se utiliza **Jest** y **Supertest** contra una base de datos SQLite en memoria (`:memory:`). La suite incluye:
+- **Pruebas de API (`api.test.js`):** Integración de enrutadores, autenticación JWT, creación de proyectos e hitos.
+- **Pruebas de Sanitización (`sanitize.test.js`):** Sanitización WYSIWYG segura y en base64 con `sanitize-html`.
+- **Pruebas de Validación (`validation.test.js`):** Validación estricta de esquemas de entrada de Joi (con eliminación de parámetros inyectados mediante `stripUnknown`).
+- **Pruebas Financieras (`financial.test.js`):** Verificación de reglas financieras de agregación de presupuestos, consumos reales y holguras de plazo basadas en Cambios de Alcance.
+
+Para ejecutar los tests del backend:
 ```bash
 cd backend
 npm test
 ```
 
-### 2. Pruebas de Frontend (E2E)
-Se utiliza **Playwright** para simular la navegación en navegador real.
-```bash
-cd frontend
-npx playwright test
-```
+### 2. Pruebas de Frontend (E2E con Playwright)
+Se utiliza **Playwright** para simular la navegación en navegadores reales (Chromium, Firefox y WebKit) de manera aislada y mockeada.
+- **Preparación previa (obligatorio antes de ejecutar por primera vez):**
+  Para descargar e instalar los binarios de los navegadores:
+  ```bash
+  cd frontend
+  # En Windows (CMD) o si hay restricciones de Execution Policy:
+  cmd /c npx playwright install
+  # En macOS/Linux o Git Bash:
+  npx playwright install
+  ```
+- **Ejecución de los tests E2E:**
+  ```bash
+  cd frontend
+  npm run test:e2e
+  ```
 
 ---
 

@@ -3,10 +3,10 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { JWT_SECRET } = require('../config/jwt');
 const { Usuarios } = require('../models/index');
-const { hashPassword, handleErr } = require('../utils/helpers');
+const { hashPassword } = require('../utils/helpers');
+const { asyncHandler } = require('../middlewares/errorHandler');
 
-const login = async (req, res) => {
-  try {
+const login = asyncHandler(async (req, res) => {
     const { correo, password } = req.body;
     if (!correo || !password) {
       return res.status(400).json({ error: 'El correo y la contraseña son obligatorios.' });
@@ -61,13 +61,9 @@ const login = async (req, res) => {
         activo: user.activo
       }
     });
-  } catch (error) {
-    handleErr(res, error);
-  }
-};
+});
 
-const verify = async (req, res) => {
-  try {
+const verify = asyncHandler(async (req, res) => {
     const pmId = req.currentPmId;
     if (!pmId) {
       return res.status(401).json({ error: 'Token inválido o expirado.' });
@@ -88,13 +84,9 @@ const verify = async (req, res) => {
         activo: user.activo
       }
     });
-  } catch (error) {
-    handleErr(res, error);
-  }
-};
+});
 
-const changePassword = async (req, res) => {
-  try {
+const changePassword = asyncHandler(async (req, res) => {
     const userId = req.currentPmId;
     if (!userId) {
       return res.status(401).json({ error: 'No autorizado. Inicie sesión.' });
@@ -137,10 +129,7 @@ const changePassword = async (req, res) => {
     await user.update({ password: newHash, password_salt: null });
 
     res.json({ message: 'Contraseña actualizada correctamente.' });
-  } catch (error) {
-    handleErr(res, error);
-  }
-};
+});
 
 module.exports = {
   login,

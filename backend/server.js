@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const { sequelize } = require('./models/index');
 const umzug = require('./migrate');
 const { verifyToken } = require('./middlewares/auth');
+const { errorHandler } = require('./middlewares/errorHandler');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -50,6 +51,9 @@ app.use('/api', vendorRoutes);
 app.use('/api', metaRoutes);
 app.use('/api', itemRoutes);
 app.use('/api', adminRoutes);
+
+// Global Error Handler Middleware
+app.use(errorHandler);
 
 // Database Initialization and Server Start
 if (process.env.NODE_ENV !== 'test') {

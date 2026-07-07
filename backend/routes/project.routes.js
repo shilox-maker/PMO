@@ -6,8 +6,10 @@ const router = express.Router();
 router.get('/projects', projectController.getProjects);
 router.get('/projects/export', projectController.exportProjects);
 router.get('/projects/:id_proyecto', projectController.getProjectDetail);
-router.post('/projects', projectController.createProject);
-router.put('/projects/:id_proyecto', projectController.updateProject);
+const { validateBody, projectCreateSchema, projectUpdateSchema } = require('../middlewares/validation');
+
+router.post('/projects', validateBody(projectCreateSchema), projectController.createProject);
+router.put('/projects/:id_proyecto', validateBody(projectUpdateSchema), projectController.updateProject);
 router.delete('/projects/:id_proyecto', projectController.deleteProject);
 
 // Participants RACI

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
+const sanitizeHtml = require('sanitize-html');
 
 async function hashPassword(password) {
   return bcrypt.hash(password, 10);
@@ -24,25 +25,39 @@ function isValidISODate(dateStr) {
 function sanitizeHTML(html) {
   if (typeof html !== 'string') return '';
   
-  let clean = html.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '');
-  clean = clean.replace(/on\w+\s*=\s*(['"])(.*?)\1/gi, '');
-  clean = clean.replace(/on\w+\s*=\s*([^\s>]+)/gi, '');
-  clean = clean.replace(/href\s*=\s*(['"])\s*javascript:(.*?)\1/gi, '');
-  clean = clean.replace(/href\s*=\s*javascript:([^\s>]+)/gi, '');
-  clean = clean.replace(/href\s*=\s*(['"])\s*(data|vbscript):(.*?)\1/gi, '');
-  clean = clean.replace(/src\s*=\s*(['"])\s*(data:(?!image\/)|javascript|vbscript):(.*?)\1/gi, '');
-
-  clean = clean.replace(/<[^>]+>/g, (match) => {
-    if (match.match(/^<\/?(p|strong|em|br|ul|ol|li|span|div|h1|h2|h3|h4|h5|h6|blockquote|table|thead|tbody|tr|th|td|b|i|u|s|font|img)(\s[^>]*)?>$/i)) {
-      return match.replace(/\s+on\w+\s*=\s*(['"])(.*?)\1/gi, '')
-                  .replace(/\s+on\w+\s*=\s*([^\s>]+)/gi, '')
-                  .replace(/\s+href\s*=\s*(['"])\s*javascript:(.*?)\1/gi, '')
-                  .replace(/\s+href\s*=\s*javascript:([^\s>]+)/gi);
+  return sanitizeHtml(html, {
+    allowedTags: [
+      'p', 'strong', 'em', 'br', 'ul', 'ol', 'li', 'span', 'div',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote',
+      'table', 'thead', 'tbody', 'tr', 'th', 'td',
+      'b', 'i', 'u', 's', 'font', 'img', 'a'
+    ],
+    allowedAttributes: {
+      a: ['href', 'name', 'target', 'style'],
+      img: ['src', 'style', 'alt', 'width', 'height'],
+      font: ['color', 'size', 'face'],
+      span: ['style'],
+      div: ['style'],
+      p: ['style'],
+      ul: ['style'],
+      ol: ['style']
+    },
+    allowedStyles: {
+      '*': {
+        'color': [/.*/],
+        'list-style-type': [/^(disc|decimal)$/],
+        'margin-left': [/^[-\d\s\w\.\-%]+$/],
+        'padding-left': [/^[-\d\s\w\.\-%]+$/],
+        'max-width': [/^[-\d\s\w\.\-%]+$/],
+        'border-radius': [/^[-\d\s\w\.\-%]+$/],
+        'margin': [/^[-\d\s\w\.\-%]+$/]
+      }
+    },
+    allowedSchemes: ['http', 'https', 'ftp', 'mailto', 'data'],
+    allowedSchemesByTag: {
+      img: ['data', 'http', 'https']
     }
-    return '';
   });
-  
-  return clean;
 }
 
 function sanitizeExcelValue(val) {

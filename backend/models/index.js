@@ -78,6 +78,10 @@ const ContactosProveedor = sequelize.define('Contactos_Proveedor', {
     type: DataTypes.STRING,
     allowNull: false
   }
+}, {
+  indexes: [
+    { name: 'idx_contactos_prov_id_proveedor', fields: ['id_proveedor'] }
+  ]
 });
 
 // 4. Usuarios Model (Internal staff PMs - supports profile switcher & future Entra ID)
@@ -404,10 +408,29 @@ const Proyectos = sequelize.define('Proyectos', {
       key: 'id_usuario'
     }
   }
+}, {
+  indexes: [
+    { name: 'idx_proyectos_id_pm', fields: ['id_pm'] },
+    { name: 'idx_proyectos_id_proveedor', fields: ['id_proveedor'] },
+    { name: 'idx_proyectos_id_sede', fields: ['id_sede'] },
+    { name: 'idx_proyectos_id_sponsor', fields: ['id_sponsor'] },
+    { name: 'idx_proyectos_id_estado', fields: ['id_estado'] },
+    { name: 'idx_proyectos_portfolio_id', fields: ['portfolio_id'] }
+  ]
 });
 
 // Join tables for Many-to-Many// Association tables
 const ProyectoContactos = sequelize.define('Proyecto_Contactos', {
+  id_proyecto: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    primaryKey: true
+  },
+  id_contacto: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true
+  },
   rol: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -418,10 +441,85 @@ const ProyectoContactos = sequelize.define('Proyecto_Contactos', {
     allowNull: true,
     defaultValue: 'I'
   }
-}, { timestamps: false });
-const ProyectoComSemanalContacto = sequelize.define('Proyecto_ComSemanal_Contacto', {}, { timestamps: false });
-const ProyectoComMensualContacto = sequelize.define('Proyecto_ComMensual_Contacto', {}, { timestamps: false });
-const ProyectoComSteerCoContacto = sequelize.define('Proyecto_SteerCo_Contacto', {}, { timestamps: false });
+}, { 
+  timestamps: false,
+  indexes: [
+    { name: 'idx_proyecto_contactos_contacto', fields: ['id_contacto'] }
+  ]
+});
+
+const ProyectoComSemanalContacto = sequelize.define('Proyecto_ComSemanal_Contacto', {
+  id_proyecto: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    primaryKey: true
+  },
+  id_contacto: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true
+  }
+}, { 
+  timestamps: false,
+  indexes: [
+    { name: 'idx_proj_comsem_contacto', fields: ['id_contacto'] }
+  ]
+});
+
+const ProyectoComMensualContacto = sequelize.define('Proyecto_ComMensual_Contacto', {
+  id_proyecto: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    primaryKey: true
+  },
+  id_contacto: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true
+  }
+}, { 
+  timestamps: false,
+  indexes: [
+    { name: 'idx_proj_commens_contacto', fields: ['id_contacto'] }
+  ]
+});
+
+const ProyectoComSteerCoContacto = sequelize.define('Proyecto_SteerCo_Contacto', {
+  id_proyecto: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    primaryKey: true
+  },
+  id_contacto: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true
+  }
+}, { 
+  timestamps: false,
+  indexes: [
+    { name: 'idx_proj_steerco_contacto', fields: ['id_contacto'] }
+  ]
+});
+
+const ProyectoTags = sequelize.define('Proyecto_Tags', {
+  proyecto_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    primaryKey: true
+  },
+  tag_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true
+  }
+}, {
+  timestamps: false,
+  tableName: 'Proyecto_Tags',
+  indexes: [
+    { name: 'idx_proyecto_tags_tag', fields: ['tag_id'] }
+  ]
+});
 
 // 7. Incidencias Model
 const Incidencias = sequelize.define('Incidencias', {
@@ -495,7 +593,10 @@ const Incidencias = sequelize.define('Incidencias', {
         throw new Error('La solución aplicada es obligatoria cuando la incidencia está RESUELTA.');
       }
     }
-  }
+  },
+  indexes: [
+    { name: 'idx_incidencias_id_proyecto', fields: ['id_proyecto'] }
+  ]
 });
 
 // 8. Riesgos Model
@@ -559,6 +660,10 @@ const Riesgos = sequelize.define('Riesgos', {
       key: 'id_usuario'
     }
   }
+}, {
+  indexes: [
+    { name: 'idx_riesgos_id_proyecto', fields: ['id_proyecto'] }
+  ]
 });
 
 // 9. LeccionesAprendidas Model (Knowledge Base)
@@ -607,6 +712,11 @@ const LeccionesAprendidas = sequelize.define('Lecciones_Aprendidas', {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   }
+}, {
+  indexes: [
+    { name: 'idx_lecciones_id_proyecto', fields: ['id_proyecto'] },
+    { name: 'idx_lecciones_id_proveedor', fields: ['id_proveedor'] }
+  ]
 });
 
 
@@ -674,6 +784,11 @@ const Facturas = sequelize.define('Facturas', {
       key: 'id_usuario'
     }
   }
+}, {
+  indexes: [
+    { name: 'idx_facturas_id_proyecto', fields: ['id_proyecto'] },
+    { name: 'idx_facturas_id_proveedor', fields: ['id_proveedor'] }
+  ]
 });
 
 // 11. CambiosAlcance Model
@@ -761,6 +876,12 @@ const CambiosAlcance = sequelize.define('Cambios_Alcance', {
       key: 'id_usuario'
     }
   }
+}, {
+  indexes: [
+    { name: 'idx_cambios_id_proyecto', fields: ['id_proyecto'] },
+    { name: 'idx_cambios_id_solicitante', fields: ['id_solicitante_contacto'] },
+    { name: 'idx_cambios_id_aprobador', fields: ['id_aprobador_contacto'] }
+  ]
 });
 
 // 12. Tareas Model
@@ -813,6 +934,10 @@ const Tareas = sequelize.define('Tareas', {
     type: DataTypes.DATEONLY,
     allowNull: true
   }
+}, {
+  indexes: [
+    { name: 'idx_tareas_id_proyecto', fields: ['id_proyecto'] }
+  ]
 });
 
 // 13. ComentariosProyecto Model
@@ -875,6 +1000,12 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
     type: DataTypes.DATE,
     allowNull: true
   }
+}, {
+  indexes: [
+    { name: 'idx_comentarios_id_proyecto', fields: ['id_proyecto'] },
+    { name: 'idx_comentarios_id_usuario', fields: ['id_usuario'] },
+    { name: 'idx_comentarios_id_usuario_mod', fields: ['id_usuario_modificacion'] }
+  ]
 });
 
 // Set up Associations
@@ -975,8 +1106,8 @@ Portfolios.hasMany(Proyectos, { foreignKey: 'portfolio_id', as: 'Proyectos' });
 Proyectos.belongsTo(Portfolios, { foreignKey: 'portfolio_id', as: 'Portfolio' });
 
 // Tags associations (Many-to-Many)
-Proyectos.belongsToMany(Tags, { through: 'Proyecto_Tags', foreignKey: 'proyecto_id', otherKey: 'tag_id', as: 'Tags' });
-Tags.belongsToMany(Proyectos, { through: 'Proyecto_Tags', foreignKey: 'tag_id', otherKey: 'proyecto_id', as: 'Proyectos' });
+Proyectos.belongsToMany(Tags, { through: ProyectoTags, foreignKey: 'proyecto_id', otherKey: 'tag_id', as: 'Tags' });
+Tags.belongsToMany(Proyectos, { through: ProyectoTags, foreignKey: 'tag_id', otherKey: 'proyecto_id', as: 'Proyectos' });
 
 // Audit associations
 [Proyectos, Facturas, Riesgos, Incidencias, CambiosAlcance].forEach(Model => {
@@ -1005,5 +1136,6 @@ module.exports = {
   EstadosProyecto,
   ComentariosProyecto,
   Portfolios,
-  Tags
+  Tags,
+  ProyectoTags
 };
