@@ -1,6 +1,6 @@
 # ==============================================================================
 # Promocion de develop a main
-# Hace merge de develop en main y lo sube a GitHub.
+# Hace merge de develop en main y lo sube a Azure DevOps.
 # Ejecutar desde el servidor DESPUES de validar PRE.
 # Uso: .\promote-to-main.ps1
 # ==============================================================================
@@ -71,9 +71,9 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "  Merge completado localmente" -ForegroundColor Green
 
-Write-Host "`n[4/4] Subiendo a GitHub..." -ForegroundColor Yellow
+Write-Host "`n[4/4] Subiendo a Azure DevOps..." -ForegroundColor Yellow
 git push origin main
-Write-Host "  main actualizada en GitHub" -ForegroundColor Green
+Write-Host "  main actualizada en Azure DevOps" -ForegroundColor Green
 
 Pop-Location
 

@@ -2,9 +2,11 @@ const Joi = require('joi');
 
 // Middleware genérico de validación
 const validateBody = (schema) => (req, res, next) => {
+  console.log(`[Validation Request] Path: ${req.path} | Body:`, req.body);
   const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
   if (error) {
     const errorDetails = error.details.map(detail => detail.message).join(', ');
+    console.error(`[Validation Failed] Path: ${req.path} | Error: ${errorDetails}`);
     return res.status(400).json({ error: errorDetails });
   }
   req.body = value; // Reemplazar con los datos validados y filtrados
@@ -50,13 +52,13 @@ const projectCreateSchema = Joi.object({
   alcance_desarrollo: Joi.string().allow('', null).optional(),
   cierre_aceptacion: Joi.string().allow('', null).optional(),
   cierre_exito: Joi.string().allow('', null).optional(),
-  fecha_peticion: Joi.string().isoDate().allow(null).optional(),
-  fecha_alcance_definido: Joi.string().isoDate().allow(null).optional(),
-  fecha_aprobacion: Joi.string().isoDate().allow(null).optional(),
-  fecha_planificacion: Joi.string().isoDate().allow(null).optional(),
-  fecha_kickoff: Joi.string().isoDate().allow(null).optional(),
-  fecha_go_live: Joi.string().isoDate().allow(null).optional(),
-  fecha_cierre: Joi.string().isoDate().allow(null).optional(),
+  fecha_peticion: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_alcance_definido: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_aprobacion: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_planificacion: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_kickoff: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_go_live: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_cierre: Joi.string().empty('').isoDate().allow(null).optional(),
   involvedKus: Joi.array().items(Joi.number().integer()).optional(),
   comSemanalKus: Joi.array().items(Joi.number().integer()).optional(),
   comMensualKus: Joi.array().items(Joi.number().integer()).optional(),
@@ -97,13 +99,13 @@ const projectUpdateSchema = Joi.object({
   alcance_desarrollo: Joi.string().allow('', null).optional(),
   cierre_aceptacion: Joi.string().allow('', null).optional(),
   cierre_exito: Joi.string().allow('', null).optional(),
-  fecha_peticion: Joi.string().isoDate().allow(null).optional(),
-  fecha_alcance_definido: Joi.string().isoDate().allow(null).optional(),
-  fecha_aprobacion: Joi.string().isoDate().allow(null).optional(),
-  fecha_planificacion: Joi.string().isoDate().allow(null).optional(),
-  fecha_kickoff: Joi.string().isoDate().allow(null).optional(),
-  fecha_go_live: Joi.string().isoDate().allow(null).optional(),
-  fecha_cierre: Joi.string().isoDate().allow(null).optional(),
+  fecha_peticion: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_alcance_definido: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_aprobacion: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_planificacion: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_kickoff: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_go_live: Joi.string().empty('').isoDate().allow(null).optional(),
+  fecha_cierre: Joi.string().empty('').isoDate().allow(null).optional(),
   involvedKus: Joi.array().items(Joi.number().integer()).optional(),
   comSemanalKus: Joi.array().items(Joi.number().integer()).optional(),
   comMensualKus: Joi.array().items(Joi.number().integer()).optional(),

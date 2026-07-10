@@ -3,7 +3,7 @@ import SearchableContactSelect from '../SearchableContactSelect';
 
 export default function ProjectEditModal({
   isOpen, onClose, project, getAuthHeaders, onSuccess,
-  sedes, vendors, contactosList, pms, workflowStates, portfolios = []
+  sedes, vendors, contactosList, pms, workflowStates, portfolios = [], capexTypes = []
 }) {
   const [form, setForm] = useState({
     nombre_proyecto: '',
@@ -14,6 +14,8 @@ export default function ProjectEditModal({
     id_sponsor: '',
     es_capex: false,
     codigo_capex: '',
+    id_tipo_capex: '',
+    id_subtipo_capex: '',
     es_estrategico: false,
     budget_inicial: '',
     portfolio_id: '',
@@ -32,6 +34,8 @@ export default function ProjectEditModal({
         id_sponsor: project.id_sponsor ? project.id_sponsor.toString() : '',
         es_capex: !!project.es_capex,
         codigo_capex: project.codigo_capex || '',
+        id_tipo_capex: project.id_tipo_capex ? project.id_tipo_capex.toString() : '',
+        id_subtipo_capex: project.id_subtipo_capex ? project.id_subtipo_capex.toString() : '',
         es_estrategico: !!project.es_estrategico,
         budget_inicial: project.budget_inicial || '',
         portfolio_id: project.portfolio_id ? project.portfolio_id.toString() : '',
@@ -69,6 +73,15 @@ export default function ProjectEditModal({
       setError('El código CAPEX es obligatorio para proyectos CAPEX.');
       return;
     }
+    if (form.es_capex && !form.id_tipo_capex) {
+      setError('El tipo de CAPEX es obligatorio para proyectos CAPEX.');
+      return;
+    }
+    const selectedTipo = capexTypes.find(t => t.id === parseInt(form.id_tipo_capex, 10));
+    if (form.es_capex && selectedTipo?.Subtipos?.length > 0 && !form.id_subtipo_capex) {
+      setError('El subtipo de CAPEX es obligatorio para el tipo seleccionado.');
+      return;
+    }
 
     const payload = {
       ...form,
@@ -77,7 +90,9 @@ export default function ProjectEditModal({
       id_proveedor: form.id_proveedor ? parseInt(form.id_proveedor, 10) : null,
       id_sede: form.id_sede ? parseInt(form.id_sede, 10) : null,
       id_sponsor: form.id_sponsor ? parseInt(form.id_sponsor, 10) : null,
-      portfolio_id: form.portfolio_id ? parseInt(form.portfolio_id, 10) : null
+      portfolio_id: form.portfolio_id ? parseInt(form.portfolio_id, 10) : null,
+      id_tipo_capex: form.id_tipo_capex ? parseInt(form.id_tipo_capex, 10) : null,
+      id_subtipo_capex: form.id_subtipo_capex ? parseInt(form.id_subtipo_capex, 10) : null
     };
 
     fetch(`${import.meta.env.VITE_API_URL}/projects/${project.id_proyecto}`, {
@@ -250,6 +265,49 @@ export default function ProjectEditModal({
               <span>¿Es Proyecto Estratégico?</span>
             </label>
           </div>
+
+          {form.es_capex && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, margin: '0 0 16px' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Tipo CAPEX *</label>
+                <select
+                  name="id_tipo_capex"
+                  value={form.id_tipo_capex}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setForm(prev => ({ ...prev, id_tipo_capex: val, id_subtipo_capex: '' }));
+                  }}
+                  required
+                  className="user-select"
+                >
+                  <option value="">Seleccionar tipo...</option>
+                  {capexTypes.map(t => (
+                    <option key={t.id} value={t.id}>{t.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              {(() => {
+                const sel = capexTypes.find(t => t.id === parseInt(form.id_tipo_capex, 10));
+                return sel?.Subtipos?.length > 0 ? (
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">Subtipo CAPEX *</label>
+                    <select
+                      name="id_subtipo_capex"
+                      value={form.id_subtipo_capex}
+                      onChange={handleInputChange}
+                      required
+                      className="user-select"
+                    >
+                      <option value="">Seleccionar subtipo...</option>
+                      {sel.Subtipos.map(s => (
+                        <option key={s.id} value={s.id}>{s.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+          )}
 
           <div className="form-group">
             <label className="form-label">Descripción Detallada *</label>

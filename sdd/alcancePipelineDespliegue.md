@@ -1,7 +1,7 @@
 # Alcance: Automatización de Despliegue y Orquestación (Raspberry Pi)
 
 ## 1. Objetivo
-Crear un script de Bash (`deploy.sh`) en la raíz del monorepositorio que orqueste la actualización completa de la plataforma. Este script debe descargar la última versión del código desde la rama `main` de GitHub, actualizar la base de datos de forma segura, compilar el frontend y reiniciar los servicios (incluyendo la compatibilidad con los túneles Cloudflared de PM2).
+Crear un script de Bash (`deploy.sh`) en la raíz del monorepositorio que orqueste la actualización completa de la plataforma. Este script debe descargar la última versión del código desde la rama `main` de Azure DevOps, actualizar la base de datos de forma segura, compilar el frontend y reiniciar los servicios (incluyendo la compatibilidad con los túneles Cloudflared de PM2).
 
 ## 2. Impacto y Conflictos
 *   **Añade:** Un nuevo archivo ejecutable `deploy.sh`.
@@ -14,7 +14,7 @@ Crear un script de Bash (`deploy.sh`) en la raíz del monorepositorio que orques
 ## 4. Criterios de Aceptación (BDD)
 
 **Escenario 1: Ejecución del pipeline de despliegue**
-*   **Dado que** hay nuevos cambios fusionados en la rama `main` de GitHub...
+*   **Dado que** hay nuevos cambios fusionados en la rama `main` de Azure DevOps...
 *   **Cuando** el administrador ejecuta `./deploy.sh` en la Raspberry Pi...
 *   **Entonces** el script debe realizar secuencialmente los siguientes pasos automatizados:
     1. Ejecutar `git pull origin main` para bajar el código.
@@ -25,5 +25,5 @@ Crear un script de Bash (`deploy.sh`) en la raíz del monorepositorio que orques
 
 **Escenario 2: Protección ante fallos**
 *   **Dado que** el script está ejecutando la compilación o las migraciones...
-*   **Cuando** ocurre un error (ej. error de sintaxis en el código bajado de GitHub o falla en `npm run build`)...
+*   **Cuando** ocurre un error (ej. error de sintaxis en el código bajado de Azure DevOps o falla en `npm run build`)...
 *   **Entonces** el script debe detenerse inmediatamente (`set -e` en Bash), no debe reiniciar PM2 y debe mostrar un mensaje de error claro en la terminal para que la versión anterior siga funcionando.

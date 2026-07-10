@@ -99,6 +99,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   const [statesList, setStatesList] = useState([]);
   const [portfoliosList, setPortfoliosList] = useState([]);
   const [tagsList, setTagsList] = useState([]);
+  const [capexTypes, setCapexTypes] = useState([]);
 
   // Modal creation state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -117,6 +118,8 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     fecha_fin_inicial: '',
     es_capex: false,
     codigo_capex: '',
+    id_tipo_capex: '',
+    id_subtipo_capex: '',
     es_estrategico: false,
     budget_inicial: '',
     com_semanal_activo: false,
@@ -162,6 +165,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
     fetch(`${import.meta.env.VITE_API_URL}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/capex-types`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setCapexTypes(data));
   };
 
   useEffect(() => {
@@ -202,6 +206,15 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       setFormError('El código CAPEX es obligatorio para proyectos CAPEX.');
       return;
     }
+    if (newProject.es_capex && !newProject.id_tipo_capex) {
+      setFormError('El tipo de CAPEX es obligatorio para proyectos CAPEX.');
+      return;
+    }
+    const selectedTipo = capexTypes.find(t => t.id === parseInt(newProject.id_tipo_capex, 10));
+    if (newProject.es_capex && selectedTipo?.Subtipos?.length > 0 && !newProject.id_subtipo_capex) {
+      setFormError('El subtipo de CAPEX es obligatorio para el tipo seleccionado.');
+      return;
+    }
 
     if (!newProject.nombre_proyecto || !newProject.id_pm || !newProject.id_proveedor || !newProject.id_sede || !newProject.id_sponsor || !newProject.budget_inicial) {
       setFormError('Por favor, rellene todos los campos obligatorios.');
@@ -215,7 +228,9 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       id_proveedor: parseInt(newProject.id_proveedor, 10),
       id_sede: parseInt(newProject.id_sede, 10),
       id_sponsor: parseInt(newProject.id_sponsor, 10),
-      portfolio_id: newProject.portfolio_id ? parseInt(newProject.portfolio_id, 10) : null
+      portfolio_id: newProject.portfolio_id ? parseInt(newProject.portfolio_id, 10) : null,
+      id_tipo_capex: newProject.id_tipo_capex ? parseInt(newProject.id_tipo_capex, 10) : null,
+      id_subtipo_capex: newProject.id_subtipo_capex ? parseInt(newProject.id_subtipo_capex, 10) : null
     };
 
     if (!payload.id_proyecto || payload.id_proyecto.trim() === '') {
@@ -250,6 +265,8 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
           fecha_fin_inicial: '',
           es_capex: false,
           codigo_capex: '',
+          id_tipo_capex: '',
+          id_subtipo_capex: '',
           es_estrategico: false,
           budget_inicial: '',
           com_semanal_activo: false,
@@ -903,6 +920,50 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
                       required={newProject.es_capex}
                       className="m3-input"
                     />
+                  </div>
+                )}
+
+                {/* CAPEX Type & Subtype selectors */}
+                {newProject.es_capex && (
+                  <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <label className="form-label">Tipo CAPEX *</label>
+                      <select
+                        name="id_tipo_capex"
+                        value={newProject.id_tipo_capex}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewProject(prev => ({ ...prev, id_tipo_capex: val, id_subtipo_capex: '' }));
+                        }}
+                        required
+                        className="user-select"
+                      >
+                        <option value="">Seleccionar tipo...</option>
+                        {capexTypes.map(t => (
+                          <option key={t.id} value={t.id}>{t.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {(() => {
+                      const sel = capexTypes.find(t => t.id === parseInt(newProject.id_tipo_capex, 10));
+                      return sel?.Subtipos?.length > 0 ? (
+                        <div>
+                          <label className="form-label">Subtipo CAPEX *</label>
+                          <select
+                            name="id_subtipo_capex"
+                            value={newProject.id_subtipo_capex}
+                            onChange={handleInputChange}
+                            required
+                            className="user-select"
+                          >
+                            <option value="">Seleccionar subtipo...</option>
+                            {sel.Subtipos.map(s => (
+                              <option key={s.id} value={s.id}>{s.nombre}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 )}
               </div>

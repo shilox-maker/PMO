@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams, Navigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { msalInstance } from './config/msal';
 import Dashboard from './pages/Dashboard';
 import GovernanceDashboard from './pages/GovernanceDashboard';
 import ProjectDetail from './pages/ProjectDetail';
@@ -10,6 +11,7 @@ import Vendor360 from './pages/Vendor360';
 import VendorDirectory from './pages/VendorDirectory';
 import AdminPanel from './pages/AdminPanel';
 import KpisPmo from './pages/KpisPmo';
+import PortfolioReport from './pages/PortfolioReport';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
   Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info
@@ -117,7 +119,7 @@ function ChangePasswordModal({ isOpen, onClose }) {
 }
 
 function LoginScreen() {
-  const { login, theme, toggleTheme } = useAuth();
+  const { login, loginAzure, theme, toggleTheme } = useAuth();
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -135,7 +137,26 @@ function LoginScreen() {
   };
 
   const handleAzureLogin = () => {
-    alert('Funcionalidad no implementada');
+    setError('');
+    setLoading(true);
+    if (import.meta.env.VITE_AZURE_MOCK === 'true') {
+      loginAzure('mock-token-rmoreno')
+        .catch(err => {
+          setError(err.message);
+          setLoading(false);
+        });
+    } else {
+      msalInstance.loginPopup({
+        scopes: ['user.read']
+      })
+      .then(response => {
+        return loginAzure(response.idToken);
+      })
+      .catch(err => {
+        setError(err.message || 'Error en la autenticación de Azure AD.');
+        setLoading(false);
+      });
+    }
   };
 
   return (
@@ -392,6 +413,14 @@ function NavigationRail() {
           <Calendar className="nav-link-icon" />
           <span>Timeline</span>
         </a>
+
+        <a
+          className={`nav-link ${isActive('/portfolios/report') ? 'active' : ''}`}
+          onClick={() => navigate('/portfolios/report')}
+        >
+          <Briefcase className="nav-link-icon" />
+          <span>Control Presupuestario</span>
+        </a>
         <hr />
         <a
           className={`nav-link ${isActive('/proveedores') || isActive('/proveedor/') ? 'active' : ''}`}
@@ -601,6 +630,7 @@ function MainAppContent() {
     if (location.pathname.startsWith('/governance')) return 'Control Ejecutivo de Cartera';
     if (location.pathname.startsWith('/kpis-pmo')) return 'KPIs PMO (Cuadro de Mando Integrado)';
     if (location.pathname.startsWith('/timeline')) return 'Timeline de Portfolio';
+    if (location.pathname.startsWith('/portfolios/report')) return 'Control Presupuestario de Portfolios';
     if (location.pathname === '/proveedores') return 'Socios Tecnológicos (Directorio)';
     if (location.pathname.startsWith('/proyecto/')) return 'Detalle de Proyecto';
     if (location.pathname.startsWith('/proveedor/')) return 'Vista 360º de Partner';
@@ -657,6 +687,8 @@ function MainAppContent() {
             } />
             
             <Route path="/lecciones" element={<GeneralLessonsPage />} />
+            
+            <Route path="/portfolios/report" element={<PortfolioReport />} />
             
             <Route path="/admin" element={<AdminPanel />} />
           </Routes>

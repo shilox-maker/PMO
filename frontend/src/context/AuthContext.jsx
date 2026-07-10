@@ -91,6 +91,27 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const loginAzure = async (azureToken) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/login/azure`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ token: azureToken })
+    });
+    
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Error al iniciar sesión con Azure AD.');
+    }
+    
+    localStorage.setItem('pm_token', data.token);
+    localStorage.setItem('pm_user', JSON.stringify(data.user));
+    setToken(data.token);
+    setCurrentPm(data.user);
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem('pm_token');
     localStorage.removeItem('pm_user');
@@ -115,6 +136,7 @@ export const AuthProvider = ({ children }) => {
       theme,
       toggleTheme,
       login,
+      loginAzure,
       logout,
       refreshUsers: fetchActiveUsers
     }}>

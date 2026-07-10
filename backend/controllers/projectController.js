@@ -3,11 +3,11 @@ const { Op } = require('sequelize');
 const { 
   Proyectos, Usuarios, Proveedores, Sedes, ContactosProveedor,
   ProyectoContactos, Tareas, EstadosProyecto, CambiosAlcance, Facturas, ComentariosProyecto,
-  Incidencias, Riesgos, LeccionesAprendidas, Portfolios, Tags
+  Incidencias, Riesgos, LeccionesAprendidas, Portfolios, Tags, TiposCapex, SubtiposCapex
 } = require('../models/index');
 const { getProjectCalculations } = require('../models/automations');
 const { 
-  sanitizeHTML, sanitizeExcelValue, isValidISODate, generateNextId 
+  sanitizeHTML, sanitizeExcelValue, isValidISODate, generateNextId, parseToISODate
 } = require('../utils/helpers');
 const { asyncHandler } = require('../middlewares/errorHandler');
 
@@ -64,6 +64,8 @@ const getProjects = asyncHandler(async (req, res) => {
       { model: ContactosProveedor, as: 'Sponsor', attributes: ['nombre', 'apellidos'] },
       { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre'] },
       { model: Tags, as: 'Tags', through: { attributes: [] } },
+      { model: TiposCapex, as: 'TipoCapex', attributes: ['id', 'nombre'] },
+      { model: SubtiposCapex, as: 'SubtipoCapex', attributes: ['id', 'nombre'] },
       { 
         model: EstadosProyecto, 
         as: 'Estado', 
@@ -113,29 +115,31 @@ const getProjectDetail = asyncHandler(async (req, res) => {
       { model: ContactosProveedor, as: 'Sponsor', attributes: ['id_contacto', 'nombre', 'apellidos', 'email'] },
       { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre', 'descripcion'] },
       { model: Tags, as: 'Tags', through: { attributes: [] } },
+      { model: TiposCapex, as: 'TipoCapex', attributes: ['id', 'nombre'] },
+      { model: SubtiposCapex, as: 'SubtipoCapex', attributes: ['id', 'nombre'] },
       { 
         model: ContactosProveedor, 
         as: 'InvolvedContacts', 
         through: { attributes: ['rol', 'raci'] },
-        include: [{ model: Proveedores, attributes: ['nombre_razon_social'] }]
+        include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }]
       },
       { 
         model: ContactosProveedor, 
         as: 'ComSemanalContactos', 
         through: { attributes: [] },
-        include: [{ model: Proveedores, attributes: ['nombre_razon_social'] }]
+        include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }]
       },
       { 
         model: ContactosProveedor, 
         as: 'ComMensualContactos', 
         through: { attributes: [] },
-        include: [{ model: Proveedores, attributes: ['nombre_razon_social'] }]
+        include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }]
       },
       { 
         model: ContactosProveedor, 
         as: 'ComSteerCoContactos', 
         through: { attributes: [] },
-        include: [{ model: Proveedores, attributes: ['nombre_razon_social'] }]
+        include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }]
       },
       { model: Incidencias, order: [['fecha_apertura', 'DESC']] },
       { model: Riesgos, order: [['fecha_proxima_revision', 'ASC']] },
@@ -185,15 +189,37 @@ const createProject = asyncHandler(async (req, res) => {
   if (data.es_capex && (!data.codigo_capex || data.codigo_capex.trim() === '')) {
     return res.status(400).json({ error: 'El código CAPEX es obligatorio para proyectos CAPEX.' });
   }
+  if (data.es_capex && !data.id_tipo_capex) {
+    return res.status(400).json({ error: 'El tipo de CAPEX es obligatorio para proyectos CAPEX.' });
+  }
+  if (data.es_capex && data.id_tipo_capex) {
+    const tipo = await TiposCapex.findByPk(data.id_tipo_capex, {
+      include: [{ model: SubtiposCapex, as: 'Subtipos' }]
+    });
+    if (tipo && tipo.Subtipos.length > 0 && !data.id_subtipo_capex) {
+      return res.status(400).json({ error: 'El subtipo de CAPEX es obligatorio para el tipo seleccionado.' });
+    }
+  }
+  if (!data.es_capex) {
+    data.id_tipo_capex = null;
+    data.id_subtipo_capex = null;
+  }
 
   const dateFields = [
     'fecha_peticion', 'fecha_alcance_definido', 'fecha_aprobacion', 
     'fecha_planificacion', 'fecha_kickoff', 'fecha_go_live', 'fecha_cierre'
   ];
   for (const field of dateFields) {
-    if (data[field] && data[field].trim() !== '') {
-      if (!isValidISODate(data[field])) {
-        return res.status(400).json({ error: `La fecha ${field} no cumple con el formato ISO 8601 (YYYY-MM-DD).` });
+    if (data[field] !== undefined) {
+      if (typeof data[field] === 'string' && data[field].trim() !== '') {
+        data[field] = parseToISODate(data[field].trim());
+      }
+      if (data[field] === '' || data[field] === null) {
+        data[field] = null;
+      } else {
+        if (!isValidISODate(data[field])) {
+          return res.status(400).json({ error: `La fecha ${field} no cumple con el formato ISO 8601 (YYYY-MM-DD).` });
+        }
       }
     }
   }
@@ -250,15 +276,37 @@ const updateProject = asyncHandler(async (req, res) => {
   if (data.es_capex && (!data.codigo_capex || data.codigo_capex.trim() === '')) {
     return res.status(400).json({ error: 'El código CAPEX es obligatorio para proyectos CAPEX.' });
   }
+  if (data.es_capex && !data.id_tipo_capex) {
+    return res.status(400).json({ error: 'El tipo de CAPEX es obligatorio para proyectos CAPEX.' });
+  }
+  if (data.es_capex && data.id_tipo_capex) {
+    const tipo = await TiposCapex.findByPk(data.id_tipo_capex, {
+      include: [{ model: SubtiposCapex, as: 'Subtipos' }]
+    });
+    if (tipo && tipo.Subtipos.length > 0 && !data.id_subtipo_capex) {
+      return res.status(400).json({ error: 'El subtipo de CAPEX es obligatorio para el tipo seleccionado.' });
+    }
+  }
+  if (!data.es_capex) {
+    data.id_tipo_capex = null;
+    data.id_subtipo_capex = null;
+  }
 
   const dateFields = [
     'fecha_peticion', 'fecha_alcance_definido', 'fecha_aprobacion', 
     'fecha_planificacion', 'fecha_kickoff', 'fecha_go_live', 'fecha_cierre'
   ];
   for (const field of dateFields) {
-    if (data[field] && data[field].trim() !== '') {
-      if (!isValidISODate(data[field])) {
-        return res.status(400).json({ error: `La fecha ${field} no cumple con el formato ISO 8601 (YYYY-MM-DD).` });
+    if (data[field] !== undefined) {
+      if (typeof data[field] === 'string' && data[field].trim() !== '') {
+        data[field] = parseToISODate(data[field].trim());
+      }
+      if (data[field] === '' || data[field] === null) {
+        data[field] = null;
+      } else {
+        if (!isValidISODate(data[field])) {
+          return res.status(400).json({ error: `La fecha ${field} no cumple con el formato ISO 8601 (YYYY-MM-DD).` });
+        }
       }
     }
   }
@@ -279,7 +327,7 @@ const updateProject = asyncHandler(async (req, res) => {
   const todayStr = new Date().toISOString().split('T')[0];
   if (newStatusName === 'Kickoff') {
     const currentKickoff = data.fecha_kickoff !== undefined ? data.fecha_kickoff : project.fecha_kickoff;
-    if (!currentKickoff || currentKickoff.trim() === '') {
+    if (!currentKickoff || (typeof currentKickoff === 'string' && currentKickoff.trim() === '')) {
       data.fecha_kickoff = todayStr;
       await ComentariosProyecto.create({
         id_proyecto,
@@ -291,7 +339,7 @@ const updateProject = asyncHandler(async (req, res) => {
   }
   if (newStatusName === 'Go Live') {
     const currentGoLive = data.fecha_go_live !== undefined ? data.fecha_go_live : project.fecha_go_live;
-    if (!currentGoLive || currentGoLive.trim() === '') {
+    if (!currentGoLive || (typeof currentGoLive === 'string' && currentGoLive.trim() === '')) {
       data.fecha_go_live = todayStr;
       await ComentariosProyecto.create({
         id_proyecto,

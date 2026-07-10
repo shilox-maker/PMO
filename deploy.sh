@@ -13,7 +13,7 @@ echo "=================================================="
 echo "🚀 Iniciando despliegue automatizado..."
 echo "=================================================="
 
-# 1. Obtener los últimos cambios de GitHub de forma forzosa (Evita conflictos locales)
+# 1. Obtener los últimos cambios de Azure DevOps de forma forzosa (Evita conflictos locales)
 echo "📥 [1/7] Obteniendo últimos cambios de la rama 'main'..."
 git stash || true
 git fetch origin main

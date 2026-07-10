@@ -5,7 +5,7 @@
 
 $ErrorActionPreference = "Stop"
 $APPS_ROOT = "C:\Apps\PMO"
-$REPO_URL = "https://github.com/TU_USUARIO/PMO.git"  # ← CAMBIAR
+$REPO_URL = "https://dev.azure.com/ORGANIZACION/PROYECTO/_git/PMO.git"  # ← CAMBIAR (Azure DevOps)
 
 Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host "  Setup Inicial PMO - Windows Server 2022" -ForegroundColor Cyan

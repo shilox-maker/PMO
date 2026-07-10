@@ -9,17 +9,54 @@ async function hashPassword(password) {
 
 function isValidISODate(dateStr) {
   if (typeof dateStr !== 'string') return false;
-  const regex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!regex.test(dateStr)) return false;
   
-  const parts = dateStr.split('-');
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10);
-  const day = parseInt(parts[2], 10);
+  // Formato ISO: YYYY-MM-DD
+  const isoRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (isoRegex.test(dateStr)) {
+    const parts = dateStr.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+    if (month < 1 || month > 12) return false;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    return day >= 1 && day <= daysInMonth;
+  }
+
+  // Formato: DD/MM/YYYY o DD-MM-YYYY
+  const alternativeRegex = /^(\d{2})[/-](\d{2})[/-](\d{4})$/;
+  const match = dateStr.match(alternativeRegex);
+  if (match) {
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+    if (month < 1 || month > 12) return false;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    return day >= 1 && day <= daysInMonth;
+  }
+
+  return false;
+}
+
+function parseToISODate(dateStr) {
+  if (!dateStr || typeof dateStr !== 'string') return null;
   
-  if (month < 1 || month > 12) return false;
-  const daysInMonth = new Date(year, month, 0).getDate();
-  return day >= 1 && day <= daysInMonth;
+  // Si contiene hora (T), nos quedamos con la parte de la fecha
+  if (dateStr.includes('T')) {
+    dateStr = dateStr.split('T')[0];
+  }
+  
+  const isoRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (isoRegex.test(dateStr)) return dateStr;
+
+  const alternativeRegex = /^(\d{2})[/-](\d{2})[/-](\d{4})$/;
+  const match = dateStr.match(alternativeRegex);
+  if (match) {
+    const day = match[1];
+    const month = match[2];
+    const year = match[3];
+    return `${year}-${month}-${day}`;
+  }
+  return dateStr;
 }
 
 function sanitizeHTML(html) {
@@ -105,6 +142,7 @@ const handleErr = (res, error, status = 400) => {
 module.exports = {
   hashPassword,
   isValidISODate,
+  parseToISODate,
   sanitizeHTML,
   sanitizeExcelValue,
   generateNextId,

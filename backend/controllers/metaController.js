@@ -4,7 +4,7 @@ const { Op } = require('sequelize');
 const { 
   Sedes, ContactosProveedor, Proveedores, Usuarios, EstadosProyecto, 
   Proyectos, Facturas, CambiosAlcance, Riesgos, Incidencias, Tareas, ComentariosProyecto,
-  Portfolios, Tags
+  Portfolios, Tags, TiposCapex, SubtiposCapex, PortfolioBudgets
 } = require('../models/index');
 const { getProjectCalculations } = require('../models/automations');
 const { asyncHandler } = require('../middlewares/errorHandler');
@@ -16,7 +16,7 @@ const getSedes = asyncHandler(async (req, res) => {
 
 const getContactos = asyncHandler(async (req, res) => {
   const kus = await ContactosProveedor.findAll({
-    include: [{ model: Proveedores, attributes: ['nombre_razon_social'] }],
+    include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }],
     order: [['nombre', 'ASC']]
   });
   res.json(kus);
@@ -279,6 +279,167 @@ const createTag = asyncHandler(async (req, res) => {
   res.status(201).json(tag);
 });
 
+const getCapexTypes = asyncHandler(async (req, res) => {
+  const tipos = await TiposCapex.findAll({
+    include: [{ model: SubtiposCapex, as: 'Subtipos' }],
+    order: [['orden', 'ASC'], [{ model: SubtiposCapex, as: 'Subtipos' }, 'orden', 'ASC']]
+  });
+  res.json(tipos);
+});
+
+const getPortfolioBudgets = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const budgets = await PortfolioBudgets.findAll({
+    where: { portfolio_id: id },
+    include: [
+      { model: TiposCapex, as: 'TipoCapex', attributes: ['id', 'nombre'] },
+      { model: SubtiposCapex, as: 'SubtipoCapex', attributes: ['id', 'nombre'] }
+    ]
+  });
+  res.json(budgets);
+});
+
+const getPortfolioBudgetReport = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const portfolio = await Portfolios.findByPk(id);
+  if (!portfolio) {
+    return res.status(404).json({ error: 'Portfolio no encontrado.' });
+  }
+
+  // Get budget lines configured for this portfolio
+  const budgets = await PortfolioBudgets.findAll({
+    where: { portfolio_id: id },
+    include: [
+      { model: TiposCapex, as: 'TipoCapex', attributes: ['id', 'nombre'] },
+      { model: SubtiposCapex, as: 'SubtipoCapex', attributes: ['id', 'nombre'] }
+    ]
+  });
+
+  // Get all projects associated with this portfolio
+  const projects = await Proyectos.findAll({
+    where: { portfolio_id: id },
+    include: [
+      { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
+      { model: EstadosProyecto, as: 'Estado', attributes: ['nombre_estado'] },
+      { model: Facturas, attributes: ['importe'] }
+    ]
+  });
+
+  // Match projects with budgets
+  let matchedProjectIds = new Set();
+  const secciones = budgets.map(b => {
+    // Filter projects matching this budget criteria
+    const projectsSec = projects.filter(p => {
+      const matchTipo = p.id_tipo_capex === b.id_tipo_capex;
+      let matchSubtipo = false;
+      if (b.id_subtipo_capex === null) {
+        matchSubtipo = p.id_subtipo_capex === null;
+      } else {
+        matchSubtipo = p.id_subtipo_capex === b.id_subtipo_capex;
+      }
+
+      const isMatch = matchTipo && matchSubtipo;
+      if (isMatch) {
+        matchedProjectIds.add(p.id_proyecto);
+      }
+      return isMatch;
+    });
+
+    const totalReservadoSec = projectsSec.reduce((acc, p) => acc + parseFloat(p.budget_inicial || 0), 0);
+    const totalEjecutadoSec = projectsSec.reduce((acc, p) => {
+      const ejecutadoProj = (p.Facturas || []).reduce((sum, f) => sum + parseFloat(f.importe || 0), 0);
+      return acc + ejecutadoProj;
+    }, 0);
+
+    return {
+      id_presupuesto: b.id,
+      tipo: b.TipoCapex ? b.TipoCapex.nombre : 'Desconocido',
+      id_tipo_capex: b.id_tipo_capex,
+      subtipo: b.SubtipoCapex ? b.SubtipoCapex.nombre : null,
+      id_subtipo_capex: b.id_subtipo_capex,
+      aprobado: parseFloat(b.importe),
+      reservado: totalReservadoSec,
+      ejecutado: totalEjecutadoSec,
+      disponible: parseFloat(b.importe) - totalReservadoSec, // mantener para compatibilidad
+      disponible_compromiso: parseFloat(b.importe) - totalReservadoSec,
+      disponible_ejecutado: parseFloat(b.importe) - totalEjecutadoSec,
+      proyectos: projectsSec.map(p => {
+        const ejecutadoProj = (p.Facturas || []).reduce((sum, f) => sum + parseFloat(f.importe || 0), 0);
+        return {
+          id_proyecto: p.id_proyecto,
+          nombre_proyecto: p.nombre_proyecto,
+          budget_inicial: parseFloat(p.budget_inicial || 0),
+          ejecutado: ejecutadoProj,
+          indicador_rag: p.indicador_rag,
+          estado: p.Estado ? p.Estado.nombre_estado : null,
+          pm: p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin Asignar'
+        };
+      })
+    };
+  });
+
+  // Collect unmatched projects (projects in portfolio but no matching budget line)
+  const unmatchedProjects = projects.filter(p => !matchedProjectIds.has(p.id_proyecto));
+  if (unmatchedProjects.length > 0) {
+    const totalReservadoUnmatched = unmatchedProjects.reduce((acc, p) => acc + parseFloat(p.budget_inicial || 0), 0);
+    const totalEjecutadoUnmatched = unmatchedProjects.reduce((acc, p) => {
+      const ejecutadoProj = (p.Facturas || []).reduce((sum, f) => sum + parseFloat(f.importe || 0), 0);
+      return acc + ejecutadoProj;
+    }, 0);
+
+    secciones.push({
+      id_presupuesto: 'sin_presupuesto',
+      tipo: 'Otros / Sin Presupuesto Asignado',
+      id_tipo_capex: null,
+      subtipo: null,
+      id_subtipo_capex: null,
+      aprobado: 0.00,
+      reservado: totalReservadoUnmatched,
+      ejecutado: totalEjecutadoUnmatched,
+      disponible: -totalReservadoUnmatched, // mantener para compatibilidad
+      disponible_compromiso: -totalReservadoUnmatched,
+      disponible_ejecutado: -totalEjecutadoUnmatched,
+      proyectos: unmatchedProjects.map(p => {
+        const ejecutadoProj = (p.Facturas || []).reduce((sum, f) => sum + parseFloat(f.importe || 0), 0);
+        return {
+          id_proyecto: p.id_proyecto,
+          nombre_proyecto: p.nombre_proyecto,
+          budget_inicial: parseFloat(p.budget_inicial || 0),
+          ejecutado: ejecutadoProj,
+          indicador_rag: p.indicador_rag,
+          estado: p.Estado ? p.Estado.nombre_estado : null,
+          pm: p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin Asignar'
+        };
+      })
+    });
+  }
+
+  // Calculate overall summary
+  const aprobado_total = budgets.reduce((acc, b) => acc + parseFloat(b.importe), 0);
+  const reservado_total = projects.reduce((acc, p) => acc + parseFloat(p.budget_inicial || 0), 0);
+  const ejecutado_total = projects.reduce((acc, p) => {
+    const ejecutadoProj = (p.Facturas || []).reduce((sum, f) => sum + parseFloat(f.importe || 0), 0);
+    return acc + ejecutadoProj;
+  }, 0);
+
+  res.json({
+    portfolio: {
+      id: portfolio.id,
+      nombre: portfolio.nombre,
+      descripcion: portfolio.descripcion
+    },
+    secciones,
+    resumen: {
+      aprobado_total,
+      reservado_total,
+      ejecutado_total,
+      disponible_total: aprobado_total - reservado_total, // mantener para compatibilidad
+      disponible_compromiso_total: aprobado_total - reservado_total,
+      disponible_ejecutado_total: aprobado_total - ejecutado_total
+    }
+  });
+});
+
 module.exports = {
   getSedes,
   getContactos,
@@ -289,5 +450,8 @@ module.exports = {
   getTimeline,
   getPortfolios,
   getTags,
-  createTag
+  createTag,
+  getCapexTypes,
+  getPortfolioBudgets,
+  getPortfolioBudgetReport
 };

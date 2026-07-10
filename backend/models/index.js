@@ -121,6 +121,14 @@ const Usuarios = sequelize.define('Usuarios', {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: true
+  },
+  metodo_acceso: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'PASSWORD',
+    validate: {
+      isIn: [['PASSWORD', 'ENTRA_ID']]
+    }
   }
 }, {
   defaultScope: {
@@ -144,6 +152,10 @@ const EstadosProyecto = sequelize.define('Estados_Proyecto', {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true
+  },
+  descripcion: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
   pasos: {
     type: DataTypes.TEXT,
@@ -196,6 +208,106 @@ const Tags = sequelize.define('Tags', {
     allowNull: false,
     unique: true
   }
+});
+
+// 4.8 TiposCapex Model (Catálogo de tipos CAPEX administrables)
+const TiposCapex = sequelize.define('Tipos_Capex', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  nombre: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  orden: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  }
+}, { timestamps: false });
+
+// 4.9 SubtiposCapex Model (Subtipos vinculados a un tipo CAPEX)
+const SubtiposCapex = sequelize.define('Subtipos_Capex', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  id_tipo_capex: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Tipos_Capex',
+      key: 'id'
+    },
+    onDelete: 'CASCADE'
+  },
+  nombre: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  orden: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  }
+}, {
+  timestamps: false,
+  indexes: [
+    { name: 'idx_subtipos_capex_tipo', fields: ['id_tipo_capex'] }
+  ]
+});
+
+// 4.95 PortfolioBudgets Model (Presupuestos aprobados por tipo/subtipo capex en un portfolio)
+const PortfolioBudgets = sequelize.define('Portfolio_Budgets', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  portfolio_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Portfolios',
+      key: 'id'
+    },
+    onDelete: 'CASCADE'
+  },
+  id_tipo_capex: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Tipos_Capex',
+      key: 'id'
+    },
+    onDelete: 'CASCADE'
+  },
+  id_subtipo_capex: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Subtipos_Capex',
+      key: 'id'
+    },
+    onDelete: 'CASCADE'
+  },
+  importe: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false,
+    defaultValue: 0.00
+  }
+}, {
+  timestamps: false,
+  tableName: 'Portfolio_Budgets',
+  indexes: [
+    { name: 'idx_portfolio_budgets_portfolio', fields: ['portfolio_id'] },
+    { name: 'idx_portfolio_budgets_tipo', fields: ['id_tipo_capex'] },
+    { name: 'idx_portfolio_budgets_subtipo', fields: ['id_subtipo_capex'] }
+  ]
 });
 
 // 5. [Eliminado] KeyUsers model fue reemplazado por ContactosProveedor
@@ -290,6 +402,22 @@ const Proyectos = sequelize.define('Proyectos', {
   codigo_capex: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  id_tipo_capex: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Tipos_Capex',
+      key: 'id'
+    }
+  },
+  id_subtipo_capex: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Subtipos_Capex',
+      key: 'id'
+    }
   },
   es_estrategico: {
     type: DataTypes.BOOLEAN,
@@ -1109,6 +1237,26 @@ Proyectos.belongsTo(Portfolios, { foreignKey: 'portfolio_id', as: 'Portfolio' })
 Proyectos.belongsToMany(Tags, { through: ProyectoTags, foreignKey: 'proyecto_id', otherKey: 'tag_id', as: 'Tags' });
 Tags.belongsToMany(Proyectos, { through: ProyectoTags, foreignKey: 'tag_id', otherKey: 'proyecto_id', as: 'Proyectos' });
 
+// TiposCapex / SubtiposCapex associations
+TiposCapex.hasMany(SubtiposCapex, { foreignKey: 'id_tipo_capex', as: 'Subtipos', onDelete: 'CASCADE' });
+SubtiposCapex.belongsTo(TiposCapex, { foreignKey: 'id_tipo_capex', as: 'Tipo' });
+
+TiposCapex.hasMany(Proyectos, { foreignKey: 'id_tipo_capex' });
+Proyectos.belongsTo(TiposCapex, { foreignKey: 'id_tipo_capex', as: 'TipoCapex' });
+
+SubtiposCapex.hasMany(Proyectos, { foreignKey: 'id_subtipo_capex' });
+Proyectos.belongsTo(SubtiposCapex, { foreignKey: 'id_subtipo_capex', as: 'SubtipoCapex' });
+
+// PortfolioBudgets associations
+Portfolios.hasMany(PortfolioBudgets, { foreignKey: 'portfolio_id', as: 'Presupuestos', onDelete: 'CASCADE' });
+PortfolioBudgets.belongsTo(Portfolios, { foreignKey: 'portfolio_id', as: 'Portfolio' });
+
+TiposCapex.hasMany(PortfolioBudgets, { foreignKey: 'id_tipo_capex', onDelete: 'CASCADE' });
+PortfolioBudgets.belongsTo(TiposCapex, { foreignKey: 'id_tipo_capex', as: 'TipoCapex' });
+
+SubtiposCapex.hasMany(PortfolioBudgets, { foreignKey: 'id_subtipo_capex', onDelete: 'CASCADE' });
+PortfolioBudgets.belongsTo(SubtiposCapex, { foreignKey: 'id_subtipo_capex', as: 'SubtipoCapex' });
+
 // Audit associations
 [Proyectos, Facturas, Riesgos, Incidencias, CambiosAlcance].forEach(Model => {
   Model.belongsTo(Usuarios, { foreignKey: 'createdBy', as: 'Creator' });
@@ -1137,5 +1285,8 @@ module.exports = {
   ComentariosProyecto,
   Portfolios,
   Tags,
-  ProyectoTags
+  ProyectoTags,
+  TiposCapex,
+  SubtiposCapex,
+  PortfolioBudgets
 };

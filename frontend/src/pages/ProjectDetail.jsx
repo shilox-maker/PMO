@@ -48,6 +48,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [pms, setPms] = useState([]);
   const [workflowStates, setWorkflowStates] = useState([]);
   const [portfoliosList, setPortfoliosList] = useState([]);
+  const [capexTypes, setCapexTypes] = useState([]);
 
   // Comments states
   const [comments, setComments] = useState([]);
@@ -113,19 +114,25 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     );
   };
 
-  const fetchProjectData = () => {
-    setLoading(true);
+  const fetchProjectData = (showLoadingState = false) => {
+    if (showLoadingState) {
+      setLoading(true);
+    }
     fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
       headers: getAuthHeaders()
     })
       .then(res => res.json())
       .then(data => {
         setProject(data);
-        setLoading(false);
+        if (showLoadingState) {
+          setLoading(false);
+        }
       })
       .catch(err => {
         console.error('Error fetching project detail:', err);
-        setLoading(false);
+        if (showLoadingState) {
+          setLoading(false);
+        }
       });
   };
 
@@ -152,11 +159,12 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPms(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowStates(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/capex-types`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setCapexTypes(data));
   };
 
   useEffect(() => {
     if (projectId) {
-      fetchProjectData();
+      fetchProjectData(true);
       fetchMetadata();
       fetchComments();
     }
@@ -219,8 +227,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       body: JSON.stringify(lifecycleForm)
     })
       .then(async (res) => {
-        if (!res.ok) throw new Error('Error al guardar hitos del ciclo de vida');
-        return res.json();
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al guardar hitos del ciclo de vida');
+        return data;
       })
       .then(() => {
         setIsEditingLifecycle(false);
@@ -461,7 +470,10 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="project-id-badge">{project.id_proyecto}</span>
               {project.es_capex ? (
-                <span className="badge badge-blue">CAPEX: {project.codigo_capex || 'Pendiente'}</span>
+                <span className="badge badge-blue">
+                  CAPEX: {project.codigo_capex || 'Pendiente'}
+                  {project.TipoCapex && ` (${project.TipoCapex.nombre}${project.SubtipoCapex ? ` - ${project.SubtipoCapex.nombre}` : ''})`}
+                </span>
               ) : (
                 <span className="badge badge-orange">OPEX</span>
               )}
@@ -652,7 +664,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         isOpen={showEditProjectModal} onClose={() => setShowEditProjectModal(false)}
         project={project} getAuthHeaders={getAuthHeaders} onSuccess={fetchProjectData}
         sedes={sedes} vendors={vendors} contactosList={contactosList} pms={pms} workflowStates={workflowStates}
-        portfolios={portfoliosList}
+        portfolios={portfoliosList} capexTypes={capexTypes}
       />
 
       <InvoiceModal 

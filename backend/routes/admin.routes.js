@@ -29,4 +29,18 @@ router.post('/admin/portfolios', adminController.createPortfolio);
 router.put('/admin/portfolios/:id', adminController.updatePortfolio);
 router.delete('/admin/portfolios/:id', adminController.deletePortfolio);
 
+// CAPEX Types admin
+router.get('/admin/capex-types', adminController.getTiposCapex);
+router.post('/admin/capex-types', adminController.createTipoCapex);
+router.put('/admin/capex-types/:id', adminController.updateTipoCapex);
+router.delete('/admin/capex-types/:id', adminController.deleteTipoCapex);
+router.post('/admin/capex-types/:id/subtypes', adminController.createSubtipoCapex);
+router.put('/admin/capex-subtypes/:id', adminController.updateSubtipoCapex);
+router.delete('/admin/capex-subtypes/:id', adminController.deleteSubtipoCapex);
+
+// Portfolio Budgets admin
+router.post('/admin/portfolios/:id/budgets', adminController.createPortfolioBudget);
+router.put('/admin/portfolio-budgets/:budgetId', adminController.updatePortfolioBudget);
+router.delete('/admin/portfolio-budgets/:budgetId', adminController.deletePortfolioBudget);
+
 module.exports = router;

@@ -18,6 +18,30 @@ export default function ProjectFichaTab({
 }) {
   const calc = project.calculations;
 
+  const sortedInvolvedContacts = React.useMemo(() => {
+    if (!project.InvolvedContacts) return [];
+    return [...project.InvolvedContacts].sort((a, b) => {
+      const compA = a.Proveedore || a.Proveedor;
+      const compB = b.Proveedore || b.Proveedor;
+      
+      const isDacsaA = compA?.es_grupo_dacsa === true;
+      const isDacsaB = compB?.es_grupo_dacsa === true;
+      
+      if (isDacsaA && !isDacsaB) return -1;
+      if (!isDacsaA && isDacsaB) return 1;
+      
+      const companyNameA = (compA?.nombre_razon_social || '').toLowerCase();
+      const companyNameB = (compB?.nombre_razon_social || '').toLowerCase();
+      if (companyNameA !== companyNameB) {
+        return companyNameA.localeCompare(companyNameB);
+      }
+      
+      const nameA = `${a.nombre} ${a.apellidos}`.toLowerCase();
+      const nameB = `${b.nombre} ${b.apellidos}`.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  }, [project.InvolvedContacts]);
+
   const formatDateTime = (isoString) => {
     if (!isoString) return '';
     const date = new Date(isoString);
@@ -155,7 +179,7 @@ export default function ProjectFichaTab({
               </div>
             </div>
 
-            {(!project.InvolvedContacts || project.InvolvedContacts.length === 0) ? (
+            {(!sortedInvolvedContacts || sortedInvolvedContacts.length === 0) ? (
               <p style={{ color: 'var(--md-sys-color-outline)', fontStyle: 'italic', textAlign: 'center', padding: '24px 0' }}>
                 No hay participantes RACI asignados a este proyecto.
               </p>
@@ -171,7 +195,7 @@ export default function ProjectFichaTab({
                     </tr>
                   </thead>
                   <tbody>
-                    {project.InvolvedContacts.map(ku => (
+                    {sortedInvolvedContacts.map(ku => (
                       <tr key={ku.id_contacto}>
                         <td style={{ fontWeight: 600 }}>{ku.nombre} {ku.apellidos}</td>
                         <td>{ku.Proyecto_Contactos?.rol}</td>

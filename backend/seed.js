@@ -2,7 +2,8 @@ const {
   sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios,
   Proyectos, Incidencias, Riesgos, LeccionesAprendidas, Facturas,
   CambiosAlcance, Tareas, ProyectoContactosProveedor, ProyectoComSemanalContacto, 
-  ProyectoComMensualContacto, ProyectoComSteerCoContacto, EstadosProyecto, ComentariosProyecto 
+  ProyectoComMensualContacto, ProyectoComSteerCoContacto, EstadosProyecto, ComentariosProyecto,
+  Portfolios, TiposCapex, SubtiposCapex, PortfolioBudgets
 } = require('./models/index');
 
 const crypto = require('crypto');
@@ -36,7 +37,7 @@ async function seed() {
     // 2. PROVEEDORES
     // ==========================================
     const proveedores = await Proveedores.bulkCreate([
-      { nombre_razon_social: 'Dacsa', telefono_general: '910000000', email_general: 'contacto@dacsa.com' },
+      { nombre_razon_social: 'Dacsa', telefono_general: '910000000', email_general: 'contacto@dacsa.com', es_grupo_dacsa: true },
       { nombre_razon_social: 'Sopra Steria', telefono_general: '960000001', email_general: 'info@soprasteria.com' },
       { nombre_razon_social: 'Indra Minsait', telefono_general: '960000002', email_general: 'info@minsait.com' },
       { nombre_razon_social: 'Accenture', telefono_general: '960000003', email_general: 'info@accenture.com' },
@@ -66,18 +67,19 @@ async function seed() {
     // 4. ESTADOS PROYECTO (16 estados)
     // ==========================================
     const statesData = [
-      { nombre_estado: 'Petición', icono: '📩', orden: 1, proyecto_cerrado: false },
-      { nombre_estado: 'Estudio de viabilidad', icono: '📋', orden: 2, proyecto_cerrado: false },
-      { nombre_estado: 'Buscar propuestas', icono: '🔍', orden: 3, proyecto_cerrado: false },
-      { nombre_estado: 'Tener aprobación', icono: '⏳', orden: 4, proyecto_cerrado: false },
-      { nombre_estado: 'Planificar', icono: '📅', orden: 5, proyecto_cerrado: false },
-      { nombre_estado: 'Kickoff', icono: '🚀', orden: 6, proyecto_cerrado: false },
-      { nombre_estado: 'Ejecución', icono: '🛠️', orden: 7, proyecto_cerrado: false },
-      { nombre_estado: 'Go Live', icono: '📦', orden: 8, proyecto_cerrado: false },
-      { nombre_estado: 'Estabilización', icono: '🛡️', orden: 9, proyecto_cerrado: false },
-      { nombre_estado: 'Cierre', icono: '🏁', orden: 10, proyecto_cerrado: true },
-      { nombre_estado: 'Descartado', icono: '🗑️', orden: 11, proyecto_cerrado: true },
-      { nombre_estado: 'Cancelado', icono: '❌', orden: 12, proyecto_cerrado: true }
+      { nombre_estado: 'Petición', icono: '📩', orden: 1, proyecto_cerrado: false, descripcion: 'Fase inicial en la que se registra la solicitud o idea de proyecto para su evaluación.' },
+      { nombre_estado: 'Estudio de viabilidad', icono: '📋', orden: 2, proyecto_cerrado: false, descripcion: 'Análisis detallado de los requisitos, costes, beneficios y viabilidad técnica del proyecto.' },
+      { nombre_estado: 'Buscar propuestas', icono: '🔍', orden: 3, proyecto_cerrado: false, descripcion: 'Fase de solicitud y recepción de ofertas o propuestas de proveedores y partners tecnológicos.' },
+      { nombre_estado: 'Tener aprobación', icono: '⏳', orden: 4, proyecto_cerrado: false, descripcion: 'Período de espera para la revisión y aprobación formal del proyecto por parte del comité de dirección o sponsor.' },
+      { nombre_estado: 'Planificar', icono: '📅', orden: 5, proyecto_cerrado: false, descripcion: 'Elaboración del cronograma detallado, asignación de recursos y definición de entregables del proyecto.' },
+      { nombre_estado: 'Kickoff', icono: '🚀', orden: 6, proyecto_cerrado: false, descripcion: 'Reunión de lanzamiento oficial del proyecto con todos los stakeholders y el equipo de trabajo.' },
+      { nombre_estado: 'Ejecución', icono: '🛠️', orden: 7, proyecto_cerrado: false, descripcion: 'Fase de desarrollo, construcción e implementación de las soluciones definidas en la planificación.' },
+      { nombre_estado: 'Pausado', icono: '⏸️', orden: 8, proyecto_cerrado: false, descripcion: 'El proyecto se encuentra temporalmente detenido por decisión de la dirección o causas externas.' },
+      { nombre_estado: 'Go Live', icono: '📦', orden: 9, proyecto_cerrado: false, descripcion: 'Puesta en producción de la solución técnica o despliegue final a los usuarios finales.' },
+      { nombre_estado: 'Estabilización', icono: '🛡️', orden: 10, proyecto_cerrado: false, descripcion: 'Período de soporte y resolución de incidencias iniciales tras la salida a producción.' },
+      { nombre_estado: 'Cierre', icono: '🏁', orden: 11, proyecto_cerrado: true, descripcion: 'Formalización de la entrega, evaluación de resultados y cierre administrativo del proyecto.' },
+      { nombre_estado: 'Descartado', icono: '🗑️', orden: 12, proyecto_cerrado: true, descripcion: 'Proyectos que tras el estudio de viabilidad o análisis inicial no se consideran viables o necesarios.' },
+      { nombre_estado: 'Cancelado', icono: '❌', orden: 13, proyecto_cerrado: true, descripcion: 'Proyectos iniciados que se interrumpen y finalizan definitivamente antes de su conclusión planificada.' }
     ];
     const seededStates = await EstadosProyecto.bulkCreate(statesData);
     const sm = {};
@@ -88,12 +90,12 @@ async function seed() {
     // 5. USUARIOS
     // ==========================================
     const users = await Usuarios.bulkCreate([
-      { nombre: 'Jaime',        apellidos: 'Martínez',  correo: 'jmartinez@dacsa.com',  password: hashPassword('123'),   perfil: 'PM',             activo: true },
-      { nombre: 'Marta',        apellidos: 'Sánchez',   correo: 'msanchez@dacsa.com',   password: hashPassword('123'),   perfil: 'PM',             activo: true },
-      { nombre: 'Carlos',       apellidos: 'Gómez',     correo: 'cgomez@dacsa.com',     password: hashPassword('123'),   perfil: 'PM',             activo: true },
-      { nombre: 'Lucía',        apellidos: 'Fernández', correo: 'lfernandez@dacsa.com', password: hashPassword('123'),   perfil: 'DIRECTOR',       activo: true },
-      { nombre: 'Administrador',apellidos: 'Sistema',   correo: 'admin@dacsa.com',      password: hashPassword('admin'), perfil: 'ADMINISTRADOR',  activo: true },
-      { nombre: 'Rafael',       apellidos: 'Moreno',    correo: 'rmoreno@dacsa.com',    password: hashPassword('123'),   perfil: 'PM',             activo: true }
+      { nombre: 'Jaime',        apellidos: 'Martínez',  correo: 'jmartinez@dacsa.com',  password: hashPassword('123'),   perfil: 'PM',             activo: true, metodo_acceso: 'PASSWORD' },
+      { nombre: 'Marta',        apellidos: 'Sánchez',   correo: 'msanchez@dacsa.com',   password: hashPassword('123'),   perfil: 'PM',             activo: true, metodo_acceso: 'PASSWORD' },
+      { nombre: 'Carlos',       apellidos: 'Gómez',     correo: 'cgomez@dacsa.com',     password: hashPassword('123'),   perfil: 'PM',             activo: true, metodo_acceso: 'PASSWORD' },
+      { nombre: 'Lucía',        apellidos: 'Fernández', correo: 'lfernandez@dacsa.com', password: hashPassword('123'),   perfil: 'DIRECTOR',       activo: true, metodo_acceso: 'PASSWORD' },
+      { nombre: 'Administrador',apellidos: 'Sistema',   correo: 'admin@dacsa.com',      password: hashPassword('admin'), perfil: 'ADMINISTRADOR',  activo: true, metodo_acceso: 'PASSWORD' },
+      { nombre: 'Rafael',       apellidos: 'Moreno',    correo: 'rmoreno@dacsa.com',    password: hashPassword('123'),   perfil: 'PM',             activo: true, metodo_acceso: 'ENTRA_ID' }
     ]);
     const [pmJaime, pmMarta, pmCarlos, dirLucia, adminSys, pmRafael] = users;
     console.log('Usuarios seeded.');
@@ -118,6 +120,42 @@ async function seed() {
     ]);
     const [kuRoberto, kuElena, kuDiego, kuPatricia, kuAlvaro, kuPedro, kuSofia, kuTomas, kuIvan, kuNuria, kuMarcos] = keyUsers;
     console.log('ContactosProveedor seeded.');
+
+    // ==========================================
+    // 6.5 PORTFOLIOS, TIPOS CAPEX Y PRESUPUESTOS
+    // ==========================================
+    const portfolios = await Portfolios.bulkCreate([
+      { nombre: 'Portfolio 2025', descripcion: 'Proyectos iniciados o planificados para la cartera del año 2025.' },
+      { nombre: 'Portfolio 2026', descripcion: 'Proyectos del plan operativo anual de la compañía para el año 2026.' }
+    ]);
+    const [port2025, port2026] = portfolios;
+    console.log('Portfolios seeded.');
+
+    const tCapex = await TiposCapex.bulkCreate([
+      { nombre: 'Growth', orden: 1 },
+      { nombre: 'Special', orden: 2 },
+      { nombre: 'Operational', orden: 3 }
+    ]);
+    const [tGrowth, tSpecial, tOperational] = tCapex;
+    console.log('Tipos CAPEX seeded.');
+
+    const stCapex = await SubtiposCapex.bulkCreate([
+      { id_tipo_capex: tSpecial.id, nombre: 'Dynamics', orden: 1 },
+      { id_tipo_capex: tSpecial.id, nombre: 'AI', orden: 2 },
+      { id_tipo_capex: tSpecial.id, nombre: 'Industry', orden: 3 }
+    ]);
+    const [stDynamics, stAI, stIndustry] = stCapex;
+    console.log('Subtipos CAPEX seeded.');
+
+    // Seed budgets for Portfolio 2025
+    await PortfolioBudgets.bulkCreate([
+      { portfolio_id: port2025.id, id_tipo_capex: tSpecial.id, id_subtipo_capex: stIndustry.id, importe: 500000.00 },
+      { portfolio_id: port2025.id, id_tipo_capex: tSpecial.id, id_subtipo_capex: stAI.id, importe: 250000.00 },
+      { portfolio_id: port2025.id, id_tipo_capex: tSpecial.id, id_subtipo_capex: stDynamics.id, importe: 450000.00 },
+      { portfolio_id: port2025.id, id_tipo_capex: tGrowth.id, id_subtipo_capex: null, importe: 245000.00 },
+      { portfolio_id: port2025.id, id_tipo_capex: tOperational.id, id_subtipo_capex: null, importe: 98000.00 }
+    ]);
+    console.log('PortfolioBudgets seeded.');
 
     // ==========================================
     // 7. PROYECTOS (15 proyectos)
@@ -289,6 +327,31 @@ async function seed() {
 
     const proyectos = [];
     for (const data of proyectosData) {
+      // 1. Assign portfolio dynamically based on start date
+      const anio = new Date(data.fecha_inicio).getFullYear();
+      if (anio === 2025) {
+        data.portfolio_id = port2025.id;
+      } else {
+        data.portfolio_id = port2026.id;
+      }
+
+      // 2. Assign CAPEX types and subtypes if it is capex
+      if (data.es_capex) {
+        const name = data.nombre_proyecto;
+        if (name.includes('ERP') || name.includes('HANA')) {
+          data.id_tipo_capex = tSpecial.id;
+          data.id_subtipo_capex = stDynamics.id;
+        } else if (name.includes('RFID') || name.includes('IoT') || name.includes('Almacén') || name.includes('Factory') || name.includes('CPD') || name.includes('Datos')) {
+          data.id_tipo_capex = tSpecial.id;
+          data.id_subtipo_capex = stIndustry.id;
+        } else if (name.includes('Analítica') || name.includes('BI') || name.includes('Data') || name.includes('Reporting')) {
+          data.id_tipo_capex = tSpecial.id;
+          data.id_subtipo_capex = stAI.id;
+        } else {
+          data.id_tipo_capex = tGrowth.id;
+        }
+      }
+
       const proj = await Proyectos.create(data);
       proyectos.push(proj);
     }

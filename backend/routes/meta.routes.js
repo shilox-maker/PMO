@@ -13,5 +13,10 @@ router.get('/timeline', metaController.getTimeline);
 router.get('/portfolios', metaController.getPortfolios);
 router.get('/tags', metaController.getTags);
 router.post('/tags', metaController.createTag);
+router.get('/capex-types', metaController.getCapexTypes);
+
+// Portfolio Budgets and Reports
+router.get('/portfolios/:id/budgets', metaController.getPortfolioBudgets);
+router.get('/portfolios/:id/budget-report', metaController.getPortfolioBudgetReport);
 
 module.exports = router;

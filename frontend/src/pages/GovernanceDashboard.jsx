@@ -780,7 +780,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
                             {p.nombre_proyecto}
                           </span>
                           <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', marginTop: 2 }}>
-                            {p.estado_proyecto} {p.es_capex ? `• CAPEX (${p.codigo_capex})` : '• OPEX'}
+                            {p.estado_proyecto} {p.es_capex ? `• CAPEX (${p.codigo_capex}${p.TipoCapex ? ` - ${p.TipoCapex.nombre}${p.SubtipoCapex ? ` - ${p.SubtipoCapex.nombre}` : ''}` : ''})` : '• OPEX'}
                           </div>
                         </td>}
 

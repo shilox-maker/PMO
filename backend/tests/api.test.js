@@ -6,6 +6,9 @@ const bcrypt = require('bcryptjs');
 let token = '';
 
 beforeAll(async () => {
+  process.env.AZURE_MOCK = 'true';
+  process.env.JWT_SECRET = 'test_secret';
+  
   // Sync memory DB
   await sequelize.sync({ force: true });
 
@@ -17,7 +20,19 @@ beforeAll(async () => {
     correo: 'test@dacsa.com',
     password: hash,
     perfil: 'ADMINISTRADOR',
-    activo: true
+    activo: true,
+    metodo_acceso: 'PASSWORD'
+  });
+
+  // Create a test user for Entra ID
+  await Usuarios.create({
+    nombre: 'Azure',
+    apellidos: 'Test',
+    correo: 'azure-test@dacsa.com',
+    password: hash,
+    perfil: 'PM',
+    activo: true,
+    metodo_acceso: 'ENTRA_ID'
   });
 
   // Create required foreign entities
@@ -175,5 +190,43 @@ describe('API Endpoints', () => {
       });
 
     expect(res.statusCode).toEqual(400);
+  });
+
+  // Azure AD (Entra ID) authentication tests
+  describe('Azure AD (Entra ID) Authentication', () => {
+    it('should authenticate Entra ID user and return local token', async () => {
+      const res = await request(app)
+        .post('/api/login/azure')
+        .send({
+          token: 'mock-token-azure-test' // Mock token will resolve to azure-test@dacsa.com
+        });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty('token');
+      expect(res.body.user.correo).toBe('azure-test@dacsa.com');
+    });
+
+    it('should fail traditional password login for Entra ID users', async () => {
+      const res = await request(app)
+        .post('/api/login')
+        .send({
+          correo: 'azure-test@dacsa.com',
+          password: 'Test_1234!'
+        });
+
+      expect(res.statusCode).toEqual(401);
+      expect(res.body.error).toContain('Microsoft Entra ID');
+    });
+
+    it('should fail Azure login for traditional password users', async () => {
+      const res = await request(app)
+        .post('/api/login/azure')
+        .send({
+          token: 'mock-token-test' // Mock token resolves to test@dacsa.com
+        });
+
+      expect(res.statusCode).toEqual(401);
+      expect(res.body.error).toContain('contraseña local');
+    });
   });
 });

@@ -3,11 +3,12 @@ import { useAuth } from '../context/AuthContext';
 import { 
   Sliders, Users, Plus, Edit2, Trash2, Shield, 
   CheckCircle, XCircle, RefreshCw, AlertTriangle,
-  ArrowUp, ArrowDown, ArrowUpDown, Briefcase
+  ArrowUp, ArrowDown, ArrowUpDown, Briefcase, Coins
 } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import CapexTypesAdmin from '../components/admin/CapexTypesAdmin';
 
 const validatePassword = (pwd) => {
   if (!pwd) return [];
@@ -65,7 +66,7 @@ export default function AdminPanel() {
   // States list
   const [states, setStates] = useState([]);
   const [statesLoading, setStatesLoading] = useState(false);
-  const [stateForm, setStateForm] = useState({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false, pasos: '' });
+  const [stateForm, setStateForm] = useState({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false, pasos: '', descripcion: '' });
   const [editingStateId, setEditingStateId] = useState(null);
   const [stateError, setStateError] = useState('');
   const [stateSuccess, setStateSuccess] = useState('');
@@ -73,13 +74,15 @@ export default function AdminPanel() {
   // Users list
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
-  const [userForm, setUserForm] = useState({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true });
+  const [userForm, setUserForm] = useState({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true, metodo_acceso: 'PASSWORD' });
   const [editingUserId, setEditingUserId] = useState(null);
   const [userError, setUserError] = useState('');
   const [userSuccess, setUserSuccess] = useState('');
 
-  const pwdErrors = validatePassword(userForm.password);
-  const isUserSubmitDisabled = (!editingUserId && !userForm.password) || (userForm.password && pwdErrors.length > 0);
+  const pwdErrors = userForm.metodo_acceso === 'ENTRA_ID' ? [] : validatePassword(userForm.password);
+  const isUserSubmitDisabled = userForm.metodo_acceso === 'ENTRA_ID'
+    ? false
+    : ((!editingUserId && !userForm.password) || (userForm.password && pwdErrors.length > 0));
 
   // Sedes list
   const [sedes, setSedes] = useState([]);
@@ -96,6 +99,109 @@ export default function AdminPanel() {
   const [editingPortfolioId, setEditingPortfolioId] = useState(null);
   const [portfolioError, setPortfolioError] = useState('');
   const [portfolioSuccess, setPortfolioSuccess] = useState('');
+
+  // Portfolio budgets state
+  const [selectedPortfolioForBudgets, setSelectedPortfolioForBudgets] = useState(null);
+  const [portfolioBudgets, setPortfolioBudgets] = useState([]);
+  const [budgetsLoading, setBudgetsLoading] = useState(false);
+  const [budgetForm, setBudgetForm] = useState({ id_tipo_capex: '', id_subtipo_capex: '', importe: '' });
+  const [budgetError, setBudgetError] = useState('');
+  const [budgetSuccess, setBudgetSuccess] = useState('');
+  const [capexTypes, setCapexTypes] = useState([]);
+
+  const fetchCapexTypes = () => {
+    fetch(`${import.meta.env.VITE_API_URL}/capex-types`, {
+      headers: getAuthHeaders()
+    })
+      .then(res => res.json())
+      .then(data => setCapexTypes(data))
+      .catch(err => console.error("Error al cargar tipos de capex:", err));
+  };
+
+  const fetchPortfolioBudgets = (portfolioId) => {
+    setBudgetsLoading(true);
+    fetch(`${import.meta.env.VITE_API_URL}/portfolios/${portfolioId}/budgets`, {
+      headers: getAuthHeaders()
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al cargar presupuestos.');
+        return res.json();
+      })
+      .then(data => {
+        setPortfolioBudgets(data);
+        setBudgetsLoading(false);
+      })
+      .catch(err => {
+        setBudgetError(err.message);
+        setBudgetsLoading(false);
+      });
+  };
+
+  const handleOpenBudgets = (portfolio) => {
+    setSelectedPortfolioForBudgets(portfolio);
+    setBudgetForm({ id_tipo_capex: '', id_subtipo_capex: '', importe: '' });
+    setBudgetError('');
+    setBudgetSuccess('');
+    fetchPortfolioBudgets(portfolio.id);
+    if (capexTypes.length === 0) {
+      fetchCapexTypes();
+    }
+  };
+
+  const handleBudgetSubmit = (e) => {
+    e.preventDefault();
+    setBudgetError('');
+    setBudgetSuccess('');
+
+    if (!budgetForm.id_tipo_capex || !budgetForm.importe) {
+      setBudgetError('El tipo de CAPEX y el importe son obligatorios.');
+      return;
+    }
+
+    const payload = {
+      id_tipo_capex: parseInt(budgetForm.id_tipo_capex, 10),
+      id_subtipo_capex: budgetForm.id_subtipo_capex ? parseInt(budgetForm.id_subtipo_capex, 10) : null,
+      importe: parseFloat(budgetForm.importe)
+    };
+
+    fetch(`${import.meta.env.VITE_API_URL}/admin/portfolios/${selectedPortfolioForBudgets.id}/budgets`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload)
+    })
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al registrar el presupuesto.');
+        return data;
+      })
+      .then(() => {
+        setBudgetSuccess('Línea de presupuesto registrada correctamente.');
+        setBudgetForm({ id_tipo_capex: '', id_subtipo_capex: '', importe: '' });
+        fetchPortfolioBudgets(selectedPortfolioForBudgets.id);
+      })
+      .catch(err => setBudgetError(err.message));
+  };
+
+  const handleDeleteBudget = (budgetId) => {
+    if (!window.confirm('¿Seguro que desea eliminar esta línea de presupuesto?')) return;
+    setBudgetError('');
+    setBudgetSuccess('');
+
+    fetch(`${import.meta.env.VITE_API_URL}/admin/portfolio-budgets/${budgetId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    })
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al eliminar el presupuesto.');
+        return data;
+      })
+      .then(() => {
+        setBudgetSuccess('Línea de presupuesto eliminada correctamente.');
+        fetchPortfolioBudgets(selectedPortfolioForBudgets.id);
+      })
+      .catch(err => setBudgetError(err.message));
+  };
 
   // Fetch States from backend
   const fetchStates = () => {
@@ -205,7 +311,8 @@ export default function AdminPanel() {
       icono: stateForm.icono || null,
       orden: parseInt(stateForm.orden, 10),
       proyecto_cerrado: !!stateForm.proyecto_cerrado,
-      pasos: stateForm.pasos || ''
+      pasos: stateForm.pasos || '',
+      descripcion: stateForm.descripcion || ''
     };
 
     const isEdit = editingStateId !== null;
@@ -226,7 +333,7 @@ export default function AdminPanel() {
       })
       .then(() => {
         setStateSuccess(isEdit ? 'Estado actualizado correctamente.' : 'Estado creado correctamente.');
-        setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false, pasos: '' });
+        setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false, pasos: '', descripcion: '' });
         setEditingStateId(null);
         fetchStates();
       })
@@ -240,7 +347,8 @@ export default function AdminPanel() {
       icono: state.icono || '',
       orden: state.orden.toString(),
       proyecto_cerrado: !!state.proyecto_cerrado,
-      pasos: state.pasos || ''
+      pasos: state.pasos || '',
+      descripcion: state.descripcion || ''
     });
     setEditingStateId(state.id_estado);
     setStateError('');
@@ -275,20 +383,23 @@ export default function AdminPanel() {
     setUserSuccess('');
 
     const isEdit = editingUserId !== null;
+    const accessMethod = userForm.metodo_acceso || 'PASSWORD';
 
     if (!userForm.nombre || !userForm.apellidos || !userForm.correo || !userForm.perfil) {
       setUserError('Todos los campos excepto la contraseña son obligatorios.');
       return;
     }
 
-    if (!isEdit && !userForm.password) {
-      setUserError('La contraseña es obligatoria para nuevos usuarios.');
-      return;
-    }
+    if (accessMethod === 'PASSWORD') {
+      if (!isEdit && !userForm.password) {
+        setUserError('La contraseña es obligatoria para nuevos usuarios con acceso local.');
+        return;
+      }
 
-    if (userForm.password && validatePassword(userForm.password).length > 0) {
-      setUserError('La contraseña no cumple con la política de seguridad requerida.');
-      return;
+      if (userForm.password && validatePassword(userForm.password).length > 0) {
+        setUserError('La contraseña no cumple con la política de seguridad requerida.');
+        return;
+      }
     }
 
     const payload = {
@@ -296,10 +407,11 @@ export default function AdminPanel() {
       apellidos: userForm.apellidos,
       correo: userForm.correo,
       perfil: userForm.perfil,
-      activo: userForm.activo
+      activo: userForm.activo,
+      metodo_acceso: accessMethod
     };
 
-    if (userForm.password && userForm.password.trim() !== '') {
+    if (accessMethod === 'PASSWORD' && userForm.password && userForm.password.trim() !== '') {
       payload.password = userForm.password;
     }
 
@@ -320,7 +432,7 @@ export default function AdminPanel() {
       })
       .then(() => {
         setUserSuccess(isEdit ? 'Usuario actualizado correctamente.' : 'Usuario creado correctamente.');
-        setUserForm({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true });
+        setUserForm({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true, metodo_acceso: 'PASSWORD' });
         setEditingUserId(null);
         fetchUsers();
         refreshUsers(); // Refresh active user options in AuthContext
@@ -336,7 +448,8 @@ export default function AdminPanel() {
       correo: usr.correo,
       password: '', // Leave empty for security, edit only if typed
       perfil: usr.perfil,
-      activo: usr.activo
+      activo: usr.activo,
+      metodo_acceso: usr.metodo_acceso || 'PASSWORD'
     });
     setEditingUserId(usr.id_usuario);
     setUserError('');
@@ -516,6 +629,10 @@ export default function AdminPanel() {
           <Briefcase size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
           Portfolios
         </button>
+        <button className={`m3-tab ${activeTab === 'capex' ? 'active' : ''}`} onClick={() => setActiveTab('capex')}>
+          <Sliders size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          Tipos CAPEX
+        </button>
       </div>
 
       {activeTab === 'states' && (
@@ -537,7 +654,8 @@ export default function AdminPanel() {
                   <thead>
                     <tr>
                       {renderSortHeader('Orden', 'orden', statesSort, handleStatesSort, { width: '80px', textAlign: 'center' })}
-                      {renderSortHeader('Estado', 'nombre_estado', statesSort, handleStatesSort)}
+                      {renderSortHeader('Estado', 'nombre_estado', statesSort, handleStatesSort, { width: '180px' })}
+                      <th>Descripción</th>
                       {renderSortHeader('Icono', 'icono', statesSort, handleStatesSort, { width: '80px', textAlign: 'center' })}
                       {renderSortHeader('Tipo', 'proyecto_cerrado', statesSort, handleStatesSort, { width: '100px', textAlign: 'center' })}
                       <th style={{ width: '90px' }}>Acción</th>
@@ -548,6 +666,7 @@ export default function AdminPanel() {
                       <tr key={st.id_estado} style={{ backgroundColor: editingStateId === st.id_estado ? 'var(--md-sys-color-primary-container)' : 'transparent' }}>
                         <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{st.orden}</td>
                         <td style={{ fontWeight: 600 }}>{st.nombre_estado}</td>
+                        <td style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{st.descripcion || <em style={{ opacity: 0.5 }}>Sin descripción</em>}</td>
                         <td style={{ fontSize: '1.2rem', textAlign: 'center' }}>{st.icono || '❓'}</td>
                         <td style={{ textAlign: 'center' }}>
                           {st.proyecto_cerrado ? (
@@ -642,6 +761,18 @@ export default function AdminPanel() {
                 </label>
               </div>
 
+              <div className="form-group">
+                <label className="form-label">Descripción</label>
+                <textarea 
+                  value={stateForm.descripcion || ''}
+                  onChange={(e) => setStateForm(prev => ({ ...prev, descripcion: e.target.value }))}
+                  placeholder="Describe brevemente este estado del proyecto..."
+                  className="m3-input"
+                  rows={2}
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+
               <div className="form-group" style={{ marginBottom: '40px' }}>
                 <label className="form-label">Pasos a seguir en esta fase (Guía para el usuario)</label>
                 <div style={{ background: 'var(--md-sys-color-surface)' }}>
@@ -663,7 +794,7 @@ export default function AdminPanel() {
                     style={{ flexGrow: 1 }}
                     onClick={() => {
                       setEditingStateId(null);
-                      setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false, pasos: '' });
+                      setStateForm({ id_estado: '', nombre_estado: '', icono: '', orden: '', proyecto_cerrado: false, pasos: '', descripcion: '' });
                     }}
                   >
                     Cancelar
@@ -699,6 +830,7 @@ export default function AdminPanel() {
                       {renderSortHeader('Nombre y Apellidos', 'nombre', usersSort, handleUsersSort)}
                       {renderSortHeader('Correo', 'correo', usersSort, handleUsersSort)}
                       {renderSortHeader('Perfil', 'perfil', usersSort, handleUsersSort)}
+                      {renderSortHeader('Método', 'metodo_acceso', usersSort, handleUsersSort)}
                       {renderSortHeader('Estado', 'activo', usersSort, handleUsersSort, { width: '100px', textAlign: 'center' })}
                       <th style={{ width: '90px' }}>Acción</th>
                     </tr>
@@ -711,6 +843,16 @@ export default function AdminPanel() {
                         <td>
                           <span className="badge badge-blue" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>
                             {usr.perfil}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="badge" style={{ 
+                            fontSize: '0.75rem', 
+                            fontWeight: 'bold', 
+                            backgroundColor: usr.metodo_acceso === 'ENTRA_ID' ? 'rgba(52, 199, 89, 0.15)' : 'rgba(0, 122, 255, 0.15)',
+                            color: usr.metodo_acceso === 'ENTRA_ID' ? 'var(--color-rag-green, #34c759)' : 'var(--md-sys-color-primary, #007aff)'
+                          }}>
+                            {usr.metodo_acceso === 'ENTRA_ID' ? 'Entra ID' : 'Contraseña'}
                           </span>
                         </td>
                         <td style={{ textAlign: 'center' }}>
@@ -796,22 +938,38 @@ export default function AdminPanel() {
 
               <div className="form-group">
                 <label className="form-label">
-                  Contraseña {editingUserId ? '(Dejar vacío para mantener actual)' : '*'}
+                  Contraseña {userForm.metodo_acceso === 'ENTRA_ID' ? '(No requerida para Entra ID)' : (editingUserId ? '(Dejar vacío para mantener actual)' : '*')}
                 </label>
                 <input 
                   type="password" 
-                  value={userForm.password}
+                  value={userForm.metodo_acceso === 'ENTRA_ID' ? '' : userForm.password}
                   onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))}
-                  required={!editingUserId}
-                  placeholder="Ej: Tr4ctor.2026!"
+                  required={userForm.metodo_acceso === 'PASSWORD' && !editingUserId}
+                  disabled={userForm.metodo_acceso === 'ENTRA_ID'}
+                  placeholder={userForm.metodo_acceso === 'ENTRA_ID' ? "Autenticación externa gestionada por Microsoft Entra ID" : "Ej: Tr4ctor.2026!"}
                   className="m3-input"
-                  style={{ borderColor: userForm.password && pwdErrors.length > 0 ? 'var(--color-rag-red)' : '' }}
+                  style={{ 
+                    borderColor: userForm.metodo_acceso === 'PASSWORD' && userForm.password && pwdErrors.length > 0 ? 'var(--color-rag-red)' : '',
+                    opacity: userForm.metodo_acceso === 'ENTRA_ID' ? 0.6 : 1
+                  }}
                 />
-                {userForm.password && pwdErrors.length > 0 && (
+                {userForm.metodo_acceso === 'PASSWORD' && userForm.password && pwdErrors.length > 0 && (
                   <ul style={{ color: 'var(--color-rag-red)', fontSize: '0.75rem', marginTop: 4, paddingLeft: 16 }}>
                     {pwdErrors.map((err, i) => <li key={i}>{err}</li>)}
                   </ul>
                 )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Método de Acceso *</label>
+                <select 
+                  value={userForm.metodo_acceso || 'PASSWORD'}
+                  onChange={(e) => setUserForm(prev => ({ ...prev, metodo_acceso: e.target.value, password: e.target.value === 'ENTRA_ID' ? '' : prev.password }))}
+                  className="user-select"
+                >
+                  <option value="PASSWORD">Contraseña Local</option>
+                  <option value="ENTRA_ID">Microsoft Entra ID (SSO)</option>
+                </select>
               </div>
 
               <div className="form-group">
@@ -847,7 +1005,7 @@ export default function AdminPanel() {
                     style={{ flexGrow: 1 }}
                     onClick={() => {
                       setEditingUserId(null);
-                      setUserForm({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true });
+                      setUserForm({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true, metodo_acceso: 'PASSWORD' });
                     }}
                   >
                     Cancelar
@@ -985,17 +1143,20 @@ export default function AdminPanel() {
                       <th style={{ width: '80px', textAlign: 'center' }}>ID</th>
                       <th>Nombre</th>
                       <th>Descripción</th>
-                      <th style={{ width: '90px' }}>Acción</th>
+                      <th style={{ width: '110px' }}>Acción</th>
                     </tr>
                   </thead>
                   <tbody>
                     {portfolios.map(p => (
-                      <tr key={p.id}>
+                      <tr key={p.id} style={{ backgroundColor: selectedPortfolioForBudgets?.id === p.id ? 'rgba(104, 84, 138, 0.15)' : 'transparent' }}>
                         <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{p.id}</td>
                         <td style={{ fontWeight: 600 }}>{p.nombre}</td>
                         <td style={{ fontSize: '0.85rem' }}>{p.descripcion || 'Sin descripción'}</td>
                         <td>
                           <div style={{ display: 'flex', gap: 8 }}>
+                            <button className="icon-btn" onClick={() => handleOpenBudgets(p)} style={{ color: 'var(--md-sys-color-tertiary, #9c27b0)' }} title="Presupuestos">
+                              <Coins size={15} />
+                            </button>
                             <button className="icon-btn" onClick={() => handleEditPortfolioClick(p)} style={{ color: 'var(--md-sys-color-primary)' }} title="Editar">
                               <Edit2 size={15} />
                             </button>
@@ -1012,73 +1173,210 @@ export default function AdminPanel() {
             )}
           </div>
 
-          {/* Portfolio Form */}
+          {/* Portfolio Form / Budget Form */}
           <div className="m3-card glass-panel" style={{ position: 'sticky', top: 24 }}>
-            <h3 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: 16 }}>
-              {editingPortfolioId ? 'Editar Portfolio' : 'Añadir Nuevo Portfolio'}
-            </h3>
-            
-            {portfolioError && (
-              <div className="status-alert alert-error" style={{ marginBottom: 16 }}>
-                <XCircle size={18} />
-                <span>{portfolioError}</span>
-              </div>
-            )}
-
-            {portfolioSuccess && (
-              <div className="status-alert alert-success" style={{ marginBottom: 16 }}>
-                <CheckCircle size={18} />
-                <span>{portfolioSuccess}</span>
-              </div>
-            )}
-
-            <form onSubmit={handlePortfolioSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="form-group">
-                <label className="form-label">Nombre del Portfolio *</label>
-                <input 
-                  type="text" 
-                  value={portfolioForm.nombre}
-                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, nombre: e.target.value }))}
-                  className="m3-input"
-                  placeholder="Ej: Transformación Digital"
-                  autoComplete="off"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Descripción</label>
-                <textarea 
-                  value={portfolioForm.descripcion}
-                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, descripcion: e.target.value }))}
-                  className="m3-input"
-                  placeholder="Descripción del portfolio..."
-                  rows={4}
-                  style={{ width: '100%', resize: 'vertical' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-                {editingPortfolioId && (
+            {selectedPortfolioForBudgets ? (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <h3 style={{ fontWeight: 600, fontSize: '1.1rem', margin: 0 }}>
+                    Presupuesto: {selectedPortfolioForBudgets.nombre}
+                  </h3>
                   <button 
-                    type="button" 
                     className="m3-btn m3-btn-outline" 
-                    style={{ flexGrow: 1 }}
-                    onClick={() => {
-                      setEditingPortfolioId(null);
-                      setPortfolioForm({ id: '', nombre: '', descripcion: '' });
-                    }}
+                    style={{ padding: '4px 12px', fontSize: '0.75rem', borderRadius: '8px', minHeight: 'unset', height: '28px' }}
+                    onClick={() => setSelectedPortfolioForBudgets(null)}
                   >
-                    Cancelar
+                    Volver
                   </button>
+                </div>
+
+                {/* List of budgets configured */}
+                <div style={{ marginBottom: 20 }}>
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 8, color: 'var(--md-sys-color-outline)' }}>
+                    Líneas de Presupuesto Aprobadas
+                  </h4>
+                  {budgetsLoading ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '12px' }}>
+                      <RefreshCw className="animate-spin" size={16} style={{ color: 'var(--md-sys-color-primary)' }} />
+                    </div>
+                  ) : portfolioBudgets.length === 0 ? (
+                    <p style={{ fontSize: '0.8rem', opacity: 0.6, fontStyle: 'italic', padding: '8px 0' }}>Sin líneas de presupuesto asignadas.</p>
+                  ) : (
+                    <div className="m3-table-wrapper" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--md-sys-color-outline-variant)', borderRadius: '8px' }}>
+                      <table className="m3-table" style={{ fontSize: '0.8rem' }}>
+                        <thead>
+                          <tr>
+                            <th>Tipo CAPEX</th>
+                            <th>Subtipo</th>
+                            <th style={{ textAlign: 'right' }}>Importe (€)</th>
+                            <th style={{ width: '40px' }}></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {portfolioBudgets.map(b => (
+                            <tr key={b.id}>
+                              <td style={{ fontWeight: 600 }}>{b.TipoCapex ? b.TipoCapex.nombre : 'Desconocido'}</td>
+                              <td>{b.SubtipoCapex ? b.SubtipoCapex.nombre : <em style={{ opacity: 0.5 }}>General</em>}</td>
+                              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                                {parseFloat(b.importe).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}€
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button className="icon-btn danger" onClick={() => handleDeleteBudget(b.id)} style={{ color: 'var(--color-rag-red)', padding: 2 }} title="Eliminar Presupuesto">
+                                  <Trash2 size={13} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {budgetError && (
+                  <div className="status-alert alert-error" style={{ marginBottom: 16, padding: '8px 12px' }}>
+                    <XCircle size={16} />
+                    <span style={{ fontSize: '0.8rem' }}>{budgetError}</span>
+                  </div>
                 )}
-                <button type="submit" className="m3-btn m3-btn-primary" style={{ flexGrow: 1 }} disabled={!portfolioForm.nombre}>
-                  {editingPortfolioId ? 'Guardar Cambios' : 'Registrar Portfolio'}
-                </button>
+                {budgetSuccess && (
+                  <div className="status-alert alert-success" style={{ marginBottom: 16, padding: '8px 12px' }}>
+                    <CheckCircle size={16} />
+                    <span style={{ fontSize: '0.8rem' }}>{budgetSuccess}</span>
+                  </div>
+                )}
+
+                {/* Form to add a new budget line */}
+                <form onSubmit={handleBudgetSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 16 }}>
+                  <h4 style={{ fontSize: '0.85rem', fontWeight: 600, margin: 0, color: 'var(--md-sys-color-primary)' }}>
+                    Añadir Línea de Presupuesto
+                  </h4>
+
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Tipo de CAPEX *</label>
+                    <select
+                      value={budgetForm.id_tipo_capex}
+                      onChange={(e) => setBudgetForm(prev => ({ ...prev, id_tipo_capex: e.target.value, id_subtipo_capex: '' }))}
+                      className="user-select"
+                      style={{ height: '36px', fontSize: '0.85rem' }}
+                      required
+                    >
+                      <option value="">Selecciona Tipo...</option>
+                      {capexTypes.map(t => (
+                        <option key={t.id} value={t.id}>{t.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Subtipo de CAPEX (Opcional)</label>
+                    <select
+                      value={budgetForm.id_subtipo_capex}
+                      onChange={(e) => setBudgetForm(prev => ({ ...prev, id_subtipo_capex: e.target.value }))}
+                      className="user-select"
+                      style={{ height: '36px', fontSize: '0.85rem' }}
+                      disabled={!budgetForm.id_tipo_capex}
+                    >
+                      <option value="">Todo el tipo (General)</option>
+                      {budgetForm.id_tipo_capex && capexTypes.find(t => t.id === parseInt(budgetForm.id_tipo_capex, 10))?.Subtipos?.map(st => (
+                        <option key={st.id} value={st.id}>{st.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Importe Aprobado (€) *</label>
+                    <input
+                      type="number"
+                      value={budgetForm.importe}
+                      onChange={(e) => setBudgetForm(prev => ({ ...prev, importe: e.target.value }))}
+                      className="m3-input"
+                      placeholder="Ej: 500000"
+                      min="0"
+                      step="any"
+                      required
+                      style={{ height: '36px', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <button type="submit" className="m3-btn m3-btn-primary" style={{ marginTop: 8, height: '36px', fontSize: '0.85rem' }}>
+                    <Plus size={14} style={{ marginRight: 6 }} /> Añadir Presupuesto
+                  </button>
+                </form>
               </div>
-            </form>
+            ) : (
+              <div>
+                <h3 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: 16 }}>
+                  {editingPortfolioId ? 'Editar Portfolio' : 'Añadir Nuevo Portfolio'}
+                </h3>
+                
+                {portfolioError && (
+                  <div className="status-alert alert-error" style={{ marginBottom: 16 }}>
+                    <XCircle size={18} />
+                    <span>{portfolioError}</span>
+                  </div>
+                )}
+
+                {portfolioSuccess && (
+                  <div className="status-alert alert-success" style={{ marginBottom: 16 }}>
+                    <CheckCircle size={18} />
+                    <span>{portfolioSuccess}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handlePortfolioSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div className="form-group">
+                    <label className="form-label">Nombre del Portfolio *</label>
+                    <input 
+                      type="text" 
+                      value={portfolioForm.nombre}
+                      onChange={(e) => setPortfolioForm(prev => ({ ...prev, nombre: e.target.value }))}
+                      className="m3-input"
+                      placeholder="Ej: Transformación Digital"
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Descripción</label>
+                    <textarea 
+                      value={portfolioForm.descripcion}
+                      onChange={(e) => setPortfolioForm(prev => ({ ...prev, descripcion: e.target.value }))}
+                      className="m3-input"
+                      placeholder="Descripción del portfolio..."
+                      rows={4}
+                      style={{ width: '100%', resize: 'vertical' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                    {editingPortfolioId && (
+                      <button 
+                        type="button" 
+                        className="m3-btn m3-btn-outline" 
+                        style={{ flexGrow: 1 }}
+                        onClick={() => {
+                          setEditingPortfolioId(null);
+                          setPortfolioForm({ id: '', nombre: '', descripcion: '' });
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                    <button type="submit" className="m3-btn m3-btn-primary" style={{ flexGrow: 1 }} disabled={!portfolioForm.nombre}>
+                      {editingPortfolioId ? 'Guardar Cambios' : 'Registrar Portfolio'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
+      )}
+      {activeTab === 'capex' && (
+        <CapexTypesAdmin getAuthHeaders={getAuthHeaders} />
       )}
     </div>
   );
 }
+
