@@ -374,7 +374,7 @@ function ChangelogModal({ isOpen, onClose }) {
 }
 
 function NavigationRail() {
-  const { currentPm, logout, theme, toggleTheme } = useAuth();
+  const { currentPm, logout, theme, toggleTheme, isGlobalWorking } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   const navigate = useNavigate();
@@ -384,9 +384,29 @@ function NavigationRail() {
 
   return (
     <div className="nav-rail">
-      <div className="brand-section">
-        <div className="brand-icon" style={{ fontSize: '1rem' }}>CT</div>
-        <span className="brand-name">PMO Control Tower</span>
+      <div className="brand-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="brand-icon" style={{ fontSize: '1rem', position: 'relative' }}>
+            CT
+            {isGlobalWorking && (
+              <span style={{
+                position: 'absolute',
+                bottom: -2,
+                right: -2,
+                width: 10,
+                height: 10,
+                backgroundColor: 'var(--color-rag-green)',
+                borderRadius: '50%',
+                border: '2px solid var(--md-sys-color-surface-container)',
+                boxShadow: '0 0 8px var(--color-rag-green)'
+              }} className="animate-pulse" />
+            )}
+          </div>
+          <span className="brand-name">PMO Control Tower</span>
+        </div>
+        {isGlobalWorking && (
+          <RefreshCw className="animate-spin" size={14} style={{ color: 'var(--md-sys-color-primary)', opacity: 0.8 }} />
+        )}
       </div>
 
       <div className="nav-links">

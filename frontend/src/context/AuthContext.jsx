@@ -7,6 +7,24 @@ export const AuthProvider = ({ children }) => {
   const [currentPm, setCurrentPm] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeRequests, setActiveRequests] = useState(0);
+
+  // Interceptar fetch global para monitorear actividad en segundo plano
+  useEffect(() => {
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      setActiveRequests(prev => prev + 1);
+      try {
+        const response = await originalFetch(...args);
+        return response;
+      } finally {
+        setActiveRequests(prev => Math.max(0, prev - 1));
+      }
+    };
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
 
   // Toggle Theme (Light / Dark)
   const [theme, setTheme] = useState(() => {
@@ -138,7 +156,8 @@ export const AuthProvider = ({ children }) => {
       login,
       loginAzure,
       logout,
-      refreshUsers: fetchActiveUsers
+      refreshUsers: fetchActiveUsers,
+      isGlobalWorking: activeRequests > 0
     }}>
       {children}
     </AuthContext.Provider>

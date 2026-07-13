@@ -263,9 +263,9 @@ const taskCreateSchema = Joi.object({
     then: Joi.required(),
     otherwise: Joi.optional()
   }),
-  fecha_original_cierre: Joi.string().isoDate().allow(null).optional(),
-  fecha_actual_cierre: Joi.string().isoDate().allow(null).optional(),
-  fecha_real_cierre: Joi.string().isoDate().allow(null).optional()
+  fecha_original_cierre: Joi.string().isoDate().allow(null, '').optional(),
+  fecha_actual_cierre: Joi.string().isoDate().allow(null, '').optional(),
+  fecha_real_cierre: Joi.string().isoDate().allow(null, '').optional()
 });
 
 const taskUpdateSchema = Joi.object({
@@ -275,9 +275,9 @@ const taskUpdateSchema = Joi.object({
   es_hito: Joi.boolean().optional(),
   estado: Joi.string().valid('PENDIENTE', 'COMPLETADA').optional(),
   fecha_limite: Joi.string().isoDate().optional(),
-  fecha_original_cierre: Joi.string().isoDate().allow(null).optional(),
-  fecha_actual_cierre: Joi.string().isoDate().allow(null).optional(),
-  fecha_real_cierre: Joi.string().isoDate().allow(null).optional()
+  fecha_original_cierre: Joi.string().isoDate().allow(null, '').optional(),
+  fecha_actual_cierre: Joi.string().isoDate().allow(null, '').optional(),
+  fecha_real_cierre: Joi.string().isoDate().allow(null, '').optional()
 });
 
 // ==========================================

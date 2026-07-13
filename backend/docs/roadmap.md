@@ -4,8 +4,8 @@
 
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
 
-
 ## 🔍 2. En Análisis / Especificación
+
 
 ## 🟩 3. Listas para Codificar (Tú les has dado el OK)
 
@@ -19,6 +19,8 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **BUG-01**: Al intentar crear un tarea que no es hito, tiene unas validaciones que fallan y no tiene sentido que sean obligatorias: "fecha_original_cierre" is not allowed to be empty, "fecha_actual_cierre" is not allowed to be empty, "fecha_real_cierre" is not allowed to be empty. (2026-07-13)
+- [x] **IDEA-13**: Añadir un feedback cuando la aplicación esté guardando o trabajando en segundo plano. Se pondrá en el NavigationRail un indicador de que la aplicación está trabajando (activity indicator/spinner/pulse), interceptando las peticiones HTTP (`fetch`) de forma centralizada o a través de un estado global en `AuthContext` o un interceptor personalizado para que cualquier petición asíncrona active visualmente el indicador. (2026-07-13)
 - [x] **IDEA-09**: Integración con Azure DevOps en lugar de GitHub (migrar URL del repositorio en scripts, reconfigurar origen remoto en el servidor de despliegue y gestionar autenticación mediante PAT o claves SSH). (2026-07-10)
 - [x] **IDEA-10**: Que la aplicación permita usuarios con contraseña dentro de la aplicación o que se integren con Microsoft Entra ID. (2026-07-10)
 - [x] **IDEA-12**: Gestión de presupuestos dentro de Portfolios e Informe de Control Presupuestario con Triple Variable (Aprobado, Reservado, Ejecutado). (2026-07-10)
