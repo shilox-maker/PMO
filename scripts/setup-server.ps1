@@ -67,8 +67,8 @@ foreach ($f in $folders) {
 Write-Host "`n[4/6] Clonando repositorio..." -ForegroundColor Yellow
 
 if (-not (Test-Path "$APPS_ROOT\pre\.git")) {
-    git clone -b develop $REPO_URL "$APPS_ROOT\pre"
-    Write-Host "  PRE clonado (rama develop)" -ForegroundColor Green
+    git clone -b main $REPO_URL "$APPS_ROOT\pre"
+    Write-Host "  PRE clonado (rama main)" -ForegroundColor Green
 } else {
     Write-Host "  PRE ya clonado, saltando" -ForegroundColor DarkGray
 }

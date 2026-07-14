@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 $ENV_NAME = "PRE"
 $APP_DIR = "C:\Apps\PMO\pre"
 $PM2_NAME = "pmo-pre-backend"
-$BRANCH = "develop"
+$BRANCH = "main"
 
 Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host "  Despliegue $ENV_NAME - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Cyan
@@ -18,12 +18,16 @@ Write-Host "==================================================" -ForegroundColor
 # 1. Obtener ultimos cambios
 # ------------------------------------------------------------------------------
 Write-Host "`n[1/5] Descargando cambios de '$BRANCH'..." -ForegroundColor Yellow
-Push-Location $APP_DIR
+$oldPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 
+Push-Location $APP_DIR
 git fetch origin $BRANCH
 $localHash = git rev-parse HEAD
 git reset --hard "origin/$BRANCH"
 $remoteHash = git rev-parse HEAD
+
+$ErrorActionPreference = $oldPreference
 
 if ($localHash -eq $remoteHash) {
     Write-Host "  Sin cambios nuevos. Continuando igualmente..." -ForegroundColor DarkGray
@@ -38,6 +42,9 @@ if ($localHash -eq $remoteHash) {
 # ------------------------------------------------------------------------------
 Write-Host "`n[2/5] Actualizando Backend..." -ForegroundColor Yellow
 Push-Location "$APP_DIR\backend"
+
+$oldPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 
 Write-Host "  npm install..." -ForegroundColor DarkCyan
 npm install --omit=dev 2>&1 | Out-Null
@@ -58,13 +65,14 @@ Write-Host "`n[3/5] Compilando Frontend..." -ForegroundColor Yellow
 Push-Location "$APP_DIR\frontend"
 
 # Asegurar que el .env del frontend apunta a ruta relativa
-"VITE_API_URL=/api" | Out-File -FilePath ".env" -Encoding utf8NoBOM -Force
+"VITE_API_URL=/api" | Out-File -FilePath ".env" -Encoding utf8 -Force
 
 Write-Host "  npm install..." -ForegroundColor DarkCyan
 npm install 2>&1 | Out-Null
 
 Write-Host "  npm run build..." -ForegroundColor DarkCyan
 npm run build
+
 Write-Host "  Frontend compilado" -ForegroundColor Green
 
 Pop-Location
@@ -86,6 +94,8 @@ if ($processExists) {
 }
 
 pm2 save 2>$null
+
+$ErrorActionPreference = $oldPreference
 
 # ------------------------------------------------------------------------------
 # 5. Health check

@@ -96,7 +96,7 @@ foreach ($site in $sites) {
   </system.webServer>
 </configuration>
 "@
-    $webConfig | Out-File -FilePath "$($site.IISPath)\web.config" -Encoding utf8NoBOM -Force
+    $webConfig | Out-File -FilePath "$($site.IISPath)\web.config" -Encoding utf8 -Force
     Write-Host "  web.config generado -> localhost:$($site.Port)" -ForegroundColor Green
 }
 

@@ -57,9 +57,9 @@ app.use(errorHandler);
 
 // Database Initialization and Server Start
 if (process.env.NODE_ENV !== 'test') {
-  sequelize.sync({ alter: false })
+  sequelize.authenticate()
     .then(() => {
-      console.log('✅ Connection to database established successfully. Database synced.');
+      console.log('✅ Connection to database established successfully.');
       return umzug.up();
     })
     .then((migrations) => {

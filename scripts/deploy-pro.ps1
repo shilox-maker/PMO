@@ -22,9 +22,14 @@ Write-Host "==================================================" -ForegroundColor
 Write-Host "`n[Preflight] Analizando cambios pendientes..." -ForegroundColor Yellow
 Push-Location $APP_DIR
 
+$oldPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+
 git fetch origin $BRANCH
 $localHash = git rev-parse HEAD
 $remoteHash = git rev-parse "origin/$BRANCH"
+
+$ErrorActionPreference = $oldPreference
 
 if ($localHash -eq $remoteHash) {
     Write-Host "  No hay cambios nuevos en '$BRANCH'. Nada que desplegar." -ForegroundColor DarkGray
@@ -50,7 +55,10 @@ if ($confirm -ne "DEPLOY") {
 # 2. Descargar cambios
 # ------------------------------------------------------------------------------
 Write-Host "`n[1/5] Descargando cambios de '$BRANCH'..." -ForegroundColor Yellow
+$oldPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 git reset --hard "origin/$BRANCH"
+$ErrorActionPreference = $oldPreference
 Write-Host "  $commitCount commits aplicados" -ForegroundColor Green
 
 # ------------------------------------------------------------------------------
