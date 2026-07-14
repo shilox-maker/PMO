@@ -58,7 +58,7 @@ module.exports = {
       updatedAt: { type: DataTypes.DATE, allowNull: false, defaultValue: Sequelize.literal('CURRENT_TIMESTAMP') }
     });
 
-    // 3. Contactos_Proveedors (pluralización de ContactosProveedor)
+    // 3. Contactos_Proveedors
     await queryInterface.createTable('Contactos_Proveedors', {
       id_contacto: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
       id_proveedor: {
@@ -87,6 +87,7 @@ module.exports = {
       password_salt: { type: DataTypes.STRING, allowNull: true },
       perfil: { type: DataTypes.ENUM('ADMINISTRADOR', 'PM', 'DIRECTOR'), allowNull: false, defaultValue: 'PM' },
       activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+      metodo_acceso: { type: DataTypes.STRING, allowNull: false, defaultValue: 'PASSWORD' },
       createdAt: { type: DataTypes.DATE, allowNull: false, defaultValue: Sequelize.literal('CURRENT_TIMESTAMP') },
       updatedAt: { type: DataTypes.DATE, allowNull: false, defaultValue: Sequelize.literal('CURRENT_TIMESTAMP') }
     });
@@ -118,7 +119,28 @@ module.exports = {
       updatedAt: { type: DataTypes.DATE, allowNull: false, defaultValue: Sequelize.literal('CURRENT_TIMESTAMP') }
     });
 
-    // 8. Proyectos
+    // 8. Tipos_Capex
+    await queryInterface.createTable('Tipos_Capex', {
+      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
+      nombre: { type: DataTypes.STRING, allowNull: false, unique: true },
+      orden: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 }
+    });
+
+    // 9. Subtipos_Capex
+    await queryInterface.createTable('Subtipos_Capex', {
+      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
+      id_tipo_capex: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: { model: 'Tipos_Capex', key: 'id' },
+        onDelete: 'CASCADE'
+      },
+      nombre: { type: DataTypes.STRING, allowNull: false },
+      orden: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 }
+    });
+    await addIndexSafe('Subtipos_Capex', ['id_tipo_capex'], { name: 'idx_subtipos_capex_tipo' });
+
+    // 10. Proyectos
     await queryInterface.createTable('Proyectos', {
       id_proyecto: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
       nombre_proyecto: { type: DataTypes.STRING, allowNull: false },
@@ -153,6 +175,21 @@ module.exports = {
         allowNull: true,
         references: { model: 'Portfolios', key: 'id' }
       },
+      id_tipo_capex: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'Tipos_Capex', key: 'id' }
+      },
+      id_subtipo_capex: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'Subtipos_Capex', key: 'id' }
+      },
+      id_sede_distribuir: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'Sedes', key: 'id_sede' }
+      },
       indicador_rag: { type: DataTypes.ENUM('VERDE', 'AMARILLO', 'ROJO'), allowNull: false, defaultValue: 'VERDE' },
       fecha_inicio: { type: DataTypes.DATEONLY, allowNull: false },
       fecha_fin_inicial: { type: DataTypes.DATEONLY, allowNull: true },
@@ -160,6 +197,7 @@ module.exports = {
       codigo_capex: { type: DataTypes.STRING, allowNull: true },
       es_estrategico: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
       budget_inicial: { type: DataTypes.DECIMAL(15, 2), allowNull: true },
+      budget_notas: { type: DataTypes.TEXT, allowNull: true },
       com_semanal_activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
       com_semanal_finalidad: { type: DataTypes.TEXT, allowNull: true },
       com_mensual_activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
@@ -200,8 +238,11 @@ module.exports = {
     await addIndexSafe('Proyectos', ['id_sponsor'], { name: 'idx_proyectos_id_sponsor' });
     await addIndexSafe('Proyectos', ['id_estado'], { name: 'idx_proyectos_id_estado' });
     await addIndexSafe('Proyectos', ['portfolio_id'], { name: 'idx_proyectos_portfolio_id' });
+    await addIndexSafe('Proyectos', ['id_tipo_capex'], { name: 'idx_proyectos_tipo_capex' });
+    await addIndexSafe('Proyectos', ['id_subtipo_capex'], { name: 'idx_proyectos_subtipo_capex' });
+    await addIndexSafe('Proyectos', ['id_sede_distribuir'], { name: 'idx_proyectos_sede_distribuir' });
 
-    // 9. Incidencias
+    // 11. Incidencias
     await queryInterface.createTable('Incidencias', {
       id_incidencia: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
       id_proyecto: {
@@ -243,7 +284,7 @@ module.exports = {
     });
     await addIndexSafe('Incidencias', ['id_proyecto'], { name: 'idx_incidencias_id_proyecto' });
 
-    // 10. Riesgos
+    // 12. Riesgos
     await queryInterface.createTable('Riesgos', {
       id_riesgo: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
       id_proyecto: {
@@ -274,7 +315,7 @@ module.exports = {
     });
     await addIndexSafe('Riesgos', ['id_proyecto'], { name: 'idx_riesgos_id_proyecto' });
 
-    // 11. Lecciones_Aprendidas
+    // 13. Lecciones_Aprendidas
     await queryInterface.createTable('Lecciones_Aprendidas', {
       id_leccion: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
       tipo_leccion: {
@@ -304,7 +345,7 @@ module.exports = {
     await addIndexSafe('Lecciones_Aprendidas', ['id_proyecto'], { name: 'idx_lecciones_id_proyecto' });
     await addIndexSafe('Lecciones_Aprendidas', ['id_proveedor'], { name: 'idx_lecciones_id_proveedor' });
 
-    // 12. Facturas
+    // 14. Facturas
     await queryInterface.createTable('Facturas', {
       id_interno_factura: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
       id_proyecto: {
@@ -340,7 +381,7 @@ module.exports = {
     await addIndexSafe('Facturas', ['id_proyecto'], { name: 'idx_facturas_id_proyecto' });
     await addIndexSafe('Facturas', ['id_proveedor'], { name: 'idx_facturas_id_proveedor' });
 
-    // 13. Cambios_Alcances
+    // 15. Cambios_Alcances
     await queryInterface.createTable('Cambios_Alcances', {
       id_cambio: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
       id_proyecto: {
@@ -388,7 +429,7 @@ module.exports = {
     await addIndexSafe('Cambios_Alcances', ['id_solicitante_contacto'], { name: 'idx_cambios_id_solicitante' });
     await addIndexSafe('Cambios_Alcances', ['id_aprobador_contacto'], { name: 'idx_cambios_id_aprobador' });
 
-    // 14. Tareas
+    // 16. Tareas
     await queryInterface.createTable('Tareas', {
       id_tarea: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
       id_proyecto: {
@@ -410,7 +451,7 @@ module.exports = {
     });
     await addIndexSafe('Tareas', ['id_proyecto'], { name: 'idx_tareas_id_proyecto' });
 
-    // 15. Comentarios_Proyectos
+    // 17. Comentarios_Proyectos
     await queryInterface.createTable('Comentarios_Proyectos', {
       id_comentario: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
       id_proyecto: {
@@ -446,7 +487,7 @@ module.exports = {
     // TABLAS DE UNIÓN (MANY TO MANY)
     // ==========================================
 
-    // 16. Proyecto_Contactos
+    // 18. Proyecto_Contactos
     await queryInterface.createTable('Proyecto_Contactos', {
       id_proyecto: {
         type: DataTypes.STRING,
@@ -467,7 +508,7 @@ module.exports = {
     });
     await addIndexSafe('Proyecto_Contactos', ['id_contacto'], { name: 'idx_proyecto_contactos_contacto' });
 
-    // 17. Proyecto_ComSemanal_Contacto
+    // 19. Proyecto_ComSemanal_Contacto
     await queryInterface.createTable('Proyecto_ComSemanal_Contacto', {
       id_proyecto: {
         type: DataTypes.STRING,
@@ -486,7 +527,7 @@ module.exports = {
     });
     await addIndexSafe('Proyecto_ComSemanal_Contacto', ['id_contacto'], { name: 'idx_proj_comsem_contacto' });
 
-    // 18. Proyecto_ComMensual_Contacto
+    // 20. Proyecto_ComMensual_Contacto
     await queryInterface.createTable('Proyecto_ComMensual_Contacto', {
       id_proyecto: {
         type: DataTypes.STRING,
@@ -505,7 +546,7 @@ module.exports = {
     });
     await addIndexSafe('Proyecto_ComMensual_Contacto', ['id_contacto'], { name: 'idx_proj_commens_contacto' });
 
-    // 19. Proyecto_SteerCo_Contacto
+    // 21. Proyecto_SteerCo_Contacto
     await queryInterface.createTable('Proyecto_SteerCo_Contacto', {
       id_proyecto: {
         type: DataTypes.STRING,
@@ -524,7 +565,7 @@ module.exports = {
     });
     await addIndexSafe('Proyecto_SteerCo_Contacto', ['id_contacto'], { name: 'idx_proj_steerco_contacto' });
 
-    // 20. Proyecto_Tags
+    // 22. Proyecto_Tags
     await queryInterface.createTable('Proyecto_Tags', {
       proyecto_id: {
         type: DataTypes.STRING,
@@ -544,6 +585,60 @@ module.exports = {
       updatedAt: { type: DataTypes.DATE, allowNull: false, defaultValue: Sequelize.literal('CURRENT_TIMESTAMP') }
     });
     await addIndexSafe('Proyecto_Tags', ['tag_id'], { name: 'idx_proyecto_tags_tag' });
+
+    // 23. Portfolio_Budgets
+    await queryInterface.createTable('Portfolio_Budgets', {
+      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
+      portfolio_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: { model: 'Portfolios', key: 'id' },
+        onDelete: 'CASCADE'
+      },
+      id_tipo_capex: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: { model: 'Tipos_Capex', key: 'id' },
+        onDelete: 'CASCADE'
+      },
+      id_subtipo_capex: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'Subtipos_Capex', key: 'id' },
+        onDelete: 'CASCADE'
+      },
+      importe: {
+        type: DataTypes.DECIMAL(15, 2),
+        allowNull: false,
+        defaultValue: 0.00
+      }
+    });
+    await addIndexSafe('Portfolio_Budgets', ['portfolio_id'], { name: 'idx_portfolio_budgets_portfolio' });
+    await addIndexSafe('Portfolio_Budgets', ['id_tipo_capex'], { name: 'idx_portfolio_budgets_tipo' });
+    await addIndexSafe('Portfolio_Budgets', ['id_subtipo_capex'], { name: 'idx_portfolio_budgets_subtipo' });
+
+    // ==========================================
+    // SEMILLAS DE DATOS INICIALES (CAPEX)
+    // ==========================================
+    const qualifiedTiposName = `[${schema}].[Tipos_Capex]`;
+    const qualifiedSubtiposName = `[${schema}].[Subtipos_Capex]`;
+
+    await queryInterface.bulkInsert({ tableName: 'Tipos_Capex', schema }, [
+      { nombre: 'Growth', orden: 1 },
+      { nombre: 'Special', orden: 2 },
+      { nombre: 'Operational', orden: 3 }
+    ]);
+
+    const [rows] = await queryInterface.sequelize.query(
+      `SELECT id FROM ${qualifiedTiposName} WHERE nombre = 'Special'`
+    );
+    const specialId = rows[0].id;
+
+    await queryInterface.bulkInsert({ tableName: 'Subtipos_Capex', schema }, [
+      { id_tipo_capex: specialId, nombre: 'Dynamics', orden: 1 },
+      { id_tipo_capex: specialId, nombre: 'AI', orden: 2 },
+      { id_tipo_capex: specialId, nombre: 'Industry 4.0', orden: 3 }
+    ]);
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -556,6 +651,7 @@ module.exports = {
     };
 
     // Eliminar todas las tablas en orden inverso de claves foráneas
+    await queryInterface.dropTable('Portfolio_Budgets');
     await queryInterface.dropTable('Proyecto_Tags');
     await queryInterface.dropTable('Proyecto_SteerCo_Contacto');
     await queryInterface.dropTable('Proyecto_ComMensual_Contacto');
@@ -569,6 +665,8 @@ module.exports = {
     await queryInterface.dropTable('Riesgos');
     await queryInterface.dropTable('Incidencias');
     await queryInterface.dropTable('Proyectos');
+    await queryInterface.dropTable('Subtipos_Capex');
+    await queryInterface.dropTable('Tipos_Capex');
     await queryInterface.dropTable('Tags');
     await queryInterface.dropTable('Portfolios');
     await queryInterface.dropTable('Estados_Proyecto');
