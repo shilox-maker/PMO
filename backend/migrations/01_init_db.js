@@ -3,6 +3,33 @@ const { DataTypes } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    const schema = queryInterface.sequelize.options.define.schema || 'dbo';
+
+    // Guardar referencias originales
+    const originalCreateTable = queryInterface.createTable.bind(queryInterface);
+    const originalAddIndex = queryInterface.addIndex.bind(queryInterface);
+
+    // Envolver createTable para inyectar esquema en atributos y referencias
+    queryInterface.createTable = async (tableName, attributes, options) => {
+      const targetTable = { tableName, schema };
+      const qualifiedAttributes = { ...attributes };
+      for (const key in qualifiedAttributes) {
+        const attribute = qualifiedAttributes[key];
+        if (attribute && attribute.references && typeof attribute.references.model === 'string') {
+          attribute.references.model = {
+            tableName: attribute.references.model,
+            schema
+          };
+        }
+      }
+      return originalCreateTable(targetTable, qualifiedAttributes, options);
+    };
+
+    // Envolver addIndex para inyectar esquema
+    queryInterface.addIndex = async (tableName, columns, options) => {
+      return originalAddIndex({ tableName, schema }, columns, options);
+    };
+
     // Helper para agregar índices de forma segura
     const addIndexSafe = async (tableName, columns, options) => {
       try {
@@ -520,6 +547,14 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
+    const schema = queryInterface.sequelize.options.define.schema || 'dbo';
+    const originalDropTable = queryInterface.dropTable.bind(queryInterface);
+
+    // Envolver dropTable para inyectar esquema
+    queryInterface.dropTable = async (tableName, options) => {
+      return originalDropTable({ tableName, schema }, options);
+    };
+
     // Eliminar todas las tablas en orden inverso de claves foráneas
     await queryInterface.dropTable('Proyecto_Tags');
     await queryInterface.dropTable('Proyecto_SteerCo_Contacto');
