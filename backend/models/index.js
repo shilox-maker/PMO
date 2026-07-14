@@ -351,6 +351,14 @@ const Proyectos = sequelize.define('Proyectos', {
       key: 'id_sede'
     }
   },
+  id_sede_distribuir: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Sedes,
+      key: 'id_sede'
+    }
+  },
   id_sponsor: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -426,6 +434,10 @@ const Proyectos = sequelize.define('Proyectos', {
   },
   budget_inicial: {
     type: DataTypes.DECIMAL(15, 2),
+    allowNull: true
+  },
+  budget_notas: {
+    type: DataTypes.TEXT,
     allowNull: true
   },
   // Weekly Communication Plan
@@ -1152,6 +1164,7 @@ Proyectos.belongsTo(Proveedores, { foreignKey: 'id_proveedor', as: 'Proveedor' }
 // Sede has many Projects
 Sedes.hasMany(Proyectos, { foreignKey: 'id_sede' });
 Proyectos.belongsTo(Sedes, { foreignKey: 'id_sede', as: 'Sede' });
+Proyectos.belongsTo(Sedes, { foreignKey: 'id_sede_distribuir', as: 'SedeDistribuir' });
 
 // Sponsor Contact has many Projects
 ContactosProveedor.hasMany(Proyectos, { foreignKey: 'id_sponsor' });

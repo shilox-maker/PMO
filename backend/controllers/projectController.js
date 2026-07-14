@@ -26,6 +26,8 @@ async function resolveStateId(data) {
 
 const getProjects = asyncHandler(async (req, res) => {
   const { pm, vendor, rag, search, state, estrategico, portfolio, tag } = req.query;
+  const user = await Usuarios.findByPk(req.currentPmId);
+  const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
   
   const where = {};
   if (pm) where.id_pm = pm;
@@ -93,10 +95,22 @@ const getProjects = asyncHandler(async (req, res) => {
         order: [['fecha_limite', 'ASC']]
       });
 
+      const commentWhere = { id_proyecto: project.id_proyecto };
+      if (!canSeeDireccion) {
+        commentWhere.para_direccion = false;
+      }
+
+      const lastComment = await ComentariosProyecto.findOne({
+        where: commentWhere,
+        order: [['fecha_registro', 'DESC']]
+      });
+      const ultimo_comentario = lastComment ? lastComment.texto_comentario.replace(/<[^>]+>/g, '') : '';
+
       return {
         ...project.toJSON(),
         calculations: calc,
-        nextMilestone: nextMilestone ? nextMilestone.toJSON() : null
+        nextMilestone: nextMilestone ? nextMilestone.toJSON() : null,
+        ultimo_comentario
       };
     })
   );
@@ -112,6 +126,7 @@ const getProjectDetail = asyncHandler(async (req, res) => {
       { model: Usuarios, as: 'PM', attributes: ['id_usuario', 'nombre', 'apellidos', 'correo'] },
       { model: Proveedores, as: 'Proveedor', attributes: ['id_proveedor', 'nombre_razon_social'] },
       { model: Sedes, as: 'Sede', attributes: ['id_sede', 'nombre_sede'] },
+      { model: Sedes, as: 'SedeDistribuir', attributes: ['id_sede', 'nombre_sede'] },
       { model: ContactosProveedor, as: 'Sponsor', attributes: ['id_contacto', 'nombre', 'apellidos', 'email'] },
       { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre', 'descripcion'] },
       { model: Tags, as: 'Tags', through: { attributes: [] } },
@@ -150,7 +165,7 @@ const getProjectDetail = asyncHandler(async (req, res) => {
         { model: ContactosProveedor, as: 'Aprobador', attributes: ['nombre', 'apellidos'] }
       ], order: [['fecha_solicitud', 'DESC']] },
       { model: Tareas, order: [['fecha_limite', 'ASC']] },
-      { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'pasos'] }
+      { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'descripcion', 'pasos'] }
     ]
   });
 

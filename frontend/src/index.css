@@ -1,38 +1,38 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Material Design 3 Design Tokens (Dark Theme by Default for Premium Feel) */
-  --md-sys-color-primary: #a8c7fa; /* Light blue / indigo */
-  --md-sys-color-on-primary: #062e6f;
-  --md-sys-color-primary-container: #0842a0;
-  --md-sys-color-on-primary-container: #d3e3fd;
+  /* Material Design 3 Design Tokens (Dark Theme — Green-tinted Premium) */
+  --md-sys-color-primary: #6dd4a0; /* Esmeralda Dacsa claro */
+  --md-sys-color-on-primary: #003920;
+  --md-sys-color-primary-container: #005230;
+  --md-sys-color-on-primary-container: #8df1bc;
   
-  --md-sys-color-secondary: #c2c7cf;
-  --md-sys-color-on-secondary: #2d3135;
-  --md-sys-color-secondary-container: #44474e;
-  --md-sys-color-on-secondary-container: #e2e2e9;
+  --md-sys-color-secondary: #afd0bc;
+  --md-sys-color-on-secondary: #1a3528;
+  --md-sys-color-secondary-container: #314c3d;
+  --md-sys-color-on-secondary-container: #caecd7;
 
-  --md-sys-color-tertiary: #dfbcf7;
-  --md-sys-color-on-tertiary: #41275b;
-  --md-sys-color-tertiary-container: #593e73;
-  --md-sys-color-on-tertiary-container: #f5daff;
+  --md-sys-color-tertiary: #9fcfe8;
+  --md-sys-color-on-tertiary: #00364a;
+  --md-sys-color-tertiary-container: #004e67;
+  --md-sys-color-on-tertiary-container: #bce9ff;
 
   --md-sys-color-error: #f2b8b5;
   --md-sys-color-on-error: #601410;
   --md-sys-color-error-container: #8c1d18;
   --md-sys-color-on-error-container: #f9dedc;
 
-  --md-sys-color-background: #0f1319; /* Sleek Dark Slate */
-  --md-sys-color-on-background: #e2e2e6;
+  --md-sys-color-background: #0d1410; /* Dark Slate con leve tinte verde */
+  --md-sys-color-on-background: #dce9e2;
   
-  --md-sys-color-surface: #13181f;
-  --md-sys-color-on-surface: #e2e2e6;
-  --md-sys-color-surface-container: #1b212a;
-  --md-sys-color-surface-container-high: #242c38;
-  --md-sys-color-surface-container-highest: #2d3746;
+  --md-sys-color-surface: #111a14;
+  --md-sys-color-on-surface: #dce9e2;
+  --md-sys-color-surface-container: #192219;
+  --md-sys-color-surface-container-high: #212e23;
+  --md-sys-color-surface-container-highest: #2a3b2d;
   
-  --md-sys-color-outline: #8e9199;
-  --md-sys-color-outline-variant: #44474e;
+  --md-sys-color-outline: #8fa898;
+  --md-sys-color-outline-variant: #3a4d3e;
 
   /* RAG Status Tailored HSL Colors */
   --color-rag-green: #34c759;
@@ -1264,4 +1264,58 @@ button, input, select, textarea {
 .badge-yellow {
   background-color: rgba(255, 204, 0, 0.2);
   color: #d97706;
+}
+
+/* KPI Formula Tooltip */
+.kpi-card-wrap {
+  overflow: visible !important;
+}
+
+.kpi-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.kpi-tooltip-box {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.72rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  max-width: 240px;
+  white-space: normal;
+  line-height: 1.4;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  z-index: 999;
+  pointer-events: none;
+}
+
+.kpi-tooltip-box::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: var(--md-sys-color-outline-variant);
+}
+
+.kpi-tooltip-wrap:hover .kpi-tooltip-box {
+  display: block;
+  animation: tooltipFadeIn 0.15s ease;
+}
+
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }

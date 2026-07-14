@@ -11,6 +11,7 @@ export default function ProjectEditModal({
     id_pm: '',
     id_proveedor: '',
     id_sede: '',
+    id_sede_distribuir: '',
     id_sponsor: '',
     es_capex: false,
     codigo_capex: '',
@@ -18,6 +19,7 @@ export default function ProjectEditModal({
     id_subtipo_capex: '',
     es_estrategico: false,
     budget_inicial: '',
+    budget_notas: '',
     portfolio_id: '',
     involvedKus: []
   });
@@ -31,6 +33,7 @@ export default function ProjectEditModal({
         id_pm: project.id_pm ? project.id_pm.toString() : '',
         id_proveedor: project.id_proveedor ? project.id_proveedor.toString() : '',
         id_sede: project.id_sede ? project.id_sede.toString() : '',
+        id_sede_distribuir: project.id_sede_distribuir ? project.id_sede_distribuir.toString() : '',
         id_sponsor: project.id_sponsor ? project.id_sponsor.toString() : '',
         es_capex: !!project.es_capex,
         codigo_capex: project.codigo_capex || '',
@@ -38,6 +41,7 @@ export default function ProjectEditModal({
         id_subtipo_capex: project.id_subtipo_capex ? project.id_subtipo_capex.toString() : '',
         es_estrategico: !!project.es_estrategico,
         budget_inicial: project.budget_inicial || '',
+        budget_notas: project.budget_notas || '',
         portfolio_id: project.portfolio_id ? project.portfolio_id.toString() : '',
         involvedKus: project.InvolvedContacts?.map(k => k.id_contacto) || []
       });
@@ -89,6 +93,7 @@ export default function ProjectEditModal({
       id_pm: form.id_pm ? parseInt(form.id_pm, 10) : null,
       id_proveedor: form.id_proveedor ? parseInt(form.id_proveedor, 10) : null,
       id_sede: form.id_sede ? parseInt(form.id_sede, 10) : null,
+      id_sede_distribuir: form.id_sede_distribuir ? parseInt(form.id_sede_distribuir, 10) : null,
       id_sponsor: form.id_sponsor ? parseInt(form.id_sponsor, 10) : null,
       portfolio_id: form.portfolio_id ? parseInt(form.portfolio_id, 10) : null,
       id_tipo_capex: form.id_tipo_capex ? parseInt(form.id_tipo_capex, 10) : null,
@@ -140,20 +145,37 @@ export default function ProjectEditModal({
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Sede *</label>
-              <select 
-                name="id_sede"
-                value={form.id_sede}
-                onChange={handleInputChange}
-                required
-                className="user-select"
-              >
-                <option value="">Seleccione Sede</option>
-                {sedes.map(s => (
-                  <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>
-                ))}
-              </select>
+            {/* Sede y A Distribuir */}
+            <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label className="form-label">Sede *</label>
+                <select 
+                  name="id_sede"
+                  value={form.id_sede}
+                  onChange={handleInputChange}
+                  required
+                  className="user-select"
+                >
+                  <option value="">Seleccione Sede</option>
+                  {sedes.map(s => (
+                    <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">A distribuir</label>
+                <select 
+                  name="id_sede_distribuir"
+                  value={form.id_sede_distribuir}
+                  onChange={handleInputChange}
+                  className="user-select"
+                >
+                  <option value="">Seleccione Sede</option>
+                  {sedes.map(s => (
+                    <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="form-group">
@@ -214,20 +236,35 @@ export default function ProjectEditModal({
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Presupuesto Inicial (€) *</label>
-              <input 
-                type="number" 
-                step="0.01"
-                name="budget_inicial"
-                value={form.budget_inicial}
-                onChange={handleInputChange}
-                required
-                className="m3-input"
-              />
+            {/* Presupuesto Inicial + Notas — fila completa */}
+            <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label className="form-label">Presupuesto Inicial (€) *</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  name="budget_inicial"
+                  value={form.budget_inicial}
+                  onChange={handleInputChange}
+                  required
+                  className="m3-input"
+                />
+              </div>
+              <div>
+                <label className="form-label">Notas sobre el presupuesto</label>
+                <input
+                  type="text"
+                  name="budget_notas"
+                  value={form.budget_notas || ''}
+                  onChange={handleInputChange}
+                  placeholder="Ej: Incluye licencias + implantación, excluye hardware"
+                  className="m3-input"
+                />
+              </div>
             </div>
           </div>
 
+          {/* Solo CAPEX switch + código */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, margin: '16px 0' }}>
             <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <input 
@@ -253,17 +290,6 @@ export default function ProjectEditModal({
                 />
               </div>
             )}
-
-            <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input 
-                type="checkbox" 
-                name="es_estrategico"
-                checked={form.es_estrategico}
-                onChange={handleInputChange}
-                className="m3-checkbox"
-              />
-              <span>¿Es Proyecto Estratégico?</span>
-            </label>
           </div>
 
           {form.es_capex && (
@@ -308,6 +334,20 @@ export default function ProjectEditModal({
               })()}
             </div>
           )}
+
+          {/* Proyecto Estratégico — debajo de Tipo CAPEX */}
+          <div className="form-group" style={{ margin: '0 0 16px' }}>
+            <label className="m3-checkbox-label" style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
+              <input 
+                type="checkbox" 
+                name="es_estrategico"
+                checked={form.es_estrategico}
+                onChange={handleInputChange}
+                className="m3-checkbox"
+              />
+              <span>¿Es Proyecto Estratégico?</span>
+            </label>
+          </div>
 
           <div className="form-group">
             <label className="form-label">Descripción Detallada *</label>

@@ -3,15 +3,16 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams, Navi
 import { createPortal } from 'react-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { msalInstance } from './config/msal';
-import Dashboard from './pages/Dashboard';
+import Projects from './pages/Projects';
 import GovernanceDashboard from './pages/GovernanceDashboard';
 import ProjectDetail from './pages/ProjectDetail';
 import Timeline from './pages/Timeline';
 import Vendor360 from './pages/Vendor360';
 import VendorDirectory from './pages/VendorDirectory';
 import AdminPanel from './pages/AdminPanel';
-import KpisPmo from './pages/KpisPmo';
+import Dashboard from './pages/Dashboard';
 import PortfolioReport from './pages/PortfolioReport';
+import GeneralLessonsPage from './pages/GeneralLessonsPage';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
   Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info
@@ -411,19 +412,27 @@ function NavigationRail() {
 
       <div className="nav-links">
         <a
-          className={`nav-link ${isActive('/dashboard') || location.pathname === '/' ? 'active' : ''}`}
-          onClick={() => navigate('/dashboard')}
+          className={`nav-link ${isActive('/proyectos') || location.pathname === '/' ? 'active' : ''}`}
+          onClick={() => navigate('/proyectos')}
         >
           <Briefcase className="nav-link-icon" />
-          <span>Seguimiento de proyectos</span>
+          <span>Proyectos</span>
         </a>
 
         <a
-          className={`nav-link ${isActive('/kpis-pmo') ? 'active' : ''}`}
-          onClick={() => navigate('/kpis-pmo')}
+          className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`}
+          onClick={() => navigate('/dashboard')}
         >
           <Activity className="nav-link-icon" />
-          <span>KPIs PMO</span>
+          <span>Dashboard</span>
+        </a>
+
+        <a
+          className={`nav-link ${isActive('/portfolios/report') ? 'active' : ''}`}
+          onClick={() => navigate('/portfolios/report')}
+        >
+          <Briefcase className="nav-link-icon" />
+          <span>PIPs</span>
         </a>
 
         <a
@@ -433,21 +442,13 @@ function NavigationRail() {
           <Calendar className="nav-link-icon" />
           <span>Timeline</span>
         </a>
-
-        <a
-          className={`nav-link ${isActive('/portfolios/report') ? 'active' : ''}`}
-          onClick={() => navigate('/portfolios/report')}
-        >
-          <Briefcase className="nav-link-icon" />
-          <span>Control Presupuestario</span>
-        </a>
         <hr />
         <a
           className={`nav-link ${isActive('/proveedores') || isActive('/proveedor/') ? 'active' : ''}`}
           onClick={() => navigate('/proveedores')}
         >
           <Building className="nav-link-icon" />
-          <span>Socios Tecnológicos</span>
+          <span>Partners</span>
         </a>
 
         <a
@@ -455,7 +456,7 @@ function NavigationRail() {
           onClick={() => navigate('/lecciones')}
         >
           <BookOpen className="nav-link-icon" />
-          <span>Lecciones</span>
+          <span>Lecciones aprendidas</span>
         </a>
 
         {currentPm && currentPm.perfil === 'ADMINISTRADOR' && (
@@ -534,10 +535,9 @@ function NavigationRail() {
           onClick={toggleTheme}
           style={{ justifyContent: 'flex-start', padding: '10px 16px', width: '100%', borderRadius: '12px' }}
         >
-          {theme === 'light' && <Sun size={18} />}
           {theme === 'dark' && <Moon size={18} />}
           {theme === 'dacsa' && <Building2 size={18} />}
-          <span>Tema {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Dacsa'}</span>
+          <span>Tema {theme === 'dark' ? 'Oscuro' : 'Dacsa'}</span>
         </button>
 
         {/* Version / Changelog */}
@@ -561,68 +561,7 @@ function NavigationRail() {
   );
 }
 
-function GeneralLessonsPage() {
-  const { getAuthHeaders } = useAuth();
-  const [lessons, setLessons] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/lessons`, {
-      headers: getAuthHeaders()
-    })
-      .then(res => res.json())
-      .then(data => {
-        setLessons(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching lessons:', err);
-        setLoading(false);
-      });
-  }, []);
-
-  return (
-    <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div>
-        <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Lecciones Aprendidas de la Cartera</h3>
-        <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
-          Historial de buenas prácticas y errores a evitar documentados por los gestores de proyectos.
-        </p>
-      </div>
-
-      {loading ? (
-        <span>Cargando base de conocimiento...</span>
-      ) : lessons.length === 0 ? (
-        <p style={{ color: 'var(--md-sys-color-outline)' }}>No se registran lecciones en el histórico.</p>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: 20 }}>
-          {lessons.map(lesson => (
-            <div key={lesson.id_leccion} style={{ padding: 20, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '16px', border: '1px solid var(--md-sys-color-outline-variant)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                <span className="project-id-badge">{lesson.id_leccion}</span>
-                <span className={`badge ${lesson.tipo_leccion === 'BUENA_PRACTICA' ? 'badge-green' : 'badge-red'}`}>
-                  {lesson.tipo_leccion.replace(/_/g, ' ')}
-                </span>
-              </div>
-              <h4 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 8 }}>{lesson.titulo}</h4>
-              <p style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-outline)', marginBottom: 12 }}>
-                <strong>Contexto:</strong> {lesson.contexto}
-              </p>
-              <p style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface)' }}>
-                <strong>Recomendación futura:</strong> {lesson.recomendacion_futura}
-              </p>
-
-              <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
-                {lesson.Proyecto && <span>Proyecto: {lesson.Proyecto.nombre_proyecto}</span>}
-                {lesson.Proveedore && <span>Partner: {lesson.Proveedore.nombre_razon_social}</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function ProjectDetailWrapper({ onBack }) {
   const { id } = useParams();
@@ -646,9 +585,9 @@ function MainAppContent() {
   const handleBack = () => navigate(-1);
 
   const getPageTitle = () => {
-    if (location.pathname.startsWith('/dashboard') || location.pathname === '/') return 'Seguimiento de Proyectos (Cartera Operativa)';
+    if (location.pathname.startsWith('/proyectos') || location.pathname === '/') return 'Proyectos';
     if (location.pathname.startsWith('/governance')) return 'Control Ejecutivo de Cartera';
-    if (location.pathname.startsWith('/kpis-pmo')) return 'KPIs PMO (Cuadro de Mando Integrado)';
+    if (location.pathname.startsWith('/dashboard')) return 'Dashboard';
     if (location.pathname.startsWith('/timeline')) return 'Timeline de Portfolio';
     if (location.pathname.startsWith('/portfolios/report')) return 'Control Presupuestario de Portfolios';
     if (location.pathname === '/proveedores') return 'Socios Tecnológicos (Directorio)';
@@ -676,18 +615,18 @@ function MainAppContent() {
         {/* Dynamic content rendering */}
         <div className="content-wrapper">
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/proyectos" replace />} />
             
-            <Route path="/dashboard" element={
-              <Dashboard onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+            <Route path="/proyectos" element={
+              <Projects onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
             } />
             
             <Route path="/governance" element={
               <GovernanceDashboard onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
             } />
 
-            <Route path="/kpis-pmo" element={
-              <KpisPmo onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+            <Route path="/dashboard" element={
+              <Dashboard onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
             } />
 
             <Route path="/timeline" element={

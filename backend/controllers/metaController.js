@@ -45,6 +45,8 @@ const getPortfolioStates = asyncHandler(async (req, res) => {
 
 const getPortfolioDashboard = asyncHandler(async (req, res) => {
   const { pm, fecha_desde, fecha_hasta, search, vendor, rag, state, portfolio, tag } = req.query;
+  const user = await Usuarios.findByPk(req.currentPmId);
+  const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
   
   const where = {};
   if (pm) {
@@ -92,12 +94,13 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
       { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
       { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
       { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
+      { model: Sedes, as: 'SedeDistribuir', attributes: ['nombre_sede'] },
       { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre'] },
       { model: Tags, as: 'Tags', through: { attributes: [] } },
       { 
         model: EstadosProyecto, 
         as: 'Estado', 
-        attributes: ['nombre_estado', 'icono'],
+        attributes: ['nombre_estado', 'icono', 'descripcion'],
         ...(state ? { where: { nombre_estado: { [Op.in]: state.split(',') } } } : {})
       }
     ],
@@ -165,11 +168,20 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
         }
       }
 
+      const cambiosAlcanceCount = await CambiosAlcance.count({
+        where: { id_proyecto }
+      });
+
+      const commentWhere = { id_proyecto };
+      if (!canSeeDireccion) {
+        commentWhere.para_direccion = false;
+      }
+
       const lastComment = await ComentariosProyecto.findOne({
-        where: { id_proyecto },
+        where: commentWhere,
         order: [['fecha_registro', 'DESC']]
       });
-      const ultimo_comentario = lastComment ? lastComment.texto_comentario.replace(/<[^>]+>/g, '').substring(0, 100) + (lastComment.texto_comentario.length > 100 ? '...' : '') : '';
+      const ultimo_comentario = lastComment ? lastComment.texto_comentario.replace(/<[^>]+>/g, '') : '';
 
       return {
         ...p.toJSON(),
@@ -181,8 +193,11 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
         id_proveedor: p.id_proveedor,
         prov_nombre: p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner',
         sede_nombre: p.Sede ? p.Sede.nombre_sede : '',
+        id_sede_distribuir: p.id_sede_distribuir,
+        distribuir_sede_nombre: p.SedeDistribuir ? p.SedeDistribuir.nombre_sede : '',
         id_estado: p.id_estado,
         estado_proyecto: p.Estado ? p.Estado.nombre_estado : 'Sin Estado',
+        estado_descripcion: p.Estado ? p.Estado.descripcion : null,
         estado_icono: p.Estado ? p.Estado.icono : '❓',
         indicador_rag: p.indicador_rag,
         es_capex: p.es_capex,
@@ -193,6 +208,7 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
         fecha_fin_estimada: calc.fecha_fin_estimada,
         dias_retraso_aprobados: totalCRDays,
         gasto_total_facturas: calc.consumo_real,
+        cambios_alcance_count: cambiosAlcanceCount,
         po_list,
         proximo_hito: nextMilestone ? { titulo_tarea: nextMilestone.titulo_tarea, fecha_limite: nextMilestone.fecha_limite } : null,
         has_hito_vencido: overdueCount > 0,
@@ -369,6 +385,7 @@ const getPortfolioBudgetReport = asyncHandler(async (req, res) => {
           id_proyecto: p.id_proyecto,
           nombre_proyecto: p.nombre_proyecto,
           budget_inicial: parseFloat(p.budget_inicial || 0),
+          budget_notas: p.budget_notas,
           ejecutado: ejecutadoProj,
           indicador_rag: p.indicador_rag,
           estado: p.Estado ? p.Estado.nombre_estado : null,
@@ -405,6 +422,7 @@ const getPortfolioBudgetReport = asyncHandler(async (req, res) => {
           id_proyecto: p.id_proyecto,
           nombre_proyecto: p.nombre_proyecto,
           budget_inicial: parseFloat(p.budget_inicial || 0),
+          budget_notas: p.budget_notas,
           ejecutado: ejecutadoProj,
           indicador_rag: p.indicador_rag,
           estado: p.Estado ? p.Estado.nombre_estado : null,

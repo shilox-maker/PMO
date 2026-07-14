@@ -857,7 +857,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
 
                         {visibleColumnsMap.ultimo_comentario && (
                           <td style={{ padding: '12px 16px', fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
-                            <div style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.ultimo_comentario}>
+                            <div style={{ minWidth: 180, maxWidth: 300, whiteSpace: 'normal', wordBreak: 'break-word' }} title={p.ultimo_comentario}>
                               {p.ultimo_comentario || <span style={{ opacity: 0.5 }}>Sin comentarios</span>}
                             </div>
                           </td>

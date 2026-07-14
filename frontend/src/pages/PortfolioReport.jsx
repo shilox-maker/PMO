@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   Briefcase, Coins, TrendingUp, ChevronDown, ChevronUp, AlertCircle, CheckCircle2,
-  RefreshCw, ArrowRight, DollarSign, Calendar
+  RefreshCw, ArrowRight, DollarSign, Calendar, FileText
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
@@ -147,16 +147,13 @@ export default function PortfolioReport() {
       ) : reportData ? (
         <>
           {/* Executive KPI Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, overflow: 'visible' }}>
             {/* KPI: Aprobado */}
-            <div className="m3-card glass-panel" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 12, 
-              padding: '16px 20px', 
-              background: 'linear-gradient(135deg, rgba(var(--md-sys-color-primary-rgb, 0, 122, 255), 0.08) 0%, rgba(var(--md-sys-color-surface-rgb, 255, 255, 255), 0) 100%)',
-              borderLeft: '4px solid var(--md-sys-color-primary, #007aff)'
-            }}>
+            <div
+              className="m3-card glass-panel"
+              title="Suma del campo 'Presupuesto Aprobado' de todos los proyectos del portfolio seleccionado."
+              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', background: 'linear-gradient(135deg, rgba(0,122,255,0.08) 0%, transparent 100%)', borderLeft: '4px solid var(--md-sys-color-primary)', cursor: 'help' }}
+            >
               <div style={{
                 width: 38,
                 height: 38,
@@ -177,14 +174,11 @@ export default function PortfolioReport() {
             </div>
 
             {/* KPI: Reservado */}
-            <div className="m3-card glass-panel" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 12, 
-              padding: '16px 20px', 
-              background: 'linear-gradient(135deg, rgba(232, 166, 0, 0.08) 0%, rgba(var(--md-sys-color-surface-rgb, 255, 255, 255), 0) 100%)',
-              borderLeft: '4px solid #e8a600'
-            }}>
+            <div
+              className="m3-card glass-panel"
+              title="Suma de todos los registros de Budget (líneas de gasto comprometido) de los proyectos del portfolio."
+              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', background: 'linear-gradient(135deg, rgba(232,166,0,0.08) 0%, transparent 100%)', borderLeft: '4px solid #e8a600', cursor: 'help' }}
+            >
               <div style={{
                 width: 38,
                 height: 38,
@@ -205,14 +199,11 @@ export default function PortfolioReport() {
             </div>
 
             {/* KPI: Ejecutado */}
-            <div className="m3-card glass-panel" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 12, 
-              padding: '16px 20px', 
-              background: 'linear-gradient(135deg, rgba(0, 199, 178, 0.08) 0%, rgba(var(--md-sys-color-surface-rgb, 255, 255, 255), 0) 100%)',
-              borderLeft: '4px solid #00c7b2'
-            }}>
+            <div
+              className="m3-card glass-panel"
+              title="Suma del importe de todas las facturas registradas (pagadas o pendientes) en los proyectos del portfolio."
+              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', background: 'linear-gradient(135deg, rgba(0,199,178,0.08) 0%, transparent 100%)', borderLeft: '4px solid #00c7b2', cursor: 'help' }}
+            >
               <div style={{
                 width: 38,
                 height: 38,
@@ -233,18 +224,11 @@ export default function PortfolioReport() {
             </div>
 
             {/* KPI: Disp. Compromiso */}
-            <div className="m3-card glass-panel" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 12, 
-              padding: '16px 20px', 
-              background: reportData.resumen.disponible_compromiso_total >= 0
-                ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.08) 0%, rgba(var(--md-sys-color-surface-rgb, 255, 255, 255), 0) 100%)'
-                : 'linear-gradient(135deg, rgba(255, 69, 58, 0.08) 0%, rgba(var(--md-sys-color-surface-rgb, 255, 255, 255), 0) 100%)',
-              borderLeft: reportData.resumen.disponible_compromiso_total >= 0 
-                ? '4px solid var(--color-rag-green, #34c759)'
-                : '4px solid var(--color-rag-red, #ff453a)'
-            }}>
+            <div
+              className="m3-card glass-panel"
+              title="Aprobado − Reservado (Budgets). Margen presupuestario aún no comprometido en ningún proyecto."
+              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', background: reportData.resumen.disponible_compromiso_total >= 0 ? 'linear-gradient(135deg, rgba(52,199,89,0.08) 0%, transparent 100%)' : 'linear-gradient(135deg, rgba(255,69,58,0.08) 0%, transparent 100%)', borderLeft: reportData.resumen.disponible_compromiso_total >= 0 ? '4px solid var(--color-rag-green)' : '4px solid var(--color-rag-red)', cursor: 'help' }}
+            >
               <div style={{
                 width: 38,
                 height: 38,
@@ -272,18 +256,11 @@ export default function PortfolioReport() {
             </div>
 
             {/* KPI: Disp. Ejecución */}
-            <div className="m3-card glass-panel" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 12, 
-              padding: '16px 20px', 
-              background: reportData.resumen.disponible_ejecutado_total >= 0
-                ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.08) 0%, rgba(var(--md-sys-color-surface-rgb, 255, 255, 255), 0) 100%)'
-                : 'linear-gradient(135deg, rgba(255, 69, 58, 0.08) 0%, rgba(var(--md-sys-color-surface-rgb, 255, 255, 255), 0) 100%)',
-              borderLeft: reportData.resumen.disponible_ejecutado_total >= 0 
-                ? '4px solid var(--color-rag-green, #34c759)'
-                : '4px solid var(--color-rag-red, #ff453a)'
-            }}>
+            <div
+              className="m3-card glass-panel"
+              title="Aprobado − Ejecutado (Facturas). Dinero real pendiente de pago según las facturas registradas."
+              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', background: reportData.resumen.disponible_ejecutado_total >= 0 ? 'linear-gradient(135deg, rgba(52,199,89,0.08) 0%, transparent 100%)' : 'linear-gradient(135deg, rgba(255,69,58,0.08) 0%, transparent 100%)', borderLeft: reportData.resumen.disponible_ejecutado_total >= 0 ? '4px solid var(--color-rag-green)' : '4px solid var(--color-rag-red)', cursor: 'help' }}
+            >
               <div style={{
                 width: 38,
                 height: 38,
@@ -494,7 +471,18 @@ export default function PortfolioReport() {
                                 {sec.proyectos.map(p => (
                                   <tr key={p.id_proyecto}>
                                     <td style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>{p.id_proyecto}</td>
-                                    <td style={{ fontWeight: 600 }}>{p.nombre_proyecto}</td>
+                                    <td style={{ fontWeight: 600 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        {p.nombre_proyecto}
+                                        {p.budget_notas && (
+                                          <FileText 
+                                            size={14} 
+                                            style={{ color: 'var(--md-sys-color-primary)', cursor: 'help', flexShrink: 0 }} 
+                                            title={p.budget_notas}
+                                          />
+                                        )}
+                                      </div>
+                                    </td>
                                     <td>{p.pm}</td>
                                     <td>{p.estado || '—'}</td>
                                     <td style={{ textAlign: 'center' }}>

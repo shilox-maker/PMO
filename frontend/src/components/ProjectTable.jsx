@@ -14,12 +14,14 @@ const DEFAULT_PROJECT_COLUMNS = [
   { id: 'proveedor', label: 'Socio Tecnológico', fixed: false, visible: false },
   { id: 'pm', label: 'Gestor PM', fixed: false, visible: true },
   { id: 'sede', label: 'Sede', fixed: false, visible: false },
-  { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: true },
-  { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: true },
+  { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: false },
+  { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: false },
   { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
   { id: 'budget', label: 'Presupuesto', fixed: false, visible: true },
   { id: 'progreso', label: 'Progreso Gasto', fixed: false, visible: true },
   { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true },
+  { id: 'ultimo_comentario', label: 'Último Comentario', fixed: false, visible: true },
+  { id: 'cambios_alcance_count', label: 'Cambios Alcance', fixed: false, visible: true },
   { id: 'accion', label: 'Acción', fixed: true, visible: true }
 ];
 
@@ -99,6 +101,8 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
               {visibleColumnsMap.budget && renderSortHeader('Presupuesto (Act. / Disp.)', 'calculations.budget_actualizado')}
               {visibleColumnsMap.progreso && renderSortHeader('Progreso Gasto', 'calculations.consumo_real')}
               {visibleColumnsMap.proximo_hito && renderSortHeader('Próximo Hito', 'nextMilestone.fecha_limite')}
+              {visibleColumnsMap.ultimo_comentario && renderSortHeader('Último Comentario', 'ultimo_comentario')}
+              {visibleColumnsMap.cambios_alcance_count && renderSortHeader('Cambios Alcance', 'cambios_alcance_count', { textAlign: 'center' })}
               {visibleColumnsMap.accion && <th>Acción</th>}
             </tr>
           </thead>
@@ -142,7 +146,11 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
 
                   {/* Estado */}
                   {visibleColumnsMap.estado_proyecto && <td>
-                    <span className="badge" style={{ backgroundColor: 'var(--md-sys-color-surface-container-highest)', color: 'var(--md-sys-color-on-surface)', fontWeight: 600 }}>
+                    <span
+                      className="badge"
+                      style={{ backgroundColor: 'var(--md-sys-color-surface-container-highest)', color: 'var(--md-sys-color-on-surface)', fontWeight: 600, cursor: project.estado_descripcion ? 'help' : 'default' }}
+                      title={project.estado_descripcion || undefined}
+                    >
                       {project.estado_proyecto}
                     </span>
                   </td>}
@@ -221,6 +229,22 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                     ) : (
                       <span style={{ color: 'var(--md-sys-color-outline)' }}>Ninguno</span>
                     )}
+                  </td>}
+
+                  {/* Último Comentario */}
+                  {visibleColumnsMap.ultimo_comentario && (
+                    <td style={{ fontSize: '0.8rem', minWidth: '180px', maxWidth: '300px', whiteSpace: 'normal', wordBreak: 'break-word', color: 'var(--md-sys-color-outline)' }}>
+                      {project.ultimo_comentario ? (
+                        <span>{project.ultimo_comentario}</span>
+                      ) : (
+                        <span style={{ opacity: 0.5 }}>Sin comentarios</span>
+                      )}
+                    </td>
+                  )}
+
+                  {/* Cambios Alcance */}
+                  {visibleColumnsMap.cambios_alcance_count && <td style={{ textAlign: 'center', fontWeight: 600 }}>
+                    {project.cambios_alcance_count || 0}
                   </td>}
 
                   {/* Action */}

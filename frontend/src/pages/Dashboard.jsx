@@ -1,149 +1,137 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Plus, Search, Building, AlertTriangle, TrendingUp, Calendar, 
-  MapPin, User, Filter, AlertOctagon, CheckSquare, RefreshCw, Eye,
-  ArrowUp, ArrowDown, ArrowUpDown, FileDown, ChevronDown, ChevronUp, MessageSquare, Printer
+  Filter, Search, AlertOctagon, Coins, ShieldCheck, ShieldAlert, Clock, CheckCircle2,
+  RefreshCw, ChevronDown, ChevronUp, AlertTriangle
 } from 'lucide-react';
-import QuickCommentModal from '../components/modals/QuickCommentModal';
-import DashboardReportModal from '../components/modals/DashboardReportModal';
-import { getSortedData } from '../utils/sorting';
-
-import SearchableContactSelect from '../components/SearchableContactSelect';
-import { useTableColumns } from '../hooks/useTableColumns';
-import ColumnSelector from '../components/ColumnSelector';
-
-const DEFAULT_PROJECT_COLUMNS = [
-  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
-  { id: 'nombre_proyecto', label: 'Nombre del Proyecto', fixed: true, visible: true },
-  { id: 'estado_proyecto', label: 'Estado/Fase', fixed: false, visible: true },
-  { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
-  { id: 'proveedor', label: 'Socio Tecnológico', fixed: false, visible: false },
-  { id: 'pm', label: 'Gestor PM', fixed: false, visible: true },
-  { id: 'sede', label: 'Sede', fixed: false, visible: false },
-  { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: true },
-  { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: true },
-  { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
-  { id: 'budget', label: 'Presupuesto', fixed: false, visible: true },
-  { id: 'progreso', label: 'Progreso Gasto', fixed: false, visible: true },
-  { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true },
-  { id: 'accion', label: 'Acción', fixed: true, visible: true }
-];
+import { 
+  Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer 
+} from 'recharts';
+import ProjectTable from '../components/ProjectTable';
 
 export default function Dashboard({ onViewProject, onViewVendor }) {
-  const { getAuthHeaders, currentPm } = useAuth();
-  const canSeeDireccion = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR');
+  const { getAuthHeaders } = useAuth();
+  
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Column visibility
-  const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns', DEFAULT_PROJECT_COLUMNS);
+  // Filters
+  const [filters, setFilters] = useState({
+    pm: '',
+    vendor: '',
+    rag: '',
+    search: '',
+    estrategico: '',
+    fechaDesde: '2026-01-01',
+    fechaHasta: '2026-12-31',
+    states: [],
+    portfolio: '',
+    tag: ''
+  });
 
-  // Sorting state
-  const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
-
-  // Quick Comment state
-  const [quickCommentProjectId, setQuickCommentProjectId] = useState(null);
-  const [isQuickCommentOpen, setIsQuickCommentOpen] = useState(false);
-
-  const handleOpenQuickComment = (pid) => {
-    setQuickCommentProjectId(pid);
-    setIsQuickCommentOpen(true);
-  };
-
-  const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-    }));
-  };
-
-  const renderSortHeader = (label, key, extraStyle = {}) => {
-    const isSorted = sortConfig.key === key;
-    return (
-      <th 
-        onClick={() => handleSort(key)} 
-        style={{ cursor: 'pointer', userSelect: 'none', ...extraStyle }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {label}
-          {isSorted ? (
-            sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
-          ) : (
-            <ArrowUpDown size={14} style={{ opacity: 0.3 }} />
-          )}
-        </div>
-      </th>
-    );
-  };
-
-  const [isReportOpen, setIsReportOpen] = useState(false);
-
-  
-  // Technical List Filters
-  const [filterPm, setFilterPm] = useState('');
-  const [filterVendor, setFilterVendor] = useState('');
-  const [filterRag, setFilterRag] = useState('');
-  const [filterEstrategico, setFilterEstrategico] = useState('');
-  const [filterPortfolio, setFilterPortfolio] = useState('');
-  const [filterTag, setFilterTag] = useState('');
-  const [filterStates, setFilterStates] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [isStatesOpen, setIsStatesOpen] = useState(false);
+  const [selectedKpi, setSelectedKpi] = useState(null);
+  const [selectedChartFilter, setSelectedChartFilter] = useState(null);
+  const [isChartOpen, setIsChartOpen] = useState(true);
 
-  // Dropdowns lists
+  const getFilteredProjects = () => {
+    let res = [...projects];
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (selectedKpi) {
+      switch(selectedKpi) {
+        case 'overrun': 
+          res = res.filter(p => p.gasto_total_facturas > p.budget_inicial);
+          break;
+        case 'overrun_extended': 
+          res = res.filter(p => p.gasto_total_facturas > (p.calculations?.budget_actualizado || p.budget_inicial));
+          break;
+        case 'delayed_partial': 
+          res = res.filter(p => p.has_hito_vencido);
+          break;
+        case 'delayed_base': 
+          res = res.filter(p => {
+            const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(p.estado_proyecto?.toUpperCase());
+            return !isClosed && p.fecha_fin_inicial && p.fecha_fin_inicial < todayStr;
+          });
+          break;
+        case 'delayed_extended': 
+          res = res.filter(p => {
+            const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(p.estado_proyecto?.toUpperCase());
+            return !isClosed && p.fecha_fin_estimada && p.fecha_fin_estimada < todayStr;
+          });
+          break;
+        case 'governance': 
+          res = res.filter(p => !p.com_semanal_activo && !p.com_mensual_activo && !p.com_steerco_activo);
+          break;
+        case 'inactive': 
+          res = res.filter(p => {
+            const diffMs = Date.now() - new Date(p.ultima_actualizacion).getTime();
+            return (diffMs / (1000 * 60 * 60 * 24)) > 30;
+          });
+          break;
+        case 'rag_verde': 
+          res = res.filter(p => p.indicador_rag === 'VERDE');
+          break;
+        case 'rag_amarillo': 
+          res = res.filter(p => p.indicador_rag === 'AMARILLO');
+          break;
+        case 'rag_rojo': 
+          res = res.filter(p => p.indicador_rag === 'ROJO');
+          break;
+        default: 
+          break;
+      }
+    }
+    if (selectedChartFilter) {
+      const { type, value } = selectedChartFilter;
+      if (type === 'estado') {
+        res = res.filter(p => p.estado_proyecto === value);
+      } else if (type === 'pm') {
+        res = res.filter(p => (p.pm_nombre || 'Sin Asignar') === value);
+      } else if (type === 'partner') {
+        res = res.filter(p => (p.prov_nombre || p.Proveedor?.nombre_razon_social || 'Desconocido') === value);
+      } else if (type === 'finanzas') {
+        if (value === 'Gastado') {
+          res = res.filter(p => (p.gasto_total_facturas || 0) > 0);
+        } else if (value === 'Disponible') {
+          res = res.filter(p => (p.budget_inicial || 0) > (p.gasto_total_facturas || 0));
+        }
+      }
+    }
+    return res;
+  };
+
+  // Dropdowns
   const [pmsList, setPmsList] = useState([]);
   const [vendorsList, setVendorsList] = useState([]);
-  const [sedesList, setSedesList] = useState([]);
-  const [contactosList, setContactosList] = useState([]);
   const [statesList, setStatesList] = useState([]);
   const [portfoliosList, setPortfoliosList] = useState([]);
   const [tagsList, setTagsList] = useState([]);
-  const [capexTypes, setCapexTypes] = useState([]);
 
-  // Modal creation state
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newProject, setNewProject] = useState({
-    id_proyecto: '', // Empty triggers auto-generation
-    nombre_proyecto: '',
-    descripcion: '',
-    id_pm: '',
-    id_proveedor: '',
-    id_sede: '',
-    id_sponsor: '',
-    portfolio_id: '',
-    estado_proyecto: 'Kickoff',
-    indicador_rag: 'VERDE',
-    fecha_inicio: '',
-    fecha_fin_inicial: '',
-    es_capex: false,
-    codigo_capex: '',
-    id_tipo_capex: '',
-    id_subtipo_capex: '',
-    es_estrategico: false,
-    budget_inicial: '',
-    com_semanal_activo: false,
-    com_semanal_finalidad: '',
-    com_mensual_activo: false,
-    com_mensual_finalidad: '',
-    com_steerco_activo: false,
-    com_steerco_finalidad: ''
-  });
-  const [formError, setFormError] = useState('');
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(data));
+  }, []);
 
-  const fetchProjects = () => {
+  const fetchDashboardData = () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (filterPm) params.append('pm', filterPm);
-    if (filterVendor) params.append('vendor', filterVendor);
-    if (filterRag) params.append('rag', filterRag);
-    if (filterEstrategico) params.append('estrategico', filterEstrategico);
-    if (filterStates.length > 0) params.append('state', filterStates.join(','));
-    if (filterPortfolio) params.append('portfolio', filterPortfolio);
-    if (filterTag) params.append('tag', filterTag);
-    if (searchTerm) params.append('search', searchTerm);
+    if (filters.pm) params.append('pm', filters.pm);
+    if (filters.vendor) params.append('vendor', filters.vendor);
+    if (filters.rag) params.append('rag', filters.rag);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.estrategico) params.append('estrategico', filters.estrategico);
+    if (filters.fechaDesde) params.append('fecha_desde', filters.fechaDesde);
+    if (filters.fechaHasta) params.append('fecha_hasta', filters.fechaHasta);
+    if (filters.states && filters.states.length > 0) params.append('state', filters.states.join(','));
+    if (filters.portfolio) params.append('portfolio', filters.portfolio);
+    if (filters.tag) params.append('tag', filters.tag);
 
-    fetch(`${import.meta.env.VITE_API_URL}/projects?${params.toString()}`, {
+    // Fetch from the governance/dashboard endpoint to get calculations and basic grouping easily
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/dashboard?${params.toString()}`, {
       headers: getAuthHeaders()
     })
       .then(res => res.json())
@@ -152,868 +140,608 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
         setLoading(false);
       })
       .catch(err => {
-        console.error('Error fetching technical projects list:', err);
+        console.error('Error fetching KPIs data:', err);
         setLoading(false);
       });
   };
 
-  const fetchMetadata = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedesList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/capex-types`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setCapexTypes(data));
-  };
-
   useEffect(() => {
-    fetchProjects();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterPortfolio, filterTag, filterStates, searchTerm]);
+    fetchDashboardData();
+  }, [filters]);
 
-  useEffect(() => {
-    fetchMetadata();
-  }, []);
-
-  useEffect(() => {
-    if (currentPm) {
-      setNewProject(prev => ({ ...prev, id_pm: currentPm.id_usuario.toString() }));
-    }
-  }, [currentPm]);
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setNewProject(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleCreateProject = (e) => {
-    e.preventDefault();
-    setFormError('');
+  // ==========================================
+  // METRIC COMPUTATIONS
+  // ==========================================
+  
+  // 1. Proyectos en Desborde Coste (CAPEX)
+  const overrunCount = projects.filter(p => p.gasto_total_facturas > p.budget_inicial).length;
+  
+  // 2. Proyectos en Desborde Coste Ampliado (CAPEX + Cambios de Alcance Aprobados)
+  const overrunExtendedCount = projects.filter(p => p.gasto_total_facturas > (p.calculations?.budget_actualizado || p.budget_inicial)).length;
 
-    if (newProject.id_proyecto && newProject.id_proyecto.trim() !== '') {
-      const idRegex = /^PRJ-\d{4}-\d{3}$/;
-      if (!idRegex.test(newProject.id_proyecto)) {
-        setFormError('El ID del proyecto debe tener el formato PRJ-YYYY-XXX o dejarse vacío.');
-        return;
-      }
-    }
+  // 3. Proyectos Retrasados Parcialmente (Hitos)
+  const delayedPartialCount = projects.filter(p => p.has_hito_vencido).length;
 
-    if (newProject.es_capex && (!newProject.codigo_capex || newProject.codigo_capex.trim() === '')) {
-      setFormError('El código CAPEX es obligatorio para proyectos CAPEX.');
-      return;
-    }
-    if (newProject.es_capex && !newProject.id_tipo_capex) {
-      setFormError('El tipo de CAPEX es obligatorio para proyectos CAPEX.');
-      return;
-    }
-    const selectedTipo = capexTypes.find(t => t.id === parseInt(newProject.id_tipo_capex, 10));
-    if (newProject.es_capex && selectedTipo?.Subtipos?.length > 0 && !newProject.id_subtipo_capex) {
-      setFormError('El subtipo de CAPEX es obligatorio para el tipo seleccionado.');
-      return;
-    }
+  // 4. Proyectos Retrasados Fecha Base
+  const todayStr = new Date().toISOString().split('T')[0];
+  const delayedBaseCount = projects.filter(p => {
+    const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(p.estado_proyecto?.toUpperCase());
+    return !isClosed && p.fecha_fin_inicial && p.fecha_fin_inicial < todayStr;
+  }).length;
 
-    if (!newProject.nombre_proyecto || !newProject.id_pm || !newProject.id_proveedor || !newProject.id_sede || !newProject.id_sponsor || !newProject.budget_inicial) {
-      setFormError('Por favor, rellene todos los campos obligatorios.');
-      return;
-    }
+  // 5. Proyectos Retrasados Fecha Ampliada
+  const delayedExtendedCount = projects.filter(p => {
+    const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(p.estado_proyecto?.toUpperCase());
+    return !isClosed && p.fecha_fin_estimada && p.fecha_fin_estimada < todayStr;
+  }).length;
 
-    const payload = {
-      ...newProject,
-      budget_inicial: parseFloat(newProject.budget_inicial),
-      id_pm: parseInt(newProject.id_pm, 10),
-      id_proveedor: parseInt(newProject.id_proveedor, 10),
-      id_sede: parseInt(newProject.id_sede, 10),
-      id_sponsor: parseInt(newProject.id_sponsor, 10),
-      portfolio_id: newProject.portfolio_id ? parseInt(newProject.portfolio_id, 10) : null,
-      id_tipo_capex: newProject.id_tipo_capex ? parseInt(newProject.id_tipo_capex, 10) : null,
-      id_subtipo_capex: newProject.id_subtipo_capex ? parseInt(newProject.id_subtipo_capex, 10) : null
-    };
+  // 6. Gobernanza (Proyectos sin Gobernanza)
+  const nonGovernedCount = projects.filter(p => !p.com_semanal_activo && !p.com_mensual_activo && !p.com_steerco_activo).length;
 
-    if (!payload.id_proyecto || payload.id_proyecto.trim() === '') {
-      delete payload.id_proyecto;
-    }
+  // 7. Proyectos Inactivos (>30 días sin actualización)
+  const inactiveCount = projects.filter(p => {
+    const diffMs = Date.now() - new Date(p.ultima_actualizacion).getTime();
+    return (diffMs / (1000 * 60 * 60 * 24)) > 30;
+  }).length;
 
-    fetch(`${import.meta.env.VITE_API_URL}/projects`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(payload)
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al guardar el proyecto');
-        return data;
-      })
-      .then(() => {
-        setShowCreateModal(false);
-        fetchProjects();
-        setNewProject({
-          id_proyecto: '',
-          nombre_proyecto: '',
-          descripcion: '',
-          id_pm: currentPm ? currentPm.id_usuario.toString() : '',
-          id_proveedor: '',
-          id_sede: '',
-          id_sponsor: '',
-          portfolio_id: '',
-          estado_proyecto: 'Kickoff',
-          indicador_rag: 'VERDE',
-          fecha_inicio: '',
-          fecha_fin_inicial: '',
-          es_capex: false,
-          codigo_capex: '',
-          id_tipo_capex: '',
-          id_subtipo_capex: '',
-          es_estrategico: false,
-          budget_inicial: '',
-          com_semanal_activo: false,
-          com_semanal_finalidad: '',
-          com_mensual_activo: false,
-          com_mensual_finalidad: '',
-          com_steerco_activo: false,
-          com_steerco_finalidad: ''
-        });
-      })
-      .catch(err => setFormError(err.message));
-  };
+  // 8. Distribución RAG
+  const ragVerde = projects.filter(p => p.indicador_rag === 'VERDE').length;
+  const ragAmarillo = projects.filter(p => p.indicador_rag === 'AMARILLO').length;
+  const ragRojo = projects.filter(p => p.indicador_rag === 'ROJO').length;
 
-  const getProgressColor = (percent) => {
-    if (percent > 90) return 'var(--color-rag-red)';
-    if (percent > 75) return 'var(--color-rag-yellow)';
-    return 'var(--md-sys-color-primary)';
-  };
+  // ==========================================
+  // CHART DATA PREPARATION
+  // ==========================================
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ffc658', '#8dd1e1', '#a4de6c'];
+
+  // 1. Proyectos por Estado (Anillo)
+  const stateCounts = {};
+  projects.forEach(p => {
+    stateCounts[p.estado_proyecto] = (stateCounts[p.estado_proyecto] || 0) + 1;
+  });
+  const dataStatus = Object.keys(stateCounts).map(key => ({ name: key, value: stateCounts[key] })).sort((a,b) => b.value - a.value);
+
+  // 2. Proyectos por PM (Barras)
+  const pmCounts = {};
+  projects.forEach(p => {
+    const pmName = p.pm_nombre || 'Sin Asignar';
+    pmCounts[pmName] = (pmCounts[pmName] || 0) + 1;
+  });
+  const dataPM = Object.keys(pmCounts).map(key => ({ name: key, proyectos: pmCounts[key] })).sort((a,b) => b.proyectos - a.proyectos).slice(0, 10);
+
+  // 3. Salud Financiera (Suma de Budget vs Suma Real) (Anillo)
+  const totalBudget = projects.reduce((acc, p) => acc + (p.budget_inicial || 0), 0);
+  const totalSpent = projects.reduce((acc, p) => acc + (p.gasto_total_facturas || 0), 0);
+  const dataFinances = [
+    { name: 'Gastado', value: totalSpent, color: '#FF8042' },
+    { name: 'Disponible', value: Math.max(0, totalBudget - totalSpent), color: '#00C49F' }
+  ];
+
+  // 4. Carga por Proveedor (Barras)
+  const vendorCounts = {};
+  projects.forEach(p => {
+    const vendorName = p.prov_nombre || p.Proveedor?.nombre_razon_social || 'Desconocido';
+    vendorCounts[vendorName] = (vendorCounts[vendorName] || 0) + 1;
+  });
+  const dataVendor = Object.keys(vendorCounts).map(key => ({ name: key, proyectos: vendorCounts[key] })).sort((a,b) => b.proyectos - a.proyectos).slice(0, 10);
+
 
   return (
     <div>
-      {/* Filters bar */}
+      {/* Filters Bar */}
       <div className="m3-card glass-panel" style={{ padding: '20px 24px', marginBottom: 24, position: 'relative', zIndex: 10, overflow: 'visible' }}>
-        {/* Row 1: Search & Master Dropdowns */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--md-sys-color-outline)' }}>
             <Filter size={18} />
-            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Filtros:</span>
+            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Filtros Maestros:</span>
           </div>
-        
-        {/* Search */}
-        <div style={{ position: 'relative', flexGrow: 1, minWidth: '180px' }}>
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre..." 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="m3-input"
-            style={{ paddingLeft: '40px', height: '40px' }}
-          />
-          <Search size={18} style={{ position: 'absolute', left: '14px', top: '11px', color: 'var(--md-sys-color-outline)' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>Desde:</span>
+            <input 
+              type="date" 
+              value={filters.fechaDesde} 
+              onChange={(e) => handleFilterChange('fechaDesde', e.target.value)}
+              className="m3-input"
+              style={{ width: '150px', height: '40px', padding: '0 12px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>Hasta:</span>
+            <input 
+              type="date" 
+              value={filters.fechaHasta} 
+              onChange={(e) => handleFilterChange('fechaHasta', e.target.value)}
+              className="m3-input"
+              style={{ width: '150px', height: '40px', padding: '0 12px' }}
+            />
+          </div>
+
+          <div style={{ position: 'relative', flexGrow: 1, minWidth: '180px' }}>
+            <input 
+              type="text" 
+              placeholder="Buscar por nombre..." 
+              value={filters.search} 
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+              className="m3-input"
+              style={{ paddingLeft: '40px', height: '40px' }}
+            />
+            <Search size={18} style={{ position: 'absolute', left: '14px', top: '11px', color: 'var(--md-sys-color-outline)' }} />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filters.pm} 
+              onChange={(e) => handleFilterChange('pm', e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '140px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">Todos los PM</option>
+              {pmsList.map(p => (
+                <option key={p.id_usuario} value={p.id_usuario}>{p.nombre} {p.apellidos}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filters.vendor} 
+              onChange={(e) => handleFilterChange('vendor', e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '140px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">Todos los Partners</option>
+              {vendorsList.map(v => (
+                <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filters.estrategico} 
+              onChange={(e) => handleFilterChange('estrategico', e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">¿Estratégico?</option>
+              <option value="true">Sí</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+
+          {/* Portfolio Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filters.portfolio} 
+              onChange={(e) => handleFilterChange('portfolio', e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">Todos los Portfolios</option>
+              {portfoliosList.map(p => (
+                <option key={p.id} value={p.id}>{p.nombre}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Tag Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filters.tag} 
+              onChange={(e) => handleFilterChange('tag', e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">Todos los Tags</option>
+              {tagsList.map(t => (
+                <option key={t.id} value={t.id}>{t.nombre}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* PM filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select 
-            value={filterPm} 
-            onChange={(e) => setFilterPm(e.target.value)}
-            className="user-select"
-            style={{ width: 'auto', minWidth: '140px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
-          >
-            <option value="">Todos los PM</option>
-            {pmsList.map(p => (
-              <option key={p.id_usuario} value={p.id_usuario}>{p.nombre} {p.apellidos}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Vendor Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select 
-            value={filterVendor} 
-            onChange={(e) => setFilterVendor(e.target.value)}
-            className="user-select"
-            style={{ width: 'auto', minWidth: '140px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
-          >
-            <option value="">Todos los Partners</option>
-            {vendorsList.map(v => (
-              <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* RAG Status Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select 
-            value={filterRag} 
-            onChange={(e) => setFilterRag(e.target.value)}
-            className="user-select"
-            style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
-          >
-            <option value="">Todos los RAG</option>
-            <option value="VERDE">VERDE 🟢</option>
-            <option value="AMARILLO">AMARILLO 🟡</option>
-            <option value="ROJO">ROJO 🔴</option>
-          </select>
-        </div>
-
-        {/* Estratégico Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select 
-            value={filterEstrategico} 
-            onChange={(e) => setFilterEstrategico(e.target.value)}
-            className="user-select"
-            style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
-          >
-            <option value="">¿Estratégico?</option>
-            <option value="true">Sí</option>
-            <option value="false">No</option>
-          </select>
-        </div>
-
-        {/* Portfolio Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select 
-            value={filterPortfolio} 
-            onChange={(e) => setFilterPortfolio(e.target.value)}
-            className="user-select"
-            style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
-          >
-            <option value="">Todos los Portfolios</option>
-            {portfoliosList.map(p => (
-              <option key={p.id} value={p.id}>{p.nombre}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Tag Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select 
-            value={filterTag} 
-            onChange={(e) => setFilterTag(e.target.value)}
-            className="user-select"
-            style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
-          >
-            <option value="">Todos los Tags</option>
-            {tagsList.map(t => (
-              <option key={t.id} value={t.id}>{t.nombre}</option>
-            ))}
-          </select>
-        </div>
-        
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto', position: 'relative', zIndex: 50 }}>
-          <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
-          
-          <button 
-            className="m3-btn m3-btn-tonal" 
-            onClick={() => setIsReportOpen(true)}
-            style={{ 
-              height: '40px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 8
-            }}
-          >
-            <Printer size={18} />
-            <span>Generar Informe</span>
-          </button>
-
-          <button className="m3-btn m3-btn-primary" onClick={() => setShowCreateModal(true)} style={{ height: '40px' }}>
-            <Plus size={18} />
-            Crear Proyecto
-          </button>
-        </div>
-        </div>
-
-        {/* Separator Line */}
         <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', margin: '16px 0' }}></div>
 
-        {/* Row 2: State Segmentation Buttons */}
+        {/* State Filters */}
         <div>
           <div 
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
             onClick={() => setIsStatesOpen(!isStatesOpen)}
           >
             <h4 style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Filtro por Estados del Proyecto
+              Filtro por Estados
             </h4>
-            {isStatesOpen ? <ChevronUp size={18} color="var(--md-sys-color-outline)" /> : <ChevronDown size={18} color="var(--md-sys-color-outline)" />}
+            {isStatesOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
           
           {isStatesOpen && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const openStates = statesList
-                      .filter(s => !s.proyecto_cerrado)
-                      .map(s => s.nombre_estado);
-                    setFilterStates(openStates);
-                  }}
-                  style={{
-                    borderRadius: '20px',
-                    padding: '8px 16px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    border: '1px solid var(--md-sys-color-primary)',
-                    color: 'var(--md-sys-color-primary)',
-                    backgroundColor: 'transparent',
-                    cursor: 'pointer',
-                    transition: 'var(--transition-smooth)'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(168, 199, 250, 0.1)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  📂 Proyectos abiertos
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFilterStates([])}
-                  style={{
-                    borderRadius: '20px',
-                    padding: '8px 16px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    border: 'none',
-                    color: 'var(--md-sys-color-outline)',
-                    backgroundColor: 'transparent',
-                    cursor: 'pointer',
-                    transition: 'var(--transition-smooth)'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--md-sys-color-on-surface)'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--md-sys-color-outline)'}
-                >
-                  🧹 Limpiar selección
-                </button>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-                {statesList.map(state => {
-                  const st = state.nombre_estado;
-                  const isSelected = filterStates.includes(st);
-                  
-                  return (
-                    <div 
-                      key={state.id_estado}
-                      onClick={() => {
-                        const newStates = isSelected 
-                          ? filterStates.filter(x => x !== st) 
-                          : [...filterStates, st];
-                        setFilterStates(newStates);
-                      }}
-                      style={{
-                        padding: '12px 16px',
-                        backgroundColor: isSelected ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-high)',
-                        color: isSelected ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface)',
-                        borderRadius: '16px',
-                        cursor: 'pointer',
-                        border: isSelected ? '1px solid var(--md-sys-color-primary)' : '1px solid var(--md-sys-color-outline-variant)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        transition: 'var(--transition-smooth)'
-                      }}
-                    >
-                      <span style={{ fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>
-                        {state.icono || '❓'} {st}
-                      </span>
-                      <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>
-                        {projects.filter(p => p.Estado && p.Estado.nombre_estado === st).length}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+            <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="m3-btn m3-btn-tonal" style={{ borderRadius: 20, padding: '4px 12px' }} onClick={() => handleFilterChange('states', [])}>Limpiar</button>
+              <button 
+                className="m3-btn" 
+                style={{ borderRadius: 20, padding: '4px 12px', backgroundColor: 'var(--md-sys-color-primary)', color: '#fff', border: 'none', cursor: 'pointer' }} 
+                onClick={() => {
+                  const openStates = statesList
+                    .map(s => s.nombre_estado)
+                    .filter(st => !['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(st.toUpperCase()));
+                  handleFilterChange('states', openStates);
+                }}
+              >
+                Abiertos
+              </button>
+              {statesList.map(state => {
+                const st = state.nombre_estado;
+                const isSelected = filters.states.includes(st);
+                return (
+                  <button 
+                    key={state.id_estado}
+                    onClick={() => {
+                      const newStates = isSelected ? filters.states.filter(x => x !== st) : [...filters.states, st];
+                      handleFilterChange('states', newStates);
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: isSelected ? 'var(--md-sys-color-primary)' : 'transparent',
+                      color: isSelected ? '#fff' : 'var(--md-sys-color-on-surface)',
+                      border: '1px solid var(--md-sys-color-primary)',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    {state.icono} {st}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
-
       </div>
 
-      {/* Spreadsheet grid technical table (full width) */}
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', gap: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
           <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
-          <span>Cargando listado de proyectos...</span>
-        </div>
-      ) : projects.length === 0 ? (
-        <div className="m3-card" style={{ textAlign: 'center', padding: '48px', color: 'var(--md-sys-color-outline)' }}>
-          No se encontraron proyectos registrados.
         </div>
       ) : (
-        <div className="m3-table-wrapper glass-panel">
-          <table className="m3-table">
-            <thead>
-              <tr>
-                {visibleColumnsMap.id_proyecto && renderSortHeader('Código', 'id_proyecto')}
-                {visibleColumnsMap.nombre_proyecto && renderSortHeader('Nombre del Proyecto', 'nombre_proyecto')}
-                {visibleColumnsMap.estado_proyecto && renderSortHeader('Estado/Fase', 'estado_proyecto')}
-                {visibleColumnsMap.indicador_rag && renderSortHeader('RAG', 'indicador_rag')}
-                {visibleColumnsMap.proveedor && renderSortHeader('Socio Tecnológico', 'Proveedor.nombre_razon_social')}
-                {visibleColumnsMap.pm && renderSortHeader('Gestor PM', 'PM.nombre')}
-                {visibleColumnsMap.sede && renderSortHeader('Sede', 'Sede.nombre_sede')}
-                {visibleColumnsMap.fecha_inicio && renderSortHeader('Fecha Inicio', 'fecha_inicio')}
-                {visibleColumnsMap.fecha_fin_inicial && renderSortHeader('Fecha Fin Base', 'fecha_fin_inicial')}
-                {visibleColumnsMap.fecha_fin_estimada && renderSortHeader('Fecha Fin Est.', 'calculations.fecha_fin_estimada')}
-                {visibleColumnsMap.budget && renderSortHeader('Presupuesto (Act. / Disp.)', 'calculations.budget_actualizado')}
-                {visibleColumnsMap.progreso && renderSortHeader('Progreso Gasto', 'calculations.consumo_real')}
-                {visibleColumnsMap.proximo_hito && renderSortHeader('Próximo Hito', 'nextMilestone.fecha_limite')}
-                {visibleColumnsMap.accion && <th>Acción</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {getSortedData(projects, sortConfig).map((project) => {
-                const calc = project.calculations;
-                const consumptionPercent = calc ? Math.min((calc.consumo_real / calc.budget_actualizado) * 100, 100) : 0;
-                const displayedPercent = calc ? Math.round((calc.consumo_real / calc.budget_actualizado) * 100) : 0;
-
-                const todayStr = new Date().toISOString().split('T')[0];
-                const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(project.estado_proyecto?.toUpperCase());
-                const isProjectOverdue = !isClosed && calc?.fecha_fin_estimada && calc.fecha_fin_estimada < todayStr;
-                const isMilestoneOverdue = project.nextMilestone && project.nextMilestone.fecha_limite && project.nextMilestone.fecha_limite < todayStr;
-
-                return (
-                  <tr key={project.id_proyecto} style={isProjectOverdue ? { backgroundColor: 'rgba(255, 69, 58, 0.1)' } : {}}>
-                    {/* ID */}
-                    {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{project.id_proyecto}</td>}
-                    
-                    {/* Name */}
-                    {visibleColumnsMap.nombre_proyecto && <td style={{ fontWeight: 600, minWidth: '180px' }}>
-                      <span 
-                        style={{ cursor: 'pointer', color: 'var(--md-sys-color-on-surface)' }}
-                        onClick={() => onViewProject(project.id_proyecto)}
-                      >
-                        {project.nombre_proyecto}
-                      </span>
-                      {project.es_capex && (
-                        <div style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-primary)', fontWeight: 600, marginTop: 2 }}>
-                          CAPEX • {project.codigo_capex}
-                        </div>
-                      )}
-                    </td>}
-
-                    {/* Estado */}
-                    {visibleColumnsMap.estado_proyecto && <td>
-                      <span className="badge" style={{ backgroundColor: 'var(--md-sys-color-surface-container-highest)', color: 'var(--md-sys-color-on-surface)', fontWeight: 600 }}>
-                        {project.estado_proyecto}
-                      </span>
-                    </td>}
-
-                    {/* RAG */}
-                    {visibleColumnsMap.indicador_rag && <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <div 
-                          className={`project-rag-dot ${project.indicador_rag}`} 
-                          style={{ width: 18, height: 18 }}
-                          title={project.indicador_rag}
-                        ></div>
-                      </div>
-                    </td>}
-
-                    {/* Vendor */}
-                    {visibleColumnsMap.proveedor && <td>
-                      <span 
-                        style={{ textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)', fontWeight: 500 }}
-                        onClick={() => onViewVendor(project.id_proveedor)}
-                      >
-                        {project.Proveedor?.nombre_razon_social}
-                      </span>
-                    </td>}
-
-                    {/* PM */}
-                    {visibleColumnsMap.pm && <td>{project.PM?.nombre} {project.PM?.apellidos}</td>}
-
-                    {/* Sede */}
-                    {visibleColumnsMap.sede && <td>{project.Sede?.nombre_sede}</td>}
-
-                    {/* Dates */}
-                    {visibleColumnsMap.fecha_inicio && <td>{project.fecha_inicio ? new Date(project.fecha_inicio).toLocaleDateString('es-ES') : '—'}</td>}
-                    {visibleColumnsMap.fecha_fin_inicial && <td>{project.fecha_fin_inicial ? new Date(project.fecha_fin_inicial).toLocaleDateString('es-ES') : '—'}</td>}
-                    {visibleColumnsMap.fecha_fin_estimada && <td>{calc?.fecha_fin_estimada ? new Date(calc.fecha_fin_estimada).toLocaleDateString('es-ES') : '—'}</td>}
-
-                    {/* Budget */}
-                    {visibleColumnsMap.budget && <td>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>
-                        Act: {calc?.budget_actualizado.toLocaleString('es-ES')} €
-                      </div>
-                      <div style={{ 
-                        fontSize: '0.75rem', 
-                        color: calc?.presupuesto_disponible < 0 ? 'var(--color-rag-red)' : 'var(--md-sys-color-outline)' 
-                      }}>
-                        Disp: {calc?.presupuesto_disponible.toLocaleString('es-ES')} €
-                      </div>
-                    </td>}
-
-                    {/* Progress Bar */}
-                    {visibleColumnsMap.progreso && <td style={{ minWidth: '120px' }}>
-                      <div style={{ display: 'flex', justify: 'space-between', fontSize: '0.75rem', fontWeight: 600, marginBottom: 4 }}>
-                        <span>{calc?.consumo_real.toLocaleString('es-ES', { maximumFractionDigits: 0 })} €</span>
-                        <span>{displayedPercent}%</span>
-                      </div>
-                      <div className="progress-track" style={{ height: 6 }}>
-                        <div 
-                          className="progress-fill" 
-                          style={{ 
-                            width: `${consumptionPercent}%`, 
-                            backgroundColor: getProgressColor(displayedPercent)
-                          }}
-                        ></div>
-                      </div>
-                    </td>}
-
-                    {/* Milestone */}
-                    {visibleColumnsMap.proximo_hito && <td style={{ fontSize: '0.8rem', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: isMilestoneOverdue ? 'var(--color-rag-red)' : 'inherit' }}>
-                      {project.nextMilestone ? (
-                        <div title={`${project.nextMilestone.titulo_tarea} (${project.nextMilestone.fecha_limite})`}>
-                          <strong>{project.nextMilestone.titulo_tarea}</strong>
-                          <div style={{ color: isMilestoneOverdue ? 'var(--color-rag-red)' : 'var(--md-sys-color-outline)', fontSize: '0.75rem' }}>{project.nextMilestone.fecha_limite}</div>
-                        </div>
-                      ) : (
-                        <span style={{ color: 'var(--md-sys-color-outline)' }}>Ninguno</span>
-                      )}
-                    </td>}
-
-                    {/* Action */}
-                    {visibleColumnsMap.accion && <td>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button 
-                          className="m3-btn m3-btn-tonal" 
-                          onClick={() => onViewProject(project.id_proyecto)}
-                          style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px' }}
-                        >
-                          <Eye size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                          Ficha
-                        </button>
-                        <button 
-                          className="m3-btn m3-btn-tonal"
-                          onClick={() => handleOpenQuickComment(project.id_proyecto)}
-                          style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 4 }}
-                          title="Actualizar estado / comentario rápido"
-                        >
-                          <MessageSquare size={14} />
-                          <span>Comentar</span>
-                        </button>
-                      </div>
-                    </td>}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Create Project Modal */}
-      {showCreateModal && (
-        <div className="modal-overlay">
-          <div className="modal-content glass-panel" style={{ maxWidth: '700px' }}>
-            <div className="modal-header">
-              <h3 className="modal-title">Registrar Nuevo Proyecto</h3>
-              <button className="icon-btn" onClick={() => setShowCreateModal(false)}>✕</button>
+        <>
+          {/* KPI CARDS (8) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, minmax(0, 1fr))', gap: 8, marginBottom: 24 }}>
+            
+            <div 
+              className="m3-card metric-card glass-panel" 
+              onClick={() => setSelectedKpi(selectedKpi === 'overrun' ? null : 'overrun')}
+              style={{ 
+                cursor: 'pointer', 
+                border: selectedKpi === 'overrun' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
+                padding: '10px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                minWidth: 0
+              }}
+              title="Suma de facturas recibidas y pendientes de recibir es mayor que el CAPEX inicial aprobado"
+            >
+              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
+                <AlertOctagon size={16} />
+              </div>
+              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                <span className="metric-value" style={{ color: 'var(--color-rag-red)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{overrunCount}</span>
+                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Exc. coste (CAPEX)</span>
+              </div>
             </div>
 
-            {formError && (
-              <div style={{ backgroundColor: 'rgba(255, 69, 58, 0.1)', color: 'var(--color-rag-red)', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: '0.9rem', fontWeight: 500 }}>
-                {formError}
+            <div 
+              className="m3-card metric-card glass-panel" 
+              onClick={() => setSelectedKpi(selectedKpi === 'overrun_extended' ? null : 'overrun_extended')}
+              style={{ 
+                cursor: 'pointer', 
+                border: selectedKpi === 'overrun_extended' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
+                padding: '10px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                minWidth: 0
+              }}
+              title="Suma de facturas recibidas y pendientes de recibir es mayor que el CAPEX inicial más los cambios de alcance aprobados"
+            >
+              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 159, 10, 0.2)', color: 'var(--priority-alta)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
+                <Coins size={16} />
               </div>
-            )}
-
-            <form onSubmit={handleCreateProject}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                
-                {/* ID Proyecto (Opcional - Autogeneración) */}
-                <div className="form-group">
-                  <label className="form-label">Código Proyecto (Dejar vacío para auto-asignar)</label>
-                  <input 
-                    type="text" 
-                    name="id_proyecto"
-                    value={newProject.id_proyecto}
-                    onChange={handleInputChange}
-                    placeholder="Auto-generado (Ej. PRJ-2026-007)"
-                    className="m3-input"
-                  />
-                </div>
-
-                {/* Nombre Proyecto */}
-                <div className="form-group">
-                  <label className="form-label">Nombre del Proyecto *</label>
-                  <input 
-                    type="text" 
-                    name="nombre_proyecto"
-                    value={newProject.nombre_proyecto}
-                    onChange={handleInputChange}
-                    placeholder="Integración Plataforma..."
-                    required
-                    className="m3-input"
-                  />
-                </div>
-
-                {/* Sede */}
-                <div className="form-group">
-                  <label className="form-label">Sede de Operación *</label>
-                  <select 
-                    name="id_sede" 
-                    value={newProject.id_sede} 
-                    onChange={handleInputChange}
-                    required
-                    className="user-select"
-                  >
-                    <option value="">Seleccione Sede</option>
-                    {sedesList.map(s => (
-                      <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Socio Tecnológico (Proveedor) */}
-                <div className="form-group">
-                  <label className="form-label">Socio Tecnológico *</label>
-                  <select 
-                    name="id_proveedor" 
-                    value={newProject.id_proveedor} 
-                    onChange={handleInputChange}
-                    required
-                    className="user-select"
-                  >
-                    <option value="">Seleccione Socio</option>
-                    {vendorsList.map(v => (
-                      <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Sponsor Key User */}
-                <div className="form-group">
-                  <label className="form-label">Sponsor / Key User Líder *</label>
-                  <SearchableContactSelect 
-                    contacts={contactosList}
-                    selected={newProject.id_sponsor}
-                    onChange={(val) => setNewProject(prev => ({ ...prev, id_sponsor: val }))}
-                    multiple={false}
-                    placeholder="Seleccione Sponsor / Key User Líder..."
-                  />
-                </div>
-
-                {/* Gestor PM */}
-                <div className="form-group">
-                  <label className="form-label">PM Asignado *</label>
-                  <select 
-                    name="id_pm" 
-                    value={newProject.id_pm} 
-                    onChange={handleInputChange}
-                    required
-                    className="user-select"
-                  >
-                    <option value="">Seleccione PM</option>
-                    {pmsList.map(p => (
-                      <option key={p.id_usuario} value={p.id_usuario}>{p.nombre} {p.apellidos}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Portfolio */}
-                <div className="form-group">
-                  <label className="form-label">Portfolio</label>
-                  <select 
-                    name="portfolio_id" 
-                    value={newProject.portfolio_id} 
-                    onChange={handleInputChange}
-                    className="user-select"
-                  >
-                    <option value="">Sin asignar</option>
-                    {portfoliosList.map(p => (
-                      <option key={p.id} value={p.id}>{p.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Fecha Inicio */}
-                <div className="form-group">
-                  <label className="form-label">Fecha de Inicio *</label>
-                  <input 
-                    type="date" 
-                    name="fecha_inicio"
-                    value={newProject.fecha_inicio}
-                    onChange={handleInputChange}
-                    required
-                    className="m3-input"
-                  />
-                </div>
-
-                {/* Fecha Fin Inicial */}
-                <div className="form-group">
-                  <label className="form-label">Fecha Fin Inicial (Línea Base) *</label>
-                  <input 
-                    type="date" 
-                    name="fecha_fin_inicial"
-                    value={newProject.fecha_fin_inicial}
-                    onChange={handleInputChange}
-                    required
-                    className="m3-input"
-                  />
-                </div>
-
-                {/* Presupuesto Inicial */}
-                <div className="form-group">
-                  <label className="form-label">Presupuesto Inicial (€) *</label>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    name="budget_inicial"
-                    value={newProject.budget_inicial}
-                    onChange={handleInputChange}
-                    placeholder="150000.00"
-                    required
-                    className="m3-input"
-                  />
-                </div>
-
-                {/* RAG */}
-                <div className="form-group">
-                  <label className="form-label">Indicador RAG inicial *</label>
-                  <select 
-                    name="indicador_rag" 
-                    value={newProject.indicador_rag} 
-                    onChange={handleInputChange}
-                    className="user-select"
-                  >
-                    <option value="VERDE">VERDE</option>
-                    <option value="AMARILLO">AMARILLO</option>
-                    <option value="ROJO">ROJO</option>
-                  </select>
-                </div>
-
-                {/* CAPEX and Estratégico switches */}
-                <div className="form-group" style={{ gridColumn: 'span 2', display: 'flex', gap: 24, justifyContent: 'center' }}>
-                  <label className="m3-checkbox-label">
-                    <input 
-                      type="checkbox" 
-                      name="es_capex"
-                      checked={newProject.es_capex}
-                      onChange={handleInputChange}
-                      className="m3-checkbox"
-                    />
-                    <span>¿Es Proyecto CAPEX?</span>
-                  </label>
-                  
-                  <label className="m3-checkbox-label" style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
-                    <input 
-                      type="checkbox" 
-                      name="es_estrategico"
-                      checked={newProject.es_estrategico}
-                      onChange={handleInputChange}
-                      className="m3-checkbox"
-                    />
-                    <span>¿Es Proyecto Estratégico?</span>
-                  </label>
-                </div>
-
-                {/* CAPEX Code */}
-                {newProject.es_capex && (
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                    <label className="form-label">Código CAPEX *</label>
-                    <input 
-                      type="text" 
-                      name="codigo_capex"
-                      value={newProject.codigo_capex}
-                      onChange={handleInputChange}
-                      placeholder="CPX-XXXXXX"
-                      required={newProject.es_capex}
-                      className="m3-input"
-                    />
-                  </div>
-                )}
-
-                {/* CAPEX Type & Subtype selectors */}
-                {newProject.es_capex && (
-                  <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <label className="form-label">Tipo CAPEX *</label>
-                      <select
-                        name="id_tipo_capex"
-                        value={newProject.id_tipo_capex}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setNewProject(prev => ({ ...prev, id_tipo_capex: val, id_subtipo_capex: '' }));
-                        }}
-                        required
-                        className="user-select"
-                      >
-                        <option value="">Seleccionar tipo...</option>
-                        {capexTypes.map(t => (
-                          <option key={t.id} value={t.id}>{t.nombre}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {(() => {
-                      const sel = capexTypes.find(t => t.id === parseInt(newProject.id_tipo_capex, 10));
-                      return sel?.Subtipos?.length > 0 ? (
-                        <div>
-                          <label className="form-label">Subtipo CAPEX *</label>
-                          <select
-                            name="id_subtipo_capex"
-                            value={newProject.id_subtipo_capex}
-                            onChange={handleInputChange}
-                            required
-                            className="user-select"
-                          >
-                            <option value="">Seleccionar subtipo...</option>
-                            {sel.Subtipos.map(s => (
-                              <option key={s.id} value={s.id}>{s.nombre}</option>
-                            ))}
-                          </select>
-                        </div>
-                      ) : null;
-                    })()}
-                  </div>
-                )}
+              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                <span className="metric-value" style={{ color: 'var(--priority-alta)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{overrunExtendedCount}</span>
+                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Exc. coste ampliado</span>
               </div>
+            </div>
 
-              {/* Descripción */}
-              <div className="form-group" style={{ marginTop: 12 }}>
-                <label className="form-label">Descripción del Proyecto *</label>
-                <textarea 
-                  name="descripcion"
-                  value={newProject.descripcion}
-                  onChange={handleInputChange}
-                  placeholder="Detalles sobre el alcance, objetivos..."
-                  required
-                  rows={3}
-                  className="m3-input"
-                  style={{ resize: 'vertical' }}
-                />
+            <div 
+              className="m3-card metric-card glass-panel" 
+              onClick={() => setSelectedKpi(selectedKpi === 'delayed_partial' ? null : 'delayed_partial')}
+              style={{ 
+                cursor: 'pointer', 
+                border: selectedKpi === 'delayed_partial' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
+                padding: '10px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                minWidth: 0
+              }}
+              title="Proyectos no cerrados con al menos un hito (fecha de control) pendiente y cuya fecha límite ha expirado"
+            >
+              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 159, 10, 0.2)', color: 'var(--priority-alta)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
+                <Clock size={16} />
               </div>
+              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                <span className="metric-value" style={{ color: 'var(--priority-alta)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{delayedPartialCount}</span>
+                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Retrasados (Hitos)</span>
+              </div>
+            </div>
 
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
-                <button type="button" className="m3-btn m3-btn-outline" onClick={() => setShowCreateModal(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="m3-btn m3-btn-primary">
-                  Registrar Proyecto
-                </button>
+            <div 
+              className="m3-card metric-card glass-panel" 
+              onClick={() => setSelectedKpi(selectedKpi === 'delayed_base' ? null : 'delayed_base')}
+              style={{ 
+                cursor: 'pointer', 
+                border: selectedKpi === 'delayed_base' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
+                padding: '10px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                minWidth: 0
+              }}
+              title="Proyectos no cerrados cuya fecha fin original planificada (Base) es anterior a hoy"
+            >
+              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
+                <AlertTriangle size={16} />
               </div>
-            </form>
+              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                <span className="metric-value" style={{ color: 'var(--color-rag-red)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{delayedBaseCount}</span>
+                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Retrasados (Base)</span>
+              </div>
+            </div>
+
+            <div 
+              className="m3-card metric-card glass-panel" 
+              onClick={() => setSelectedKpi(selectedKpi === 'delayed_extended' ? null : 'delayed_extended')}
+              style={{ 
+                cursor: 'pointer', 
+                border: selectedKpi === 'delayed_extended' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
+                padding: '10px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                minWidth: 0
+              }}
+              title="Proyectos no cerrados cuya fecha fin estimada (Fecha Fin Base + días aprobados en cambios de alcance) es anterior a hoy"
+            >
+              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
+                <AlertTriangle size={16} />
+              </div>
+              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                <span className="metric-value" style={{ color: 'var(--color-rag-red)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{delayedExtendedCount}</span>
+                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Retrasados (Ampliada)</span>
+              </div>
+            </div>
+
+            <div 
+              className="m3-card metric-card glass-panel"
+              onClick={() => setSelectedKpi(selectedKpi === 'governance' ? null : 'governance')}
+              style={{ 
+                cursor: 'pointer', 
+                border: selectedKpi === 'governance' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
+                padding: '10px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                minWidth: 0
+              }}
+              title="Proyectos que no tienen ningún plan de comunicación activo (semanal, mensual ni steer co)"
+            >
+              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
+                <ShieldAlert size={16} />
+              </div>
+              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                <span className="metric-value" style={{ color: 'var(--color-rag-red)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{nonGovernedCount}</span>
+                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Sin Gobernanza</span>
+              </div>
+            </div>
+
+            <div 
+              className="m3-card metric-card glass-panel"
+              onClick={() => setSelectedKpi(selectedKpi === 'inactive' ? null : 'inactive')}
+              style={{ 
+                cursor: 'pointer', 
+                border: selectedKpi === 'inactive' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
+                padding: '10px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                minWidth: 0
+              }}
+              title="Proyectos que no han registrado modificaciones en su ficha, tareas, facturas, riesgos ni cambios de alcance en los últimos 30 días"
+            >
+              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 159, 10, 0.2)', color: 'var(--priority-alta)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
+                <Clock size={16} />
+              </div>
+              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                <span className="metric-value" style={{ color: 'var(--priority-alta)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{inactiveCount}</span>
+                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Proyectos Inactivos</span>
+              </div>
+            </div>
+
+            <div 
+              className="m3-card metric-card glass-panel" 
+              style={{ padding: '10px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}
+              title="Distribución de proyectos según su semáforo de estado de salud actual (Verde, Amarillo, Rojo)"
+            >
+              <div style={{ display: 'flex', gap: 6, width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                <div 
+                  style={{ flex: 1, textAlign: 'center', cursor: 'pointer', borderRadius: 8, padding: '4px 2px', backgroundColor: selectedKpi === 'rag_verde' ? 'rgba(52, 199, 89, 0.15)' : 'transparent' }}
+                  onClick={() => setSelectedKpi(selectedKpi === 'rag_verde' ? null : 'rag_verde')}
+                >
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-rag-green)', lineHeight: 1 }}>{ragVerde}</div>
+                </div>
+                <div style={{ width: 1, height: '16px', backgroundColor: 'var(--md-sys-color-outline-variant)' }}></div>
+                <div 
+                  style={{ flex: 1, textAlign: 'center', cursor: 'pointer', borderRadius: 8, padding: '4px 2px', backgroundColor: selectedKpi === 'rag_amarillo' ? 'rgba(255, 159, 10, 0.15)' : 'transparent' }}
+                  onClick={() => setSelectedKpi(selectedKpi === 'rag_amarillo' ? null : 'rag_amarillo')}
+                >
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-rag-yellow)', lineHeight: 1 }}>{ragAmarillo}</div>
+                </div>
+                <div style={{ width: 1, height: '16px', backgroundColor: 'var(--md-sys-color-outline-variant)' }}></div>
+                <div 
+                  style={{ flex: 1, textAlign: 'center', cursor: 'pointer', borderRadius: 8, padding: '4px 2px', backgroundColor: selectedKpi === 'rag_rojo' ? 'rgba(255, 69, 58, 0.15)' : 'transparent' }}
+                  onClick={() => setSelectedKpi(selectedKpi === 'rag_rojo' ? null : 'rag_rojo')}
+                >
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-rag-red)', lineHeight: 1 }}>{ragRojo}</div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+              {/* CHARTS */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24, marginBottom: 24 }}>
+            
+            {/* Chart 1 */}
+            <div className="m3-card glass-panel" style={{ padding: 24 }}>
+              <div 
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+                onClick={() => setIsChartOpen(!isChartOpen)}
+              >
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Proyectos por Fase / Estado</h3>
+                <div style={{ color: 'var(--md-sys-color-outline)' }}>
+                  {isChartOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </div>
+              </div>
+              
+              {isChartOpen && (
+                <div style={{ height: 350, marginTop: 16 }}>
+                  {dataStatus.length === 0 ? <p style={{ color: '#999' }}>Sin datos</p> : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={dataStatus} margin={{ bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-25} textAnchor="end" interval={0} height={50} />
+                        <YAxis allowDecimals={false} />
+                        <RechartsTooltip />
+                        <Bar 
+                          dataKey="value" 
+                          fill="var(--md-sys-color-primary)" 
+                          radius={[4, 4, 0, 0]}
+                          onClick={(data) => {
+                            if (data && data.name) {
+                              setSelectedChartFilter(prev => 
+                                prev && prev.type === 'estado' && prev.value === data.name ? null : { type: 'estado', value: data.name }
+                              );
+                            }
+                          }}
+                        >
+                          {dataStatus.map((entry, index) => {
+                            const isSelected = selectedChartFilter && selectedChartFilter.type === 'estado' && selectedChartFilter.value === entry.name;
+                            return (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={isSelected ? 'var(--md-sys-color-primary-container)' : COLORS[index % COLORS.length]} 
+                                stroke={isSelected ? 'var(--md-sys-color-primary)' : 'none'}
+                                strokeWidth={isSelected ? 2 : 0}
+                              />
+                            );
+                          })}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="m3-card glass-panel" style={{ marginTop: 24, padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 600, margin: 0 }}>
+                Proyectos ({getFilteredProjects().length})
+              </h3>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {selectedKpi && (
+                  <span 
+                    style={{ 
+                      padding: '4px 10px', 
+                      backgroundColor: 'var(--md-sys-color-primary-container)', 
+                      color: 'var(--md-sys-color-on-primary-container)', 
+                      borderRadius: 12, 
+                      fontSize: '0.8rem', 
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setSelectedKpi(null)}
+                  >
+                    KPI: {selectedKpi === 'overrun' ? 'Excedido coste (CAPEX)' : 
+                          selectedKpi === 'overrun_extended' ? 'Excedido coste ampliado' : 
+                          selectedKpi === 'delayed_partial' ? 'Retrasados parc. (Hitos)' : 
+                          selectedKpi === 'delayed_base' ? 'Retrasados (Fecha Base)' : 
+                          selectedKpi === 'delayed_extended' ? 'Retrasados (Fecha Ampliada)' : 
+                          selectedKpi === 'governance' ? 'Sin Gobernanza' : 
+                          selectedKpi === 'inactive' ? 'Proyectos Inactivos' : 
+                          selectedKpi === 'rag_verde' ? 'Verde' : 
+                          selectedKpi === 'rag_amarillo' ? 'Amarillo' : 
+                          selectedKpi === 'rag_rojo' ? 'Rojo' : ''} ✕
+                  </span>
+                )}
+                {selectedChartFilter && (
+                  <span 
+                    style={{ 
+                      padding: '4px 10px', 
+                      backgroundColor: 'var(--md-sys-color-secondary-container)', 
+                      color: 'var(--md-sys-color-on-secondary-container)', 
+                      borderRadius: 12, 
+                      fontSize: '0.8rem', 
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setSelectedChartFilter(null)}
+                  >
+                    Gráfico: {selectedChartFilter.value} ✕
+                  </span>
+                )}
+                {(selectedKpi || selectedChartFilter) && (
+                  <button 
+                    className="m3-btn m3-btn-text" 
+                    style={{ padding: '2px 8px', fontSize: '0.8rem' }}
+                    onClick={() => {
+                      setSelectedKpi(null);
+                      setSelectedChartFilter(null);
+                    }}
+                  >
+                    Limpiar Filtros KPI/Gráfico
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {getFilteredProjects().length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>
+                No hay proyectos que cumplan con los filtros seleccionados.
+              </div>
+            ) : (
+              <ProjectTable 
+                projects={getFilteredProjects()} 
+                onViewProject={onViewProject} 
+                onViewVendor={onViewVendor} 
+                showHeaderSelector={true} 
+              />
+            )}
+          </div>
+        </>
       )}
-      {/* Quick Comment Modal */}
-      <QuickCommentModal 
-        isOpen={isQuickCommentOpen}
-        onClose={() => {
-          setIsQuickCommentOpen(false);
-          setQuickCommentProjectId(null);
-        }}
-        projectId={quickCommentProjectId}
-        getAuthHeaders={getAuthHeaders}
-        onSuccess={fetchProjects}
-        canSeeDireccion={canSeeDireccion}
-      />
-      {/* Dashboard Report Modal */}
-      <DashboardReportModal 
-        isOpen={isReportOpen}
-        onClose={() => setIsReportOpen(false)}
-        projects={projects}
-        getAuthHeaders={getAuthHeaders}
-      />
     </div>
   );
 }

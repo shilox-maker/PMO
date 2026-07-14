@@ -105,6 +105,7 @@ export default function AdminPanel() {
   const [portfolioBudgets, setPortfolioBudgets] = useState([]);
   const [budgetsLoading, setBudgetsLoading] = useState(false);
   const [budgetForm, setBudgetForm] = useState({ id_tipo_capex: '', id_subtipo_capex: '', importe: '' });
+  const [editingBudgetId, setEditingBudgetId] = useState(null);
   const [budgetError, setBudgetError] = useState('');
   const [budgetSuccess, setBudgetSuccess] = useState('');
   const [capexTypes, setCapexTypes] = useState([]);
@@ -140,6 +141,7 @@ export default function AdminPanel() {
   const handleOpenBudgets = (portfolio) => {
     setSelectedPortfolioForBudgets(portfolio);
     setBudgetForm({ id_tipo_capex: '', id_subtipo_capex: '', importe: '' });
+    setEditingBudgetId(null);
     setBudgetError('');
     setBudgetSuccess('');
     fetchPortfolioBudgets(portfolio.id);
@@ -148,38 +150,78 @@ export default function AdminPanel() {
     }
   };
 
+  const handleEditBudgetClick = (b) => {
+    setEditingBudgetId(b.id);
+    setBudgetForm({
+      id_tipo_capex: b.id_tipo_capex || '',
+      id_subtipo_capex: b.id_subtipo_capex || '',
+      importe: b.importe
+    });
+    setBudgetError('');
+    setBudgetSuccess('');
+  };
+
   const handleBudgetSubmit = (e) => {
     e.preventDefault();
     setBudgetError('');
     setBudgetSuccess('');
 
-    if (!budgetForm.id_tipo_capex || !budgetForm.importe) {
-      setBudgetError('El tipo de CAPEX y el importe son obligatorios.');
-      return;
+    if (editingBudgetId) {
+      if (!budgetForm.importe) {
+        setBudgetError('El importe es obligatorio.');
+        return;
+      }
+
+      const payload = {
+        importe: parseFloat(budgetForm.importe)
+      };
+
+      fetch(`${import.meta.env.VITE_API_URL}/admin/portfolio-budgets/${editingBudgetId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      })
+        .then(async res => {
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Error al actualizar el presupuesto.');
+          return data;
+        })
+        .then(() => {
+          setBudgetSuccess('Línea de presupuesto actualizada correctamente.');
+          setBudgetForm({ id_tipo_capex: '', id_subtipo_capex: '', importe: '' });
+          setEditingBudgetId(null);
+          fetchPortfolioBudgets(selectedPortfolioForBudgets.id);
+        })
+        .catch(err => setBudgetError(err.message));
+    } else {
+      if (!budgetForm.id_tipo_capex || !budgetForm.importe) {
+        setBudgetError('El tipo de CAPEX y el importe son obligatorios.');
+        return;
+      }
+
+      const payload = {
+        id_tipo_capex: parseInt(budgetForm.id_tipo_capex, 10),
+        id_subtipo_capex: budgetForm.id_subtipo_capex ? parseInt(budgetForm.id_subtipo_capex, 10) : null,
+        importe: parseFloat(budgetForm.importe)
+      };
+
+      fetch(`${import.meta.env.VITE_API_URL}/admin/portfolios/${selectedPortfolioForBudgets.id}/budgets`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      })
+        .then(async res => {
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Error al registrar el presupuesto.');
+          return data;
+        })
+        .then(() => {
+          setBudgetSuccess('Línea de presupuesto registrada correctamente.');
+          setBudgetForm({ id_tipo_capex: '', id_subtipo_capex: '', importe: '' });
+          fetchPortfolioBudgets(selectedPortfolioForBudgets.id);
+        })
+        .catch(err => setBudgetError(err.message));
     }
-
-    const payload = {
-      id_tipo_capex: parseInt(budgetForm.id_tipo_capex, 10),
-      id_subtipo_capex: budgetForm.id_subtipo_capex ? parseInt(budgetForm.id_subtipo_capex, 10) : null,
-      importe: parseFloat(budgetForm.importe)
-    };
-
-    fetch(`${import.meta.env.VITE_API_URL}/admin/portfolios/${selectedPortfolioForBudgets.id}/budgets`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(payload)
-    })
-      .then(async res => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al registrar el presupuesto.');
-        return data;
-      })
-      .then(() => {
-        setBudgetSuccess('Línea de presupuesto registrada correctamente.');
-        setBudgetForm({ id_tipo_capex: '', id_subtipo_capex: '', importe: '' });
-        fetchPortfolioBudgets(selectedPortfolioForBudgets.id);
-      })
-      .catch(err => setBudgetError(err.message));
   };
 
   const handleDeleteBudget = (budgetId) => {
@@ -1209,7 +1251,7 @@ export default function AdminPanel() {
                             <th>Tipo CAPEX</th>
                             <th>Subtipo</th>
                             <th style={{ textAlign: 'right' }}>Importe (€)</th>
-                            <th style={{ width: '40px' }}></th>
+                            <th style={{ width: '60px' }}></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1221,9 +1263,14 @@ export default function AdminPanel() {
                                 {parseFloat(b.importe).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}€
                               </td>
                               <td style={{ textAlign: 'center' }}>
-                                <button className="icon-btn danger" onClick={() => handleDeleteBudget(b.id)} style={{ color: 'var(--color-rag-red)', padding: 2 }} title="Eliminar Presupuesto">
-                                  <Trash2 size={13} />
-                                </button>
+                                <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                                  <button type="button" className="icon-btn" onClick={() => handleEditBudgetClick(b)} style={{ color: 'var(--md-sys-color-primary)', padding: 2 }} title="Editar Presupuesto">
+                                    <Edit2 size={13} />
+                                  </button>
+                                  <button type="button" className="icon-btn danger" onClick={() => handleDeleteBudget(b.id)} style={{ color: 'var(--color-rag-red)', padding: 2 }} title="Eliminar Presupuesto">
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -1249,7 +1296,7 @@ export default function AdminPanel() {
                 {/* Form to add a new budget line */}
                 <form onSubmit={handleBudgetSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12, borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 16 }}>
                   <h4 style={{ fontSize: '0.85rem', fontWeight: 600, margin: 0, color: 'var(--md-sys-color-primary)' }}>
-                    Añadir Línea de Presupuesto
+                    {editingBudgetId ? 'Editar Importe de Presupuesto' : 'Añadir Línea de Presupuesto'}
                   </h4>
 
                   <div className="form-group">
@@ -1260,6 +1307,7 @@ export default function AdminPanel() {
                       className="user-select"
                       style={{ height: '36px', fontSize: '0.85rem' }}
                       required
+                      disabled={editingBudgetId !== null}
                     >
                       <option value="">Selecciona Tipo...</option>
                       {capexTypes.map(t => (
@@ -1275,7 +1323,7 @@ export default function AdminPanel() {
                       onChange={(e) => setBudgetForm(prev => ({ ...prev, id_subtipo_capex: e.target.value }))}
                       className="user-select"
                       style={{ height: '36px', fontSize: '0.85rem' }}
-                      disabled={!budgetForm.id_tipo_capex}
+                      disabled={!budgetForm.id_tipo_capex || editingBudgetId !== null}
                     >
                       <option value="">Todo el tipo (General)</option>
                       {budgetForm.id_tipo_capex && capexTypes.find(t => t.id === parseInt(budgetForm.id_tipo_capex, 10))?.Subtipos?.map(st => (
@@ -1299,9 +1347,24 @@ export default function AdminPanel() {
                     />
                   </div>
 
-                  <button type="submit" className="m3-btn m3-btn-primary" style={{ marginTop: 8, height: '36px', fontSize: '0.85rem' }}>
-                    <Plus size={14} style={{ marginRight: 6 }} /> Añadir Presupuesto
-                  </button>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                    {editingBudgetId && (
+                      <button 
+                        type="button" 
+                        className="m3-btn m3-btn-outline" 
+                        style={{ flexGrow: 1, height: '36px', fontSize: '0.85rem' }}
+                        onClick={() => {
+                          setEditingBudgetId(null);
+                          setBudgetForm({ id_tipo_capex: '', id_subtipo_capex: '', importe: '' });
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                    <button type="submit" className="m3-btn m3-btn-primary" style={{ flexGrow: 1, height: '36px', fontSize: '0.85rem' }}>
+                      {editingBudgetId ? 'Guardar Cambios' : 'Añadir Presupuesto'}
+                    </button>
+                  </div>
                 </form>
               </div>
             ) : (

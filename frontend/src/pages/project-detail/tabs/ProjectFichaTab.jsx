@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Building, User, MapPin, Calendar, Plus, Trash2, Edit2, Check, MessageSquare, Star 
+  Building, User, MapPin, Calendar, Plus, Trash2, Edit2, Check, MessageSquare, Star, GitBranch
 } from 'lucide-react';
 import RichTextEditor from '../../../components/RichTextEditor';
 import SearchableContactSelect from '../../../components/SearchableContactSelect';
@@ -77,7 +77,7 @@ export default function ProjectFichaTab({
                 <h3 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span>📘</span> Descripción del Estado ({project.Estado.nombre_estado})
                 </h3>
-                <div className="wysiwyg-content" dangerouslySetInnerHTML={{ __html: project.Estado.pasos || '<p style="font-style: italic; opacity: 0.8;">Sin descripción de estado detallada.</p>' }} style={{ fontSize: '0.9rem', lineHeight: '1.5' }} />
+                <div className="wysiwyg-content" dangerouslySetInnerHTML={{ __html: project.Estado.descripcion || project.Estado.pasos || '<p style="font-style: italic; opacity: 0.8;">Sin descripción de estado detallada.</p>' }} style={{ fontSize: '0.9rem', lineHeight: '1.5' }} />
               </div>
             )}
 
@@ -94,6 +94,14 @@ export default function ProjectFichaTab({
                   <div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Sede</div>
                     <div style={{ fontWeight: 500 }}>{project.Sede?.nombre_sede}</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <GitBranch size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>A distribuir</div>
+                    <div style={{ fontWeight: 500 }}>{project.SedeDistribuir?.nombre_sede || '—'}</div>
                   </div>
                 </div>
 

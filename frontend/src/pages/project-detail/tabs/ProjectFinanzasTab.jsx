@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Euro, Plus, Edit2, Trash2 } from 'lucide-react';
 import { getSortedData } from '../../../utils/sorting';
 
 export default function ProjectFinanzasTab({
@@ -10,24 +10,32 @@ export default function ProjectFinanzasTab({
   const sortedInvoices = getSortedData(project.Facturas || [], invoicesSort);
 
   const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
-  
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* KPIs Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
         <div className="m3-card metric-card glass-panel" style={{ borderLeft: '4px solid var(--md-sys-color-primary)' }}>
           <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(168, 199, 250, 0.15)', color: 'var(--md-sys-color-primary)' }}>
-            <DollarSign size={24} />
+            <Euro size={24} />
           </div>
-          <div className="metric-info">
+          <div className="metric-info" style={{ display: 'flex', flexDirection: 'column' }}>
             <span className="metric-value">{formatCurrency(parseFloat(project.budget_inicial))}</span>
             <span className="metric-label">Presupuesto Inicial</span>
+            {project.budget_notas && (
+              <span
+                style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-outline)', marginTop: 4, fontStyle: 'italic', maxWidth: '200px', whiteSpace: 'normal', lineHeight: 1.2 }}
+                title={project.budget_notas}
+              >
+                {project.budget_notas}
+              </span>
+            )}
           </div>
         </div>
 
         <div className="m3-card metric-card glass-panel" style={{ borderLeft: '4px solid var(--md-sys-color-primary)' }}>
           <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(168, 199, 250, 0.15)', color: 'var(--md-sys-color-primary)' }}>
-            <DollarSign size={24} />
+            <Euro size={24} />
           </div>
           <div className="metric-info">
             <span className="metric-value" style={{ color: calc.budget_actualizado > project.budget_inicial ? 'var(--color-rag-yellow)' : 'inherit' }}>
@@ -39,7 +47,7 @@ export default function ProjectFinanzasTab({
 
         <div className="m3-card metric-card glass-panel" style={{ borderLeft: '4px solid var(--color-rag-green)' }}>
           <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(52, 199, 89, 0.15)', color: 'var(--color-rag-green)' }}>
-            <DollarSign size={24} />
+            <Euro size={24} />
           </div>
           <div className="metric-info">
             <span className="metric-value" style={{ color: 'var(--color-rag-green)' }}>{formatCurrency(calc.consumo_real)}</span>
@@ -48,11 +56,11 @@ export default function ProjectFinanzasTab({
         </div>
 
         <div className="m3-card metric-card glass-panel" style={{ borderLeft: calc.presupuesto_disponible < 0 ? '4px solid var(--color-rag-red)' : '4px solid var(--color-rag-green)' }}>
-          <div className="metric-icon-wrapper" style={{ 
-            backgroundColor: calc.presupuesto_disponible < 0 ? 'rgba(255, 69, 58, 0.15)' : 'rgba(52, 199, 89, 0.15)', 
-            color: calc.presupuesto_disponible < 0 ? 'var(--color-rag-red)' : 'var(--color-rag-green)' 
+          <div className="metric-icon-wrapper" style={{
+            backgroundColor: calc.presupuesto_disponible < 0 ? 'rgba(255, 69, 58, 0.15)' : 'rgba(52, 199, 89, 0.15)',
+            color: calc.presupuesto_disponible < 0 ? 'var(--color-rag-red)' : 'var(--color-rag-green)'
           }}>
-            <DollarSign size={24} />
+            <Euro size={24} />
           </div>
           <div className="metric-info">
             <span className="metric-value" style={{ color: calc.presupuesto_disponible < 0 ? 'var(--color-rag-red)' : 'var(--color-rag-green)' }}>

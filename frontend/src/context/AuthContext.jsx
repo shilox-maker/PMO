@@ -38,9 +38,8 @@ export const AuthProvider = ({ children }) => {
 
   const toggleTheme = () => {
     setTheme((prevTheme) => {
-      if (prevTheme === 'light') return 'dark';
       if (prevTheme === 'dark') return 'dacsa';
-      return 'light';
+      return 'dark';
     });
   };
 
