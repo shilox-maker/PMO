@@ -14,19 +14,37 @@ module.exports = {
         portfolio_id: {
           type: DataTypes.INTEGER,
           allowNull: false,
-          references: { model: 'Portfolios', key: 'id' },
+          references: {
+            model: {
+              tableName: 'Portfolios',
+              schema: queryInterface.sequelize.options.define.schema || 'dbo'
+            },
+            key: 'id'
+          },
           onDelete: 'CASCADE'
         },
         id_tipo_capex: {
           type: DataTypes.INTEGER,
           allowNull: false,
-          references: { model: 'Tipos_Capex', key: 'id' },
+          references: {
+            model: {
+              tableName: 'Tipos_Capex',
+              schema: queryInterface.sequelize.options.define.schema || 'dbo'
+            },
+            key: 'id'
+          },
           onDelete: 'CASCADE'
         },
         id_subtipo_capex: {
           type: DataTypes.INTEGER,
           allowNull: true,
-          references: { model: 'Subtipos_Capex', key: 'id' },
+          references: {
+            model: {
+              tableName: 'Subtipos_Capex',
+              schema: queryInterface.sequelize.options.define.schema || 'dbo'
+            },
+            key: 'id'
+          },
           onDelete: 'CASCADE'
         },
         importe: {
