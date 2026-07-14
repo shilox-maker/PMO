@@ -53,10 +53,18 @@ export default function ProjectEditModal({
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setForm(prev => {
+      const updated = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      };
+      if (name === 'es_capex' && !checked) {
+        updated.id_tipo_capex = '';
+        updated.id_subtipo_capex = '';
+        updated.codigo_capex = '';
+      }
+      return updated;
+    });
   };
 
   const handleKeyUserToggle = (listName, kuId) => {
@@ -96,8 +104,8 @@ export default function ProjectEditModal({
       id_sede_distribuir: form.id_sede_distribuir ? parseInt(form.id_sede_distribuir, 10) : null,
       id_sponsor: form.id_sponsor ? parseInt(form.id_sponsor, 10) : null,
       portfolio_id: form.portfolio_id ? parseInt(form.portfolio_id, 10) : null,
-      id_tipo_capex: form.id_tipo_capex ? parseInt(form.id_tipo_capex, 10) : null,
-      id_subtipo_capex: form.id_subtipo_capex ? parseInt(form.id_subtipo_capex, 10) : null
+      id_tipo_capex: form.es_capex && form.id_tipo_capex ? parseInt(form.id_tipo_capex, 10) : null,
+      id_subtipo_capex: form.es_capex && form.id_subtipo_capex ? parseInt(form.id_subtipo_capex, 10) : null
     };
 
     fetch(`${import.meta.env.VITE_API_URL}/projects/${project.id_proyecto}`, {

@@ -187,10 +187,18 @@ export default function Projects({ onViewProject, onViewVendor }) {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setNewProject(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setNewProject(prev => {
+      const updated = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      };
+      if (name === 'es_capex' && !checked) {
+        updated.id_tipo_capex = '';
+        updated.id_subtipo_capex = '';
+        updated.codigo_capex = '';
+      }
+      return updated;
+    });
   };
 
   const handleCreateProject = (e) => {
@@ -233,8 +241,8 @@ export default function Projects({ onViewProject, onViewVendor }) {
       id_sede_distribuir: newProject.id_sede_distribuir ? parseInt(newProject.id_sede_distribuir, 10) : null,
       id_sponsor: parseInt(newProject.id_sponsor, 10),
       portfolio_id: newProject.portfolio_id ? parseInt(newProject.portfolio_id, 10) : null,
-      id_tipo_capex: newProject.id_tipo_capex ? parseInt(newProject.id_tipo_capex, 10) : null,
-      id_subtipo_capex: newProject.id_subtipo_capex ? parseInt(newProject.id_subtipo_capex, 10) : null
+      id_tipo_capex: newProject.es_capex && newProject.id_tipo_capex ? parseInt(newProject.id_tipo_capex, 10) : null,
+      id_subtipo_capex: newProject.es_capex && newProject.id_subtipo_capex ? parseInt(newProject.id_subtipo_capex, 10) : null
     };
 
     if (!payload.id_proyecto || payload.id_proyecto.trim() === '') {

@@ -229,4 +229,29 @@ describe('API Endpoints', () => {
       expect(res.body.error).toContain('contraseña local');
     });
   });
+
+  describe('Project Deletion', () => {
+    it('should delete a project successfully when authorized', async () => {
+      const res = await request(app)
+        .delete('/api/projects/PRJ-2026-001')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.message).toBe('Proyecto eliminado con éxito');
+
+      // Verify it's gone
+      const verifyRes = await request(app)
+        .get('/api/projects/PRJ-2026-001')
+        .set('Authorization', `Bearer ${token}`);
+      expect(verifyRes.statusCode).toEqual(404);
+    });
+
+    it('should fail to delete a project if not found', async () => {
+      const res = await request(app)
+        .delete('/api/projects/PRJ-NONEXISTENT')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.statusCode).toEqual(404);
+    });
+  });
 });

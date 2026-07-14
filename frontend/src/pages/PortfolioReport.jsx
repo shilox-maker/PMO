@@ -461,6 +461,7 @@ export default function PortfolioReport() {
                                   <th>Nombre del Proyecto</th>
                                   <th>Project Manager</th>
                                   <th>Fase Workflow</th>
+                                  <th>Subtipo</th>
                                   <th style={{ textAlign: 'center', width: '80px' }}>RAG</th>
                                   <th style={{ textAlign: 'right', width: '120px' }}>Reservado (Budget)</th>
                                   <th style={{ textAlign: 'right', width: '120px' }}>Ejecutado (Facturas)</th>
@@ -485,6 +486,15 @@ export default function PortfolioReport() {
                                     </td>
                                     <td>{p.pm}</td>
                                     <td>{p.estado || '—'}</td>
+                                    <td>
+                                      {p.subtipo_capex ? (
+                                        <span className="badge badge-blue" style={{ fontSize: '0.75rem', padding: '2px 8px' }}>
+                                          {p.subtipo_capex}
+                                        </span>
+                                      ) : (
+                                        <span style={{ opacity: 0.4 }}>—</span>
+                                      )}
+                                    </td>
                                     <td style={{ textAlign: 'center' }}>
                                       <div style={{ display: 'flex', justifyContent: 'center' }}>
                                         <span style={{ 

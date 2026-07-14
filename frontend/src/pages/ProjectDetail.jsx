@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
-  ArrowLeft, FileText, Target, Trophy, DollarSign, TrendingUp, ShieldAlert, MessageSquare, CheckSquare, BookOpen, Printer, Edit2, ArrowUp, ArrowDown, ArrowUpDown, RefreshCw 
+  ArrowLeft, FileText, Target, Trophy, DollarSign, TrendingUp, ShieldAlert, MessageSquare, CheckSquare, BookOpen, Printer, Edit2, ArrowUp, ArrowDown, ArrowUpDown, RefreshCw, Trash2 
 } from 'lucide-react';
 
 // Import Modals
@@ -183,7 +183,25 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         return d;
       })
       .then(() => fetchProjectData())
-      .catch(err => alert(err.message));
+  };
+
+  // Delete Project
+  const handleDeleteProject = () => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este proyecto de forma permanente? Esta acción eliminará también todas sus tareas, hitos, facturas, incidencias, riesgos y comentarios relacionados, y no se puede deshacer.')) {
+      fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      })
+        .then(async (res) => {
+          const d = await res.json();
+          if (!res.ok) throw new Error(d.error || 'Error al eliminar el proyecto');
+          alert('Proyecto eliminado con éxito');
+          if (onBack) {
+            onBack();
+          }
+        })
+        .catch(err => alert(err.message));
+    }
   };
 
   // Block Saving
@@ -510,6 +528,26 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
             <Edit2 size={16} />
             Editar Proyecto
           </button>
+
+          {currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR' || project?.id_pm === currentPm.id_usuario) && (
+            <button 
+              className="m3-btn" 
+              onClick={handleDeleteProject}
+              style={{
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                color: '#fff',
+                border: 'none',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}
+              title="Eliminar Proyecto permanentemente"
+            >
+              <Trash2 size={16} />
+              <span>Eliminar Proyecto</span>
+            </button>
+          )}
 
           {/* RAG select quick control */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

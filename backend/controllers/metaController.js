@@ -331,35 +331,55 @@ const getPortfolioBudgetReport = asyncHandler(async (req, res) => {
     ]
   });
 
-  // Get all projects associated with this portfolio
+  // Get all projects associated with this portfolio (only CAPEX projects)
   const projects = await Proyectos.findAll({
-    where: { portfolio_id: id },
+    where: { 
+      portfolio_id: id,
+      es_capex: true
+    },
     include: [
       { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
       { model: EstadosProyecto, as: 'Estado', attributes: ['nombre_estado'] },
-      { model: Facturas, attributes: ['importe'] }
+      { model: Facturas, attributes: ['importe'] },
+      { model: SubtiposCapex, as: 'SubtipoCapex', attributes: ['nombre'] }
     ]
   });
 
-  // Match projects with budgets
+  // Match projects with budgets (prioritizing specific subtypes, falling back to parent type)
+  const budgetProjectsMap = {};
   let matchedProjectIds = new Set();
-  const secciones = budgets.map(b => {
-    // Filter projects matching this budget criteria
-    const projectsSec = projects.filter(p => {
+
+  budgets.forEach(b => {
+    budgetProjectsMap[b.id] = [];
+  });
+
+  const sortedBudgets = [...budgets].sort((a, b) => {
+    if (a.id_subtipo_capex !== null && b.id_subtipo_capex === null) return -1;
+    if (a.id_subtipo_capex === null && b.id_subtipo_capex !== null) return 1;
+    return 0;
+  });
+
+  sortedBudgets.forEach(b => {
+    projects.forEach(p => {
+      if (matchedProjectIds.has(p.id_proyecto)) return;
+
       const matchTipo = p.id_tipo_capex === b.id_tipo_capex;
       let matchSubtipo = false;
-      if (b.id_subtipo_capex === null) {
-        matchSubtipo = p.id_subtipo_capex === null;
-      } else {
+      if (b.id_subtipo_capex !== null) {
         matchSubtipo = p.id_subtipo_capex === b.id_subtipo_capex;
+      } else {
+        matchSubtipo = true; // Fallback: general budget line matches any subtype under the same type
       }
 
-      const isMatch = matchTipo && matchSubtipo;
-      if (isMatch) {
+      if (matchTipo && matchSubtipo) {
+        budgetProjectsMap[b.id].push(p);
         matchedProjectIds.add(p.id_proyecto);
       }
-      return isMatch;
     });
+  });
+
+  const secciones = budgets.map(b => {
+    const projectsSec = budgetProjectsMap[b.id] || [];
 
     const totalReservadoSec = projectsSec.reduce((acc, p) => acc + parseFloat(p.budget_inicial || 0), 0);
     const totalEjecutadoSec = projectsSec.reduce((acc, p) => {
@@ -384,6 +404,7 @@ const getPortfolioBudgetReport = asyncHandler(async (req, res) => {
         return {
           id_proyecto: p.id_proyecto,
           nombre_proyecto: p.nombre_proyecto,
+          subtipo_capex: p.SubtipoCapex ? p.SubtipoCapex.nombre : null,
           budget_inicial: parseFloat(p.budget_inicial || 0),
           budget_notas: p.budget_notas,
           ejecutado: ejecutadoProj,
@@ -421,6 +442,7 @@ const getPortfolioBudgetReport = asyncHandler(async (req, res) => {
         return {
           id_proyecto: p.id_proyecto,
           nombre_proyecto: p.nombre_proyecto,
+          subtipo_capex: p.SubtipoCapex ? p.SubtipoCapex.nombre : null,
           budget_inicial: parseFloat(p.budget_inicial || 0),
           budget_notas: p.budget_notas,
           ejecutado: ejecutadoProj,

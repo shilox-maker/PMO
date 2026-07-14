@@ -2,7 +2,9 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
+
 ## 🔍 2. En Análisis / Especificación
+
 
 ## 🟩 3. Listas para Codificar (Tú les has dado el OK)
 
@@ -11,10 +13,12 @@
 
 ## 🧪 5. En Testeo / Pruebas
 
+
 ## 🚀 6. Pendiente de Subir (Listo para Git)
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **IDEA-18: Botón para eliminar proyectos** (2026-07-14)
 - [x] **IDEA-15: Filtros en Lecciones Aprendidas (Buenas Prácticas / Errores a evitar, Partner y Proyecto)** (2026-07-14)
 - [x] **IDEA-16: Indicador de Nota Explicativa de Presupuesto en Reporte de Portfolios (Pips)** (2026-07-14)
 - [x] **IDEA-14: Rediseño de KPIs y Gráficos PMO con Ordenación por Cambios de Alcance** (2026-07-14)

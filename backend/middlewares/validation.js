@@ -36,6 +36,8 @@ const projectCreateSchema = Joi.object({
     is: true,
     then: Joi.string().required().messages({ 'any.required': 'El código CAPEX es obligatorio cuando el proyecto es CAPEX.' })
   }),
+  id_tipo_capex: Joi.number().integer().allow(null).optional(),
+  id_subtipo_capex: Joi.number().integer().allow(null).optional(),
   es_estrategico: Joi.boolean().default(false),
   budget_inicial: Joi.number().precision(2).positive().allow(0).optional(),
   com_semanal_activo: Joi.boolean().default(false),
@@ -83,6 +85,8 @@ const projectUpdateSchema = Joi.object({
     is: true,
     then: Joi.string().required().messages({ 'any.required': 'El código CAPEX es obligatorio cuando el proyecto es CAPEX.' })
   }),
+  id_tipo_capex: Joi.number().integer().allow(null).optional(),
+  id_subtipo_capex: Joi.number().integer().allow(null).optional(),
   es_estrategico: Joi.boolean().optional(),
   budget_inicial: Joi.number().precision(2).positive().allow(0).optional(),
   com_semanal_activo: Joi.boolean().optional(),
