@@ -11,11 +11,15 @@ module.exports = {
       });
     }
     if (!tableInfo.id_sede_distribuir) {
+      const schema = queryInterface.sequelize.options.define.schema || 'dbo';
       await queryInterface.addColumn('Proyectos', 'id_sede_distribuir', {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: 'Sedes',
+          model: {
+            tableName: 'Sedes',
+            schema
+          },
           key: 'id_sede'
         }
       });

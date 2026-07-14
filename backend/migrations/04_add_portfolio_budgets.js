@@ -4,8 +4,11 @@ module.exports = {
   async up(queryInterface) {
     const showTables = await queryInterface.showAllTables();
 
+    const schema = queryInterface.sequelize.options.define.schema || 'dbo';
+    const targetTable = { tableName: 'Portfolio_Budgets', schema };
+
     if (!showTables.includes('Portfolio_Budgets')) {
-      await queryInterface.createTable('Portfolio_Budgets', {
+      await queryInterface.createTable(targetTable, {
         id: {
           type: DataTypes.INTEGER,
           primaryKey: true,
@@ -17,7 +20,7 @@ module.exports = {
           references: {
             model: {
               tableName: 'Portfolios',
-              schema: queryInterface.sequelize.options.define.schema || 'dbo'
+              schema
             },
             key: 'id'
           },
@@ -29,7 +32,7 @@ module.exports = {
           references: {
             model: {
               tableName: 'Tipos_Capex',
-              schema: queryInterface.sequelize.options.define.schema || 'dbo'
+              schema
             },
             key: 'id'
           },
@@ -41,7 +44,7 @@ module.exports = {
           references: {
             model: {
               tableName: 'Subtipos_Capex',
-              schema: queryInterface.sequelize.options.define.schema || 'dbo'
+              schema
             },
             key: 'id'
           },
@@ -55,13 +58,13 @@ module.exports = {
       });
 
       try {
-        await queryInterface.addIndex('Portfolio_Budgets', ['portfolio_id'], {
+        await queryInterface.addIndex(targetTable, ['portfolio_id'], {
           name: 'idx_portfolio_budgets_portfolio'
         });
-        await queryInterface.addIndex('Portfolio_Budgets', ['id_tipo_capex'], {
+        await queryInterface.addIndex(targetTable, ['id_tipo_capex'], {
           name: 'idx_portfolio_budgets_tipo'
         });
-        await queryInterface.addIndex('Portfolio_Budgets', ['id_subtipo_capex'], {
+        await queryInterface.addIndex(targetTable, ['id_subtipo_capex'], {
           name: 'idx_portfolio_budgets_subtipo'
         });
       } catch (err) {
@@ -72,8 +75,9 @@ module.exports = {
 
   async down(queryInterface) {
     const showTables = await queryInterface.showAllTables();
+    const schema = queryInterface.sequelize.options.define.schema || 'dbo';
     if (showTables.includes('Portfolio_Budgets')) {
-      await queryInterface.dropTable('Portfolio_Budgets');
+      await queryInterface.dropTable({ tableName: 'Portfolio_Budgets', schema });
     }
   }
 };
