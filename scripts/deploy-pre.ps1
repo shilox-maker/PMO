@@ -22,7 +22,7 @@ $oldPreference = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
 
 Push-Location $APP_DIR
-git fetch origin $BRANCH
+git fetch origin $BRANCH 2>&1
 $localHash = git rev-parse HEAD
 git reset --hard "origin/$BRANCH"
 $remoteHash = git rev-parse HEAD
@@ -65,13 +65,13 @@ Write-Host "`n[3/5] Compilando Frontend..." -ForegroundColor Yellow
 Push-Location "$APP_DIR\frontend"
 
 # Asegurar que el .env del frontend apunta a ruta relativa y activa el mock de Azure AD (sin BOM para que Vite lo lea)
-[System.IO.File]::WriteAllText(".env", "VITE_API_URL=/api`nVITE_AZURE_MOCK=true")
+[System.IO.File]::WriteAllText("$APP_DIR\frontend\.env", "VITE_API_URL=/api`nVITE_AZURE_MOCK=true")
 
 Write-Host "  npm install..." -ForegroundColor DarkCyan
 npm install 2>&1 | Out-Null
 
 Write-Host "  npm run build..." -ForegroundColor DarkCyan
-npm run build
+npm run build 2>&1
 
 Write-Host "  Frontend compilado" -ForegroundColor Green
 
@@ -82,14 +82,14 @@ Pop-Location
 # ------------------------------------------------------------------------------
 Write-Host "`n[4/5] Reiniciando servicio PM2..." -ForegroundColor Yellow
 
-$pm2List = pm2 jlist 2>$null | ConvertFrom-Json -ErrorAction SilentlyContinue
-$processExists = $pm2List | Where-Object { $_.name -eq $PM2_NAME }
+pm2 describe $PM2_NAME 2>&1 | Out-Null
+$processExists = ($LASTEXITCODE -eq 0)
 
 if ($processExists) {
-    pm2 restart $PM2_NAME
+    pm2 restart $PM2_NAME 2>&1
     Write-Host "  $PM2_NAME reiniciado" -ForegroundColor Green
 } else {
-    pm2 start "$APP_DIR\backend\server.js" --name $PM2_NAME
+    pm2 start "$APP_DIR\backend\server.js" --name $PM2_NAME 2>&1
     Write-Host "  $PM2_NAME iniciado por primera vez" -ForegroundColor Green
 }
 
