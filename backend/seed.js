@@ -14,9 +14,13 @@ function hashPassword(password) {
 async function seed() {
   try {
     console.log('Synchronizing database models...');
-    await sequelize.query('PRAGMA foreign_keys = OFF;');
+    if (sequelize.options.dialect === 'sqlite') {
+      await sequelize.query('PRAGMA foreign_keys = OFF;');
+    }
     await sequelize.sync({ force: true });
-    await sequelize.query('PRAGMA foreign_keys = ON;');
+    if (sequelize.options.dialect === 'sqlite') {
+      await sequelize.query('PRAGMA foreign_keys = ON;');
+    }
     console.log('Database synced. Seeding tables...');
 
     // ==========================================

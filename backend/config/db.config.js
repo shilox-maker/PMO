@@ -1,5 +1,6 @@
-const { Sequelize } = require('sequelize');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const { Sequelize } = require('sequelize');
 
 const dialect = process.env.DB_DIALECT || 'sqlite';
 let sequelize;
