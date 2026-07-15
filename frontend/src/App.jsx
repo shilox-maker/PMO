@@ -147,6 +147,11 @@ function LoginScreen() {
           setLoading(false);
         });
     } else {
+      if (!msalInstance) {
+        setError('La autenticación con Azure AD requiere una conexión segura (HTTPS). Por favor, accede mediante HTTPS o utiliza el acceso por contraseña.');
+        setLoading(false);
+        return;
+      }
       msalInstance.loginPopup({
         scopes: ['user.read']
       })

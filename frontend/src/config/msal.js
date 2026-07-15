@@ -13,4 +13,17 @@ const msalConfig = {
   }
 };
 
-export const msalInstance = new PublicClientApplication(msalConfig);
+let msalInstance = null;
+
+try {
+  // MSAL requires window.crypto.subtle which is only available in secure contexts (HTTPS or localhost)
+  if (window.isSecureContext || (window.crypto && window.crypto.subtle)) {
+    msalInstance = new PublicClientApplication(msalConfig);
+  } else {
+    console.warn("Web Crypto API (window.crypto.subtle) is not available in this insecure context. Azure AD login will be disabled.");
+  }
+} catch (error) {
+  console.error("Failed to initialize MSAL:", error);
+}
+
+export { msalInstance };
