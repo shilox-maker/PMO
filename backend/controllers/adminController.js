@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { Sedes, Proyectos, EstadosProyecto, Usuarios, Portfolios, TiposCapex, SubtiposCapex, PortfolioBudgets } = require('../models/index');
 const { hashPassword } = require('../utils/helpers');
 const { asyncHandler } = require('../middlewares/errorHandler');
