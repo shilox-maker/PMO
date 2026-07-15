@@ -16,6 +16,18 @@ async function seed() {
     console.log('Synchronizing database models...');
     if (sequelize.options.dialect === 'sqlite') {
       await sequelize.query('PRAGMA foreign_keys = OFF;');
+    } else if (sequelize.options.dialect === 'mssql') {
+      const schema = sequelize.options.define?.schema || 'dbo';
+      const dropFKsQuery = `
+        DECLARE @sql NVARCHAR(MAX) = N'';
+        SELECT @sql += N'ALTER TABLE ' + QUOTENAME(SCHEMA_NAME(t.schema_id)) + '.' + QUOTENAME(t.name) + 
+                       ' DROP CONSTRAINT ' + QUOTENAME(fk.name) + ';'
+        FROM sys.foreign_keys fk
+        INNER JOIN sys.tables t ON fk.parent_object_id = t.object_id
+        WHERE SCHEMA_NAME(t.schema_id) = '${schema}';
+        IF @sql <> N'' EXEC sp_executesql @sql;
+      `;
+      await sequelize.query(dropFKsQuery);
     }
     await sequelize.sync({ force: true });
     if (sequelize.options.dialect === 'sqlite') {
