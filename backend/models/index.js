@@ -284,7 +284,7 @@ const PortfolioBudgets = sequelize.define('Portfolio_Budgets', {
       model: TiposCapex,
       key: 'id'
     },
-    onDelete: 'CASCADE'
+    onDelete: 'NO ACTION'
   },
   id_subtipo_capex: {
     type: DataTypes.INTEGER,
@@ -293,7 +293,7 @@ const PortfolioBudgets = sequelize.define('Portfolio_Budgets', {
       model: SubtiposCapex,
       key: 'id'
     },
-    onDelete: 'SET NULL'
+    onDelete: 'NO ACTION'
   },
   importe: {
     type: DataTypes.DECIMAL(15, 2),
@@ -1264,10 +1264,10 @@ Proyectos.belongsTo(SubtiposCapex, { foreignKey: 'id_subtipo_capex', as: 'Subtip
 Portfolios.hasMany(PortfolioBudgets, { foreignKey: 'portfolio_id', as: 'Presupuestos', onDelete: 'CASCADE' });
 PortfolioBudgets.belongsTo(Portfolios, { foreignKey: 'portfolio_id', as: 'Portfolio' });
 
-TiposCapex.hasMany(PortfolioBudgets, { foreignKey: 'id_tipo_capex', onDelete: 'CASCADE' });
+TiposCapex.hasMany(PortfolioBudgets, { foreignKey: 'id_tipo_capex', onDelete: 'NO ACTION' });
 PortfolioBudgets.belongsTo(TiposCapex, { foreignKey: 'id_tipo_capex', as: 'TipoCapex' });
 
-SubtiposCapex.hasMany(PortfolioBudgets, { foreignKey: 'id_subtipo_capex', onDelete: 'SET NULL' });
+SubtiposCapex.hasMany(PortfolioBudgets, { foreignKey: 'id_subtipo_capex', onDelete: 'NO ACTION' });
 PortfolioBudgets.belongsTo(SubtiposCapex, { foreignKey: 'id_subtipo_capex', as: 'SubtipoCapex' });
 
 // Audit associations
