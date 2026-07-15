@@ -358,7 +358,8 @@ const Proyectos = sequelize.define('Proyectos', {
     references: {
       model: Sedes,
       key: 'id_sede'
-    }
+    },
+    onDelete: 'NO ACTION'
   },
   id_sponsor: {
     type: DataTypes.INTEGER,
@@ -419,7 +420,8 @@ const Proyectos = sequelize.define('Proyectos', {
     references: {
       model: TiposCapex,
       key: 'id'
-    }
+    },
+    onDelete: 'NO ACTION'
   },
   id_subtipo_capex: {
     type: DataTypes.INTEGER,
@@ -427,7 +429,8 @@ const Proyectos = sequelize.define('Proyectos', {
     references: {
       model: SubtiposCapex,
       key: 'id'
-    }
+    },
+    onDelete: 'NO ACTION'
   },
   es_estrategico: {
     type: DataTypes.BOOLEAN,
@@ -1256,10 +1259,10 @@ Tags.belongsToMany(Proyectos, { through: ProyectoTags, foreignKey: 'tag_id', oth
 TiposCapex.hasMany(SubtiposCapex, { foreignKey: 'id_tipo_capex', as: 'Subtipos', onDelete: 'CASCADE' });
 SubtiposCapex.belongsTo(TiposCapex, { foreignKey: 'id_tipo_capex', as: 'Tipo' });
 
-TiposCapex.hasMany(Proyectos, { foreignKey: 'id_tipo_capex' });
+TiposCapex.hasMany(Proyectos, { foreignKey: 'id_tipo_capex', onDelete: 'NO ACTION' });
 Proyectos.belongsTo(TiposCapex, { foreignKey: 'id_tipo_capex', as: 'TipoCapex' });
 
-SubtiposCapex.hasMany(Proyectos, { foreignKey: 'id_subtipo_capex' });
+SubtiposCapex.hasMany(Proyectos, { foreignKey: 'id_subtipo_capex', onDelete: 'NO ACTION' });
 Proyectos.belongsTo(SubtiposCapex, { foreignKey: 'id_subtipo_capex', as: 'SubtipoCapex' });
 
 // PortfolioBudgets associations
