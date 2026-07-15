@@ -1240,12 +1240,12 @@ Proyectos.hasMany(ComentariosProyecto, { foreignKey: 'id_proyecto', onDelete: 'C
 ComentariosProyecto.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
 
 // Usuario has many ComentariosProyecto (Autor)
-Usuarios.hasMany(ComentariosProyecto, { foreignKey: 'id_usuario' });
-ComentariosProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario', as: 'Autor' });
+Usuarios.hasMany(ComentariosProyecto, { foreignKey: 'id_usuario', onDelete: 'NO ACTION' });
+ComentariosProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario', as: 'Autor', onDelete: 'NO ACTION' });
 
 // Usuario has many ComentariosProyecto (Editor)
-Usuarios.hasMany(ComentariosProyecto, { foreignKey: 'id_usuario_modificacion' });
-ComentariosProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario_modificacion', as: 'Editor' });
+Usuarios.hasMany(ComentariosProyecto, { foreignKey: 'id_usuario_modificacion', onDelete: 'NO ACTION' });
+ComentariosProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario_modificacion', as: 'Editor', onDelete: 'NO ACTION' });
 
 // Portfolios associations
 Portfolios.hasMany(Proyectos, { foreignKey: 'portfolio_id', as: 'Proyectos' });
@@ -1277,8 +1277,8 @@ PortfolioBudgets.belongsTo(SubtiposCapex, { foreignKey: 'id_subtipo_capex', as: 
 
 // Audit associations
 [Proyectos, Facturas, Riesgos, Incidencias, CambiosAlcance].forEach(Model => {
-  Model.belongsTo(Usuarios, { foreignKey: 'createdBy', as: 'Creator' });
-  Model.belongsTo(Usuarios, { foreignKey: 'modifiedBy', as: 'Modifier' });
+  Model.belongsTo(Usuarios, { foreignKey: 'createdBy', as: 'Creator', onDelete: 'NO ACTION' });
+  Model.belongsTo(Usuarios, { foreignKey: 'modifiedBy', as: 'Modifier', onDelete: 'NO ACTION' });
 });
 
 module.exports = {
