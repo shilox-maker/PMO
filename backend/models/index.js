@@ -341,7 +341,8 @@ const Proyectos = sequelize.define('Proyectos', {
     references: {
       model: Proveedores,
       key: 'id_proveedor'
-    }
+    },
+    onDelete: 'NO ACTION'
   },
   id_sede: {
     type: DataTypes.INTEGER,
@@ -365,7 +366,8 @@ const Proyectos = sequelize.define('Proyectos', {
     references: {
       model: ContactosProveedor,
       key: 'id_contacto'
-    }
+    },
+    onDelete: 'NO ACTION'
   },
   id_estado: {
     type: DataTypes.INTEGER,
@@ -1158,7 +1160,7 @@ Usuarios.hasMany(Proyectos, { foreignKey: 'id_pm' });
 Proyectos.belongsTo(Usuarios, { foreignKey: 'id_pm', as: 'PM' });
 
 // Proveedor has many Projects
-Proveedores.hasMany(Proyectos, { foreignKey: 'id_proveedor' });
+Proveedores.hasMany(Proyectos, { foreignKey: 'id_proveedor', onDelete: 'NO ACTION' });
 Proyectos.belongsTo(Proveedores, { foreignKey: 'id_proveedor', as: 'Proveedor' });
 
 // Sede has many Projects
@@ -1167,7 +1169,7 @@ Proyectos.belongsTo(Sedes, { foreignKey: 'id_sede', as: 'Sede' });
 Proyectos.belongsTo(Sedes, { foreignKey: 'id_sede_distribuir', as: 'SedeDistribuir' });
 
 // Sponsor Contact has many Projects
-ContactosProveedor.hasMany(Proyectos, { foreignKey: 'id_sponsor' });
+ContactosProveedor.hasMany(Proyectos, { foreignKey: 'id_sponsor', onDelete: 'NO ACTION' });
 Proyectos.belongsTo(ContactosProveedor, { foreignKey: 'id_sponsor', as: 'Sponsor' });
 
 // Many-to-Many involved Contacts
