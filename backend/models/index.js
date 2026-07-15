@@ -240,7 +240,7 @@ const SubtiposCapex = sequelize.define('Subtipos_Capex', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Tipos_Capex',
+      model: TiposCapex,
       key: 'id'
     },
     onDelete: 'CASCADE'
@@ -272,7 +272,7 @@ const PortfolioBudgets = sequelize.define('Portfolio_Budgets', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Portfolios',
+      model: Portfolios,
       key: 'id'
     },
     onDelete: 'CASCADE'
@@ -281,7 +281,7 @@ const PortfolioBudgets = sequelize.define('Portfolio_Budgets', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Tipos_Capex',
+      model: TiposCapex,
       key: 'id'
     },
     onDelete: 'CASCADE'
@@ -290,7 +290,7 @@ const PortfolioBudgets = sequelize.define('Portfolio_Budgets', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Subtipos_Capex',
+      model: SubtiposCapex,
       key: 'id'
     },
     onDelete: 'CASCADE'
@@ -371,7 +371,7 @@ const Proyectos = sequelize.define('Proyectos', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Estados_Proyecto',
+      model: EstadosProyecto,
       key: 'id_estado'
     }
   },
@@ -379,7 +379,7 @@ const Proyectos = sequelize.define('Proyectos', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Portfolios',
+      model: Portfolios,
       key: 'id'
     }
   },
@@ -415,7 +415,7 @@ const Proyectos = sequelize.define('Proyectos', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Tipos_Capex',
+      model: TiposCapex,
       key: 'id'
     }
   },
@@ -423,7 +423,7 @@ const Proyectos = sequelize.define('Proyectos', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Subtipos_Capex',
+      model: SubtiposCapex,
       key: 'id'
     }
   },
@@ -1091,7 +1091,7 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
     type: DataTypes.STRING,
     allowNull: false,
     references: {
-      model: 'Proyectos',
+      model: Proyectos,
       key: 'id_proyecto'
     },
     onDelete: 'CASCADE'
@@ -1100,7 +1100,7 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Usuarios',
+      model: Usuarios,
       key: 'id_usuario'
     }
   },
@@ -1132,7 +1132,7 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Usuarios',
+      model: Usuarios,
       key: 'id_usuario'
     }
   },
