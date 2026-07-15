@@ -293,7 +293,7 @@ const PortfolioBudgets = sequelize.define('Portfolio_Budgets', {
       model: SubtiposCapex,
       key: 'id'
     },
-    onDelete: 'CASCADE'
+    onDelete: 'SET NULL'
   },
   importe: {
     type: DataTypes.DECIMAL(15, 2),
@@ -1267,7 +1267,7 @@ PortfolioBudgets.belongsTo(Portfolios, { foreignKey: 'portfolio_id', as: 'Portfo
 TiposCapex.hasMany(PortfolioBudgets, { foreignKey: 'id_tipo_capex', onDelete: 'CASCADE' });
 PortfolioBudgets.belongsTo(TiposCapex, { foreignKey: 'id_tipo_capex', as: 'TipoCapex' });
 
-SubtiposCapex.hasMany(PortfolioBudgets, { foreignKey: 'id_subtipo_capex', onDelete: 'CASCADE' });
+SubtiposCapex.hasMany(PortfolioBudgets, { foreignKey: 'id_subtipo_capex', onDelete: 'SET NULL' });
 PortfolioBudgets.belongsTo(SubtiposCapex, { foreignKey: 'id_subtipo_capex', as: 'SubtipoCapex' });
 
 // Audit associations
