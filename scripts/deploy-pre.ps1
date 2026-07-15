@@ -64,8 +64,8 @@ Pop-Location
 Write-Host "`n[3/5] Compilando Frontend..." -ForegroundColor Yellow
 Push-Location "$APP_DIR\frontend"
 
-# Asegurar que el .env del frontend apunta a ruta relativa
-"VITE_API_URL=/api" | Out-File -FilePath ".env" -Encoding utf8 -Force
+# Asegurar que el .env del frontend apunta a ruta relativa y activa el mock de Azure AD
+"VITE_API_URL=/api`nVITE_AZURE_MOCK=true" | Out-File -FilePath ".env" -Encoding utf8 -Force
 
 Write-Host "  npm install..." -ForegroundColor DarkCyan
 npm install 2>&1 | Out-Null
