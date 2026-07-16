@@ -17,6 +17,7 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **IDEA-19: Resumen de Cartera y panel de alertas en el informe consolidado HTML/PDF, y remoción de PO de Excel** (2026-07-16)
 - [x] **BUG-02: No funciona bien el filtro de Lecciones aprendidas al filtrar por Partner ni por proyecto** (2026-07-16)
 - [x] **IDEA-18: Botón para eliminar proyectos** (2026-07-14)
 - [x] **IDEA-15: Filtros en Lecciones Aprendidas (Buenas Prácticas / Errores a evitar, Partner y Proyecto)** (2026-07-14)

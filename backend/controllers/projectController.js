@@ -1,4 +1,5 @@
-const ExcelJS = require('exceljs');
+const { prepareProjectsData } = require('../services/projectDataPrepService');
+const { generateProjectsExcel } = require('../services/projectExcelService');
 const { Op } = require('sequelize');
 const { 
   Proyectos, Usuarios, Proveedores, Sedes, ContactosProveedor,
@@ -450,8 +451,7 @@ const exportProjects = asyncHandler(async (req, res) => {
     order: [['createdAt', 'DESC']]
   });
 
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Proyectos');
+  const rowsData = await prepareProjectsData(projectsList);
 
   let exportCols = [
     { header: 'Código', key: 'id_proyecto', width: 15 },
@@ -461,7 +461,6 @@ const exportProjects = asyncHandler(async (req, res) => {
     { header: 'Socio Tecnológico', key: 'proveedor', width: 25 },
     { header: 'Gestor PM', key: 'pm', width: 20 },
     { header: 'Sede', key: 'sede', width: 15 },
-    { header: 'PO (Purchase Order)', key: 'po_list', width: 20 },
     { header: 'Presupuesto Inicial', key: 'budget_inicial', width: 20 },
     { header: 'Budget Actualizado', key: 'budget_actualizado', width: 20 },
     { header: 'Consumo Real', key: 'consumo_real', width: 20 },
@@ -495,89 +494,7 @@ const exportProjects = asyncHandler(async (req, res) => {
     exportCols = exportCols.filter(c => mappedAllowed.has(c.key) || c.key === 'id_proyecto' || c.key === 'nombre_proyecto');
   }
 
-  worksheet.columns = exportCols;
-
-  const headerRow = worksheet.getRow(1);
-  headerRow.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFFFFF' } };
-  headerRow.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: '1A1A2E' }
-  };
-  headerRow.alignment = { vertical: 'middle', horizontal: 'left' };
-
-  const rowsData = await Promise.all(
-    projectsList.map(async (p) => {
-      const id_proyecto = p.id_proyecto;
-
-      const approvedCRs = await CambiosAlcance.findAll({
-        where: { id_proyecto, estado_cambio: 'APROBADO' }
-      });
-      let totalCRDays = 0;
-      let totalCRAmount = 0;
-      approvedCRs.forEach(cr => {
-        if (cr.impacta_tiempo) {
-          totalCRDays += parseInt(cr.dias_impacto || 0, 10);
-        }
-        if (cr.impacta_importe) {
-          totalCRAmount += parseFloat(cr.importe_impacto || 0);
-        }
-      });
-
-      const budget_inicial = parseFloat(p.budget_inicial) || 0;
-      const budget_actualizado = budget_inicial + totalCRAmount;
-
-      const initialEndDate = new Date(p.fecha_fin_inicial);
-      initialEndDate.setDate(initialEndDate.getDate() + totalCRDays);
-      const year = initialEndDate.getFullYear();
-      const month = String(initialEndDate.getMonth() + 1).padStart(2, '0');
-      const day = String(initialEndDate.getDate()).padStart(2, '0');
-      const fecha_fin_estimada = `${year}-${month}-${day}`;
-
-      const invoices = await Facturas.findAll({
-        where: { id_proyecto }
-      });
-      let consumo_real = 0;
-      let pos = new Set();
-      invoices.forEach(f => {
-        if (f.PO) pos.add(f.PO);
-        if (f.estado === 'RECIBIDA' || f.estado === 'PENDIENTE_DE_RECIBIR') {
-          consumo_real += parseFloat(f.importe || 0);
-        }
-      });
-      const po_list = Array.from(pos).join(', ');
-
-      const presupuesto_disponible = budget_actualizado - consumo_real;
-
-      return {
-        id_proyecto: sanitizeExcelValue(p.id_proyecto),
-        nombre_proyecto: sanitizeExcelValue(p.nombre_proyecto),
-        estado_proyecto: sanitizeExcelValue(p.Estado ? p.Estado.nombre_estado : 'Sin Estado'),
-        indicador_rag: sanitizeExcelValue(p.indicador_rag),
-        proveedor: sanitizeExcelValue(p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner'),
-        pm: sanitizeExcelValue(p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : 'Sin PM'),
-        sede: sanitizeExcelValue(p.Sede ? p.Sede.nombre_sede : ''),
-        po_list: sanitizeExcelValue(po_list),
-        budget_inicial,
-        budget_actualizado,
-        consumo_real,
-        presupuesto_disponible,
-        fecha_inicio: p.fecha_inicio,
-        fecha_fin_inicial: p.fecha_fin_inicial,
-        fecha_fin_estimada
-      };
-    })
-  );
-
-  const hasCol = (key) => exportCols.some(c => c.key === key);
-
-  for (const data of rowsData) {
-    const row = worksheet.addRow(data);
-    if (hasCol('budget_inicial')) row.getCell('budget_inicial').numFmt = '#,##0.00" €"';
-    if (hasCol('budget_actualizado')) row.getCell('budget_actualizado').numFmt = '#,##0.00" €"';
-    if (hasCol('consumo_real')) row.getCell('consumo_real').numFmt = '#,##0.00" €"';
-    if (hasCol('presupuesto_disponible')) row.getCell('presupuesto_disponible').numFmt = '#,##0.00" €"';
-  }
+  const workbook = await generateProjectsExcel(rowsData, exportCols);
 
   res.setHeader(
     'Content-Type',

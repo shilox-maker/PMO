@@ -224,6 +224,91 @@ export const generateDashboardReport = (detailedProjects, reportOptions, highlig
     `;
   };
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const totalProjects = detailedProjects.length;
+  const ragRedCount = detailedProjects.filter(dp => dp.project.indicador_rag === 'ROJO').length;
+  const ragYellowCount = detailedProjects.filter(dp => dp.project.indicador_rag === 'AMARILLO').length;
+  const ragGreenCount = detailedProjects.filter(dp => dp.project.indicador_rag === 'VERDE').length;
+
+  const alertedProjects = [];
+  detailedProjects.forEach(dp => {
+    const project = dp.project;
+    const calc = project.calculations || {};
+    const budgetInitial = parseFloat(project.budget_inicial) || 0;
+    const gastoTotal = calc.gasto_comprometido || 0;
+    const budgetOverrun = gastoTotal > budgetInitial;
+    
+    const milestones = (project.Tareas || []).filter(t => t.es_hito);
+    const overdueMilestones = milestones.filter(m => m.estado === 'PENDIENTE' && m.fecha_limite < todayStr);
+
+    const reasons = [];
+    if (project.indicador_rag === 'ROJO') reasons.push('RAG Crítico (Rojo)');
+    if (overdueMilestones.length > 0) reasons.push(`${overdueMilestones.length} hito(s) vencido(s)`);
+    if (budgetOverrun) {
+      const overCost = gastoTotal - budgetInitial;
+      reasons.push(`Desvío Presupuestario (${formatCurrency(overCost)})`);
+    }
+
+    if (reasons.length > 0) {
+      alertedProjects.push({
+        id_proyecto: project.id_proyecto,
+        nombre_proyecto: project.nombre_proyecto,
+        pm: `${project.PM?.nombre || ''} ${project.PM?.apellidos || ''}`,
+        partner: project.Proveedor?.nombre_razon_social || '—',
+        rag: project.indicador_rag,
+        reasons: reasons.join(' | ')
+      });
+    }
+  });
+
+  const summaryHtml = `
+    <div class="summary-page">
+      <div style="margin-bottom: 24px; text-align: center;">
+        <h2 style="font-size: 16px; font-weight: 700; color: #1a1a2e; text-transform: uppercase; margin-bottom: 4px;">Cuadro de Mando Ejecutivo</h2>
+        <p style="font-size: 11px; color: #666;">Dacsa IT PPM Governance · Resumen de Cartera</p>
+      </div>
+      
+      <div class="summary-kpi-grid">
+        <div class="summary-kpi-box"><div class="label">Total Proyectos</div><div class="value">${totalProjects}</div></div>
+        <div class="summary-kpi-box rag-green"><div class="label">Green (Estables)</div><div class="value">${ragGreenCount}</div></div>
+        <div class="summary-kpi-box rag-yellow"><div class="label">Yellow (Advertencia)</div><div class="value">${ragYellowCount}</div></div>
+        <div class="summary-kpi-box rag-red"><div class="label">Red (Críticos)</div><div class="value">${ragRedCount}</div></div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <h3 style="font-size: 11px; text-transform: uppercase; color: #1a1a2e; border-bottom: 2px solid #1a1a2e; padding-bottom: 6px; margin-bottom: 12px; font-weight: 700;">🚨 Alertas Importantes y Proyectos a Revisar</h3>
+        ${alertedProjects.length === 0 ? `
+          <p style="text-align: center; color: #666; font-style: italic; padding: 20px; background: #f8f9fa; border-radius: 6px; border: 1px dashed #ccc;">No se registran alertas de revisión prioritaria en la cartera.</p>
+        ` : `
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Proyecto</th>
+                <th>RAG</th>
+                <th>Motivo Alerta</th>
+                <th>PM</th>
+                <th>Socio Tecnológico</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${alertedProjects.map(ap => `
+                <tr>
+                  <td style="font-weight: 600;">${ap.id_proyecto}</td>
+                  <td>${ap.nombre_proyecto}</td>
+                  <td><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:9px;font-weight:700;${ap.rag === 'ROJO' ? 'background:#ffebeb;color:#dc2626;' : ap.rag === 'AMARILLO' ? 'background:#fff3e0;color:#e65100;' : 'background:#e8f5e9;color:#2e7d32;'}">${ap.rag}</span></td>
+                  <td style="color: #c00000; font-weight: 600;">${ap.reasons}</td>
+                  <td>${ap.pm}</td>
+                  <td>${ap.partner}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `}
+      </div>
+    </div>
+  `;
+
   const projectsHtml = detailedProjects.map(renderProjectSection).join('');
 
   const html = `<!DOCTYPE html>
@@ -238,10 +323,19 @@ export const generateDashboardReport = (detailedProjects, reportOptions, highlig
     @media print {
       body { padding: 20px; }
       .no-print { display: none !important; }
+      .summary-page { page-break-after: always; border: none; padding: 0; margin-bottom: 0; }
       .project-card { page-break-after: always; }
     }
     .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 3px solid #1a1a2e; }
     .report-header h1 { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+    .summary-page { border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px; background: #fff; page-break-after: always; }
+    .summary-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 12px; }
+    .summary-kpi-box { padding: 12px; border-radius: 8px; background: #f8f9fa; border: 1px solid #e9ecef; text-align: center; }
+    .summary-kpi-box .label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+    .summary-kpi-box .value { font-size: 18px; font-weight: 700; }
+    .summary-kpi-box.rag-red { background: #ffebeb; border-color: #ffccd5; color: #dc2626; }
+    .summary-kpi-box.rag-yellow { background: #fffde6; border-color: #fff2cc; color: #d97706; }
+    .summary-kpi-box.rag-green { background: #f0fdf4; border-color: #dcfce7; color: #16a34a; }
     .project-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 24px; background: #fff; }
     .project-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .project-card-header h2 { font-size: 15px; font-weight: 700; }
@@ -273,6 +367,8 @@ export const generateDashboardReport = (detailedProjects, reportOptions, highlig
       ${highlightDate ? `<p><strong>Filtro "A revisar" desde:</strong> ${formatDate(highlightDate)}</p>` : ''}
     </div>
   </div>
+
+  ${summaryHtml}
 
   ${projectsHtml}
 </body>
