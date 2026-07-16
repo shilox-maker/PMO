@@ -242,8 +242,8 @@ const deleteTask = asyncHandler(async (req, res) => {
 const getLessons = asyncHandler(async (req, res) => {
   const lessons = await LeccionesAprendidas.findAll({
     include: [
-      { model: Proyectos, as: 'Proyecto', attributes: ['nombre_proyecto'] },
-      { model: Proveedores, as: 'Proveedore', attributes: ['nombre_razon_social'] }
+      { model: Proyectos, as: 'Proyecto', attributes: ['id_proyecto', 'nombre_proyecto'] },
+      { model: Proveedores, as: 'Proveedore', attributes: ['id_proveedor', 'nombre_razon_social'] }
     ],
     order: [['createdAt', 'DESC']]
   });

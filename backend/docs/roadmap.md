@@ -2,7 +2,6 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
-
 ## 🔍 2. En Análisis / Especificación
 
 
@@ -18,6 +17,7 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **BUG-02: No funciona bien el filtro de Lecciones aprendidas al filtrar por Partner ni por proyecto** (2026-07-16)
 - [x] **IDEA-18: Botón para eliminar proyectos** (2026-07-14)
 - [x] **IDEA-15: Filtros en Lecciones Aprendidas (Buenas Prácticas / Errores a evitar, Partner y Proyecto)** (2026-07-14)
 - [x] **IDEA-16: Indicador de Nota Explicativa de Presupuesto en Reporte de Portfolios (Pips)** (2026-07-14)
