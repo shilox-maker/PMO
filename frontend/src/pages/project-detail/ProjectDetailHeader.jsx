@@ -7,64 +7,118 @@ export default function ProjectDetailHeader({
   setShowEditProjectModal,
   setShowReportModal,
   handleDeleteProject,
-  calc
+  workflowStates,
+  handleUpdateProject,
+  currentPm
 }) {
+  const canDelete = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR' || project?.id_pm === currentPm.id_usuario);
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 24, marginBottom: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         {onBack && (
-          <button className="icon-btn" onClick={onBack} title="Volver a la lista">
-            <ArrowLeft size={20} />
+          <button className="icon-btn" onClick={onBack} title="Volver">
+            <ArrowLeft size={22} />
           </button>
         )}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <h2 style={{ fontWeight: 700, fontSize: '1.5rem', margin: 0 }}>
-              {project.nombre_proyecto}
-            </h2>
-            <div className={`project-rag-dot ${project.indicador_rag}`} title={`RAG: ${project.indicador_rag}`}></div>
-          </div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', marginTop: 4, display: 'flex', gap: 12 }}>
-            <span>ID: <strong>{project.id_proyecto}</strong></span>
-            <span>•</span>
-            <span>Estado: <strong>{project.estado_proyecto}</strong></span>
-            {project.es_capex && (
-              <>
-                <span>•</span>
-                <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>CAPEX: {project.codigo_capex}</span>
-              </>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="project-id-badge">{project.id_proyecto}</span>
+            {project.es_capex ? (
+              <span className="badge badge-blue">
+                CAPEX: {project.codigo_capex || 'Pendiente'}
+                {project.TipoCapex && ` (${project.TipoCapex.nombre}${project.SubtipoCapex ? ` - ${project.SubtipoCapex.nombre}` : ''})`}
+              </span>
+            ) : (
+              <span className="badge badge-orange">OPEX</span>
+            )}
+            {project.Estado && (
+              <span className="badge" style={{ backgroundColor: 'var(--md-sys-color-surface-container-highest)', color: 'var(--md-sys-color-on-surface)', fontWeight: 600 }}>
+                {project.Estado.icono || ''} {project.Estado.nombre_estado}
+              </span>
             )}
           </div>
+          <h2 className="page-title" style={{ marginTop: 4 }}>{project.nombre_proyecto}</h2>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
         <button 
-          className="m3-btn m3-btn-tonal" 
+          className="m3-btn" 
           onClick={() => setShowReportModal(true)}
-          style={{ height: '40px', display: 'flex', alignItems: 'center', gap: 8 }}
+          style={{ 
+            background: 'linear-gradient(135deg, #f59e0b, #d97706)', 
+            color: '#fff', 
+            border: 'none',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}
+          title="Generar informe ejecutivo del proyecto"
         >
-          <Printer size={18} />
-          <span>Informe PDF</span>
+          <Printer size={16} />
+          <span>Informe</span>
         </button>
 
-        <button 
-          className="m3-btn m3-btn-primary" 
-          onClick={() => setShowEditProjectModal(true)}
-          style={{ height: '40px', display: 'flex', alignItems: 'center', gap: 8 }}
-        >
-          <Edit2 size={18} />
+        <button className="m3-btn m3-btn-primary" onClick={() => setShowEditProjectModal(true)}>
+          <Edit2 size={16} />
           <span>Editar Proyecto</span>
         </button>
 
-        <button 
-          className="m3-btn m3-btn-outline" 
-          onClick={handleDeleteProject}
-          style={{ height: '40px', color: 'var(--color-rag-red)', borderColor: 'var(--color-rag-red)', display: 'flex', alignItems: 'center', gap: 8 }}
-          title="Eliminar proyecto"
-        >
-          <Trash2 size={18} />
-        </button>
+        {canDelete && (
+          <button 
+            className="m3-btn" 
+            onClick={handleDeleteProject}
+            style={{
+              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+              color: '#fff',
+              border: 'none',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+            title="Eliminar Proyecto permanentemente"
+          >
+            <Trash2 size={16} />
+            <span>Eliminar Proyecto</span>
+          </button>
+        )}
+
+        {/* RAG select quick control */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--md-sys-color-outline)' }}>RAG:</span>
+          <select 
+            value={project.indicador_rag || 'VERDE'}
+            onChange={(e) => handleUpdateProject({ indicador_rag: e.target.value })}
+            className="user-select"
+            style={{ width: 'auto', padding: '6px 12px', height: '36px' }}
+          >
+            <option value="VERDE">VERDE 🟢</option>
+            <option value="AMARILLO">AMARILLO 🟡</option>
+            <option value="ROJO">ROJO 🔴</option>
+          </select>
+        </div>
+
+        {/* Estado Workflow */}
+        {workflowStates && workflowStates.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--md-sys-color-outline)' }}>Fase:</span>
+            <select 
+              value={project.id_estado || ''}
+              onChange={(e) => handleUpdateProject({ id_estado: parseInt(e.target.value, 10) })}
+              className="user-select"
+              style={{ width: 'auto', padding: '6px 12px', height: '36px' }}
+            >
+              {workflowStates.map(state => (
+                <option key={state.id_estado} value={state.id_estado}>
+                  {state.icono} {state.nombre_estado}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
     </div>
   );

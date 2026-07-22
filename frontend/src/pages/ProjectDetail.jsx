@@ -299,6 +299,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         setShowEditProjectModal={setShowEditProjectModal}
         setShowReportModal={setShowReportModal}
         handleDeleteProject={handleDeleteProject}
+        workflowStates={workflowStates}
+        handleUpdateProject={handleUpdateProject}
+        currentPm={currentPm}
         calc={calc}
       />
 
