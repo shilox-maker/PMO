@@ -162,12 +162,173 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
       });
   };
 
-  const generatePortfolioReport = () => {
+  const generatePortfolioReport = async () => {
+    if (filteredGridData.length === 0) {
+      alert('No hay proyectos filtrados para generar el informe de portfolio.');
+      return;
+    }
     setGeneratingReport(true);
-    setTimeout(() => {
-      alert('Reporte generado correctamente.');
+
+    const formatDate = (d) => {
+      if (!d) return '—';
+      const dt = new Date(d);
+      return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth()+1).padStart(2, '0')}/${dt.getFullYear()}`;
+    };
+    const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
+    const formatDateTime = (isoString) => {
+      if (!isoString) return '';
+      const date = new Date(isoString);
+      return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()} a las ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+    };
+
+    try {
+      // Fetch full detail + comments for each project
+      const projectBlocks = [];
+      for (const p of filteredGridData) {
+        const [detailRes, commentsRes] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_URL}/projects/${p.id_proyecto}`, { headers: getAuthHeaders() }),
+          fetch(`${import.meta.env.VITE_API_URL}/projects/${p.id_proyecto}/comments`, { headers: getAuthHeaders() })
+        ]);
+        const detail = await detailRes.json();
+        const comments = await commentsRes.json();
+        const importantComments = comments.filter(c => c.es_importante);
+
+        const calc = detail.calculations || {};
+        const budgetInitial = parseFloat(detail.budget_inicial) || 0;
+        const gastoTotal = calc.gasto_comprometido || 0;
+        const budgetOverrun = gastoTotal > budgetInitial;
+        const budgetPercent = budgetInitial > 0 ? ((gastoTotal / budgetInitial) * 100).toFixed(1) : 0;
+        const fechaFinInicial = detail.fecha_fin_inicial || '—';
+        const fechaFinEstimada = calc.fecha_fin_estimada || fechaFinInicial;
+        const diasRetraso = calc.dias_retraso_aprobados || 0;
+        const hasDelay = diasRetraso > 0;
+
+        const allTasks = detail.Tareas || [];
+        const milestones = allTasks.filter(t => t.es_hito);
+        const completed = milestones.filter(t => t.estado === 'COMPLETADA').sort((a,b) => new Date(b.fecha_limite) - new Date(a.fecha_limite)).slice(0,3);
+        const pending = milestones.filter(t => t.estado === 'PENDIENTE').sort((a,b) => new Date(a.fecha_limite) - new Date(b.fecha_limite)).slice(0,3);
+
+        const milestoneRows = (list, type) => {
+          if (list.length === 0) return `<tr><td colspan="3" style="text-align:center;color:#999;padding:8px;">Sin hitos ${type}</td></tr>`;
+          return list.map(m => `
+            <tr>
+              <td style="padding:6px 10px;border-bottom:1px solid #e0e0e0;font-size:12px;">${m.titulo_tarea}</td>
+              <td style="padding:6px 10px;border-bottom:1px solid #e0e0e0;font-size:12px;">${formatDate(m.fecha_limite)}</td>
+              <td style="padding:6px 10px;border-bottom:1px solid #e0e0e0;"><span style="padding:2px 6px;border-radius:10px;font-size:10px;font-weight:600;background:${m.estado==='COMPLETADA'?'#e8f5e9':'#fff3e0'};color:${m.estado==='COMPLETADA'?'#2e7d32':'#e65100'};">${m.estado==='COMPLETADA'?'✅ Completado':'⏳ Pendiente'}</span></td>
+            </tr>
+          `).join('');
+        };
+
+        const commentsHtml = importantComments.length === 0
+          ? '<p style="color:#999;text-align:center;padding:12px;font-size:12px;">Sin comentarios ejecutivos.</p>'
+          : importantComments.map(c => `
+            <div style="padding:12px;margin-bottom:8px;background:#fffbf0;border-left:3px solid #f59e0b;border-radius:6px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <strong style="font-size:12px;">${c.Autor?.nombre||''} ${c.Autor?.apellidos||''}</strong>
+                <span style="font-size:10px;color:#888;">${formatDate(c.fecha_registro)}</span>
+              </div>
+              <div style="font-size:12px;line-height:1.5;color:#333;">${c.texto_comentario}</div>
+              ${c.editado ? `<div style="font-size:10px;color:#999;margin-top:4px;font-style:italic;">Editado por ${c.Editor?.nombre||''} ${c.Editor?.apellidos||''} el ${formatDateTime(c.fecha_modificacion)}</div>` : ''}
+            </div>
+          `).join('');
+
+        projectBlocks.push(`
+          <div class="project-block" style="page-break-after: always;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #1a1a2e;">
+              <div>
+                <h2 style="font-size:20px;font-weight:700;color:#1a1a2e;margin:0;">${detail.Estado?.icono||''} ${detail.nombre_proyecto}</h2>
+                <p style="font-size:12px;color:#666;margin:4px 0 0;">${detail.id_proyecto} · ${detail.Estado?.nombre_estado||'Sin Estado'}</p>
+              </div>
+              <div style="text-align:right;font-size:11px;color:#666;">
+                <p><strong>PM:</strong> ${detail.PM?.nombre||''} ${detail.PM?.apellidos||''}</p>
+                <p><strong>Partner:</strong> ${detail.Proveedor?.nombre_razon_social||'—'}</p>
+                <p><strong>Sede:</strong> ${detail.Sede?.nombre_sede||'—'}</p>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+              <div style="padding:12px;border-radius:8px;background:#f8f9fa;border:1px solid #e9ecef;">
+                <div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:600;">Fecha Fin Inicial</div>
+                <div style="font-size:16px;font-weight:700;">${formatDate(fechaFinInicial)}</div>
+              </div>
+              <div style="padding:12px;border-radius:8px;background:#f8f9fa;border:1px solid #e9ecef;">
+                <div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:600;">Fecha Fin Estimada</div>
+                <div style="font-size:16px;font-weight:700;${hasDelay?'color:#dc2626;':''}">${formatDate(fechaFinEstimada)} ${hasDelay?`<span style="font-size:11px;">(+${diasRetraso} días)</span>`:''}</div>
+              </div>
+              <div style="padding:12px;border-radius:8px;background:#f8f9fa;border:1px solid #e9ecef;">
+                <div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:600;">Presupuesto Inicial</div>
+                <div style="font-size:16px;font-weight:700;">${formatCurrency(budgetInitial)}</div>
+              </div>
+              <div style="padding:12px;border-radius:8px;background:#f8f9fa;border:1px solid #e9ecef;">
+                <div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:600;">Gasto Comprometido (${budgetPercent}%)</div>
+                <div style="font-size:16px;font-weight:700;${budgetOverrun?'color:#dc2626;':'color:#16a34a;'}">${formatCurrency(gastoTotal)} ${budgetOverrun?'<span style="font-size:11px;">⚠️ SOBRECOSTO</span>':''}</div>
+              </div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+              <h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #eee;">🏁 Hitos</h3>
+              <table style="width:100%;border-collapse:collapse;"><thead><tr><th style="padding:8px 10px;background:#f1f3f5;font-size:10px;text-transform:uppercase;font-weight:700;color:#555;text-align:left;border-bottom:2px solid #dee2e6;">Hito</th><th style="padding:8px 10px;background:#f1f3f5;font-size:10px;text-transform:uppercase;font-weight:700;color:#555;text-align:left;border-bottom:2px solid #dee2e6;">Fecha</th><th style="padding:8px 10px;background:#f1f3f5;font-size:10px;text-transform:uppercase;font-weight:700;color:#555;text-align:left;border-bottom:2px solid #dee2e6;">Estado</th></tr></thead><tbody>${milestoneRows(completed,'completados')}${milestoneRows(pending,'pendientes')}</tbody></table>
+            </div>
+
+            <div>
+              <h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #eee;">⭐ Muro Ejecutivo</h3>
+              ${commentsHtml}
+            </div>
+          </div>
+        `);
+      }
+
+      const fullHtml = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Informe de Portfolio — PPM Dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; color: #1a1a2e; background: #fff; padding: 40px; font-size: 13px; line-height: 1.6; }
+    @media print {
+      body { padding: 20px; }
+      .no-print { display: none !important; }
+      .project-block { page-break-after: always; }
+      .project-block:last-child { page-break-after: auto; }
+    }
+    .print-btn { position: fixed; top: 20px; right: 20px; padding: 12px 24px; background: #1a1a2e; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; z-index: 100; }
+    .print-btn:hover { background: #2d2d4e; }
+    .cover-page { text-align: center; padding: 120px 40px; page-break-after: always; }
+    .cover-page h1 { font-size: 32px; font-weight: 800; color: #1a1a2e; margin-bottom: 16px; }
+    .cover-page p { font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+  <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+
+  <div class="cover-page">
+    <h1>📊 Informe de Portfolio</h1>
+    <p>PPM Dashboard — Dossier ejecutivo consolidado</p>
+    <p style="margin-top:8px;font-size:13px;">Proyectos incluidos: <strong>${filteredGridData.length}</strong></p>
+    <p style="margin-top:4px;font-size:12px;color:#999;">Generado el ${formatDate(new Date().toISOString())} a las ${new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</p>
+  </div>
+
+  ${projectBlocks.join('\n')}
+
+  <div style="margin-top:40px;padding-top:16px;border-top:2px solid #eee;font-size:11px;color:#999;text-align:center;">
+    PPM Dashboard — Informe de Portfolio generado automáticamente
+  </div>
+</body>
+</html>`;
+
+      const reportWindow = window.open('', '_blank');
+      if (reportWindow) {
+        reportWindow.document.write(fullHtml);
+        reportWindow.document.close();
+      }
+    } catch (err) {
+      console.error('Error generating portfolio report:', err);
+      alert('Error al generar el informe de portfolio. Revise la consola.');
+    } finally {
       setGeneratingReport(false);
-    }, 1000);
+    }
   };
 
   // Metrics
