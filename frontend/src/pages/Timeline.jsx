@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Filter, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Diamond } from 'lucide-react';
+import TimelineToolbar from '../components/timeline/TimelineToolbar';
 
 const ZOOM_LEVELS = ['trimestral', 'mensual', 'semanal'];
-const ZOOM_LABELS = { trimestral: 'Trimestral', mensual: 'Mensual', semanal: 'Semanal' };
 const MS_PER_DAY = 86400000;
 
 const RAG_COLORS = {
@@ -34,7 +33,7 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
   const { getAuthHeaders } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [zoomIndex, setZoomIndex] = useState(1); // default: mensual
+  const [zoomIndex, setZoomIndex] = useState(1);
   const [showClosed, setShowClosed] = useState(false);
   const [filterRag, setFilterRag] = useState('');
   const [filterPm, setFilterPm] = useState('');
@@ -51,7 +50,6 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
       .catch(err => { console.error(err); setLoading(false); });
   }, []);
 
-  // Scroll to "today" line on first load
   useEffect(() => {
     if (!loading && todayLineRef.current && scrollRef.current) {
       const containerRect = scrollRef.current.getBoundingClientRect();
@@ -63,7 +61,6 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
 
   const zoom = ZOOM_LEVELS[zoomIndex];
 
-  // Filter
   const filtered = useMemo(() => {
     if (projectId) {
       return projects.filter(p => p.id_proyecto === projectId);
@@ -73,7 +70,6 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
       if (filterRag && p.indicador_rag !== filterRag) return false;
       if (filterPm && p.pm_nombre !== filterPm) return false;
 
-      // Date overlap check
       const pStart = p.fecha_inicio;
       const pEnd = p.fecha_fin_estimada;
       if (filterStartDate && pEnd && pEnd < filterStartDate) return false;
@@ -83,10 +79,8 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
     });
   }, [projects, showClosed, filterRag, filterPm, filterStartDate, filterEndDate, projectId]);
 
-  // Unique PMs for filter
   const pmList = useMemo(() => [...new Set(projects.map(p => p.pm_nombre))].sort(), [projects]);
 
-  // Timeline range: earliest start - latest end, with padding
   const { timelineStart, timelineEnd, totalDays } = useMemo(() => {
     if (filtered.length === 0) return { timelineStart: new Date(), timelineEnd: new Date(), totalDays: 365 };
     const starts = filtered.map(p => parseDate(p.fecha_kickoff || p.fecha_inicio)).filter(Boolean);
@@ -97,27 +91,22 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
     let minDate = new Date(Math.min(...allDates));
     let maxDate = new Date(Math.max(...allDates));
 
-    // Pad 30 days on each side
     minDate = new Date(minDate.getTime() - 30 * MS_PER_DAY);
     maxDate = new Date(maxDate.getTime() + 30 * MS_PER_DAY);
 
-    // Align to month start
     minDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
     maxDate = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0);
 
     return { timelineStart: minDate, timelineEnd: maxDate, totalDays: diffDays(minDate, maxDate) };
   }, [filtered]);
 
-  // Pixel width per day based on zoom
   const pxPerDay = zoom === 'semanal' ? 12 : zoom === 'mensual' ? 4 : 1.5;
   const chartWidth = totalDays * pxPerDay;
 
-  // Generate column headers
   const columns = useMemo(() => {
     const cols = [];
     const d = new Date(timelineStart);
     if (zoom === 'semanal') {
-      // Align to Monday
       const dayOfWeek = d.getDay();
       d.setDate(d.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
       while (d <= timelineEnd) {
@@ -136,7 +125,6 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
         d.setMonth(d.getMonth() + 1);
       }
     } else {
-      // Trimestral
       while (d <= timelineEnd) {
         const qStart = new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3, 1);
         const qEnd = new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3 + 3, 0);
@@ -149,7 +137,6 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
     return cols;
   }, [timelineStart, timelineEnd, zoom, pxPerDay, totalDays]);
 
-  // Today position
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayOffset = diffDays(timelineStart, today) * pxPerDay;
@@ -177,74 +164,24 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
 
   return (
     <div className="timeline-page">
-      {/* Toolbar */}
       {!hideHeader && (
-        <div className="m3-card glass-panel timeline-toolbar">
-          <div className="timeline-filters">
-            <div className="timeline-filter-group">
-              <Filter size={16} style={{ opacity: 0.6 }} />
-              <select value={filterRag} onChange={e => setFilterRag(e.target.value)} className="timeline-select">
-                <option value="">Todos RAG</option>
-                <option value="VERDE">🟢 Verde</option>
-                <option value="AMARILLO">🟡 Amarillo</option>
-                <option value="ROJO">🔴 Rojo</option>
-              </select>
-
-              <select value={filterPm} onChange={e => setFilterPm(e.target.value)} className="timeline-select">
-                <option value="">Todos PM</option>
-                {pmList.map(pm => <option key={pm} value={pm}>{pm}</option>)}
-              </select>
-
-              <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="timeline-select" title="Rango de fecha inicio" />
-              <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>a</span>
-              <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="timeline-select" title="Rango de fecha fin" />
-
-              <label className="timeline-toggle">
-                <input type="checkbox" checked={showClosed} onChange={e => setShowClosed(e.target.checked)} />
-                <span>Cerrados</span>
-              </label>
-            </div>
-
-            <div className="timeline-zoom-controls">
-              <button
-                className="icon-btn"
-                disabled={zoomIndex === 0}
-                onClick={() => setZoomIndex(i => Math.max(0, i - 1))}
-                title="Menos zoom"
-              >
-                <ZoomOut size={18} />
-              </button>
-              <span className="timeline-zoom-label">{ZOOM_LABELS[zoom]}</span>
-              <button
-                className="icon-btn"
-                disabled={zoomIndex === ZOOM_LEVELS.length - 1}
-                onClick={() => setZoomIndex(i => Math.min(ZOOM_LEVELS.length - 1, i + 1))}
-                title="Más zoom"
-              >
-                <ZoomIn size={18} />
-              </button>
-            </div>
-          </div>
-
-          <div className="timeline-legend">
-            <span className="timeline-legend-item"><span className="timeline-legend-dot" style={{ background: RAG_COLORS.VERDE }}></span> Verde</span>
-            <span className="timeline-legend-item"><span className="timeline-legend-dot" style={{ background: RAG_COLORS.AMARILLO }}></span> Amarillo</span>
-            <span className="timeline-legend-item"><span className="timeline-legend-dot" style={{ background: RAG_COLORS.ROJO }}></span> Rojo</span>
-            <span className="timeline-legend-item"><span className="timeline-legend-diamond completed"></span> Hito completado</span>
-            <span className="timeline-legend-item"><span className="timeline-legend-diamond pending"></span> Hito pendiente</span>
-            <span className="timeline-legend-item"><span className="timeline-today-indicator"></span> Hoy</span>
-          </div>
-        </div>
+        <TimelineToolbar
+          filterRag={filterRag} setFilterRag={setFilterRag}
+          filterPm={filterPm} setFilterPm={setFilterPm}
+          filterStartDate={filterStartDate} setFilterStartDate={setFilterStartDate}
+          filterEndDate={filterEndDate} setFilterEndDate={setFilterEndDate}
+          showClosed={showClosed} setShowClosed={setShowClosed}
+          zoomIndex={zoomIndex} setZoomIndex={setZoomIndex}
+          pmList={pmList} zoom={zoom}
+        />
       )}
 
-      {/* Gantt Chart */}
       {filtered.length === 0 ? (
         <div className="m3-card glass-panel" style={{ padding: 40, textAlign: 'center', color: 'var(--md-sys-color-outline)' }}>
           No hay proyectos que mostrar con los filtros actuales.
         </div>
       ) : (
         <div className="timeline-chart-wrapper">
-          {/* Project labels (sticky left) */}
           <div className="timeline-labels">
             <div className="timeline-labels-header">Proyecto</div>
             {filtered.map((p, i) => (
@@ -263,10 +200,8 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
             ))}
           </div>
 
-          {/* Chart area with scroll */}
           <div className="timeline-chart-scroll" ref={scrollRef}>
             <div className="timeline-chart" style={{ width: chartWidth, minWidth: chartWidth }}>
-              {/* Column headers */}
               <div className="timeline-header-row">
                 {columns.map((col, idx) => (
                   <div
@@ -279,14 +214,12 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
                 ))}
               </div>
 
-              {/* Grid lines */}
               <div className="timeline-grid">
                 {columns.map((col, idx) => (
                   <div key={idx} className="timeline-grid-line" style={{ left: col.startOffset }}></div>
                 ))}
               </div>
 
-              {/* Today line */}
               {todayVisible && (
                 <div
                   ref={todayLineRef}
@@ -297,7 +230,6 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
                 </div>
               )}
 
-              {/* Project bars */}
               {filtered.map((p, i) => {
                 const start = parseDate(p.fecha_kickoff || p.fecha_inicio);
                 const end = parseDate(p.fecha_go_live || p.fecha_fin_estimada);
@@ -323,7 +255,6 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
                       )}
                     </div>
 
-                    {/* Milestones */}
                     {p.hitos.map(h => {
                       const hDate = parseDate(h.fecha_limite);
                       if (!hDate) return null;
@@ -346,7 +277,6 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
         </div>
       )}
 
-      {/* Tooltip */}
       {tooltip && (
         <div
           className="timeline-tooltip"

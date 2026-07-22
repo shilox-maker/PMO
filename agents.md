@@ -4,7 +4,7 @@
 
 ## Reglas Arquitectónicas (KISS & Modularidad)
 - **Filosofía KISS:** Prioriza la solución más simple, legible y directa. Evita sobre-ingeniería o abstracciones innecesarias.
-- **Tamaño de Archivos:** Mantén un límite estricto de **máximo 150-200 líneas por fichero**. Si una funcionalidad hace que un archivo supere este límite, detente y propón separar la lógica en un nuevo módulo.
+- **Tamaño de Archivos:** Mantén un límite estricto de **máximo 300 líneas en frontend y 200 líneas en backend por fichero**. Si una funcionalidad hace que un archivo supere este límite, detente y propón separar la lógica en un nuevo módulo.
 - **Responsabilidad Única (SRP):** Desacopla la lógica de negocio, las utilidades y las interfaces/tipos en archivos independientes. No crees "God Files".
 
 ## Restricciones de Comportamiento (Control de Tokens)

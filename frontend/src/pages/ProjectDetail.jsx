@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { 
-  ArrowLeft, FileText, Target, Trophy, DollarSign, TrendingUp, ShieldAlert, MessageSquare, CheckSquare, BookOpen, Printer, Edit2, ArrowUp, ArrowDown, ArrowUpDown, RefreshCw, Trash2 
-} from 'lucide-react';
+import { RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
 // Import Modals
 import ProjectEditModal from '../components/modals/ProjectEditModal';
@@ -15,7 +13,9 @@ import LessonModal from '../components/modals/LessonModal';
 import ReportModal from '../components/modals/ReportModal';
 import RaciModal from '../components/modals/RaciModal';
 
-// Import Tabs
+// Import Tabs & Header
+import ProjectDetailHeader from './project-detail/ProjectDetailHeader';
+import ProjectDetailTabsNav from './project-detail/ProjectDetailTabsNav';
 import ProjectFichaTab from './project-detail/tabs/ProjectFichaTab';
 import ProjectAlcanceTab from './project-detail/tabs/ProjectAlcanceTab';
 import ProjectFinanzasTab from './project-detail/tabs/ProjectFinanzasTab';
@@ -115,32 +115,22 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   };
 
   const fetchProjectData = (showLoadingState = false) => {
-    if (showLoadingState) {
-      setLoading(true);
-    }
-    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
-      headers: getAuthHeaders()
-    })
+    if (showLoadingState) setLoading(true);
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => {
         setProject(data);
-        if (showLoadingState) {
-          setLoading(false);
-        }
+        if (showLoadingState) setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching project detail:', err);
-        if (showLoadingState) {
-          setLoading(false);
-        }
+        if (showLoadingState) setLoading(false);
       });
   };
 
   const fetchComments = () => {
     setCommentsLoading(true);
-    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`, {
-      headers: getAuthHeaders()
-    })
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`, { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => {
         setComments(data);
@@ -170,7 +160,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     }
   }, [projectId]);
 
-  // General Updates
   const handleUpdateProject = (fieldsToUpdate) => {
     fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
       method: 'PUT',
@@ -182,12 +171,11 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         if (!res.ok) throw new Error(d.error || 'Error al actualizar el proyecto');
         return d;
       })
-      .then(() => fetchProjectData())
+      .then(() => fetchProjectData());
   };
 
-  // Delete Project
   const handleDeleteProject = () => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este proyecto de forma permanente? Esta acción eliminará también todas sus tareas, hitos, facturas, incidencias, riesgos y comentarios relacionados, y no se puede deshacer.')) {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este proyecto de forma permanente?')) {
       fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
@@ -196,34 +184,32 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           const d = await res.json();
           if (!res.ok) throw new Error(d.error || 'Error al eliminar el proyecto');
           alert('Proyecto eliminado con éxito');
-          if (onBack) {
-            onBack();
-          }
+          if (onBack) onBack();
         })
         .catch(err => alert(err.message));
     }
   };
 
-  // Block Saving
-  const handleSaveBlock = (fieldName) => {
-    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ [fieldName]: blockValue })
-    })
-      .then(async (res) => {
-        const d = await res.json();
-        if (!res.ok) throw new Error(d.error || 'Error al guardar el bloque');
-        return d;
-      })
-      .then(() => {
-        setEditingBlock(null);
-        fetchProjectData();
-      })
-      .catch(err => alert(err.message));
+  const handleOpenAddRaci = (val) => {
+    setEditingParticipant({ id_contacto: val });
+    setShowRaciModal(true);
   };
 
-  // Lifecycle save
+  const handleOpenEditRaci = (ku) => {
+    setEditingParticipant(ku);
+    setShowRaciModal(true);
+  };
+
+  const handleDeleteParticipant = (contactId) => {
+    if (window.confirm('¿Eliminar participante RACI del proyecto?')) {
+      fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/raci/${contactId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      })
+        .then(() => fetchProjectData());
+    }
+  };
+
   const handleOpenEditLifecycle = () => {
     setLifecycleForm({
       fecha_peticion: project.fecha_peticion || '',
@@ -237,69 +223,21 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     setIsEditingLifecycle(true);
   };
 
-  const handleSaveLifecycle = (e) => {
-    if (e) e.preventDefault();
-    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(lifecycleForm)
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al guardar hitos del ciclo de vida');
-        return data;
-      })
-      .then(() => {
-        setIsEditingLifecycle(false);
-        fetchProjectData();
-      })
-      .catch(err => alert(err.message));
-  };
-
-  // RACI triggers
-  const handleOpenAddRaci = (kuId) => {
-    const contact = contactosList.find(k => Number(k.id_contacto) === Number(kuId));
-    if (!contact) return;
-    setEditingParticipant(null);
-    setEditingParticipant(contact);
-    setShowRaciModal(true);
-  };
-
-  const handleOpenEditRaci = (ku) => {
-    setEditingParticipant(ku);
-    setShowRaciModal(true);
-  };
-
-  const handleDeleteParticipant = (kuId) => {
-    if (!window.confirm('¿Seguro que desea retirar a este participante del proyecto?')) return;
-    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/participants/${kuId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error('Error al eliminar participante');
-        return res.json();
-      })
-      .then(() => fetchProjectData())
-      .catch(err => alert(err.message));
-  };
-
-  // Comments triggers
   const handleAddComment = () => {
-    if (!newCommentText || newCommentText.trim() === '' || newCommentText === '<br>') return;
-    fetch(`${import.meta.env.VITE_API_URL}/comments`, {
+    if (!newCommentText || !newCommentText.trim()) return;
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
-        id_proyecto: projectId,
         texto_comentario: newCommentText,
         es_importante: newCommentImportant,
         para_direccion: newCommentDireccion
       })
     })
-      .then(res => {
-        if (!res.ok) throw new Error('Error al publicar comentario');
-        return res.json();
+      .then(async (res) => {
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Error al publicar comentario');
+        return d;
       })
       .then(() => {
         setNewCommentText('');
@@ -310,9 +248,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       .catch(err => alert(err.message));
   };
 
-  const handleUpdateComment = (id) => {
-    if (!editingCommentText || editingCommentText.trim() === '' || editingCommentText === '<br>') return;
-    fetch(`${import.meta.env.VITE_API_URL}/comments/${id}`, {
+  const handleUpdateComment = (commentId) => {
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/comments/${commentId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({
@@ -321,483 +258,293 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         para_direccion: editingCommentDireccion
       })
     })
-      .then(res => {
-        if (!res.ok) throw new Error('Error al actualizar comentario');
-        return res.json();
+      .then(async (res) => {
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Error al actualizar comentario');
+        return d;
       })
       .then(() => {
         setEditingCommentId(null);
-        setEditingCommentText('');
-        setEditingCommentImportant(false);
-        setEditingCommentDireccion(false);
         fetchComments();
       })
       .catch(err => alert(err.message));
   };
 
-  const handleDeleteComment = (id) => {
-    if (!window.confirm('¿Seguro que desea eliminar este comentario?')) return;
-    fetch(`${import.meta.env.VITE_API_URL}/comments/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Error al eliminar comentario');
-        return res.json();
+  const handleDeleteComment = (commentId) => {
+    if (window.confirm('¿Seguro que deseas eliminar este comentario?')) {
+      fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
       })
-      .then(() => fetchComments())
-      .catch(err => alert(err.message));
+        .then(() => fetchComments());
+    }
   };
 
-  // Invoices triggers
-  const openAddInvoice = () => {
-    setEditingInvoice(null);
-    setShowInvoiceModal(true);
-  };
-  const openEditInvoice = (fac) => {
-    setEditingInvoice(fac);
-    setShowInvoiceModal(true);
-  };
-  const handleDeleteInvoice = (facId) => {
-    if (!window.confirm('¿Seguro que desea eliminar este cobro/factura?')) return;
-    fetch(`${import.meta.env.VITE_API_URL}/invoices/${facId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    })
-      .then(() => fetchProjectData())
-      .catch(err => console.error(err));
-  };
-
-  // CR triggers
-  const openAddCr = () => {
-    setEditingCr(null);
-    setShowCrModal(true);
-  };
-  const openEditCr = (cr) => {
-    setEditingCr(cr);
-    setShowCrModal(true);
-  };
-
-  // Risks triggers
-  const openAddRisk = () => {
-    setEditingRisk(null);
-    setShowRiskModal(true);
-  };
-  const openEditRisk = (rsg) => {
-    setEditingRisk(rsg);
-    setShowRiskModal(true);
-  };
-  const handleToggleRiskState = (riskId, currentStatus) => {
-    const nextStatus = currentStatus === 'ACTIVO' ? 'CERRADO' : 'ACTIVO';
-    fetch(`${import.meta.env.VITE_API_URL}/risks/${riskId}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ estado_riesgo: nextStatus })
-    })
-      .then(() => fetchProjectData())
-      .catch(err => console.error(err));
-  };
-
-  // Issues triggers
-  const openAddIssue = () => {
-    setEditingIssue(null);
-    setShowIssueModal(true);
-  };
-  const openEditIssue = (inc) => {
-    setEditingIssue(inc);
-    setShowIssueModal(true);
-  };
-
-  // Tasks triggers
-  const openAddTask = () => {
-    setEditingTask(null);
-    setShowTaskModal(true);
-  };
-  const openEditTask = (task) => {
-    setEditingTask(task);
-    setShowTaskModal(true);
-  };
-  const handleToggleTask = (taskId, currentState) => {
-    const nextState = currentState === 'PENDIENTE' ? 'COMPLETADA' : 'PENDIENTE';
-    fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ estado: nextState })
-    })
-      .then(() => fetchProjectData())
-      .catch(err => console.error(err));
-  };
-  const handleDeleteTask = (taskId) => {
-    if (!window.confirm('¿Seguro que desea eliminar esta tarea checklist?')) return;
-    fetch(`${import.meta.env.VITE_API_URL}/tasks/${taskId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    })
-      .then(() => fetchProjectData())
-      .catch(err => console.error(err));
-  };
-
-  // Lessons triggers
-  const openAddLesson = () => {
-    setEditingLesson(null);
-    setShowLessonModal(true);
-  };
-  const openEditLesson = (les) => {
-    setEditingLesson(les);
-    setShowLessonModal(true);
-  };
-  const handleDeleteLesson = (lessonId) => {
-    if (!window.confirm('¿Seguro que desea eliminar esta lección?')) return;
-    fetch(`${import.meta.env.VITE_API_URL}/lessons/${lessonId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    })
-      .then(() => fetchProjectData())
-      .catch(err => console.error(err));
-  };
-
-  if (loading) {
+  if (loading || !project) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', gap: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
         <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
-        <span>Cargando ficha de gobernanza de proyecto...</span>
       </div>
     );
   }
 
-  if (!project) {
-    return (
-      <div className="m3-card" style={{ textAlign: 'center', padding: 32 }}>
-        No se pudo recuperar la ficha del proyecto.
-        <button className="m3-btn m3-btn-primary" onClick={onBack} style={{ marginTop: 16 }}>
-          <ArrowLeft size={16} /> Volver
-        </button>
-      </div>
-    );
-  }
+  const calc = project.calculations;
 
   return (
     <div>
-      {/* Header with actions & switcher */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 24, marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <button className="icon-btn" onClick={onBack}>
-            <ArrowLeft size={22} />
-          </button>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="project-id-badge">{project.id_proyecto}</span>
-              {project.es_capex ? (
-                <span className="badge badge-blue">
-                  CAPEX: {project.codigo_capex || 'Pendiente'}
-                  {project.TipoCapex && ` (${project.TipoCapex.nombre}${project.SubtipoCapex ? ` - ${project.SubtipoCapex.nombre}` : ''})`}
-                </span>
-              ) : (
-                <span className="badge badge-orange">OPEX</span>
-              )}
-              {project.Estado && (
-                <span className="badge" style={{ backgroundColor: 'var(--md-sys-color-surface-container-highest)', color: 'var(--md-sys-color-on-surface)', fontWeight: 600 }}>
-                  {project.Estado.icono || ''} {project.Estado.nombre_estado}
-                </span>
-              )}
-            </div>
-            <h2 className="page-title" style={{ marginTop: 4 }}>{project.nombre_proyecto}</h2>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-          <button 
-            className="m3-btn" 
-            onClick={() => setShowReportModal(true)}
-            style={{ 
-              background: 'linear-gradient(135deg, #f59e0b, #d97706)', 
-              color: '#fff', 
-              border: 'none',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8
-            }}
-            title="Generar informe ejecutivo del proyecto"
-          >
-            <Printer size={16} />
-            <span>Informe</span>
-          </button>
-
-          <button className="m3-btn m3-btn-primary" onClick={() => setShowEditProjectModal(true)}>
-            <Edit2 size={16} />
-            Editar Proyecto
-          </button>
-
-          {currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR' || project?.id_pm === currentPm.id_usuario) && (
-            <button 
-              className="m3-btn" 
-              onClick={handleDeleteProject}
-              style={{
-                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                color: '#fff',
-                border: 'none',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8
-              }}
-              title="Eliminar Proyecto permanentemente"
-            >
-              <Trash2 size={16} />
-              <span>Eliminar Proyecto</span>
-            </button>
-          )}
-
-          {/* RAG select quick control */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--md-sys-color-outline)' }}>RAG:</span>
-            <select 
-              value={project.indicador_rag}
-              onChange={(e) => handleUpdateProject({ indicador_rag: e.target.value })}
-              className="user-select"
-              style={{ width: 'auto', padding: '6px 12px', height: '36px' }}
-            >
-              <option value="VERDE">VERDE 🟢</option>
-              <option value="AMARILLO">AMARILLO 🟡</option>
-              <option value="ROJO">ROJO 🔴</option>
-            </select>
-          </div>
-
-          {/* Estado Workflow */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--md-sys-color-outline)' }}>Fase:</span>
-            <select 
-              value={project.id_estado || ''}
-              onChange={(e) => handleUpdateProject({ id_estado: parseInt(e.target.value, 10) })}
-              className="user-select"
-              style={{ width: 'auto', padding: '6px 12px', height: '36px' }}
-            >
-              {workflowStates.map(state => (
-                <option key={state.id_estado} value={state.id_estado}>
-                  {state.icono} {state.nombre_estado}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs list */}
-      <div className="m3-tabs-container">
-        <button className={`m3-tab ${activeTab === 'ficha' ? 'active' : ''}`} onClick={() => setActiveTab('ficha')}>
-          <FileText size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Ficha General
-        </button>
-        <button className={`m3-tab ${activeTab === 'checklist' ? 'active' : ''}`} onClick={() => setActiveTab('checklist')}>
-          <CheckSquare size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Tareas
-        </button>
-        <button className={`m3-tab ${activeTab === 'alcance' ? 'active' : ''}`} onClick={() => setActiveTab('alcance')}>
-          <Target size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Alcance y Cierre
-        </button>
-        <button className={`m3-tab ${activeTab === 'finanzas' ? 'active' : ''}`} onClick={() => setActiveTab('finanzas')}>
-          <DollarSign size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Control Financiero
-        </button>
-        <button className={`m3-tab ${activeTab === 'cambios' ? 'active' : ''}`} onClick={() => setActiveTab('cambios')}>
-          <TrendingUp size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Cambios de Alcance (CR)
-        </button>
-        <button className={`m3-tab ${activeTab === 'riesgos' ? 'active' : ''}`} onClick={() => setActiveTab('riesgos')}>
-          <ShieldAlert size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Riesgos e Incidencias
-        </button>
-        <button className={`m3-tab ${activeTab === 'comunicaciones' ? 'active' : ''}`} onClick={() => setActiveTab('comunicaciones')}>
-          <MessageSquare size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Comunicaciones
-        </button>
-        <button className={`m3-tab ${activeTab === 'lecciones' ? 'active' : ''}`} onClick={() => setActiveTab('lecciones')}>
-          <BookOpen size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Lecciones Aprendidas
-        </button>
-      </div>
-
-      {/* Tab Panels */}
-      <div className="content-panel" style={{ marginTop: 8 }}>
-        {activeTab === 'ficha' && (
-          <ProjectFichaTab 
-            project={project} comments={comments} commentsLoading={commentsLoading}
-            newCommentText={newCommentText} setNewCommentText={setNewCommentText}
-            newCommentImportant={newCommentImportant} setNewCommentImportant={setNewCommentImportant}
-            newCommentDireccion={newCommentDireccion} setNewCommentDireccion={setNewCommentDireccion}
-            handleAddComment={handleAddComment} handleDeleteComment={handleDeleteComment}
-            editingCommentId={editingCommentId} setEditingCommentId={setEditingCommentId}
-            editingCommentText={editingCommentText} setEditingCommentText={setEditingCommentText}
-            editingCommentImportant={editingCommentImportant} setEditingCommentImportant={setEditingCommentImportant}
-            editingCommentDireccion={editingCommentDireccion} setEditingCommentDireccion={setEditingCommentDireccion}
-            handleUpdateComment={handleUpdateComment} isEditingLifecycle={isEditingLifecycle}
-            handleOpenEditLifecycle={handleOpenEditLifecycle} handleDeleteParticipant={handleDeleteParticipant}
-            handleOpenAddRaci={handleOpenAddRaci} handleOpenEditRaci={handleOpenEditRaci}
-            onViewVendor={onViewVendor} contactosList={contactosList}
-            canSeeDireccion={canSeeDireccion}
-            getAuthHeaders={getAuthHeaders}
-            handleUpdateProject={handleUpdateProject}
-          />
-        )}
-
-        {activeTab === 'alcance' && (
-          <ProjectAlcanceTab 
-            project={project} editingBlock={editingBlock} setEditingBlock={setEditingBlock}
-            blockValue={blockValue} setBlockValue={setBlockValue} handleSaveBlock={handleSaveBlock}
-          />
-        )}
-
-        {activeTab === 'finanzas' && (
-          <ProjectFinanzasTab 
-            project={project} openAddInvoice={openAddInvoice} openEditInvoice={openEditInvoice}
-            handleDeleteInvoice={handleDeleteInvoice} invoicesSort={invoicesSort}
-            setInvoicesSort={setInvoicesSort} renderSortHeader={renderSortHeader}
-          />
-        )}
-
-        {activeTab === 'cambios' && (
-          <ProjectCambiosTab 
-            project={project} openAddCr={openAddCr} openEditCr={openEditCr}
-            crSort={crSort} setCrSort={setCrSort} renderSortHeader={renderSortHeader}
-          />
-        )}
-
-        {activeTab === 'riesgos' && (
-          <ProjectRiesgosTab 
-            project={project} openAddRisk={openAddRisk} openEditRisk={openEditRisk}
-            handleToggleRiskState={handleToggleRiskState} openAddIssue={openAddIssue}
-            openEditIssue={openEditIssue} risksSort={risksSort} setRisksSort={setRisksSort}
-            issuesSort={issuesSort} setIssuesSort={setIssuesSort} renderSortHeader={renderSortHeader}
-          />
-        )}
-
-        {activeTab === 'comunicaciones' && (
-          <ProjectComunicacionesTab 
-            project={project} 
-            handleUpdateProject={handleUpdateProject} 
-          />
-        )}
-
-        {activeTab === 'checklist' && (
-          <ProjectChecklistTab 
-            project={project} openAddTask={openAddTask} openEditTask={openEditTask}
-            handleToggleTask={handleToggleTask} handleDeleteTask={handleDeleteTask}
-            tasksSort={tasksSort} setTasksSort={setTasksSort} renderSortHeader={renderSortHeader}
-          />
-        )}
-
-        {activeTab === 'lecciones' && (
-          <ProjectLeccionesTab 
-            project={project} openAddLesson={openAddLesson} openEditLesson={openEditLesson}
-            handleDeleteLesson={handleDeleteLesson} lessonsSort={lessonsSort}
-            setLessonsSort={setLessonsSort} renderSortHeader={renderSortHeader}
-          />
-        )}
-      </div>
-
-      {/* Modals Mounting */}
-      <ProjectEditModal 
-        isOpen={showEditProjectModal} onClose={() => setShowEditProjectModal(false)}
-        project={project} getAuthHeaders={getAuthHeaders} onSuccess={fetchProjectData}
-        sedes={sedes} vendors={vendors} contactosList={contactosList} pms={pms} workflowStates={workflowStates}
-        portfolios={portfoliosList} capexTypes={capexTypes}
+      {/* Header */}
+      <ProjectDetailHeader 
+        project={project}
+        onBack={onBack}
+        setShowEditProjectModal={setShowEditProjectModal}
+        setShowReportModal={setShowReportModal}
+        handleDeleteProject={handleDeleteProject}
+        calc={calc}
       />
 
-      <InvoiceModal 
-        isOpen={showInvoiceModal} onClose={() => setShowInvoiceModal(false)}
-        projectId={projectId} editingInvoice={editingInvoice} getAuthHeaders={getAuthHeaders}
-        onSuccess={fetchProjectData} vendors={vendors}
+      {/* Tabs Navigation */}
+      <ProjectDetailTabsNav 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        project={project}
       />
 
-      <CrModal 
-        isOpen={showCrModal} onClose={() => setShowCrModal(false)}
-        projectId={projectId} editingCr={editingCr} getAuthHeaders={getAuthHeaders}
-        onSuccess={fetchProjectData} contactosList={project?.InvolvedContacts || []}
-      />
+      {/* Active Tab Content */}
+      {activeTab === 'ficha' && (
+        <ProjectFichaTab 
+          project={project}
+          comments={comments}
+          commentsLoading={commentsLoading}
+          newCommentText={newCommentText}
+          setNewCommentText={setNewCommentText}
+          newCommentImportant={newCommentImportant}
+          setNewCommentImportant={setNewCommentImportant}
+          newCommentDireccion={newCommentDireccion}
+          setNewCommentDireccion={setNewCommentDireccion}
+          handleAddComment={handleAddComment}
+          handleDeleteComment={handleDeleteComment}
+          editingCommentId={editingCommentId}
+          setEditingCommentId={setEditingCommentId}
+          editingCommentText={editingCommentText}
+          setEditingCommentText={setEditingCommentText}
+          editingCommentImportant={editingCommentImportant}
+          setEditingCommentImportant={setEditingCommentImportant}
+          editingCommentDireccion={editingCommentDireccion}
+          setEditingCommentDireccion={setEditingCommentDireccion}
+          handleUpdateComment={handleUpdateComment}
+          isEditingLifecycle={isEditingLifecycle}
+          handleOpenEditLifecycle={handleOpenEditLifecycle}
+          handleDeleteParticipant={handleDeleteParticipant}
+          handleOpenAddRaci={handleOpenAddRaci}
+          handleOpenEditRaci={handleOpenEditRaci}
+          onViewVendor={onViewVendor}
+          contactosList={contactosList}
+          canSeeDireccion={canSeeDireccion}
+          getAuthHeaders={getAuthHeaders}
+          handleUpdateProject={handleUpdateProject}
+        />
+      )}
 
-      <RiskModal 
-        isOpen={showRiskModal} onClose={() => setShowRiskModal(false)}
-        projectId={projectId} editingRisk={editingRisk} getAuthHeaders={getAuthHeaders}
-        onSuccess={fetchProjectData}
-      />
+      {activeTab === 'alcance' && (
+        <ProjectAlcanceTab 
+          project={project}
+          editingBlock={editingBlock}
+          setEditingBlock={setEditingBlock}
+          blockValue={blockValue}
+          setBlockValue={setBlockValue}
+          handleSaveBlock={(fn) => {
+            fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
+              method: 'PUT',
+              headers: getAuthHeaders(),
+              body: JSON.stringify({ [fn]: blockValue })
+            }).then(() => { setEditingBlock(null); fetchProjectData(); });
+          }}
+        />
+      )}
 
-      <IssueModal 
-        isOpen={showIssueModal} onClose={() => setShowIssueModal(false)}
-        projectId={projectId} editingIssue={editingIssue} getAuthHeaders={getAuthHeaders}
-        onSuccess={fetchProjectData}
-      />
+      {activeTab === 'finanzas' && (
+        <ProjectFinanzasTab 
+          project={project}
+          invoicesSort={invoicesSort}
+          setInvoicesSort={setInvoicesSort}
+          renderSortHeader={renderSortHeader}
+          setShowInvoiceModal={setShowInvoiceModal}
+          setEditingInvoice={setEditingInvoice}
+          fetchProjectData={fetchProjectData}
+          getAuthHeaders={getAuthHeaders}
+        />
+      )}
 
-      <TaskModal 
-        isOpen={showTaskModal} onClose={() => setShowTaskModal(false)}
-        projectId={projectId} editingTask={editingTask} getAuthHeaders={getAuthHeaders}
-        onSuccess={fetchProjectData}
-      />
+      {activeTab === 'cambios' && (
+        <ProjectCambiosTab 
+          project={project}
+          crSort={crSort}
+          setCrSort={setCrSort}
+          renderSortHeader={renderSortHeader}
+          setShowCrModal={setShowCrModal}
+          setEditingCr={setEditingCr}
+          fetchProjectData={fetchProjectData}
+          getAuthHeaders={getAuthHeaders}
+        />
+      )}
 
-      <LessonModal 
-        isOpen={showLessonModal} onClose={() => setShowLessonModal(false)}
-        projectId={projectId} editingLesson={editingLesson} getAuthHeaders={getAuthHeaders}
-        onSuccess={fetchProjectData}
-      />
+      {activeTab === 'riesgos' && (
+        <ProjectRiesgosTab 
+          project={project}
+          risksSort={risksSort}
+          setRisksSort={setRisksSort}
+          issuesSort={issuesSort}
+          setIssuesSort={setIssuesSort}
+          renderSortHeader={renderSortHeader}
+          setShowRiskModal={setShowRiskModal}
+          setEditingRisk={setEditingRisk}
+          setShowIssueModal={setShowIssueModal}
+          setEditingIssue={setEditingIssue}
+          fetchProjectData={fetchProjectData}
+          getAuthHeaders={getAuthHeaders}
+        />
+      )}
 
-      <ReportModal 
-        isOpen={showReportModal} onClose={() => setShowReportModal(false)}
-        project={project} comments={comments}
-      />
+      {activeTab === 'comunicaciones' && (
+        <ProjectComunicacionesTab 
+          project={project}
+          contactosList={contactosList}
+          getAuthHeaders={getAuthHeaders}
+          handleUpdateProject={handleUpdateProject}
+        />
+      )}
 
-      <RaciModal 
-        isOpen={showRaciModal} onClose={() => setShowRaciModal(false)}
-        projectId={projectId} editingParticipant={editingParticipant} getAuthHeaders={getAuthHeaders}
-        onSuccess={fetchProjectData} contactosList={contactosList}
-      />
+      {activeTab === 'checklist' && (
+        <ProjectChecklistTab 
+          project={project}
+          tasksSort={tasksSort}
+          setTasksSort={setTasksSort}
+          renderSortHeader={renderSortHeader}
+          setShowTaskModal={setShowTaskModal}
+          setEditingTask={setEditingTask}
+          fetchProjectData={fetchProjectData}
+          getAuthHeaders={getAuthHeaders}
+        />
+      )}
 
-      {/* Lifecycle Modal Inline Edit */}
-      {isEditingLifecycle && (
-        <div className="modal-overlay">
-          <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
-            <div className="modal-header">
-              <h3 className="modal-title">Editar Hitos del Ciclo de Vida</h3>
-              <button className="icon-btn" onClick={() => setIsEditingLifecycle(false)}>✕</button>
-            </div>
-            <form onSubmit={handleSaveLifecycle}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: '16px 0' }}>
-                <div className="form-group">
-                  <label className="form-label">Fecha de Petición</label>
-                  <input type="date" value={lifecycleForm.fecha_peticion} onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_peticion: e.target.value })} className="m3-input" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Fecha de Alcance Definido</label>
-                  <input type="date" value={lifecycleForm.fecha_alcance_definido} onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_alcance_definido: e.target.value })} className="m3-input" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Fecha de Aprobación</label>
-                  <input type="date" value={lifecycleForm.fecha_aprobacion} onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_aprobacion: e.target.value })} className="m3-input" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Fecha de Planificación</label>
-                  <input type="date" value={lifecycleForm.fecha_planificacion} onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_planificacion: e.target.value })} className="m3-input" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Fecha de Kickoff</label>
-                  <input type="date" value={lifecycleForm.fecha_kickoff} onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_kickoff: e.target.value })} className="m3-input" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Fecha de Go-Live</label>
-                  <input type="date" value={lifecycleForm.fecha_go_live} onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_go_live: e.target.value })} className="m3-input" />
-                </div>
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label className="form-label">Fecha de Cierre</label>
-                  <input type="date" value={lifecycleForm.fecha_cierre} onChange={(e) => setLifecycleForm({ ...lifecycleForm, fecha_cierre: e.target.value })} className="m3-input" />
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 12 }}>
-                <button type="button" className="m3-btn m3-btn-outline" onClick={() => setIsEditingLifecycle(false)}>Cancelar</button>
-                <button type="submit" className="m3-btn m3-btn-primary">Guardar Hitos</button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {activeTab === 'lecciones' && (
+        <ProjectLeccionesTab 
+          project={project}
+          lessonsSort={lessonsSort}
+          setLessonsSort={setLessonsSort}
+          renderSortHeader={renderSortHeader}
+          setShowLessonModal={setShowLessonModal}
+          setEditingLesson={setEditingLesson}
+          fetchProjectData={fetchProjectData}
+          getAuthHeaders={getAuthHeaders}
+        />
+      )}
+
+      {/* Modals */}
+      {showEditProjectModal && (
+        <ProjectEditModal 
+          isOpen={showEditProjectModal}
+          onClose={() => setShowEditProjectModal(false)}
+          project={project}
+          sedes={sedes}
+          vendors={vendors}
+          contactosList={contactosList}
+          pms={pms}
+          workflowStates={workflowStates}
+          portfoliosList={portfoliosList}
+          capexTypes={capexTypes}
+          getAuthHeaders={getAuthHeaders}
+          onSuccess={fetchProjectData}
+        />
+      )}
+
+      {showRaciModal && (
+        <RaciModal 
+          isOpen={showRaciModal}
+          onClose={() => setShowRaciModal(false)}
+          projectId={projectId}
+          participant={editingParticipant}
+          contactosList={contactosList}
+          getAuthHeaders={getAuthHeaders}
+          onSuccess={fetchProjectData}
+        />
+      )}
+
+      {showInvoiceModal && (
+        <InvoiceModal 
+          isOpen={showInvoiceModal}
+          onClose={() => setShowInvoiceModal(false)}
+          projectId={projectId}
+          invoice={editingInvoice}
+          vendors={vendors}
+          getAuthHeaders={getAuthHeaders}
+          onSuccess={fetchProjectData}
+        />
+      )}
+
+      {showCrModal && (
+        <CrModal 
+          isOpen={showCrModal}
+          onClose={() => setShowCrModal(false)}
+          projectId={projectId}
+          cr={editingCr}
+          getAuthHeaders={getAuthHeaders}
+          onSuccess={fetchProjectData}
+        />
+      )}
+
+      {showRiskModal && (
+        <RiskModal 
+          isOpen={showRiskModal}
+          onClose={() => setShowRiskModal(false)}
+          projectId={projectId}
+          risk={editingRisk}
+          getAuthHeaders={getAuthHeaders}
+          onSuccess={fetchProjectData}
+        />
+      )}
+
+      {showIssueModal && (
+        <IssueModal 
+          isOpen={showIssueModal}
+          onClose={() => setShowIssueModal(false)}
+          projectId={projectId}
+          issue={editingIssue}
+          getAuthHeaders={getAuthHeaders}
+          onSuccess={fetchProjectData}
+        />
+      )}
+
+      {showTaskModal && (
+        <TaskModal 
+          isOpen={showTaskModal}
+          onClose={() => setShowTaskModal(false)}
+          projectId={projectId}
+          task={editingTask}
+          getAuthHeaders={getAuthHeaders}
+          onSuccess={fetchProjectData}
+        />
+      )}
+
+      {showLessonModal && (
+        <LessonModal 
+          isOpen={showLessonModal}
+          onClose={() => setShowLessonModal(false)}
+          projectId={projectId}
+          lesson={editingLesson}
+          getAuthHeaders={getAuthHeaders}
+          onSuccess={fetchProjectData}
+        />
+      )}
+
+      {showReportModal && (
+        <ReportModal 
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          project={project}
+          comments={comments}
+          getAuthHeaders={getAuthHeaders}
+        />
       )}
     </div>
   );

@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { 
-  Filter, Search, AlertOctagon, Coins, ShieldCheck, ShieldAlert, Clock, CheckCircle2,
-  RefreshCw, ChevronDown, ChevronUp, AlertTriangle
-} from 'lucide-react';
-import { 
-  Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer 
-} from 'recharts';
-import ProjectTable from '../components/ProjectTable';
+import { Filter, Search, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid';
+import DashboardChartsSection from '../components/dashboard/DashboardChartsSection';
+import DashboardSummaryTable from '../components/dashboard/DashboardSummaryTable';
 
 export default function Dashboard({ onViewProject, onViewVendor }) {
   const { getAuthHeaders } = useAuth();
@@ -86,16 +82,6 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       const { type, value } = selectedChartFilter;
       if (type === 'estado') {
         res = res.filter(p => p.estado_proyecto === value);
-      } else if (type === 'pm') {
-        res = res.filter(p => (p.pm_nombre || 'Sin Asignar') === value);
-      } else if (type === 'partner') {
-        res = res.filter(p => (p.prov_nombre || p.Proveedor?.nombre_razon_social || 'Desconocido') === value);
-      } else if (type === 'finanzas') {
-        if (value === 'Gastado') {
-          res = res.filter(p => (p.gasto_total_facturas || 0) > 0);
-        } else if (value === 'Disponible') {
-          res = res.filter(p => (p.budget_inicial || 0) > (p.gasto_total_facturas || 0));
-        }
       }
     }
     return res;
@@ -130,7 +116,6 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     if (filters.portfolio) params.append('portfolio', filters.portfolio);
     if (filters.tag) params.append('tag', filters.tag);
 
-    // Fetch from the governance/dashboard endpoint to get calculations and basic grouping easily
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/dashboard?${params.toString()}`, {
       headers: getAuthHeaders()
     })
@@ -153,82 +138,41 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  // ==========================================
-  // METRIC COMPUTATIONS
-  // ==========================================
-  
-  // 1. Proyectos en Desborde Coste (CAPEX)
+  // Metric Computations
   const overrunCount = projects.filter(p => p.gasto_total_facturas > p.budget_inicial).length;
-  
-  // 2. Proyectos en Desborde Coste Ampliado (CAPEX + Cambios de Alcance Aprobados)
   const overrunExtendedCount = projects.filter(p => p.gasto_total_facturas > (p.calculations?.budget_actualizado || p.budget_inicial)).length;
-
-  // 3. Proyectos Retrasados Parcialmente (Hitos)
   const delayedPartialCount = projects.filter(p => p.has_hito_vencido).length;
-
-  // 4. Proyectos Retrasados Fecha Base
+  
   const todayStr = new Date().toISOString().split('T')[0];
   const delayedBaseCount = projects.filter(p => {
     const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(p.estado_proyecto?.toUpperCase());
     return !isClosed && p.fecha_fin_inicial && p.fecha_fin_inicial < todayStr;
   }).length;
 
-  // 5. Proyectos Retrasados Fecha Ampliada
   const delayedExtendedCount = projects.filter(p => {
     const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(p.estado_proyecto?.toUpperCase());
     return !isClosed && p.fecha_fin_estimada && p.fecha_fin_estimada < todayStr;
   }).length;
 
-  // 6. Gobernanza (Proyectos sin Gobernanza)
   const nonGovernedCount = projects.filter(p => !p.com_semanal_activo && !p.com_mensual_activo && !p.com_steerco_activo).length;
 
-  // 7. Proyectos Inactivos (>30 días sin actualización)
   const inactiveCount = projects.filter(p => {
     const diffMs = Date.now() - new Date(p.ultima_actualizacion).getTime();
     return (diffMs / (1000 * 60 * 60 * 24)) > 30;
   }).length;
 
-  // 8. Distribución RAG
   const ragVerde = projects.filter(p => p.indicador_rag === 'VERDE').length;
   const ragAmarillo = projects.filter(p => p.indicador_rag === 'AMARILLO').length;
   const ragRojo = projects.filter(p => p.indicador_rag === 'ROJO').length;
 
-  // ==========================================
-  // CHART DATA PREPARATION
-  // ==========================================
+  // Chart data
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ffc658', '#8dd1e1', '#a4de6c'];
 
-  // 1. Proyectos por Estado (Anillo)
   const stateCounts = {};
   projects.forEach(p => {
     stateCounts[p.estado_proyecto] = (stateCounts[p.estado_proyecto] || 0) + 1;
   });
   const dataStatus = Object.keys(stateCounts).map(key => ({ name: key, value: stateCounts[key] })).sort((a,b) => b.value - a.value);
-
-  // 2. Proyectos por PM (Barras)
-  const pmCounts = {};
-  projects.forEach(p => {
-    const pmName = p.pm_nombre || 'Sin Asignar';
-    pmCounts[pmName] = (pmCounts[pmName] || 0) + 1;
-  });
-  const dataPM = Object.keys(pmCounts).map(key => ({ name: key, proyectos: pmCounts[key] })).sort((a,b) => b.proyectos - a.proyectos).slice(0, 10);
-
-  // 3. Salud Financiera (Suma de Budget vs Suma Real) (Anillo)
-  const totalBudget = projects.reduce((acc, p) => acc + (p.budget_inicial || 0), 0);
-  const totalSpent = projects.reduce((acc, p) => acc + (p.gasto_total_facturas || 0), 0);
-  const dataFinances = [
-    { name: 'Gastado', value: totalSpent, color: '#FF8042' },
-    { name: 'Disponible', value: Math.max(0, totalBudget - totalSpent), color: '#00C49F' }
-  ];
-
-  // 4. Carga por Proveedor (Barras)
-  const vendorCounts = {};
-  projects.forEach(p => {
-    const vendorName = p.prov_nombre || p.Proveedor?.nombre_razon_social || 'Desconocido';
-    vendorCounts[vendorName] = (vendorCounts[vendorName] || 0) + 1;
-  });
-  const dataVendor = Object.keys(vendorCounts).map(key => ({ name: key, proyectos: vendorCounts[key] })).sort((a,b) => b.proyectos - a.proyectos).slice(0, 10);
-
 
   return (
     <div>
@@ -315,7 +259,6 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
             </select>
           </div>
 
-          {/* Portfolio Filter */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <select 
               value={filters.portfolio} 
@@ -330,7 +273,6 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
             </select>
           </div>
 
-          {/* Tag Filter */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <select 
               value={filters.tag} 
@@ -411,335 +353,41 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       ) : (
         <>
           {/* KPI CARDS (8) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, minmax(0, 1fr))', gap: 8, marginBottom: 24 }}>
-            
-            <div 
-              className="m3-card metric-card glass-panel" 
-              onClick={() => setSelectedKpi(selectedKpi === 'overrun' ? null : 'overrun')}
-              style={{ 
-                cursor: 'pointer', 
-                border: selectedKpi === 'overrun' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
-                padding: '10px 8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                minWidth: 0
-              }}
-              title="Suma de facturas recibidas y pendientes de recibir es mayor que el CAPEX inicial aprobado"
-            >
-              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
-                <AlertOctagon size={16} />
-              </div>
-              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                <span className="metric-value" style={{ color: 'var(--color-rag-red)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{overrunCount}</span>
-                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Exc. coste (CAPEX)</span>
-              </div>
-            </div>
+          <DashboardKpiGrid 
+            overrunCount={overrunCount}
+            overrunExtendedCount={overrunExtendedCount}
+            delayedPartialCount={delayedPartialCount}
+            delayedBaseCount={delayedBaseCount}
+            delayedExtendedCount={delayedExtendedCount}
+            nonGovernedCount={nonGovernedCount}
+            inactiveCount={inactiveCount}
+            ragVerde={ragVerde}
+            ragAmarillo={ragAmarillo}
+            ragRojo={ragRojo}
+            selectedKpi={selectedKpi}
+            setSelectedKpi={setSelectedKpi}
+          />
 
-            <div 
-              className="m3-card metric-card glass-panel" 
-              onClick={() => setSelectedKpi(selectedKpi === 'overrun_extended' ? null : 'overrun_extended')}
-              style={{ 
-                cursor: 'pointer', 
-                border: selectedKpi === 'overrun_extended' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
-                padding: '10px 8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                minWidth: 0
-              }}
-              title="Suma de facturas recibidas y pendientes de recibir es mayor que el CAPEX inicial más los cambios de alcance aprobados"
-            >
-              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 159, 10, 0.2)', color: 'var(--priority-alta)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
-                <Coins size={16} />
-              </div>
-              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                <span className="metric-value" style={{ color: 'var(--priority-alta)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{overrunExtendedCount}</span>
-                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Exc. coste ampliado</span>
-              </div>
-            </div>
+          {/* CHARTS */}
+          <DashboardChartsSection 
+            isChartOpen={isChartOpen}
+            setIsChartOpen={setIsChartOpen}
+            dataStatus={dataStatus}
+            selectedChartFilter={selectedChartFilter}
+            setSelectedChartFilter={setSelectedChartFilter}
+            COLORS={COLORS}
+          />
 
-            <div 
-              className="m3-card metric-card glass-panel" 
-              onClick={() => setSelectedKpi(selectedKpi === 'delayed_partial' ? null : 'delayed_partial')}
-              style={{ 
-                cursor: 'pointer', 
-                border: selectedKpi === 'delayed_partial' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
-                padding: '10px 8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                minWidth: 0
-              }}
-              title="Proyectos no cerrados con al menos un hito (fecha de control) pendiente y cuya fecha límite ha expirado"
-            >
-              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 159, 10, 0.2)', color: 'var(--priority-alta)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
-                <Clock size={16} />
-              </div>
-              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                <span className="metric-value" style={{ color: 'var(--priority-alta)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{delayedPartialCount}</span>
-                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Retrasados (Hitos)</span>
-              </div>
-            </div>
-
-            <div 
-              className="m3-card metric-card glass-panel" 
-              onClick={() => setSelectedKpi(selectedKpi === 'delayed_base' ? null : 'delayed_base')}
-              style={{ 
-                cursor: 'pointer', 
-                border: selectedKpi === 'delayed_base' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
-                padding: '10px 8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                minWidth: 0
-              }}
-              title="Proyectos no cerrados cuya fecha fin original planificada (Base) es anterior a hoy"
-            >
-              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
-                <AlertTriangle size={16} />
-              </div>
-              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                <span className="metric-value" style={{ color: 'var(--color-rag-red)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{delayedBaseCount}</span>
-                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Retrasados (Base)</span>
-              </div>
-            </div>
-
-            <div 
-              className="m3-card metric-card glass-panel" 
-              onClick={() => setSelectedKpi(selectedKpi === 'delayed_extended' ? null : 'delayed_extended')}
-              style={{ 
-                cursor: 'pointer', 
-                border: selectedKpi === 'delayed_extended' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
-                padding: '10px 8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                minWidth: 0
-              }}
-              title="Proyectos no cerrados cuya fecha fin estimada (Fecha Fin Base + días aprobados en cambios de alcance) es anterior a hoy"
-            >
-              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
-                <AlertTriangle size={16} />
-              </div>
-              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                <span className="metric-value" style={{ color: 'var(--color-rag-red)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{delayedExtendedCount}</span>
-                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Retrasados (Ampliada)</span>
-              </div>
-            </div>
-
-            <div 
-              className="m3-card metric-card glass-panel"
-              onClick={() => setSelectedKpi(selectedKpi === 'governance' ? null : 'governance')}
-              style={{ 
-                cursor: 'pointer', 
-                border: selectedKpi === 'governance' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
-                padding: '10px 8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                minWidth: 0
-              }}
-              title="Proyectos que no tienen ningún plan de comunicación activo (semanal, mensual ni steer co)"
-            >
-              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 69, 58, 0.2)', color: 'var(--color-rag-red)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
-                <ShieldAlert size={16} />
-              </div>
-              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                <span className="metric-value" style={{ color: 'var(--color-rag-red)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{nonGovernedCount}</span>
-                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Sin Gobernanza</span>
-              </div>
-            </div>
-
-            <div 
-              className="m3-card metric-card glass-panel"
-              onClick={() => setSelectedKpi(selectedKpi === 'inactive' ? null : 'inactive')}
-              style={{ 
-                cursor: 'pointer', 
-                border: selectedKpi === 'inactive' ? '2px solid var(--md-sys-color-primary)' : '1px solid transparent',
-                padding: '10px 8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                minWidth: 0
-              }}
-              title="Proyectos que no han registrado modificaciones en su ficha, tareas, facturas, riesgos ni cambios de alcance en los últimos 30 días"
-            >
-              <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 159, 10, 0.2)', color: 'var(--priority-alta)', width: 32, height: 32, borderRadius: 8, flexShrink: 0 }}>
-                <Clock size={16} />
-              </div>
-              <div className="metric-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                <span className="metric-value" style={{ color: 'var(--priority-alta)', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.1 }}>{inactiveCount}</span>
-                <span className="metric-label" style={{ fontWeight: 600, fontSize: '0.65rem', lineHeight: 1.1, whiteSpace: 'normal', color: 'var(--md-sys-color-outline)' }}>Proyectos Inactivos</span>
-              </div>
-            </div>
-
-            <div 
-              className="m3-card metric-card glass-panel" 
-              style={{ padding: '10px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}
-              title="Distribución de proyectos según su semáforo de estado de salud actual (Verde, Amarillo, Rojo)"
-            >
-              <div style={{ display: 'flex', gap: 6, width: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                <div 
-                  style={{ flex: 1, textAlign: 'center', cursor: 'pointer', borderRadius: 8, padding: '4px 2px', backgroundColor: selectedKpi === 'rag_verde' ? 'rgba(52, 199, 89, 0.15)' : 'transparent' }}
-                  onClick={() => setSelectedKpi(selectedKpi === 'rag_verde' ? null : 'rag_verde')}
-                >
-                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-rag-green)', lineHeight: 1 }}>{ragVerde}</div>
-                </div>
-                <div style={{ width: 1, height: '16px', backgroundColor: 'var(--md-sys-color-outline-variant)' }}></div>
-                <div 
-                  style={{ flex: 1, textAlign: 'center', cursor: 'pointer', borderRadius: 8, padding: '4px 2px', backgroundColor: selectedKpi === 'rag_amarillo' ? 'rgba(255, 159, 10, 0.15)' : 'transparent' }}
-                  onClick={() => setSelectedKpi(selectedKpi === 'rag_amarillo' ? null : 'rag_amarillo')}
-                >
-                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-rag-yellow)', lineHeight: 1 }}>{ragAmarillo}</div>
-                </div>
-                <div style={{ width: 1, height: '16px', backgroundColor: 'var(--md-sys-color-outline-variant)' }}></div>
-                <div 
-                  style={{ flex: 1, textAlign: 'center', cursor: 'pointer', borderRadius: 8, padding: '4px 2px', backgroundColor: selectedKpi === 'rag_rojo' ? 'rgba(255, 69, 58, 0.15)' : 'transparent' }}
-                  onClick={() => setSelectedKpi(selectedKpi === 'rag_rojo' ? null : 'rag_rojo')}
-                >
-                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-rag-red)', lineHeight: 1 }}>{ragRojo}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-              {/* CHARTS */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24, marginBottom: 24 }}>
-            
-            {/* Chart 1 */}
-            <div className="m3-card glass-panel" style={{ padding: 24 }}>
-              <div 
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
-                onClick={() => setIsChartOpen(!isChartOpen)}
-              >
-                <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Proyectos por Fase / Estado</h3>
-                <div style={{ color: 'var(--md-sys-color-outline)' }}>
-                  {isChartOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </div>
-              </div>
-              
-              {isChartOpen && (
-                <div style={{ height: 350, marginTop: 16 }}>
-                  {dataStatus.length === 0 ? <p style={{ color: '#999' }}>Sin datos</p> : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={dataStatus} margin={{ bottom: 10 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-25} textAnchor="end" interval={0} height={50} />
-                        <YAxis allowDecimals={false} />
-                        <RechartsTooltip />
-                        <Bar 
-                          dataKey="value" 
-                          fill="var(--md-sys-color-primary)" 
-                          radius={[4, 4, 0, 0]}
-                          onClick={(data) => {
-                            if (data && data.name) {
-                              setSelectedChartFilter(prev => 
-                                prev && prev.type === 'estado' && prev.value === data.name ? null : { type: 'estado', value: data.name }
-                              );
-                            }
-                          }}
-                        >
-                          {dataStatus.map((entry, index) => {
-                            const isSelected = selectedChartFilter && selectedChartFilter.type === 'estado' && selectedChartFilter.value === entry.name;
-                            return (
-                              <Cell 
-                                key={`cell-${index}`} 
-                                fill={isSelected ? 'var(--md-sys-color-primary-container)' : COLORS[index % COLORS.length]} 
-                                stroke={isSelected ? 'var(--md-sys-color-primary)' : 'none'}
-                                strokeWidth={isSelected ? 2 : 0}
-                              />
-                            );
-                          })}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="m3-card glass-panel" style={{ marginTop: 24, padding: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 600, margin: 0 }}>
-                Proyectos ({getFilteredProjects().length})
-              </h3>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                {selectedKpi && (
-                  <span 
-                    style={{ 
-                      padding: '4px 10px', 
-                      backgroundColor: 'var(--md-sys-color-primary-container)', 
-                      color: 'var(--md-sys-color-on-primary-container)', 
-                      borderRadius: 12, 
-                      fontSize: '0.8rem', 
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => setSelectedKpi(null)}
-                  >
-                    KPI: {selectedKpi === 'overrun' ? 'Excedido coste (CAPEX)' : 
-                          selectedKpi === 'overrun_extended' ? 'Excedido coste ampliado' : 
-                          selectedKpi === 'delayed_partial' ? 'Retrasados parc. (Hitos)' : 
-                          selectedKpi === 'delayed_base' ? 'Retrasados (Fecha Base)' : 
-                          selectedKpi === 'delayed_extended' ? 'Retrasados (Fecha Ampliada)' : 
-                          selectedKpi === 'governance' ? 'Sin Gobernanza' : 
-                          selectedKpi === 'inactive' ? 'Proyectos Inactivos' : 
-                          selectedKpi === 'rag_verde' ? 'Verde' : 
-                          selectedKpi === 'rag_amarillo' ? 'Amarillo' : 
-                          selectedKpi === 'rag_rojo' ? 'Rojo' : ''} ✕
-                  </span>
-                )}
-                {selectedChartFilter && (
-                  <span 
-                    style={{ 
-                      padding: '4px 10px', 
-                      backgroundColor: 'var(--md-sys-color-secondary-container)', 
-                      color: 'var(--md-sys-color-on-secondary-container)', 
-                      borderRadius: 12, 
-                      fontSize: '0.8rem', 
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => setSelectedChartFilter(null)}
-                  >
-                    Gráfico: {selectedChartFilter.value} ✕
-                  </span>
-                )}
-                {(selectedKpi || selectedChartFilter) && (
-                  <button 
-                    className="m3-btn m3-btn-text" 
-                    style={{ padding: '2px 8px', fontSize: '0.8rem' }}
-                    onClick={() => {
-                      setSelectedKpi(null);
-                      setSelectedChartFilter(null);
-                    }}
-                  >
-                    Limpiar Filtros KPI/Gráfico
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            {getFilteredProjects().length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>
-                No hay proyectos que cumplan con los filtros seleccionados.
-              </div>
-            ) : (
-              <ProjectTable 
-                projects={getFilteredProjects()} 
-                onViewProject={onViewProject} 
-                onViewVendor={onViewVendor} 
-                showHeaderSelector={true} 
-              />
-            )}
-          </div>
+          {/* TABLE */}
+          <DashboardSummaryTable 
+            filteredProjects={getFilteredProjects()}
+            selectedKpi={selectedKpi}
+            setSelectedKpi={setSelectedKpi}
+            selectedChartFilter={selectedChartFilter}
+            setSelectedChartFilter={setSelectedChartFilter}
+            onViewProject={onViewProject}
+            onViewVendor={onViewVendor}
+          />
         </>
       )}
     </div>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Sliders, ChevronDown, ChevronUp } from 'lucide-react';
+import { Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import CapexTypeForm from './CapexTypeForm';
+import CapexSubtypeForm from './CapexSubtypeForm';
 
 export default function CapexTypesAdmin({ getAuthHeaders }) {
   const [types, setTypes] = useState([]);
@@ -264,100 +266,24 @@ export default function CapexTypesAdmin({ getAuthHeaders }) {
 
         {/* Action Panel (Forms) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Type Form */}
-          <div className="m3-card glass-panel">
-            <h3 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: 12 }}>
-              {editingTypeId ? 'Editar Tipo CAPEX' : 'Nuevo Tipo CAPEX'}
-            </h3>
-            <form onSubmit={handleTypeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div className="form-group">
-                <label className="form-label">Nombre del Tipo *</label>
-                <input 
-                  type="text" 
-                  value={typeForm.nombre}
-                  onChange={e => setTypeForm(prev => ({ ...prev, nombre: e.target.value }))}
-                  required
-                  placeholder="Ej. Growth"
-                  className="m3-input"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Orden (opcional)</label>
-                <input 
-                  type="number" 
-                  value={typeForm.orden}
-                  onChange={e => setTypeForm(prev => ({ ...prev, orden: e.target.value }))}
-                  placeholder="Ej. 1"
-                  className="m3-input"
-                />
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {editingTypeId && (
-                  <button 
-                    type="button" 
-                    className="m3-btn m3-btn-outline" 
-                    onClick={() => {
-                      setEditingTypeId(null);
-                      setTypeForm({ id: '', nombre: '', orden: '' });
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                )}
-                <button type="submit" className="m3-btn m3-btn-primary" style={{ flexGrow: 1 }} disabled={!typeForm.nombre}>
-                  {editingTypeId ? 'Guardar' : 'Añadir Tipo'}
-                </button>
-              </div>
-            </form>
-          </div>
+          <CapexTypeForm 
+            editingTypeId={editingTypeId}
+            setEditingTypeId={setEditingTypeId}
+            typeForm={typeForm}
+            setTypeForm={setTypeForm}
+            onSubmit={handleTypeSubmit}
+          />
 
-          {/* Subtype Form */}
-          {(addingSubtypeToId || editingSubtypeId) && (
-            <div className="m3-card glass-panel">
-              <h3 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: 12 }}>
-                {editingSubtypeId ? 'Editar Subtipo CAPEX' : `Añadir Subtipo a ${types.find(t => t.id === addingSubtypeToId)?.nombre}`}
-              </h3>
-              <form onSubmit={handleSubtypeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div className="form-group">
-                  <label className="form-label">Nombre del Subtipo *</label>
-                  <input 
-                    type="text" 
-                    value={subtypeForm.nombre}
-                    onChange={e => setSubtypeForm(prev => ({ ...prev, nombre: e.target.value }))}
-                    required
-                    placeholder="Ej. Dynamics"
-                    className="m3-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Orden (opcional)</label>
-                  <input 
-                    type="number" 
-                    value={subtypeForm.orden}
-                    onChange={e => setSubtypeForm(prev => ({ ...prev, orden: e.target.value }))}
-                    placeholder="Ej. 1"
-                    className="m3-input"
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button 
-                    type="button" 
-                    className="m3-btn m3-btn-outline" 
-                    onClick={() => {
-                      setEditingSubtypeId(null);
-                      setAddingSubtypeToId(null);
-                      setSubtypeForm({ id: '', nombre: '', orden: '', id_tipo_capex: '' });
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                  <button type="submit" className="m3-btn m3-btn-primary" style={{ flexGrow: 1 }} disabled={!subtypeForm.nombre}>
-                    {editingSubtypeId ? 'Guardar' : 'Añadir Subtipo'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+          <CapexSubtypeForm 
+            addingSubtypeToId={addingSubtypeToId}
+            editingSubtypeId={editingSubtypeId}
+            setEditingSubtypeId={setEditingSubtypeId}
+            setAddingSubtypeToId={setAddingSubtypeToId}
+            subtypeForm={subtypeForm}
+            setSubtypeForm={setSubtypeForm}
+            types={types}
+            onSubmit={handleSubtypeSubmit}
+          />
         </div>
       </div>
     </div>

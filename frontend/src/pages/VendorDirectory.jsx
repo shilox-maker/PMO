@@ -5,7 +5,7 @@ import {
   ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
-
+import VendorModal from '../components/modals/VendorModal';
 
 export default function VendorDirectory({ onViewVendor }) {
   const { getAuthHeaders } = useAuth();
@@ -15,6 +15,10 @@ export default function VendorDirectory({ onViewVendor }) {
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: 'id_proveedor', direction: 'asc' });
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingVendor, setEditingVendor] = useState(null);
 
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -42,19 +46,6 @@ export default function VendorDirectory({ onViewVendor }) {
     );
   };
 
-
-  // Modals state
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingVendor, setEditingVendor] = useState(null);
-  
-  const [vendorForm, setVendorForm] = useState({
-    nombre_razon_social: '', es_grupo_dacsa: false,
-    telefono_general: '',
-    email_general: ''
-  });
-  const [formError, setFormError] = useState('');
-
   const fetchVendors = () => {
     setLoading(true);
     fetch(`${import.meta.env.VITE_API_URL}/vendors`, {
@@ -75,84 +66,14 @@ export default function VendorDirectory({ onViewVendor }) {
     fetchVendors();
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setVendorForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-  };
-
   const openCreateModal = () => {
     setEditingVendor(null);
-    setVendorForm({
-      nombre_razon_social: '',
-      es_grupo_dacsa: false,
-      telefono_general: '',
-      email_general: ''
-    });
-    setFormError('');
-    setShowCreateModal(true);
+    setIsModalOpen(true);
   };
 
   const openEditModal = (vendor) => {
     setEditingVendor(vendor);
-    setVendorForm({
-      nombre_razon_social: vendor.nombre_razon_social, es_grupo_dacsa: vendor.es_grupo_dacsa || false,
-      telefono_general: vendor.telefono_general || '',
-      email_general: vendor.email_general || ''
-    });
-    setFormError('');
-    setShowEditModal(true);
-  };
-
-  const handleCreateSubmit = (e) => {
-    e.preventDefault();
-    setFormError('');
-
-    if (!vendorForm.nombre_razon_social.trim()) {
-      setFormError('El nombre o razón social es obligatorio.');
-      return;
-    }
-
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(vendorForm)
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al guardar el socio tecnológico');
-        return data;
-      })
-      .then(() => {
-        setShowCreateModal(false);
-        fetchVendors();
-      })
-      .catch(err => setFormError(err.message));
-  };
-
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-    setFormError('');
-
-    if (!vendorForm.nombre_razon_social.trim()) {
-      setFormError('El nombre o razón social es obligatorio.');
-      return;
-    }
-
-    fetch(`${import.meta.env.VITE_API_URL}/vendors/${editingVendor.id_proveedor}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(vendorForm)
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al actualizar el socio tecnológico');
-        return data;
-      })
-      .then(() => {
-        setShowEditModal(false);
-        fetchVendors();
-      })
-      .catch(err => setFormError(err.message));
+    setIsModalOpen(true);
   };
 
   const handleDeleteVendor = (vendorId, vendorName) => {
@@ -209,7 +130,7 @@ export default function VendorDirectory({ onViewVendor }) {
 
       {/* Main Directory Table */}
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justify: 'center', minHeight: '200px', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', gap: 16 }}>
           <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
           <span>Cargando lista de socios tecnológicos...</span>
         </div>
@@ -299,160 +220,14 @@ export default function VendorDirectory({ onViewVendor }) {
         </div>
       )}
 
-      {/* Create Vendor Modal */}
-      {showCreateModal && (
-        <div className="modal-overlay">
-          <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
-            <div className="modal-header">
-              <h3 className="modal-title">Registrar Socio Tecnológico</h3>
-              <button className="icon-btn" onClick={() => setShowCreateModal(false)}>✕</button>
-            </div>
-
-            {formError && (
-              <div style={{ backgroundColor: 'rgba(255, 69, 58, 0.1)', color: 'var(--color-rag-red)', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: '0.9rem', fontWeight: 500 }}>
-                {formError}
-              </div>
-            )}
-
-            <form onSubmit={handleCreateSubmit}>
-              <div className="form-group">
-                <label className="form-label">Razón Social o Nombre del Socio *</label>
-                <input 
-                  type="text" 
-                  name="nombre_razon_social"
-                  value={vendorForm.nombre_razon_social}
-                  onChange={handleInputChange}
-                  placeholder="Sopra Steria S.A."
-                  required
-                  className="m3-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Teléfono de Contacto General</label>
-                <input 
-                  type="text" 
-                  name="telefono_general"
-                  value={vendorForm.telefono_general}
-                  onChange={handleInputChange}
-                  placeholder="960000000"
-                  className="m3-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Email de Contacto General</label>
-                <input 
-                  type="email" 
-                  name="email_general"
-                  value={vendorForm.email_general}
-                  onChange={handleInputChange}
-                  placeholder="contacto@partner.com"
-                  className="m3-input"
-                />
-              </div>
-
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-                <input 
-                  type="checkbox" 
-                  name="es_grupo_dacsa"
-                  id="es_grupo_dacsa_create"
-                  checked={vendorForm.es_grupo_dacsa}
-                  onChange={handleInputChange}
-                  className="m3-checkbox"
-                  style={{ width: 18, height: 18 }}
-                />
-                <label htmlFor="es_grupo_dacsa_create" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>Pertenece al Grupo Dacsa</label>
-              </div>
-
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
-                <button type="button" className="m3-btn m3-btn-outline" onClick={() => setShowCreateModal(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="m3-btn m3-btn-primary">
-                  Registrar Socio
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Vendor Modal */}
-      {showEditModal && (
-        <div className="modal-overlay">
-          <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
-            <div className="modal-header">
-              <h3 className="modal-title">Editar Socio Tecnológico</h3>
-              <button className="icon-btn" onClick={() => setShowEditModal(false)}>✕</button>
-            </div>
-
-            {formError && (
-              <div style={{ backgroundColor: 'rgba(255, 69, 58, 0.1)', color: 'var(--color-rag-red)', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: '0.9rem', fontWeight: 500 }}>
-                {formError}
-              </div>
-            )}
-
-            <form onSubmit={handleEditSubmit}>
-              <div className="form-group">
-                <label className="form-label">Razón Social o Nombre del Socio *</label>
-                <input 
-                  type="text" 
-                  name="nombre_razon_social"
-                  value={vendorForm.nombre_razon_social}
-                  onChange={handleInputChange}
-                  required
-                  className="m3-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Teléfono de Contacto General</label>
-                <input 
-                  type="text" 
-                  name="telefono_general"
-                  value={vendorForm.telefono_general}
-                  onChange={handleInputChange}
-                  className="m3-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Email de Contacto General</label>
-                <input 
-                  type="email" 
-                  name="email_general"
-                  value={vendorForm.email_general}
-                  onChange={handleInputChange}
-                  className="m3-input"
-                />
-              </div>
-
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-                <input 
-                  type="checkbox" 
-                  name="es_grupo_dacsa"
-                  id="es_grupo_dacsa_edit"
-                  checked={vendorForm.es_grupo_dacsa}
-                  onChange={handleInputChange}
-                  className="m3-checkbox"
-                  style={{ width: 18, height: 18 }}
-                />
-                <label htmlFor="es_grupo_dacsa_edit" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>Pertenece al Grupo Dacsa</label>
-              </div>
-
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
-                <button type="button" className="m3-btn m3-btn-outline" onClick={() => setShowEditModal(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="m3-btn m3-btn-primary">
-                  Guardar Cambios
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Unified Create / Edit Vendor Modal */}
+      <VendorModal 
+        isOpen={isModalOpen}
+        vendor={editingVendor}
+        getAuthHeaders={getAuthHeaders}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchVendors}
+      />
     </div>
   );
 }
