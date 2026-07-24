@@ -3,10 +3,70 @@ import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { getSortedData } from '../../../utils/sorting';
 
 export default function ProjectChecklistTab({
-  project, openAddTask, openEditTask, handleToggleTask, handleDeleteTask,
-  tasksSort, setTasksSort, renderSortHeader
+  project, 
+  tasksSort, 
+  setTasksSort, 
+  renderSortHeader,
+  setShowTaskModal,
+  setEditingTask,
+  fetchProjectData,
+  getAuthHeaders
 }) {
-  const sortedTasks = getSortedData(project.Tareas || [], tasksSort);
+  const sortedTasks = getSortedData(project?.Tareas || [], tasksSort);
+
+  const openAddTask = () => {
+    if (setEditingTask) setEditingTask(null);
+    if (setShowTaskModal) setShowTaskModal(true);
+  };
+
+  const openEditTask = (task) => {
+    if (setEditingTask) setEditingTask(task);
+    if (setShowTaskModal) setShowTaskModal(true);
+  };
+
+  const handleToggleTask = (id_tarea, currentEstado) => {
+    const newEstado = currentEstado === 'COMPLETADA' ? 'PENDIENTE' : 'COMPLETADA';
+    const today = new Date().toISOString().split('T')[0];
+    const taskObj = (project?.Tareas || []).find(t => t.id_tarea === id_tarea);
+
+    const payload = {
+      estado: newEstado,
+      ...(newEstado === 'COMPLETADA' && taskObj?.es_hito ? { fecha_real_cierre: taskObj.fecha_real_cierre || today } : {})
+    };
+
+    fetch(`${import.meta.env.VITE_API_URL}/tasks/${id_tarea}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload)
+    })
+      .then(async res => {
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d.error || 'Error al actualizar el estado de la tarea');
+        return d;
+      })
+      .then(() => {
+        if (fetchProjectData) fetchProjectData();
+      })
+      .catch(err => alert(err.message));
+  };
+
+  const handleDeleteTask = (id_tarea) => {
+    if (!window.confirm('¿Seguro que deseas eliminar esta tarea/hito?')) return;
+
+    fetch(`${import.meta.env.VITE_API_URL}/tasks/${id_tarea}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    })
+      .then(async res => {
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d.error || 'Error al eliminar la tarea');
+        return d;
+      })
+      .then(() => {
+        if (fetchProjectData) fetchProjectData();
+      })
+      .catch(err => alert(err.message));
+  };
 
   return (
     <div className="m3-card glass-panel">
@@ -20,7 +80,7 @@ export default function ProjectChecklistTab({
         </button>
       </div>
 
-      {(!project.Tareas || project.Tareas.length === 0) ? (
+      {(!project?.Tareas || project.Tareas.length === 0) ? (
         <p style={{ color: 'var(--md-sys-color-outline)', fontStyle: 'italic', textAlign: 'center', padding: '24px 0' }}>
           No hay tareas registradas en el proyecto.
         </p>

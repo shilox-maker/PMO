@@ -2,7 +2,7 @@ const {
   sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios,
   Proyectos, Incidencias, Riesgos, LeccionesAprendidas, Facturas,
   CambiosAlcance, Tareas, EstadosProyecto, ComentariosProyecto,
-  Portfolios, TiposCapex, SubtiposCapex, PortfolioBudgets
+  Portfolios, TiposCapex, SubtiposCapex, PortfolioBudgets, TiposFactura
 } = require('./models/index');
 
 const crypto = require('crypto');
@@ -288,31 +288,56 @@ async function seed() {
     console.log('Tareas seeded.');
 
     // ==========================================
+    // 8.5. TIPOS DE FACTURA
+    // ==========================================
+    const tiposFacturaData = [
+      { nombre: 'Consultoría Externa' },
+      { nombre: 'Licencias de Software' },
+      { nombre: 'Desarrollos e Integraciones' },
+      { nombre: 'Infraestructura Tecnológica' },
+      { nombre: 'Migración y Calidad de Datos' },
+      { nombre: 'Viajes y Desplazamientos' },
+      { nombre: 'Alojamiento' },
+      { nombre: 'Dietas y Comidas' },
+      { nombre: 'Formación' },
+      { nombre: 'Hardware y Equipamiento' },
+      { nombre: 'Recursos Internos' },
+      { nombre: 'Otros Gastos' }
+    ];
+    const seededTiposFactura = await TiposFactura.bulkCreate(tiposFacturaData);
+    console.log('Tipos de Factura seeded.');
+    
+    const tiposFacturaMap = {};
+    seededTiposFactura.forEach(tf => {
+      tiposFacturaMap[tf.nombre] = tf.id_tipo_factura;
+    });
+
+    // ==========================================
     // 9. FACTURAS (Contextualized to matching projects)
     // ==========================================
     const facturasData = [
       // Salesforce
-      { id_interno_factura: 'FAC-2026-001', id_proyecto: 'PRJ-2026-001', id_proveedor: sopra.id_proveedor, numero_factura: 'FR-SF-01', concepto: 'Hito 1: Análisis y mockups iniciales CRM', fecha_factura: '2026-02-15', importe: 20000.00, estado: 'RECIBIDA' },
-      { id_interno_factura: 'FAC-2026-002', id_proyecto: 'PRJ-2026-001', id_proveedor: sopra.id_proveedor, numero_factura: 'FR-SF-02', concepto: 'Hito 2: Configuración Salesforce Core y Pipelines', fecha_factura: '2026-05-10', importe: 15000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-001', id_proyecto: 'PRJ-2026-001', id_proveedor: sopra.id_proveedor, id_tipo_factura: tiposFacturaMap['Consultoría Externa'], numero_factura: 'FR-SF-01', concepto: 'Hito 1: Análisis y mockups iniciales CRM', fecha_factura: '2026-02-15', importe: 20000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-002', id_proyecto: 'PRJ-2026-001', id_proveedor: sopra.id_proveedor, id_tipo_factura: tiposFacturaMap['Desarrollos e Integraciones'], numero_factura: 'FR-SF-02', concepto: 'Hito 2: Configuración Salesforce Core y Pipelines', fecha_factura: '2026-05-10', importe: 15000.00, estado: 'RECIBIDA' },
       // Firewall DC Barcelona
-      { id_interno_factura: 'FAC-2026-003', id_proyecto: 'PRJ-2026-002', id_proveedor: indra.id_proveedor, numero_factura: 'FR-FW-01', concepto: 'Adquisición de equipamiento Fortigate redundante', fecha_factura: '2026-03-20', importe: 10000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-003', id_proyecto: 'PRJ-2026-002', id_proveedor: indra.id_proveedor, id_tipo_factura: tiposFacturaMap['Infraestructura Tecnológica'], numero_factura: 'FR-FW-01', concepto: 'Adquisición de equipamiento Fortigate redundante', fecha_factura: '2026-03-20', importe: 10000.00, estado: 'RECIBIDA' },
       // MES Olanet Valencia
-      { id_interno_factura: 'FAC-2026-004', id_proyecto: 'PRJ-2026-005', id_proveedor: accenture.id_proveedor, numero_factura: 'FR-OL-01', concepto: 'Licenciamiento del núcleo Olanet MES v12', fecha_factura: '2026-04-10', importe: 50000.00, estado: 'RECIBIDA' },
-      { id_interno_factura: 'FAC-2026-005', id_proyecto: 'PRJ-2026-005', id_proveedor: accenture.id_proveedor, numero_factura: 'FR-OL-02', concepto: 'Servicios profesionales cableado industrial PLC', fecha_factura: '2026-06-15', importe: 20000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-004', id_proyecto: 'PRJ-2026-005', id_proveedor: accenture.id_proveedor, id_tipo_factura: tiposFacturaMap['Licencias de Software'], numero_factura: 'FR-OL-01', concepto: 'Licenciamiento del núcleo Olanet MES v12', fecha_factura: '2026-04-10', importe: 50000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-005', id_proyecto: 'PRJ-2026-005', id_proveedor: accenture.id_proveedor, id_tipo_factura: tiposFacturaMap['Consultoría Externa'], numero_factura: 'FR-OL-02', concepto: 'Servicios profesionales cableado industrial PLC', fecha_factura: '2026-06-15', importe: 20000.00, estado: 'RECIBIDA' },
       // MES Olanet Portugal
-      { id_interno_factura: 'FAC-2026-006', id_proyecto: 'PRJ-2026-006', id_proveedor: accenture.id_proveedor, numero_factura: 'FR-OL-PT-01', concepto: 'Consultoría y replanteo de red en planta Portugal', fecha_factura: '2026-04-20', importe: 40000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-006', id_proyecto: 'PRJ-2026-006', id_proveedor: accenture.id_proveedor, id_tipo_factura: tiposFacturaMap['Consultoría Externa'], numero_factura: 'FR-OL-PT-01', concepto: 'Consultoría y replanteo de red en planta Portugal', fecha_factura: '2026-04-20', importe: 40000.00, estado: 'RECIBIDA' },
       // SGA Mecalux Valencia
-      { id_interno_factura: 'FAC-2026-007', id_proyecto: 'PRJ-2026-007', id_proveedor: deloitte.id_proveedor, numero_factura: 'FR-ME-01', concepto: 'Diseño de la topología lógica WMS Mecalux', fecha_factura: '2026-05-15', importe: 60000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-007', id_proyecto: 'PRJ-2026-007', id_proveedor: deloitte.id_proveedor, id_tipo_factura: tiposFacturaMap['Consultoría Externa'], numero_factura: 'FR-ME-01', concepto: 'Diseño de la topología lógica WMS Mecalux', fecha_factura: '2026-05-15', importe: 60000.00, estado: 'RECIBIDA' },
       // TESI Valencia
-      { id_interno_factura: 'FAC-2026-008', id_proyecto: 'PRJ-2026-009', id_proveedor: sopra.id_proveedor, numero_factura: 'FR-TE-01', concepto: 'Hito 1: Implantación del CORE TESI en servidor local', fecha_factura: '2026-05-02', importe: 80000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-008', id_proyecto: 'PRJ-2026-009', id_proveedor: sopra.id_proveedor, id_tipo_factura: tiposFacturaMap['Desarrollos e Integraciones'], numero_factura: 'FR-TE-01', concepto: 'Hito 1: Implantación del CORE TESI en servidor local', fecha_factura: '2026-05-02', importe: 80000.00, estado: 'RECIBIDA' },
       // Portátiles Corporate
-      { id_interno_factura: 'FAC-2026-009', id_proyecto: 'PRJ-2026-010', id_proveedor: capgemini.id_proveedor, numero_factura: 'FR-LT-01', concepto: 'Lote de 15 portátiles Lenovo L14 para Corporate', fecha_factura: '2026-03-30', importe: 50000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-009', id_proyecto: 'PRJ-2026-010', id_proveedor: capgemini.id_proveedor, id_tipo_factura: tiposFacturaMap['Hardware y Equipamiento'], numero_factura: 'FR-LT-01', concepto: 'Lote de 15 portátiles Lenovo L14 para Corporate', fecha_factura: '2026-03-30', importe: 50000.00, estado: 'RECIBIDA' },
       // Portátiles Valencia
-      { id_interno_factura: 'FAC-2026-010', id_proyecto: 'PRJ-2026-011', id_proveedor: capgemini.id_proveedor, numero_factura: 'FR-LT-02', concepto: 'Lote de 40 portátiles Lenovo L14 para Valencia', fecha_factura: '2026-04-12', importe: 15000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-010', id_proyecto: 'PRJ-2026-011', id_proveedor: capgemini.id_proveedor, id_tipo_factura: tiposFacturaMap['Hardware y Equipamiento'], numero_factura: 'FR-LT-02', concepto: 'Lote de 40 portátiles Lenovo L14 para Valencia', fecha_factura: '2026-04-12', importe: 15000.00, estado: 'RECIBIDA' },
       // NEXUS API Manager
-      { id_interno_factura: 'FAC-2026-011', id_proyecto: 'PRJ-2026-019', id_proveedor: sopra.id_proveedor, numero_factura: 'FR-NX-01', concepto: 'Definición de pasarela de seguridad API', fecha_factura: '2026-04-15', importe: 15000.00, estado: 'RECIBIDA' },
+      { id_interno_factura: 'FAC-2026-011', id_proyecto: 'PRJ-2026-019', id_proveedor: sopra.id_proveedor, id_tipo_factura: tiposFacturaMap['Desarrollos e Integraciones'], numero_factura: 'FR-NX-01', concepto: 'Definición de pasarela de seguridad API', fecha_factura: '2026-04-15', importe: 15000.00, estado: 'RECIBIDA' },
       // DATA Metodología
-      { id_interno_factura: 'FAC-2026-012', id_proyecto: 'PRJ-2026-020', id_proveedor: indra.id_proveedor, numero_factura: 'FR-DT-01', concepto: 'Hito 1: Auditoría de taxonomías documentales legadas', fecha_factura: '2026-03-28', importe: 8000.00, estado: 'RECIBIDA' }
+      { id_interno_factura: 'FAC-2026-012', id_proyecto: 'PRJ-2026-020', id_proveedor: indra.id_proveedor, id_tipo_factura: tiposFacturaMap['Migración y Calidad de Datos'], numero_factura: 'FR-DT-01', concepto: 'Hito 1: Auditoría de taxonomías documentales legadas', fecha_factura: '2026-03-28', importe: 8000.00, estado: 'RECIBIDA' }
     ];
     await Facturas.bulkCreate(facturasData);
     console.log('Facturas seeded.');

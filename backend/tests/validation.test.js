@@ -3,9 +3,11 @@ const {
   projectCreateSchema,
   projectUpdateSchema,
   invoiceCreateSchema,
+  invoiceBatchCreateSchema,
   issueCreateSchema,
   validateBody
 } = require('../middlewares/validation');
+
 
 describe('Payload Validation Schemas (Joi)', () => {
   
@@ -86,7 +88,52 @@ describe('Payload Validation Schemas (Joi)', () => {
       expect(fields).toContain('importe');
       expect(fields).toContain('estado');
     });
+
+    it('debería validar id_tipo_factura opcional como entero o null', () => {
+      const validInvoiceWithTipo = {
+        id_proyecto: 'PRJ-2026-001',
+        concepto: 'Prueba',
+        fecha_factura: '2026-07-23',
+        importe: 1000,
+        estado: 'RECIBIDA',
+        id_tipo_factura: 2
+      };
+      const { error } = invoiceCreateSchema.validate(validInvoiceWithTipo);
+      expect(error).toBeUndefined();
+    });
   });
+
+  describe('Invoice Batch Create Schema', () => {
+    it('debería validar correctamente un array de facturas en items', () => {
+      const validBatch = {
+        items: [
+          {
+            id_proyecto: 'PRJ-2026-001',
+            concepto: 'Cuota 1/3',
+            fecha_factura: '2026-07-23',
+            importe: 500,
+            estado: 'PENDIENTE_DE_RECIBIR'
+          },
+          {
+            id_proyecto: 'PRJ-2026-001',
+            concepto: 'Cuota 2/3',
+            fecha_factura: '2026-08-23',
+            importe: 500,
+            estado: 'PENDIENTE_DE_RECIBIR'
+          }
+        ]
+      };
+      const { error } = invoiceBatchCreateSchema.validate(validBatch);
+      expect(error).toBeUndefined();
+    });
+
+    it('debería fallar si items está vacío', () => {
+      const emptyBatch = { items: [] };
+      const { error } = invoiceBatchCreateSchema.validate(emptyBatch);
+      expect(error).toBeDefined();
+    });
+  });
+
 
   describe('Issue Create Schema', () => {
     it('debería requerir solucion_aplicada obligatoriamente cuando el estado sea RESUELTA', () => {

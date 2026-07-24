@@ -4,7 +4,7 @@ import { Edit2, Trash2, RefreshCw, XCircle, CheckCircle } from 'lucide-react';
 export default function SedesAdmin({ getAuthHeaders }) {
   const [sedes, setSedes] = useState([]);
   const [sedesLoading, setSedesLoading] = useState(false);
-  const [sedeForm, setSedeForm] = useState({ id_sede: '', nombre_sede: '' });
+  const [sedeForm, setSedeForm] = useState({ id_sede: '', nombre_sede: '', orden: 0 });
   const [editingSedeId, setEditingSedeId] = useState(null);
   const [sedeError, setSedeError] = useState('');
   const [sedeSuccess, setSedeSuccess] = useState('');
@@ -51,7 +51,7 @@ export default function SedesAdmin({ getAuthHeaders }) {
     fetch(url, {
       method,
       headers: getAuthHeaders(),
-      body: JSON.stringify({ nombre_sede: sedeForm.nombre_sede })
+      body: JSON.stringify({ nombre_sede: sedeForm.nombre_sede, orden: parseInt(sedeForm.orden || 0, 10) })
     })
       .then(async res => {
         const data = await res.json();
@@ -60,7 +60,7 @@ export default function SedesAdmin({ getAuthHeaders }) {
       })
       .then(() => {
         setSedeSuccess(isEdit ? 'Sede actualizada correctamente.' : 'Sede creada correctamente.');
-        setSedeForm({ id_sede: '', nombre_sede: '' });
+        setSedeForm({ id_sede: '', nombre_sede: '', orden: 0 });
         setEditingSedeId(null);
         fetchSedes();
       })
@@ -68,7 +68,7 @@ export default function SedesAdmin({ getAuthHeaders }) {
   };
 
   const handleEditSedeClick = (s) => {
-    setSedeForm({ id_sede: s.id_sede, nombre_sede: s.nombre_sede });
+    setSedeForm({ id_sede: s.id_sede, nombre_sede: s.nombre_sede, orden: s.orden ?? 0 });
     setEditingSedeId(s.id_sede);
     setSedeError('');
     setSedeSuccess('');
@@ -112,7 +112,8 @@ export default function SedesAdmin({ getAuthHeaders }) {
             <table className="m3-table">
               <thead>
                 <tr>
-                  <th style={{ width: '80px', textAlign: 'center' }}>ID</th>
+                  <th style={{ width: '60px', textAlign: 'center' }}>ID</th>
+                  <th style={{ width: '70px', textAlign: 'center' }}>Orden</th>
                   <th>Nombre de Sede</th>
                   <th style={{ width: '90px' }}>Acción</th>
                 </tr>
@@ -121,6 +122,7 @@ export default function SedesAdmin({ getAuthHeaders }) {
                 {sedes.map(s => (
                   <tr key={s.id_sede}>
                     <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{s.id_sede}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 600 }}>{s.orden ?? 0}</td>
                     <td style={{ fontWeight: 500 }}>{s.nombre_sede}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 8 }}>
@@ -172,6 +174,17 @@ export default function SedesAdmin({ getAuthHeaders }) {
             />
           </div>
 
+          <div className="form-group">
+            <label className="form-label">Orden</label>
+            <input 
+              type="number" 
+              value={sedeForm.orden}
+              onChange={(e) => setSedeForm(prev => ({ ...prev, orden: e.target.value }))}
+              className="m3-input"
+              placeholder="0"
+            />
+          </div>
+
           <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
             {editingSedeId && (
               <button 
@@ -180,7 +193,7 @@ export default function SedesAdmin({ getAuthHeaders }) {
                 style={{ flexGrow: 1 }}
                 onClick={() => {
                   setEditingSedeId(null);
-                  setSedeForm({ id_sede: '', nombre_sede: '' });
+                  setSedeForm({ id_sede: '', nombre_sede: '', orden: 0 });
                 }}
               >
                 Cancelar

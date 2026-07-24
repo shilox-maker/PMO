@@ -3,7 +3,8 @@ const Joi = require('joi');
 const invoiceCreateSchema = Joi.object({
   id_interno_factura: Joi.string().optional(),
   id_proyecto: Joi.string().required(),
-  id_proveedor: Joi.number().integer().allow(null).optional(),
+  id_proveedor: Joi.number().integer().empty('').allow(null).optional(),
+  id_tipo_factura: Joi.number().integer().empty('').allow(null).optional(),
   numero_factura: Joi.string().allow('', null).optional(),
   concepto: Joi.string().required(),
   fecha_factura: Joi.string().isoDate().required(),
@@ -14,7 +15,8 @@ const invoiceCreateSchema = Joi.object({
 
 const invoiceUpdateSchema = Joi.object({
   id_proyecto: Joi.string().optional(),
-  id_proveedor: Joi.number().integer().allow(null).optional(),
+  id_proveedor: Joi.number().integer().empty('').allow(null).optional(),
+  id_tipo_factura: Joi.number().integer().empty('').allow(null).optional(),
   numero_factura: Joi.string().allow('', null).optional(),
   concepto: Joi.string().optional(),
   fecha_factura: Joi.string().isoDate().optional(),
@@ -23,7 +25,13 @@ const invoiceUpdateSchema = Joi.object({
   PO: Joi.string().allow('', null).optional()
 });
 
+const invoiceBatchCreateSchema = Joi.object({
+  items: Joi.array().items(invoiceCreateSchema).min(1).required()
+});
+
 module.exports = {
   invoiceCreateSchema,
-  invoiceUpdateSchema
+  invoiceUpdateSchema,
+  invoiceBatchCreateSchema
 };
+

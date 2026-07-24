@@ -1,5 +1,26 @@
 # CHANGELOG
 
+## [2.4.0] - 2026-07-24
+### Added
+- **Relación de Riesgos e Incidencias con Tareas (FEATURE-25 / IDEA-25)**:
+  - Posibilidad de asociar riesgos preventivos e incidencias técnicas o presupuestarias a una tarea o hito del proyecto.
+  - Selector de tarea/hito en los modales de edición/creación (`RiskModal.jsx` y `IssueModal.jsx`).
+  - Nueva columna "Tarea Relacionada" con insignias identificativas (🎯 Hito / 📌 Tarea) en la matriz de riesgos e incidencias ([ProjectRiesgosTab.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/pages/project-detail/tabs/ProjectRiesgosTab.jsx)).
+  - Migración [`06_add_id_tarea_to_risks_and_issues.js`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/migrations/06_add_id_tarea_to_risks_and_issues.js) e inclusión en esquemas Joi del backend.
+- **Registro en Lote de Facturas y Cobros Recurrentes (FEATURE-24 / IDEA-24)**:
+  - Herramienta para la generación masiva de facturas y cobros periódicos por intervalo (mensual, trimestral, anual).
+- **Campo URL del Site de SharePoint de Documentación (FEATURE-23 / IDEA-23)**:
+  - Incorporación del campo `url_sharepoint` en la entidad `Proyectos` para vincular documentación del proyecto en SharePoint.
+  - Enlace interactivo en vista de detalle y campo editable en el formulario de proyecto.
+  - Migración [`04_add_url_sharepoint_to_proyectos.js`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/migrations/04_add_url_sharepoint_to_proyectos.js).
+- **Mantenimiento Administrable de Tipos de Factura (FEATURE-22 / IDEA-22)**:
+  - Creación del modelo maestro `Tipos_Factura` y gestión de campo `orden` en sedes y tipos de factura.
+  - Migraciones [`03_create_tipos_factura.js`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/migrations/03_create_tipos_factura.js) y [`05_add_orden_to_sedes_and_tipos_factura.js`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/migrations/05_add_orden_to_sedes_and_tipos_factura.js).
+- **Rediseño del Mantenimiento de Estados de Proyecto (FEATURE-21 / IDEA-21)**:
+  - Reorganización de la pantalla de gestión de estados con vistas separadas para listado/detalle y administración de tareas asociadas.
+- **Popup de Tareas Preconfiguradas al Cambiar de Estado (FEATURE-20 / IDEA-20)**:
+  - Diálogo de confirmación para auto-generar tareas por defecto al cambiar el estado del ciclo de vida del proyecto.
+
 ## [2.3.0] - 2026-06-25
 ### Added
 - **Soporte de Despliegue en Windows Server 2022**:

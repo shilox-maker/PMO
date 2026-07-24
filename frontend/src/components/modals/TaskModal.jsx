@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
 export default function TaskModal({ 
-  isOpen, onClose, projectId, editingTask, getAuthHeaders, onSuccess 
+  isOpen, onClose, projectId, editingTask: propEditingTask, task, getAuthHeaders, onSuccess 
 }) {
+  const editingTask = propEditingTask || task;
+
   const [form, setForm] = useState({
     id_tarea: '',
     titulo_tarea: '',

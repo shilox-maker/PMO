@@ -206,6 +206,7 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                   {visibleColumnsMap.progreso && <td style={{ minWidth: '120px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600, marginBottom: 4 }}>
                       <span>{calc?.consumo_real.toLocaleString('es-ES', { maximumFractionDigits: 0 })} €</span>
+                      <span style={{ opacity: 0.6 }}>/</span>
                       <span>{displayedPercent}%</span>
                     </div>
                     <div className="progress-track" style={{ height: 6 }}>

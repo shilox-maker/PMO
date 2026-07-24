@@ -3,9 +3,19 @@ import { Plus, Edit2, TrendingUp } from 'lucide-react';
 import { getSortedData } from '../../../utils/sorting';
 
 export default function ProjectCambiosTab({
-  project, openAddCr, openEditCr, crSort, setCrSort, renderSortHeader
+  project, openAddCr, openEditCr, setShowCrModal, setEditingCr, crSort, setCrSort, renderSortHeader
 }) {
   const sortedCrs = getSortedData(project.Cambios_Alcances || [], crSort);
+
+  const handleOpenAdd = openAddCr || (() => {
+    if (setEditingCr) setEditingCr(null);
+    if (setShowCrModal) setShowCrModal(true);
+  });
+
+  const handleOpenEdit = openEditCr || ((cr) => {
+    if (setEditingCr) setEditingCr(cr);
+    if (setShowCrModal) setShowCrModal(true);
+  });
 
   const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
 
@@ -18,7 +28,7 @@ export default function ProjectCambiosTab({
           </h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Control de ampliaciones de plazos, presupuestos y justificaciones técnicas</p>
         </div>
-        <button className="m3-btn m3-btn-primary" onClick={openAddCr}>
+        <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
           <Plus size={16} /> Solicitar Cambio (CR)
         </button>
       </div>
@@ -65,7 +75,7 @@ export default function ProjectCambiosTab({
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="icon-btn" onClick={() => openEditCr(cr)} title="Editar solicitud">
+                      <button className="icon-btn" onClick={() => handleOpenEdit(cr)} title="Editar solicitud">
                         <Edit2 size={14} />
                       </button>
                     </div>

@@ -4,10 +4,29 @@ import { getSortedData } from '../../../utils/sorting';
 
 export default function ProjectLeccionesTab({
   project, openAddLesson, openEditLesson, handleDeleteLesson,
+  setShowLessonModal, setEditingLesson, fetchProjectData, getAuthHeaders,
   lessonsSort, setLessonsSort, renderSortHeader
 }) {
   const lessons = project.Lecciones_Aprendidas || project.LeccionesAprendidas || [];
   const sortedLessons = getSortedData(lessons, lessonsSort);
+
+  const handleOpenAdd = openAddLesson || (() => {
+    if (setEditingLesson) setEditingLesson(null);
+    if (setShowLessonModal) setShowLessonModal(true);
+  });
+
+  const handleOpenEdit = openEditLesson || ((l) => {
+    if (setEditingLesson) setEditingLesson(l);
+    if (setShowLessonModal) setShowLessonModal(true);
+  });
+
+  const handleDelete = handleDeleteLesson || ((lessonId) => {
+    if (!window.confirm('¿Seguro que deseas eliminar esta lección aprendida?')) return;
+    fetch(`${import.meta.env.VITE_API_URL}/lessons/${lessonId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders ? getAuthHeaders() : {}
+    }).then(() => fetchProjectData && fetchProjectData());
+  });
 
   return (
     <div className="m3-card glass-panel">
@@ -18,7 +37,7 @@ export default function ProjectLeccionesTab({
           </h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Base de conocimiento técnica: aciertos, buenas prácticas y errores detectados</p>
         </div>
-        <button className="m3-btn m3-btn-primary" onClick={openAddLesson}>
+        <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
           <Plus size={16} /> Registrar Lección
         </button>
       </div>
@@ -54,10 +73,10 @@ export default function ProjectLeccionesTab({
                   <td>{l.recomendacion_futura || '—'}</td>
                   <td>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="icon-btn" onClick={() => openEditLesson(l)} title="Editar lección">
+                      <button className="icon-btn" onClick={() => handleOpenEdit(l)} title="Editar lección">
                         <Edit2 size={14} />
                       </button>
-                      <button className="icon-btn" onClick={() => handleDeleteLesson(l.id_leccion || l.id)} title="Eliminar lección" style={{ color: 'var(--color-rag-red)' }}>
+                      <button className="icon-btn" onClick={() => handleDelete(l.id_leccion || l.id)} title="Eliminar lección" style={{ color: 'var(--color-rag-red)' }}>
                         <Trash2 size={14} />
                       </button>
                     </div>

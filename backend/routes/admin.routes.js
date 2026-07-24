@@ -17,6 +17,9 @@ router.get('/admin/states', adminController.getStates);
 router.post('/admin/states', adminController.createState);
 router.put('/admin/states/:id_estado', adminController.updateState);
 router.delete('/admin/states/:id_estado', adminController.deleteState);
+router.post('/admin/states/:id_estado/tasks', adminController.createStateTask);
+router.delete('/admin/state-tasks/:id_task', adminController.deleteStateTask);
+
 
 // Users admin
 router.get('/admin/users', adminController.getUsers);
@@ -42,5 +45,11 @@ router.delete('/admin/capex-subtypes/:id', adminController.deleteSubtipoCapex);
 router.post('/admin/portfolios/:id/budgets', adminController.createPortfolioBudget);
 router.put('/admin/portfolio-budgets/:budgetId', adminController.updatePortfolioBudget);
 router.delete('/admin/portfolio-budgets/:budgetId', adminController.deletePortfolioBudget);
+
+// Invoice Types admin
+router.get('/admin/invoice-types', adminController.getTiposFactura);
+router.post('/admin/invoice-types', adminController.createTipoFactura);
+router.put('/admin/invoice-types/:id', adminController.updateTipoFactura);
+router.delete('/admin/invoice-types/:id', adminController.deleteTipoFactura);
 
 module.exports = router;

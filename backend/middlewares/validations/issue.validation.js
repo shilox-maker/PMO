@@ -9,14 +9,16 @@ const issueCreateSchema = Joi.object({
   criticidad: Joi.string().valid('BLOQUEANTE', 'ALTA', 'MEDIA', 'BAJA').required(),
   estado: Joi.string().valid('ABIERTA', 'EN_PROCESO', 'RESUELTA', 'CANCELADA').default('ABIERTA'),
   fecha_apertura: Joi.string().isoDate().required(),
-  fecha_cierre: Joi.string().isoDate().allow(null).optional(),
+  fecha_cierre: Joi.string().isoDate().allow('', null).optional(),
   solucion_aplicada: Joi.string().allow('', null).optional().when('estado', {
     is: 'RESUELTA',
     then: Joi.string().required().messages({ 'any.required': 'La solución aplicada es obligatoria cuando la incidencia está RESUELTA.' })
-  })
+  }),
+  id_tarea: Joi.alternatives().try(Joi.number().integer(), Joi.string().allow('', null)).optional()
 });
 
 const issueUpdateSchema = Joi.object({
+  id_incidencia: Joi.string().optional(),
   id_proyecto: Joi.string().optional(),
   titulo: Joi.string().max(255).optional(),
   descripcion: Joi.string().optional(),
@@ -24,11 +26,12 @@ const issueUpdateSchema = Joi.object({
   criticidad: Joi.string().valid('BLOQUEANTE', 'ALTA', 'MEDIA', 'BAJA').optional(),
   estado: Joi.string().valid('ABIERTA', 'EN_PROCESO', 'RESUELTA', 'CANCELADA').optional(),
   fecha_apertura: Joi.string().isoDate().optional(),
-  fecha_cierre: Joi.string().isoDate().allow(null).optional(),
+  fecha_cierre: Joi.string().isoDate().allow('', null).optional(),
   solucion_aplicada: Joi.string().allow('', null).optional().when('estado', {
     is: 'RESUELTA',
     then: Joi.string().required().messages({ 'any.required': 'La solución aplicada es obligatoria cuando la incidencia está RESUELTA.' })
-  })
+  }),
+  id_tarea: Joi.alternatives().try(Joi.number().integer(), Joi.string().allow('', null)).optional()
 });
 
 module.exports = {

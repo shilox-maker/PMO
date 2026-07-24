@@ -2,7 +2,7 @@ const { Op } = require('sequelize');
 const { 
   Proyectos, Usuarios, Proveedores, Sedes, ContactosProveedor,
   Tareas, EstadosProyecto, CambiosAlcance, Facturas, ComentariosProyecto,
-  Incidencias, Riesgos, LeccionesAprendidas, Portfolios, Tags, TiposCapex, SubtiposCapex
+  Incidencias, Riesgos, LeccionesAprendidas, Portfolios, Tags, TiposCapex, SubtiposCapex, TiposFactura
 } = require('../../models/index');
 const { getProjectCalculations } = require('../../models/automations');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -139,10 +139,10 @@ const getProjectDetail = asyncHandler(async (req, res) => {
         through: { attributes: [] },
         include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }]
       },
-      { model: Incidencias, order: [['fecha_apertura', 'DESC']] },
-      { model: Riesgos, order: [['fecha_proxima_revision', 'ASC']] },
+      { model: Incidencias, include: [{ model: Tareas, as: 'tarea', attributes: ['id_tarea', 'titulo_tarea', 'es_hito', 'estado'] }], order: [['fecha_apertura', 'DESC']] },
+      { model: Riesgos, include: [{ model: Tareas, as: 'tarea', attributes: ['id_tarea', 'titulo_tarea', 'es_hito', 'estado'] }], order: [['fecha_proxima_revision', 'ASC']] },
       { model: LeccionesAprendidas, order: [['fecha_registro', 'DESC']] },
-      { model: Facturas, order: [['fecha_factura', 'DESC']] },
+      { model: Facturas, include: [{ model: TiposFactura, as: 'TipoFactura' }], order: [['fecha_factura', 'DESC']] },
       { model: CambiosAlcance, include: [
         { model: ContactosProveedor, as: 'Solicitante', attributes: ['nombre', 'apellidos'] },
         { model: ContactosProveedor, as: 'Aprobador', attributes: ['nombre', 'apellidos'] }

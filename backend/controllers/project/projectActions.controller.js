@@ -2,9 +2,10 @@ const { prepareProjectsData } = require('../../services/projectDataPrepService')
 const { generateProjectsExcel } = require('../../services/projectExcelService');
 const { Op } = require('sequelize');
 const { 
-  Proyectos, Usuarios, Proveedores, Sedes, EstadosProyecto, ProyectoContactos
+  Proyectos, Usuarios, Proveedores, Sedes, EstadosProyecto, ProyectoContactos, Tareas
 } = require('../../models/index');
 const { asyncHandler } = require('../../middlewares/errorHandler');
+
 
 const exportProjects = asyncHandler(async (req, res) => {
   const { pm, vendor, rag, search, state, cols, estrategico, ids } = req.query;
@@ -130,8 +131,37 @@ const removeParticipant = asyncHandler(async (req, res) => {
   res.json({ message: 'Participante eliminado con éxito.' });
 });
 
+const applyStateTasks = asyncHandler(async (req, res) => {
+  const { id_proyecto } = req.params;
+  const { tareas } = req.body;
+
+  if (!Array.isArray(tareas) || tareas.length === 0) {
+    return res.status(400).json({ error: 'Debes proporcionar una lista de tareas para añadir.' });
+  }
+
+  const project = await Proyectos.findByPk(id_proyecto);
+  if (!project) {
+    return res.status(404).json({ error: 'Proyecto no encontrado.' });
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const newTasks = tareas.map(t => ({
+    id_proyecto,
+    titulo_tarea: t.nombre_tarea || t.titulo_tarea,
+    descripcion: t.descripcion || null,
+    es_hito: !!t.es_hito,
+    estado: 'PENDIENTE',
+    fecha_limite: t.fecha_limite || today
+  }));
+
+  const createdTasks = await Tareas.bulkCreate(newTasks);
+  res.status(201).json({ message: 'Tareas añadidas con éxito', createdTasks });
+});
+
 module.exports = {
   exportProjects,
   addParticipant,
-  removeParticipant
+  removeParticipant,
+  applyStateTasks
 };
+

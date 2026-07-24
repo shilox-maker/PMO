@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building, User, MapPin, Calendar, GitBranch } from 'lucide-react';
+import { Building, User, MapPin, Calendar, GitBranch, ExternalLink } from 'lucide-react';
 import ProjectTagsSelect from '../../../components/ProjectTagsSelect';
 
 export default function ProjectGovernanceAttributes({
@@ -96,6 +96,26 @@ export default function ProjectGovernanceAttributes({
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Portfolio</div>
               <div style={{ fontWeight: 500 }}>{project.Portfolio?.nombre || 'Sin asignar'}</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, gridColumn: 'span 2' }}>
+            <ExternalLink size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Site SharePoint (Documentación)</div>
+              {project.url_sharepoint ? (
+                <a 
+                  href={project.url_sharepoint.startsWith('http://') || project.url_sharepoint.startsWith('https://') ? project.url_sharepoint : `https://${project.url_sharepoint}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{ fontWeight: 500, color: 'var(--md-sys-color-primary)', textDecoration: 'underline', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                  <span>{project.url_sharepoint}</span>
+                  <ExternalLink size={14} style={{ flexShrink: 0 }} />
+                </a>
+              ) : (
+                <div style={{ fontWeight: 500, color: 'var(--md-sys-color-outline)' }}>—</div>
+              )}
             </div>
           </div>
         </div>

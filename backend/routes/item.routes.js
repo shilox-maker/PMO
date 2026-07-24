@@ -4,6 +4,7 @@ const {
   validateBody,
   invoiceCreateSchema,
   invoiceUpdateSchema,
+  invoiceBatchCreateSchema,
   scopeChangeCreateSchema,
   scopeChangeUpdateSchema,
   riskCreateSchema,
@@ -21,9 +22,11 @@ const {
 const router = express.Router();
 
 // Invoices
+router.post('/invoices/batch', validateBody(invoiceBatchCreateSchema), itemController.createBatchInvoices);
 router.post('/invoices', validateBody(invoiceCreateSchema), itemController.createInvoice);
 router.put('/invoices/:id_interno_factura', validateBody(invoiceUpdateSchema), itemController.updateInvoice);
 router.delete('/invoices/:id_interno_factura', itemController.deleteInvoice);
+
 
 // Scope Changes
 router.post('/scope-changes', validateBody(scopeChangeCreateSchema), itemController.createScopeChange);

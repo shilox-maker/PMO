@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import SearchableContactSelect from '../SearchableContactSelect';
 
 export default function RaciModal({ 
-  isOpen, onClose, projectId, editingParticipant, getAuthHeaders, onSuccess, contactosList 
+  isOpen, onClose, projectId, editingParticipant, participant, getAuthHeaders, onSuccess, contactosList 
 }) {
+  const targetParticipant = editingParticipant || participant;
   const [form, setForm] = useState({
     id_contacto: '',
     rol: 'Usuario funcional',
@@ -15,11 +16,11 @@ export default function RaciModal({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (editingParticipant) {
-      const raciString = editingParticipant.Proyecto_Contactos?.raci || '';
+    if (targetParticipant) {
+      const raciString = targetParticipant.Proyecto_Contactos?.raci || '';
       setForm({
-        id_contacto: editingParticipant.id_contacto,
-        rol: editingParticipant.Proyecto_Contactos?.rol || 'Usuario funcional',
+        id_contacto: targetParticipant.id_contacto,
+        rol: targetParticipant.Proyecto_Contactos?.rol || 'Usuario funcional',
         r: raciString.includes('R'),
         a: raciString.includes('A'),
         c: raciString.includes('C'),
@@ -36,7 +37,7 @@ export default function RaciModal({
       });
     }
     setError('');
-  }, [editingParticipant, isOpen]);
+  }, [targetParticipant, isOpen]);
 
   if (!isOpen) return null;
 

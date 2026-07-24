@@ -12,6 +12,11 @@ const Sedes = sequelize.define('Sedes', {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true
+  },
+  orden: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
   }
 });
 
@@ -177,6 +182,49 @@ const EstadosProyecto = sequelize.define('Estados_Proyecto', {
 }, {
   timestamps: false
 });
+
+// 4.5.1 EstadoTareasPlantilla Model (Tareas preconfiguradas asociadas a un estado)
+const EstadoTareasPlantilla = sequelize.define('Estado_Tareas_Plantilla', {
+
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  id_estado: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: EstadosProyecto,
+      key: 'id_estado'
+    },
+    onDelete: 'CASCADE'
+  },
+  nombre_tarea: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  descripcion: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  es_hito: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  orden: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  }
+}, {
+  timestamps: false
+});
+
+EstadosProyecto.hasMany(EstadoTareasPlantilla, { foreignKey: 'id_estado', as: 'TareasPlantilla', onDelete: 'CASCADE' });
+EstadoTareasPlantilla.belongsTo(EstadosProyecto, { foreignKey: 'id_estado', as: 'Estado' });
+
 
 // 4.6 Portfolios Model
 const Portfolios = sequelize.define('Portfolios', {
@@ -385,6 +433,10 @@ const Proyectos = sequelize.define('Proyectos', {
       model: Portfolios,
       key: 'id'
     }
+  },
+  url_sharepoint: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
   estado_proyecto: {
     type: DataTypes.VIRTUAL,
@@ -730,6 +782,10 @@ const Incidencias = sequelize.define('Incidencias', {
       model: Usuarios,
       key: 'id_usuario'
     }
+  },
+  id_tarea: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, {
   validate: {
@@ -804,6 +860,10 @@ const Riesgos = sequelize.define('Riesgos', {
       model: Usuarios,
       key: 'id_usuario'
     }
+  },
+  id_tarea: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, {
   indexes: [
@@ -865,6 +925,27 @@ const LeccionesAprendidas = sequelize.define('Lecciones_Aprendidas', {
 });
 
 
+// 9.5 TiposFactura Model
+const TiposFactura = sequelize.define('Tipos_Factura', {
+  id_tipo_factura: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  nombre: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  orden: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  }
+}, {
+  tableName: 'Tipos_Factura'
+});
+
 // 10. Facturas Model
 const Facturas = sequelize.define('Facturas', {
   id_interno_factura: {
@@ -887,6 +968,14 @@ const Facturas = sequelize.define('Facturas', {
     references: {
       model: Proveedores,
       key: 'id_proveedor'
+    }
+  },
+  id_tipo_factura: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: TiposFactura,
+      key: 'id_tipo_factura'
     }
   },
   numero_factura: {
@@ -1216,6 +1305,10 @@ Facturas.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
 Proveedores.hasMany(Facturas, { foreignKey: 'id_proveedor' });
 Facturas.belongsTo(Proveedores, { foreignKey: 'id_proveedor' });
 
+// TiposFactura has many Facturas
+TiposFactura.hasMany(Facturas, { foreignKey: 'id_tipo_factura' });
+Facturas.belongsTo(TiposFactura, { foreignKey: 'id_tipo_factura', as: 'TipoFactura' });
+
 // Project has many CambiosAlcance
 Proyectos.hasMany(CambiosAlcance, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
 CambiosAlcance.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
@@ -1230,6 +1323,13 @@ CambiosAlcance.belongsTo(ContactosProveedor, { foreignKey: 'id_aprobador_contact
 // Project has many Tareas
 Proyectos.hasMany(Tareas, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
 Tareas.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
+
+// Tareas links to Incidencias and Riesgos
+Tareas.hasMany(Incidencias, { foreignKey: 'id_tarea' });
+Incidencias.belongsTo(Tareas, { foreignKey: 'id_tarea', as: 'tarea' });
+
+Tareas.hasMany(Riesgos, { foreignKey: 'id_tarea' });
+Riesgos.belongsTo(Tareas, { foreignKey: 'id_tarea', as: 'tarea' });
 
 // EstadosProyecto has many Proyectos
 EstadosProyecto.hasMany(Proyectos, { foreignKey: 'id_estado', as: 'Proyectos' });
@@ -1300,11 +1400,14 @@ module.exports = {
   CambiosAlcance,
   Tareas,
   EstadosProyecto,
+  EstadoTareasPlantilla,
   ComentariosProyecto,
+
   Portfolios,
   Tags,
   ProyectoTags,
   TiposCapex,
   SubtiposCapex,
-  PortfolioBudgets
+  PortfolioBudgets,
+  TiposFactura
 };

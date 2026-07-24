@@ -41,7 +41,8 @@ export default function CreateProjectModal({
     com_mensual_activo: false,
     com_mensual_finalidad: '',
     com_steerco_activo: false,
-    com_steerco_finalidad: ''
+    com_steerco_finalidad: '',
+    url_sharepoint: ''
   });
   const [formError, setFormError] = useState('');
 
@@ -73,7 +74,8 @@ export default function CreateProjectModal({
         com_mensual_activo: false,
         com_mensual_finalidad: '',
         com_steerco_activo: false,
-        com_steerco_finalidad: ''
+        com_steerco_finalidad: '',
+        url_sharepoint: ''
       });
       setFormError('');
     }
@@ -299,6 +301,19 @@ export default function CreateProjectModal({
                   <option key={p.id} value={p.id}>{p.nombre}</option>
                 ))}
               </select>
+            </div>
+
+            {/* SharePoint URL */}
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">URL Site SharePoint (Documentación)</label>
+              <input 
+                type="text" 
+                name="url_sharepoint"
+                value={newProject.url_sharepoint}
+                onChange={handleInputChange}
+                placeholder="https://dacsa.sharepoint.com/sites/..."
+                className="m3-input"
+              />
             </div>
 
             {/* Fecha Inicio */}

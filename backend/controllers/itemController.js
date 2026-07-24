@@ -1,6 +1,7 @@
 const { 
-  createInvoice, updateInvoice, deleteInvoice, createScopeChange, updateScopeChange 
+  createInvoice, createBatchInvoices, updateInvoice, deleteInvoice, createScopeChange, updateScopeChange 
 } = require('./item/financial.controller');
+
 
 const { 
   createRisk, updateRisk, createIssue, updateIssue 
@@ -16,7 +17,9 @@ const {
 
 module.exports = {
   createInvoice,
+  createBatchInvoices,
   updateInvoice,
+
   deleteInvoice,
   createScopeChange,
   updateScopeChange,

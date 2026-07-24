@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
 export default function RiskModal({ 
-  isOpen, onClose, projectId, editingRisk, getAuthHeaders, onSuccess 
+  isOpen, onClose, projectId, tasks = [], editingRisk, risk, getAuthHeaders, onSuccess 
 }) {
+  const targetRisk = editingRisk || risk;
   const [form, setForm] = useState({
     id_riesgo: '',
     titulo_riesgo: '',
@@ -11,21 +12,23 @@ export default function RiskModal({
     impacto: 'MEDIA',
     plan_mitigacion: '',
     estado_riesgo: 'ACTIVO',
-    fecha_proxima_revision: ''
+    fecha_proxima_revision: '',
+    id_tarea: ''
   });
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (editingRisk) {
+    if (targetRisk) {
       setForm({
-        id_riesgo: editingRisk.id_riesgo,
-        titulo_riesgo: editingRisk.titulo_riesgo || '',
-        descripcion: editingRisk.descripcion || '',
-        probabilidad: editingRisk.probabilidad || 'MEDIA',
-        impacto: editingRisk.impacto || 'MEDIA',
-        plan_mitigacion: editingRisk.plan_mitigacion || '',
-        estado_riesgo: editingRisk.estado_riesgo || 'ACTIVO',
-        fecha_proxima_revision: editingRisk.fecha_proxima_revision || ''
+        id_riesgo: targetRisk.id_riesgo,
+        titulo_riesgo: targetRisk.titulo_riesgo || '',
+        descripcion: targetRisk.descripcion || '',
+        probabilidad: targetRisk.probabilidad || 'MEDIA',
+        impacto: targetRisk.impacto || 'MEDIA',
+        plan_mitigacion: targetRisk.plan_mitigacion || '',
+        estado_riesgo: targetRisk.estado_riesgo || 'ACTIVO',
+        fecha_proxima_revision: targetRisk.fecha_proxima_revision || '',
+        id_tarea: targetRisk.id_tarea || ''
       });
     } else {
       setForm({
@@ -36,11 +39,12 @@ export default function RiskModal({
         impacto: 'MEDIA',
         plan_mitigacion: '',
         estado_riesgo: 'ACTIVO',
-        fecha_proxima_revision: new Date().toISOString().split('T')[0]
+        fecha_proxima_revision: new Date().toISOString().split('T')[0],
+        id_tarea: ''
       });
     }
     setError('');
-  }, [editingRisk, isOpen]);
+  }, [targetRisk, isOpen]);
 
   if (!isOpen) return null;
 
@@ -54,9 +58,9 @@ export default function RiskModal({
     }
 
     const payload = { ...form, id_proyecto: projectId };
-    const isEdit = !!editingRisk;
+    const isEdit = !!targetRisk;
     const url = isEdit 
-      ? `${import.meta.env.VITE_API_URL}/risks/${editingRisk.id_riesgo}` 
+      ? `${import.meta.env.VITE_API_URL}/risks/${targetRisk.id_riesgo}` 
       : `${import.meta.env.VITE_API_URL}/risks`;
     const method = isEdit ? 'PUT' : 'POST';
 
@@ -181,6 +185,22 @@ export default function RiskModal({
               rows={2}
               className="m3-input"
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Tarea / Hito Asociado (Opcional)</label>
+            <select 
+              value={form.id_tarea}
+              onChange={(e) => setForm({ ...form, id_tarea: e.target.value })}
+              className="user-select"
+            >
+              <option value="">-- Ninguna --</option>
+              {tasks.map(t => (
+                <option key={t.id_tarea} value={t.id_tarea}>
+                  {t.es_hito ? '🎯 ' : '📌 '}{t.titulo_tarea}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">

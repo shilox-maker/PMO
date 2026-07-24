@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
 export default function LessonModal({ 
-  isOpen, onClose, projectId, editingLesson, getAuthHeaders, onSuccess 
+  isOpen, onClose, projectId, editingLesson, lesson, getAuthHeaders, onSuccess 
 }) {
+  const targetLesson = editingLesson || lesson;
   const [form, setForm] = useState({
     titulo: '',
     tipo_leccion: 'BUENA_PRACTICA',
@@ -12,12 +13,12 @@ export default function LessonModal({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (editingLesson) {
+    if (targetLesson) {
       setForm({
-        titulo: editingLesson.titulo || '',
-        tipo_leccion: editingLesson.tipo_leccion || 'BUENA_PRACTICA',
-        contexto: editingLesson.contexto || '',
-        recomendacion_futura: editingLesson.recomendacion_futura || ''
+        titulo: targetLesson.titulo || '',
+        tipo_leccion: targetLesson.tipo_leccion || 'BUENA_PRACTICA',
+        contexto: targetLesson.contexto || '',
+        recomendacion_futura: targetLesson.recomendacion_futura || ''
       });
     } else {
       setForm({
@@ -28,7 +29,7 @@ export default function LessonModal({
       });
     }
     setError('');
-  }, [editingLesson, isOpen]);
+  }, [targetLesson, isOpen]);
 
   if (!isOpen) return null;
 
@@ -42,9 +43,10 @@ export default function LessonModal({
     }
 
     const payload = { ...form, id_proyecto: projectId };
-    const isEdit = !!editingLesson;
+    const isEdit = !!targetLesson;
+    const lessonId = targetLesson ? (targetLesson.id_leccion || targetLesson.id) : null;
     const url = isEdit 
-      ? `${import.meta.env.VITE_API_URL}/lessons/${editingLesson.id}` 
+      ? `${import.meta.env.VITE_API_URL}/lessons/${lessonId}` 
       : `${import.meta.env.VITE_API_URL}/lessons`;
     const method = isEdit ? 'PUT' : 'POST';
 

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
 export default function IssueModal({ 
-  isOpen, onClose, projectId, editingIssue, getAuthHeaders, onSuccess 
+  isOpen, onClose, projectId, tasks = [], editingIssue, issue, getAuthHeaders, onSuccess 
 }) {
+  const targetIssue = editingIssue || issue;
   const [form, setForm] = useState({
     id_incidencia: '',
     titulo: '',
@@ -12,22 +13,24 @@ export default function IssueModal({
     estado: 'ABIERTA',
     fecha_apertura: '',
     fecha_cierre: '',
-    solucion_aplicada: ''
+    solucion_aplicada: '',
+    id_tarea: ''
   });
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (editingIssue) {
+    if (targetIssue) {
       setForm({
-        id_incidencia: editingIssue.id_incidencia,
-        titulo: editingIssue.titulo || '',
-        descripcion: editingIssue.descripcion || '',
-        tipo_incidencias: editingIssue.tipo_incidencias || 'TECNICA',
-        criticidad: editingIssue.criticidad || 'MEDIA',
-        estado: editingIssue.estado || 'ABIERTA',
-        fecha_apertura: editingIssue.fecha_apertura || '',
-        fecha_cierre: editingIssue.fecha_cierre || '',
-        solucion_aplicada: editingIssue.solucion_aplicada || ''
+        id_incidencia: targetIssue.id_incidencia,
+        titulo: targetIssue.titulo || '',
+        descripcion: targetIssue.descripcion || '',
+        tipo_incidencias: targetIssue.tipo_incidencias || 'TECNICA',
+        criticidad: targetIssue.criticidad || 'MEDIA',
+        estado: targetIssue.estado || 'ABIERTA',
+        fecha_apertura: targetIssue.fecha_apertura || '',
+        fecha_cierre: targetIssue.fecha_cierre || '',
+        solucion_aplicada: targetIssue.solucion_aplicada || '',
+        id_tarea: targetIssue.id_tarea || ''
       });
     } else {
       setForm({
@@ -39,11 +42,12 @@ export default function IssueModal({
         estado: 'ABIERTA',
         fecha_apertura: new Date().toISOString().split('T')[0],
         fecha_cierre: '',
-        solucion_aplicada: ''
+        solucion_aplicada: '',
+        id_tarea: ''
       });
     }
     setError('');
-  }, [editingIssue, isOpen]);
+  }, [targetIssue, isOpen]);
 
   if (!isOpen) return null;
 
@@ -62,9 +66,12 @@ export default function IssueModal({
     }
 
     const payload = { ...form, id_proyecto: projectId };
-    const isEdit = !!editingIssue;
+    if (!payload.fecha_cierre || payload.fecha_cierre.trim() === '') {
+      payload.fecha_cierre = null;
+    }
+    const isEdit = !!targetIssue;
     const url = isEdit 
-      ? `${import.meta.env.VITE_API_URL}/issues/${editingIssue.id_incidencia}` 
+      ? `${import.meta.env.VITE_API_URL}/issues/${targetIssue.id_incidencia}` 
       : `${import.meta.env.VITE_API_URL}/issues`;
     const method = isEdit ? 'PUT' : 'POST';
 
@@ -191,6 +198,22 @@ export default function IssueModal({
                 <option value="CANCELADA">CANCELADA</option>
               </select>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Tarea / Hito Asociado (Opcional)</label>
+            <select 
+              value={form.id_tarea}
+              onChange={(e) => setForm({ ...form, id_tarea: e.target.value })}
+              className="user-select"
+            >
+              <option value="">-- Ninguna --</option>
+              {tasks.map(t => (
+                <option key={t.id_tarea} value={t.id_tarea}>
+                  {t.es_hito ? '🎯 ' : '📌 '}{t.titulo_tarea}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">

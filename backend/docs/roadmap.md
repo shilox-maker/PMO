@@ -2,6 +2,8 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
+
+
 ## 🔍 2. En Análisis / Especificación
 
 
@@ -17,6 +19,12 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-25 (IDEA-25): Relacionar riesgos e incidencias con una tarea existente del mismo proyecto** (2026-07-24)
+- [x] **FEATURE-24 (IDEA-24): Registro en lote de Facturas / Cobros Recurrentes** (2026-07-24)
+- [x] **FEATURE-23 (IDEA-23): Campo URL del site de SharePoint de documentación en proyectos** (2026-07-24)
+- [x] **FEATURE-22 (IDEA-22): Campo 'Tipo' en Facturas y mantenimiento administrable** (2026-07-24)
+- [x] **FEATURE-21 (IDEA-21): Reorganizar pantalla de mantenimiento de estados (Separación Vista Tabla / Detalle y Tareas)** (2026-07-24)
+- [x] **FEATURE-20 (IDEA-20): Popup para añadir tareas preconfiguradas al cambiar de estado** (2026-07-24)
 - [x] **REFACTOR-01: Modularización arquitectónica KISS/SRP en Backend y Frontend para cumplir límites de 200/300 líneas** (2026-07-22)
 - [x] **IDEA-19: Resumen de Cartera y panel de alertas en el informe consolidado HTML/PDF, y remoción de PO de Excel** (2026-07-16)
 - [x] **BUG-02: No funciona bien el filtro de Lecciones aprendidas al filtrar por Partner ni por proyecto** (2026-07-16)

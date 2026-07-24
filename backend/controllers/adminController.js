@@ -1,8 +1,10 @@
 const { createSede, updateSede, deleteSede } = require('./admin/sede.controller');
-const { getStates, createState, updateState, deleteState } = require('./admin/state.controller');
+const { getStates, createState, updateState, deleteState, createStateTask, deleteStateTask } = require('./admin/state.controller');
+
 const { getUsers, createUser, updateUser, deleteUser } = require('./admin/user.controller');
 const { createPortfolio, updatePortfolio, deletePortfolio, createPortfolioBudget, updatePortfolioBudget, deletePortfolioBudget } = require('./admin/portfolio.controller');
 const { getTiposCapex, createTipoCapex, updateTipoCapex, deleteTipoCapex, createSubtipoCapex, updateSubtipoCapex, deleteSubtipoCapex } = require('./admin/capex.controller');
+const { getTiposFactura, createTipoFactura, updateTipoFactura, deleteTipoFactura } = require('./admin/invoiceTypes.controller');
 
 module.exports = {
   createSede,
@@ -12,6 +14,9 @@ module.exports = {
   createState,
   updateState,
   deleteState,
+  createStateTask,
+  deleteStateTask,
+
   getUsers,
   createUser,
   updateUser,
@@ -28,5 +33,9 @@ module.exports = {
   deleteSubtipoCapex,
   createPortfolioBudget,
   updatePortfolioBudget,
-  deletePortfolioBudget
+  deletePortfolioBudget,
+  getTiposFactura,
+  createTipoFactura,
+  updateTipoFactura,
+  deleteTipoFactura
 };

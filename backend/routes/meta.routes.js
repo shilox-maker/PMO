@@ -14,6 +14,7 @@ router.get('/portfolios', metaController.getPortfolios);
 router.get('/tags', metaController.getTags);
 router.post('/tags', metaController.createTag);
 router.get('/capex-types', metaController.getCapexTypes);
+router.get('/invoice-types', metaController.getInvoiceTypes);
 
 // Portfolio Budgets and Reports
 router.get('/portfolios/:id/budgets', metaController.getPortfolioBudgets);

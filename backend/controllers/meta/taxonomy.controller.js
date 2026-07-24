@@ -1,13 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 const { 
-  Sedes, ContactosProveedor, Proveedores, Usuarios, EstadosProyecto, 
-  Portfolios, Tags, TiposCapex, SubtiposCapex, PortfolioBudgets
+  Sedes, ContactosProveedor, Proveedores, Usuarios, EstadosProyecto, EstadoTareasPlantilla,
+  Portfolios, Tags, TiposCapex, SubtiposCapex, PortfolioBudgets, TiposFactura
 } = require('../../models/index');
+
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
 const getSedes = asyncHandler(async (req, res) => {
-  const sedes = await Sedes.findAll({ order: [['nombre_sede', 'ASC']] });
+  const sedes = await Sedes.findAll({ order: [['orden', 'ASC'], ['nombre_sede', 'ASC']] });
   res.json(sedes);
 });
 
@@ -35,10 +36,12 @@ const getChangelog = asyncHandler(async (req, res) => {
 
 const getPortfolioStates = asyncHandler(async (req, res) => {
   const states = await EstadosProyecto.findAll({
+    include: [{ model: EstadoTareasPlantilla, as: 'TareasPlantilla' }],
     order: [['orden', 'ASC']]
   });
   res.json(states);
 });
+
 
 const getPortfolios = asyncHandler(async (req, res) => {
   const portfolios = await Portfolios.findAll({ order: [['nombre', 'ASC']] });
@@ -83,6 +86,24 @@ const getPortfolioBudgets = asyncHandler(async (req, res) => {
   res.json(budgets);
 });
 
+const getInvoiceTypes = asyncHandler(async (req, res) => {
+  await TiposFactura.sync();
+  let tipos = await TiposFactura.findAll({
+    order: [['orden', 'ASC'], ['nombre', 'ASC']]
+  });
+  if (tipos.length === 0) {
+    const defaultData = [
+      'Consultoría Externa', 'Licencias de Software', 'Desarrollos e Integraciones',
+      'Infraestructura Tecnológica', 'Migración y Calidad de Datos', 'Viajes y Desplazamientos',
+      'Alojamiento', 'Dietas y Comidas', 'Formación', 'Hardware y Equipamiento',
+      'Recursos Internos', 'Otros Gastos'
+    ].map(nombre => ({ nombre }));
+    await TiposFactura.bulkCreate(defaultData);
+    tipos = await TiposFactura.findAll({ order: [['orden', 'ASC'], ['nombre', 'ASC']] });
+  }
+  res.json(tipos);
+});
+
 module.exports = {
   getSedes,
   getContactos,
@@ -93,5 +114,6 @@ module.exports = {
   getTags,
   createTag,
   getCapexTypes,
-  getPortfolioBudgets
+  getPortfolioBudgets,
+  getInvoiceTypes
 };

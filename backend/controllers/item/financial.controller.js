@@ -15,9 +15,36 @@ const createInvoice = asyncHandler(async (req, res) => {
       return res.status(400).json({ error: 'El ID de factura debe tener el formato FAC-YYYY-XXX.' });
     }
   }
+  if (!data.id_proveedor || data.id_proveedor === '') data.id_proveedor = null;
+  if (!data.id_tipo_factura || data.id_tipo_factura === '') data.id_tipo_factura = null;
+  if (!data.numero_factura || data.numero_factura === '') data.numero_factura = null;
+  if (!data.PO || data.PO === '') data.PO = null;
   const fac = await Facturas.create(data);
   res.status(201).json(fac);
 });
+
+const createBatchInvoices = asyncHandler(async (req, res) => {
+  const { items } = req.body;
+  const createdInvoices = [];
+
+  for (const item of items) {
+    item.createdBy = req.currentPmId;
+    item.modifiedBy = req.currentPmId;
+    if (!item.id_interno_factura || item.id_interno_factura.trim() === '') {
+      item.id_interno_factura = await generateNextId(Facturas, 'FAC', 'id_interno_factura');
+    }
+    if (!item.id_proveedor || item.id_proveedor === '') item.id_proveedor = null;
+    if (!item.id_tipo_factura || item.id_tipo_factura === '') item.id_tipo_factura = null;
+    if (!item.numero_factura || item.numero_factura === '') item.numero_factura = null;
+    if (!item.PO || item.PO === '') item.PO = null;
+
+    const fac = await Facturas.create(item);
+    createdInvoices.push(fac);
+  }
+
+  res.status(201).json(createdInvoices);
+});
+
 
 const updateInvoice = asyncHandler(async (req, res) => {
   const { id_interno_factura } = req.params;
@@ -28,6 +55,10 @@ const updateInvoice = asyncHandler(async (req, res) => {
   if (!fac) {
     return res.status(404).json({ error: 'Factura no encontrada' });
   }
+  if (data.hasOwnProperty('id_proveedor') && (!data.id_proveedor || data.id_proveedor === '')) data.id_proveedor = null;
+  if (data.hasOwnProperty('id_tipo_factura') && (!data.id_tipo_factura || data.id_tipo_factura === '')) data.id_tipo_factura = null;
+  if (data.hasOwnProperty('numero_factura') && (!data.numero_factura || data.numero_factura === '')) data.numero_factura = null;
+  if (data.hasOwnProperty('PO') && (!data.PO || data.PO === '')) data.PO = null;
   await fac.update(data);
   res.json(fac);
 });
@@ -86,8 +117,10 @@ const updateScopeChange = asyncHandler(async (req, res) => {
 
 module.exports = {
   createInvoice,
+  createBatchInvoices,
   updateInvoice,
   deleteInvoice,
   createScopeChange,
   updateScopeChange
 };
+

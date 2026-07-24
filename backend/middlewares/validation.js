@@ -15,7 +15,7 @@ const validateBody = (schema) => (req, res, next) => {
 
 // Importar los esquemas desde sus respectivos ficheros modulares
 const { projectCreateSchema, projectUpdateSchema } = require('./validations/project.validation');
-const { invoiceCreateSchema, invoiceUpdateSchema } = require('./validations/invoice.validation');
+const { invoiceCreateSchema, invoiceUpdateSchema, invoiceBatchCreateSchema } = require('./validations/invoice.validation');
 const { scopeChangeCreateSchema, scopeChangeUpdateSchema } = require('./validations/scopeChange.validation');
 const { riskCreateSchema, riskUpdateSchema } = require('./validations/risk.validation');
 const { issueCreateSchema, issueUpdateSchema } = require('./validations/issue.validation');
@@ -30,6 +30,7 @@ module.exports = {
   projectUpdateSchema,
   invoiceCreateSchema,
   invoiceUpdateSchema,
+  invoiceBatchCreateSchema,
   scopeChangeCreateSchema,
   scopeChangeUpdateSchema,
   riskCreateSchema,
@@ -43,3 +44,4 @@ module.exports = {
   lessonCreateSchema,
   lessonUpdateSchema
 };
+

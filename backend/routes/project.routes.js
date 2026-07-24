@@ -16,4 +16,8 @@ router.delete('/projects/:id_proyecto', projectController.deleteProject);
 router.post('/projects/:id_proyecto/participants', projectController.addParticipant);
 router.delete('/projects/:id_proyecto/participants/:id_contacto', projectController.removeParticipant);
 
+// State Tasks
+router.post('/projects/:id_proyecto/apply-state-tasks', projectController.applyStateTasks);
+
+
 module.exports = router;

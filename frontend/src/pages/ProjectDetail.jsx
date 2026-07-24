@@ -12,6 +12,8 @@ import TaskModal from '../components/modals/TaskModal';
 import LessonModal from '../components/modals/LessonModal';
 import ReportModal from '../components/modals/ReportModal';
 import RaciModal from '../components/modals/RaciModal';
+import ConfirmAddStateTasksModal from '../components/projects/ConfirmAddStateTasksModal';
+
 
 // Import Tabs & Header
 import ProjectDetailHeader from './project-detail/ProjectDetailHeader';
@@ -71,6 +73,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showRaciModal, setShowRaciModal] = useState(false);
+  const [pendingStateUpdate, setPendingStateUpdate] = useState(null);
+  const [stateTasksLoading, setStateTasksLoading] = useState(false);
+
 
   // Modals Editing Selection
   const [editingInvoice, setEditingInvoice] = useState(null);
@@ -160,8 +165,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     }
   }, [projectId]);
 
-  const handleUpdateProject = (fieldsToUpdate) => {
-    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
+  const executeUpdateProject = (fieldsToUpdate) => {
+    return fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(fieldsToUpdate)
@@ -170,9 +175,76 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         const d = await res.json();
         if (!res.ok) throw new Error(d.error || 'Error al actualizar el proyecto');
         return d;
-      })
-      .then(() => fetchProjectData());
+      });
   };
+
+  const handleUpdateProject = (fieldsToUpdate) => {
+    if (fieldsToUpdate.id_estado && Number(fieldsToUpdate.id_estado) !== Number(project?.id_estado)) {
+      const targetState = workflowStates.find(s => Number(s.id_estado) === Number(fieldsToUpdate.id_estado));
+      if (targetState && targetState.TareasPlantilla && targetState.TareasPlantilla.length > 0) {
+        setPendingStateUpdate({ targetState, fieldsToUpdate });
+        return;
+      }
+    }
+
+    executeUpdateProject(fieldsToUpdate)
+      .then(() => {
+        fetchProjectData();
+        fetchMetadata();
+      })
+      .catch(err => alert(err.message));
+  };
+
+
+  const handleConfirmStateTasks = (selectedTasks) => {
+    if (!pendingStateUpdate) return;
+    setStateTasksLoading(true);
+
+    const { fieldsToUpdate } = pendingStateUpdate;
+
+    executeUpdateProject(fieldsToUpdate)
+      .then(() => {
+        if (!selectedTasks || selectedTasks.length === 0) {
+          return Promise.resolve();
+        }
+        return fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/apply-state-tasks`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ tareas: selectedTasks })
+        }).then(async (res) => {
+          const d = await res.json();
+          if (!res.ok) throw new Error(d.error || 'Error al añadir las tareas del estado');
+          return d;
+        });
+      })
+      .then(() => {
+        setStateTasksLoading(false);
+        setPendingStateUpdate(null);
+        fetchProjectData();
+      })
+      .catch(err => {
+        setStateTasksLoading(false);
+        alert(err.message);
+      });
+  };
+
+  const handleSkipStateTasks = () => {
+    if (!pendingStateUpdate) return;
+    setStateTasksLoading(true);
+    const { fieldsToUpdate } = pendingStateUpdate;
+
+    executeUpdateProject(fieldsToUpdate)
+      .then(() => {
+        setStateTasksLoading(false);
+        setPendingStateUpdate(null);
+        fetchProjectData();
+      })
+      .catch(err => {
+        setStateTasksLoading(false);
+        alert(err.message);
+      });
+  };
+
 
   const handleDeleteProject = () => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este proyecto de forma permanente?')) {
@@ -381,30 +453,40 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       {activeTab === 'cambios' && (
         <ProjectCambiosTab 
           project={project}
+          openAddCr={() => { setEditingCr(null); setShowCrModal(true); }}
+          openEditCr={(cr) => { setEditingCr(cr); setShowCrModal(true); }}
           crSort={crSort}
           setCrSort={setCrSort}
           renderSortHeader={renderSortHeader}
-          setShowCrModal={setShowCrModal}
-          setEditingCr={setEditingCr}
-          fetchProjectData={fetchProjectData}
-          getAuthHeaders={getAuthHeaders}
         />
       )}
 
       {activeTab === 'riesgos' && (
         <ProjectRiesgosTab 
           project={project}
+          openAddRisk={() => { setEditingRisk(null); setShowRiskModal(true); }}
+          openEditRisk={(r) => { setEditingRisk(r); setShowRiskModal(true); }}
+          handleToggleRiskState={async (id_riesgo, estado_actual) => {
+            const nuevoEstado = estado_actual === 'ACTIVO' ? 'CERRADO' : 'ACTIVO';
+            try {
+              const res = await fetch(`${import.meta.env.VITE_API_URL}/risks/${id_riesgo}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ estado_riesgo: nuevoEstado })
+              });
+              if (!res.ok) throw new Error('Error al cambiar el estado del riesgo');
+              fetchProjectData();
+            } catch (err) {
+              alert(err.message);
+            }
+          }}
+          openAddIssue={() => { setEditingIssue(null); setShowIssueModal(true); }}
+          openEditIssue={(i) => { setEditingIssue(i); setShowIssueModal(true); }}
           risksSort={risksSort}
           setRisksSort={setRisksSort}
           issuesSort={issuesSort}
           setIssuesSort={setIssuesSort}
           renderSortHeader={renderSortHeader}
-          setShowRiskModal={setShowRiskModal}
-          setEditingRisk={setEditingRisk}
-          setShowIssueModal={setShowIssueModal}
-          setEditingIssue={setEditingIssue}
-          fetchProjectData={fetchProjectData}
-          getAuthHeaders={getAuthHeaders}
         />
       )}
 
@@ -433,13 +515,19 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       {activeTab === 'lecciones' && (
         <ProjectLeccionesTab 
           project={project}
+          openAddLesson={() => { setEditingLesson(null); setShowLessonModal(true); }}
+          openEditLesson={(l) => { setEditingLesson(l); setShowLessonModal(true); }}
+          handleDeleteLesson={(lessonId) => {
+            if (window.confirm('¿Seguro que deseas eliminar esta lección aprendida?')) {
+              fetch(`${import.meta.env.VITE_API_URL}/lessons/${lessonId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+              }).then(() => fetchProjectData());
+            }
+          }}
           lessonsSort={lessonsSort}
           setLessonsSort={setLessonsSort}
           renderSortHeader={renderSortHeader}
-          setShowLessonModal={setShowLessonModal}
-          setEditingLesson={setEditingLesson}
-          fetchProjectData={fetchProjectData}
-          getAuthHeaders={getAuthHeaders}
         />
       )}
 
@@ -476,8 +564,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       {showInvoiceModal && (
         <InvoiceModal 
           isOpen={showInvoiceModal}
-          onClose={() => setShowInvoiceModal(false)}
+          onClose={() => { setShowInvoiceModal(false); setEditingInvoice(null); }}
           projectId={projectId}
+          editingInvoice={editingInvoice}
           invoice={editingInvoice}
           vendors={vendors}
           getAuthHeaders={getAuthHeaders}
@@ -490,7 +579,9 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           isOpen={showCrModal}
           onClose={() => setShowCrModal(false)}
           projectId={projectId}
+          editingCr={editingCr}
           cr={editingCr}
+          contactosList={contactosList}
           getAuthHeaders={getAuthHeaders}
           onSuccess={fetchProjectData}
         />
@@ -501,6 +592,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           isOpen={showRiskModal}
           onClose={() => setShowRiskModal(false)}
           projectId={projectId}
+          tasks={project?.Tareas || []}
+          editingRisk={editingRisk}
           risk={editingRisk}
           getAuthHeaders={getAuthHeaders}
           onSuccess={fetchProjectData}
@@ -512,6 +605,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           isOpen={showIssueModal}
           onClose={() => setShowIssueModal(false)}
           projectId={projectId}
+          tasks={project?.Tareas || []}
+          editingIssue={editingIssue}
           issue={editingIssue}
           getAuthHeaders={getAuthHeaders}
           onSuccess={fetchProjectData}
@@ -523,6 +618,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           isOpen={showTaskModal}
           onClose={() => setShowTaskModal(false)}
           projectId={projectId}
+          editingTask={editingTask}
           task={editingTask}
           getAuthHeaders={getAuthHeaders}
           onSuccess={fetchProjectData}
@@ -534,6 +630,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           isOpen={showLessonModal}
           onClose={() => setShowLessonModal(false)}
           projectId={projectId}
+          editingLesson={editingLesson}
           lesson={editingLesson}
           getAuthHeaders={getAuthHeaders}
           onSuccess={fetchProjectData}
@@ -549,6 +646,17 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           getAuthHeaders={getAuthHeaders}
         />
       )}
+
+      {pendingStateUpdate && (
+        <ConfirmAddStateTasksModal 
+          targetState={pendingStateUpdate.targetState}
+          onConfirm={handleConfirmStateTasks}
+          onSkip={handleSkipStateTasks}
+          onCancel={() => setPendingStateUpdate(null)}
+          loading={stateTasksLoading}
+        />
+      )}
     </div>
   );
 }
+

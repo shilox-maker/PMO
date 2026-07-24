@@ -1,5 +1,5 @@
 const { 
-  sequelize, Usuarios, Proyectos, EstadosProyecto, Sedes, Proveedores, ContactosProveedor, CambiosAlcance, Facturas 
+  sequelize, Usuarios, Proyectos, EstadosProyecto, Sedes, Proveedores, ContactosProveedor, CambiosAlcance, Facturas, TiposFactura 
 } = require('../models');
 const { getProjectCalculations } = require('../models/automations');
 
@@ -221,6 +221,28 @@ describe('Pruebas de Integración - Reglas Financieras de Proyecto', () => {
 
     // presupuesto_disponible = 80000 - 50000 = 30000
     expect(calculations.presupuesto_disponible).toBe(30000.00);
+  });
+
+  it('debería permitir asociar un tipo de factura a una factura y recuperar la relación', async () => {
+    const tipo = await TiposFactura.create({ nombre: 'Consultoría Externa' });
+    await Facturas.create({
+      id_interno_factura: 'FAC-TEST-TIPO',
+      id_proyecto: 'PRJ-2026-FIN1',
+      id_proveedor: 1,
+      id_tipo_factura: tipo.id_tipo_factura,
+      concepto: 'Prueba Tipo Factura',
+      fecha_factura: '2026-07-01',
+      importe: 1000.00,
+      estado: 'RECIBIDA'
+    });
+
+    const foundFac = await Facturas.findByPk('FAC-TEST-TIPO', {
+      include: [{ model: TiposFactura, as: 'TipoFactura' }]
+    });
+
+    expect(foundFac).not.toBeNull();
+    expect(foundFac.TipoFactura).not.toBeNull();
+    expect(foundFac.TipoFactura.nombre).toBe('Consultoría Externa');
   });
 
 });

@@ -3,7 +3,7 @@ const {
 } = require('./project/projectCrud.controller');
 
 const { 
-  exportProjects, addParticipant, removeParticipant 
+  exportProjects, addParticipant, removeParticipant, applyStateTasks
 } = require('./project/projectActions.controller');
 
 module.exports = {
@@ -14,5 +14,7 @@ module.exports = {
   deleteProject,
   exportProjects,
   addParticipant,
-  removeParticipant
+  removeParticipant,
+  applyStateTasks
 };
+

@@ -15,6 +15,8 @@ const createRisk = asyncHandler(async (req, res) => {
       return res.status(400).json({ error: 'El ID de riesgo debe tener el formato RSG-YYYY-XXX.' });
     }
   }
+  if (!data.id_tarea || data.id_tarea === '') data.id_tarea = null;
+  else data.id_tarea = Number(data.id_tarea);
   const rsg = await Riesgos.create(data);
   res.status(201).json(rsg);
 });
@@ -24,6 +26,8 @@ const updateRisk = asyncHandler(async (req, res) => {
   const data = req.body;
   delete data.createdBy;
   data.modifiedBy = req.currentPmId;
+  if (data.id_tarea === '' || data.id_tarea === null) data.id_tarea = null;
+  else if (data.id_tarea) data.id_tarea = Number(data.id_tarea);
   const rsg = await Riesgos.findByPk(id_riesgo);
   if (!rsg) {
     return res.status(404).json({ error: 'Riesgo no encontrado' });
@@ -48,6 +52,8 @@ const createIssue = asyncHandler(async (req, res) => {
   if (data.estado === 'RESUELTA' && (!data.solucion_aplicada || data.solucion_aplicada.trim() === '')) {
     return res.status(400).json({ error: 'La solución aplicada es obligatoria cuando la incidencia está RESUELTA.' });
   }
+  if (!data.id_tarea || data.id_tarea === '') data.id_tarea = null;
+  else data.id_tarea = Number(data.id_tarea);
   const inc = await Incidencias.create(data);
   res.status(201).json(inc);
 });
@@ -57,6 +63,8 @@ const updateIssue = asyncHandler(async (req, res) => {
   const data = req.body;
   delete data.createdBy;
   data.modifiedBy = req.currentPmId;
+  if (data.id_tarea === '' || data.id_tarea === null) data.id_tarea = null;
+  else if (data.id_tarea) data.id_tarea = Number(data.id_tarea);
   const inc = await Incidencias.findByPk(id_incidencia);
   if (!inc) {
     return res.status(404).json({ error: 'Incidencia no encontrada' });

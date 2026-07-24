@@ -21,6 +21,7 @@ export default function ProjectEditModal({
     budget_inicial: '',
     budget_notas: '',
     portfolio_id: '',
+    url_sharepoint: '',
     involvedKus: []
   });
   const [error, setError] = useState('');
@@ -43,6 +44,7 @@ export default function ProjectEditModal({
         budget_inicial: project.budget_inicial || '',
         budget_notas: project.budget_notas || '',
         portfolio_id: project.portfolio_id ? project.portfolio_id.toString() : '',
+        url_sharepoint: project.url_sharepoint || '',
         involvedKus: project.InvolvedContacts?.map(k => k.id_contacto) || []
       });
     }
@@ -241,6 +243,19 @@ export default function ProjectEditModal({
                 onChange={(val) => setForm(prev => ({ ...prev, id_sponsor: val }))}
                 multiple={false}
                 placeholder="Seleccione Sponsor..."
+              />
+            </div>
+
+            {/* SharePoint URL */}
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">URL Site SharePoint (Documentación)</label>
+              <input 
+                type="text" 
+                name="url_sharepoint"
+                value={form.url_sharepoint}
+                onChange={handleInputChange}
+                placeholder="https://dacsa.sharepoint.com/sites/..."
+                className="m3-input"
               />
             </div>
 

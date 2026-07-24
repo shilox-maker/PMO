@@ -4,10 +4,34 @@ import { getSortedData } from '../../../utils/sorting';
 
 export default function ProjectFinanzasTab({
   project, openAddInvoice, openEditInvoice, handleDeleteInvoice,
+  setShowInvoiceModal, setEditingInvoice, fetchProjectData, getAuthHeaders,
   invoicesSort, setInvoicesSort, renderSortHeader
 }) {
   const calc = project.calculations || {};
   const sortedInvoices = getSortedData(project.Facturas || [], invoicesSort);
+
+  const handleOpenAdd = openAddInvoice || (() => {
+    if (setEditingInvoice) setEditingInvoice(null);
+    if (setShowInvoiceModal) setShowInvoiceModal(true);
+  });
+
+  const handleOpenEdit = openEditInvoice || ((fac) => {
+    if (setEditingInvoice) setEditingInvoice(fac);
+    if (setShowInvoiceModal) setShowInvoiceModal(true);
+  });
+
+  const handleDelete = handleDeleteInvoice || ((id) => {
+    if (!window.confirm('¿Seguro que desea eliminar esta factura?')) return;
+    fetch(`${import.meta.env.VITE_API_URL}/invoices/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders ? getAuthHeaders() : {}
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al eliminar la factura');
+        if (fetchProjectData) fetchProjectData();
+      })
+      .catch(err => alert(err.message));
+  });
 
   const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
 
@@ -78,7 +102,7 @@ export default function ProjectFinanzasTab({
             <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Registro de Cobros Realizados / PO</h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Seguimiento contable de hitos de cobro y órdenes de compra</p>
           </div>
-          <button className="m3-btn m3-btn-primary" onClick={openAddInvoice}>
+          <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
             <Plus size={16} /> Registrar Cobro / PO
           </button>
         </div>
@@ -95,6 +119,7 @@ export default function ProjectFinanzasTab({
                   {renderSortHeader('Código Interno', 'id_interno_factura', invoicesSort, setInvoicesSort)}
                   {renderSortHeader('Factura Socio', 'numero_factura', invoicesSort, setInvoicesSort)}
                   {renderSortHeader('Orden Compra PO', 'PO', invoicesSort, setInvoicesSort)}
+                  {renderSortHeader('Tipo', 'TipoFactura.nombre', invoicesSort, setInvoicesSort)}
                   {renderSortHeader('Concepto', 'concepto', invoicesSort, setInvoicesSort)}
                   {renderSortHeader('Fecha Emisión', 'fecha_factura', invoicesSort, setInvoicesSort)}
                   {renderSortHeader('Importe', 'importe', invoicesSort, setInvoicesSort)}
@@ -108,6 +133,13 @@ export default function ProjectFinanzasTab({
                     <td style={{ fontWeight: 700 }}>{fac.id_interno_factura}</td>
                     <td>{fac.numero_factura || '—'}</td>
                     <td style={{ fontWeight: 600, color: 'var(--md-sys-color-primary)' }}>{fac.PO || '—'}</td>
+                    <td>
+                      {fac.TipoFactura?.nombre ? (
+                        <span className="badge" style={{ backgroundColor: 'rgba(187, 134, 252, 0.15)', color: '#d0bcff', border: '1px solid rgba(187, 134, 252, 0.3)', fontSize: '0.75rem' }}>
+                          {fac.TipoFactura.nombre}
+                        </span>
+                      ) : '—'}
+                    </td>
                     <td>{fac.concepto}</td>
                     <td>{fac.fecha_factura}</td>
                     <td style={{ fontWeight: 600 }}>{formatCurrency(parseFloat(fac.importe))}</td>
@@ -118,10 +150,10 @@ export default function ProjectFinanzasTab({
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button className="icon-btn" onClick={() => openEditInvoice(fac)} title="Editar factura">
+                        <button className="icon-btn" onClick={() => handleOpenEdit(fac)} title="Editar factura">
                           <Edit2 size={14} />
                         </button>
-                        <button className="icon-btn" onClick={() => handleDeleteInvoice(fac.id_interno_factura)} title="Eliminar factura" style={{ color: 'var(--color-rag-red)' }}>
+                        <button className="icon-btn" onClick={() => handleDelete(fac.id_interno_factura)} title="Eliminar factura" style={{ color: 'var(--color-rag-red)' }}>
                           <Trash2 size={14} />
                         </button>
                       </div>

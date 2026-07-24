@@ -48,6 +48,7 @@ const projectCreateSchema = Joi.object({
   comSemanalKus: Joi.array().items(Joi.number().integer()).optional(),
   comMensualKus: Joi.array().items(Joi.number().integer()).optional(),
   comSteercoKus: Joi.array().items(Joi.number().integer()).optional(),
+  url_sharepoint: Joi.string().allow('', null).optional(),
   tagIds: Joi.array().items(Joi.number().integer()).optional()
 });
 
@@ -97,6 +98,7 @@ const projectUpdateSchema = Joi.object({
   comSemanalKus: Joi.array().items(Joi.number().integer()).optional(),
   comMensualKus: Joi.array().items(Joi.number().integer()).optional(),
   comSteercoKus: Joi.array().items(Joi.number().integer()).optional(),
+  url_sharepoint: Joi.string().allow('', null).optional(),
   tagIds: Joi.array().items(Joi.number().integer()).optional()
 });
 

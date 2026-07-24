@@ -39,3 +39,8 @@ Tú eres el encargado de mantener la trazabilidad del proyecto utilizando el arc
 
 6. **Comando: "Subido FEATURE-XX" (o si el agente tiene permiso para hacer git push):**
    - Mueve la feature a la sección "7. Completado e Integrado (Historial)", marca el check `[x]` y añade la fecha actual.
+
+   ## 🛡️ Protocolo de Calidad y Cambios de Base de Datos
+- **Ejecución Obligatoria de Migraciones:** Siempre que se cree o modifique un modelo/columna en la base de datos, el agente DEBE crear la migración Y ejecutarla inmediatamente (`node migrate.js up`) en la base de datos local antes de dar la tarea por completada.
+- **Verificación de Persistencia Real:** Prohibido declarar una funcionalidad de lectura/escritura (POST/PUT/DELETE) como terminada sin antes verificar mediante un test o script de consola que el dato se guarda y recupera correctamente en la BD.
+- **Protección de Contratos y Regresiones:** Antes de modificar un controlador o componente existente, verificar que no se alteren o eliminen parámetros existentes en los esquemas ni tipos de datos en la respuesta.

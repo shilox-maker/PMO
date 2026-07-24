@@ -55,8 +55,16 @@ app.use('/api', metaRoutes);
 app.use('/api', itemRoutes);
 app.use('/api', adminRoutes);
 
+// API 404 JSON Handler
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ 
+    error: `HAY UN ERROR EN EL BACKEND (HTTP 404): Ruta de API no encontrada (${req.method} ${req.originalUrl})` 
+  });
+});
+
 // Global Error Handler Middleware
 app.use(errorHandler);
+
 
 // Database Initialization and Server Start
 if (process.env.NODE_ENV !== 'test') {

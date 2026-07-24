@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
 export default function CrModal({ 
-  isOpen, onClose, projectId, editingCr, getAuthHeaders, onSuccess, contactosList 
+  isOpen, onClose, projectId, editingCr, cr, getAuthHeaders, onSuccess, contactosList 
 }) {
+  const targetCr = editingCr || cr;
   const [form, setForm] = useState({
     id_cambio: '',
     fecha_solicitud: '',
@@ -18,23 +19,23 @@ export default function CrModal({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (editingCr) {
+    if (targetCr) {
       setForm({
-        id_cambio: editingCr.id_cambio,
-        fecha_solicitud: editingCr.fecha_solicitud || '',
-        id_solicitante_contacto: editingCr.id_solicitante_contacto || '',
-        id_aprobador_contacto: editingCr.id_aprobador_contacto || '',
-        descripcion_motivo: editingCr.descripcion_motivo || '',
-        impacta_importe: !!editingCr.impacta_importe,
-        importe_impacto: editingCr.importe_impacto || '0',
-        impacta_tiempo: !!editingCr.impacta_tiempo,
-        dias_impacto: editingCr.dias_impacto || '0',
-        estado_cambio: editingCr.estado_cambio || 'SOLICITADO'
+        id_cambio: targetCr.id_cambio,
+        fecha_solicitud: targetCr.fecha_solicitud || '',
+        id_solicitante_contacto: targetCr.id_solicitante_contacto || '',
+        id_aprobador_contacto: targetCr.id_aprobador_contacto || '',
+        descripcion_motivo: targetCr.descripcion_motivo || '',
+        impacta_importe: !!targetCr.impacta_importe,
+        importe_impacto: targetCr.importe_impacto || '0',
+        impacta_tiempo: !!targetCr.impacta_tiempo,
+        dias_impacto: targetCr.dias_impacto || '0',
+        estado_cambio: targetCr.estado_cambio || 'SOLICITADO'
       });
     } else {
       setForm({
         id_cambio: '',
-        fecha_solicitud: '',
+        fecha_solicitud: new Date().toISOString().split('T')[0],
         id_solicitante_contacto: '',
         id_aprobador_contacto: '',
         descripcion_motivo: '',
@@ -46,7 +47,7 @@ export default function CrModal({
       });
     }
     setError('');
-  }, [editingCr, isOpen]);
+  }, [targetCr, isOpen]);
 
   if (!isOpen) return null;
 
@@ -68,9 +69,9 @@ export default function CrModal({
       dias_impacto: parseInt(form.dias_impacto, 10)
     };
 
-    const isEdit = !!editingCr;
+    const isEdit = !!targetCr;
     const url = isEdit 
-      ? `${import.meta.env.VITE_API_URL}/scope-changes/${editingCr.id_cambio}` 
+      ? `${import.meta.env.VITE_API_URL}/scope-changes/${targetCr.id_cambio}` 
       : `${import.meta.env.VITE_API_URL}/scope-changes`;
     const method = isEdit ? 'PUT' : 'POST';
 
