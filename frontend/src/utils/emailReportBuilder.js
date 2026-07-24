@@ -368,7 +368,7 @@ export async function copyHtmlToClipboard(htmlText, plainText) {
 }
 
 export function openMailClient({ recipientEmails = [], subject = '', body = '' }) {
-  const toParam = recipientEmails.filter(Boolean).join(',');
+  const toParam = recipientEmails.filter(Boolean).join(';');
   const encodedSubject = encodeURIComponent(subject);
   const encodedBody = encodeURIComponent(body);
   const mailtoUrl = `mailto:${toParam}?subject=${encodedSubject}&body=${encodedBody}`;
