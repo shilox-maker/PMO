@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const schema = queryInterface.sequelize.options.define.schema || 'dbo';
+    const schema = process.env.DB_SCHEMA || queryInterface.sequelize.options.define?.schema || 'dbo';
     const isSqlite = queryInterface.sequelize.options.dialect === 'sqlite';
     const riesgosTarget = isSqlite ? 'Riesgos' : { tableName: 'Riesgos', schema };
     const incidenciasTarget = isSqlite ? 'Incidencias' : { tableName: 'Incidencias', schema };
@@ -55,7 +55,7 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    const schema = queryInterface.sequelize.options.define.schema || 'dbo';
+    const schema = process.env.DB_SCHEMA || queryInterface.sequelize.options.define?.schema || 'dbo';
     const isSqlite = queryInterface.sequelize.options.dialect === 'sqlite';
 
     try {
