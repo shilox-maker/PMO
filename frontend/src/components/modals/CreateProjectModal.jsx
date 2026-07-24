@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import SearchableContactSelect from '../SearchableContactSelect';
 import CapexFieldsGroup from './CapexFieldsGroup';
 
 export default function CreateProjectModal({
@@ -125,7 +124,7 @@ export default function CreateProjectModal({
       return;
     }
 
-    if (!newProject.nombre_proyecto || !newProject.id_pm || !newProject.id_proveedor || !newProject.id_sede || !newProject.id_sponsor || !newProject.budget_inicial) {
+    if (!newProject.nombre_proyecto || !newProject.id_pm || !newProject.id_proveedor || !newProject.id_sede || !newProject.budget_inicial) {
       setFormError('Por favor, rellene todos los campos obligatorios.');
       return;
     }
@@ -137,7 +136,7 @@ export default function CreateProjectModal({
       id_proveedor: parseInt(newProject.id_proveedor, 10),
       id_sede: parseInt(newProject.id_sede, 10),
       id_sede_distribuir: newProject.id_sede_distribuir ? parseInt(newProject.id_sede_distribuir, 10) : null,
-      id_sponsor: parseInt(newProject.id_sponsor, 10),
+      id_sponsor: newProject.id_sponsor ? parseInt(newProject.id_sponsor, 10) : null,
       portfolio_id: newProject.portfolio_id ? parseInt(newProject.portfolio_id, 10) : null,
       id_tipo_capex: newProject.es_capex && newProject.id_tipo_capex ? parseInt(newProject.id_tipo_capex, 10) : null,
       id_subtipo_capex: newProject.es_capex && newProject.id_subtipo_capex ? parseInt(newProject.id_subtipo_capex, 10) : null
@@ -256,18 +255,6 @@ export default function CreateProjectModal({
                   <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
                 ))}
               </select>
-            </div>
-
-            {/* Sponsor Key User */}
-            <div className="form-group">
-              <label className="form-label">Sponsor / Key User Líder *</label>
-              <SearchableContactSelect 
-                contacts={contactosList}
-                selected={newProject.id_sponsor}
-                onChange={(val) => setNewProject(prev => ({ ...prev, id_sponsor: val }))}
-                multiple={false}
-                placeholder="Seleccione Sponsor / Key User Líder..."
-              />
             </div>
 
             {/* Gestor PM */}
