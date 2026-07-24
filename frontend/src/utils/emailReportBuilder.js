@@ -36,7 +36,7 @@ export function buildProjectEmailBody(project, reportOptions, committeeName) {
     lines.push('│ 📈 RESUMEN GENERAL Y KPIS DE CONTROL             │');
     lines.push('└──────────────────────────────────────────────────┘');
     lines.push(`  • Estado: ${getStatusBadge(project.Estado?.nombre_estado || project.estado)}`);
-    lines.push(`  • Salud General: ${project.salud_proyecto ?? 'N/A'}%`);
+    lines.push(`  • Salud General: ${project.salud_proyecto !== null && project.salud_proyecto !== undefined ? `${project.salud_proyecto}%` : 'N/A'}`);
     lines.push(`  • Avance Tiempo:  ${getProgressBar(calc.tiempoTranscurridoPorcentaje)}`);
     lines.push(`  • Progreso Gasto: ${getProgressBar(calc.gastoEjecutadoPorcentaje)}`);
     if (project.proximo_hito) lines.push(`  • Próximo Hito: 🎯 ${project.proximo_hito}`);
@@ -73,7 +73,8 @@ export function buildProjectEmailBody(project, reportOptions, committeeName) {
       hitos.slice(0, 5).forEach(h => {
         const fecha = h.fecha_limite ? new Date(h.fecha_limite).toLocaleDateString('es-ES') : 'Sin fecha';
         const isDone = h.estado === 'COMPLETADA';
-        lines.push(`  ${isDone ? '✅' : '⏳'} ${h.titulo_tarea || h.nombre} (${fecha}) - ${h.estado || 'PENDIENTE'}`);
+        const nombreHito = h.titulo_tarea || h.nombre || h.descripcion || 'Hito sin título';
+        lines.push(`  ${isDone ? '✅' : '⏳'} ${nombreHito} (${fecha}) - ${h.estado || 'PENDIENTE'}`);
       });
       lines.push('');
     }
@@ -87,7 +88,8 @@ export function buildProjectEmailBody(project, reportOptions, committeeName) {
       lines.push('🚨 MATRIZ DE RIESGOS ABIERTOS');
       lines.push('════════════════════════════════════════════════════');
       riesgos.slice(0, 5).forEach(r => {
-        lines.push(`  ⚠️  ${r.titulo_riesgo || r.descripcion} [Prob: ${r.probabilidad || '-'}, Imp: ${r.impacto || '-'}]`);
+        const desc = r.titulo_riesgo || r.descripcion_riesgo || r.descripcion || r.motivo || 'Riesgo identificado';
+        lines.push(`  ⚠️  ${desc} [Prob: ${r.probabilidad || '-'}, Imp: ${r.impacto || '-'}]`);
       });
       lines.push('');
     }
@@ -101,7 +103,8 @@ export function buildProjectEmailBody(project, reportOptions, committeeName) {
       lines.push('⚡ INCIDENCIAS PENDIENTES');
       lines.push('════════════════════════════════════════════════════');
       incs.slice(0, 5).forEach(i => {
-        lines.push(`  💥 [${i.prioridad || i.severidad || 'MEDIA'}] ${i.titulo_incidencia || i.descripcion}`);
+        const desc = i.titulo_incidencia || i.descripcion_incidencia || i.descripcion || 'Incidencia abierta';
+        lines.push(`  💥 [${i.prioridad || i.severidad || 'MEDIA'}] ${desc}`);
       });
       lines.push('');
     }
@@ -115,7 +118,9 @@ export function buildProjectEmailBody(project, reportOptions, committeeName) {
       lines.push('🔄 CAMBIOS DE ALCANCE (CR)');
       lines.push('════════════════════════════════════════════════════');
       cambios.slice(0, 5).forEach(c => {
-        lines.push(`  📋 [${c.estado || 'PENDIENTE'}] ${c.titulo || c.descripcion}`);
+        const desc = c.descripcion_motivo || c.titulo_cambio || c.titulo || c.descripcion || c.motivo || `Solicitud de cambio #${c.id_cambio || ''}`;
+        const estado = c.estado_cambio || c.estado || 'PENDIENTE';
+        lines.push(`  📋 [${estado}] ${desc}`);
       });
       lines.push('');
     }
@@ -129,7 +134,8 @@ export function buildProjectEmailBody(project, reportOptions, committeeName) {
       lines.push('💡 LECCIONES APRENDIDAS');
       lines.push('════════════════════════════════════════════════════');
       lecciones.slice(0, 3).forEach(l => {
-        lines.push(`  💡 ${l.titulo || l.descripcion}`);
+        const desc = l.titulo_leccion || l.descripcion_leccion || l.leccion_aprendida || l.titulo || l.descripcion || 'Lección registrada';
+        lines.push(`  💡 ${desc}`);
       });
       lines.push('');
     }
@@ -147,6 +153,7 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
   const calc = project.calculations || {};
   const dateStr = new Date().toLocaleDateString('es-ES');
   const estadoStr = project.Estado?.nombre_estado || project.estado || 'En Ejecución';
+  const saludStr = project.salud_proyecto !== null && project.salud_proyecto !== undefined ? `${project.salud_proyecto}%` : 'N/A';
 
   let html = `
   <div style="font-family: Arial, Helvetica, sans-serif; max-width: 680px; margin: 0 auto; color: #1e293b; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
@@ -184,7 +191,7 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
             </td>
             <td width="50%" valign="top" style="border-bottom: 1px solid #e2e8f0;">
               <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Salud General</div>
-              <div style="font-size: 16px; font-weight: bold; margin-top: 4px; color: #2563eb;">${project.salud_proyecto ?? 'N/A'}%</div>
+              <div style="font-size: 16px; font-weight: bold; margin-top: 4px; color: #2563eb;">${saludStr}</div>
             </td>
           </tr>
           <tr>
@@ -241,9 +248,11 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
               </tr>
             </thead>
             <tbody>
-              ${hitos.slice(0, 5).map(h => `
+              ${hitos.slice(0, 5).map(h => {
+                const nombreHito = h.titulo_tarea || h.nombre || h.descripcion || 'Hito sin título';
+                return `
                 <tr>
-                  <td style="border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: 600;">${h.titulo_tarea || h.nombre}</td>
+                  <td style="border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: 600;">${nombreHito}</td>
                   <td style="border-bottom: 1px solid #e2e8f0; padding: 8px;">${h.fecha_limite ? new Date(h.fecha_limite).toLocaleDateString('es-ES') : '—'}</td>
                   <td style="border-bottom: 1px solid #e2e8f0; padding: 8px;">
                     <span style="padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; background-color: ${h.estado === 'COMPLETADA' ? '#dcfce7' : '#fef3c7'}; color: ${h.estado === 'COMPLETADA' ? '#15803d' : '#b45309'};">
@@ -251,7 +260,8 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
                     </span>
                   </td>
                 </tr>
-              `).join('')}
+              `;
+              }).join('')}
             </tbody>
           </table>
         </div>
@@ -275,13 +285,16 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
               </tr>
             </thead>
             <tbody>
-              ${riesgos.slice(0, 5).map(r => `
+              ${riesgos.slice(0, 5).map(r => {
+                const desc = r.titulo_riesgo || r.descripcion_riesgo || r.descripcion || r.motivo || 'Riesgo identificado';
+                return `
                 <tr>
-                  <td style="border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: 500;">${r.titulo_riesgo || r.descripcion}</td>
+                  <td style="border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: 500;">${desc}</td>
                   <td style="border-bottom: 1px solid #e2e8f0; padding: 8px;">${r.probabilidad || '-'}</td>
                   <td style="border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: bold; color: #dc2626;">${r.impacto || '-'}</td>
                 </tr>
-              `).join('')}
+              `;
+              }).join('')}
             </tbody>
           </table>
         </div>
@@ -304,12 +317,47 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
               </tr>
             </thead>
             <tbody>
-              ${incs.slice(0, 5).map(i => `
+              ${incs.slice(0, 5).map(i => {
+                const desc = i.titulo_incidencia || i.descripcion_incidencia || i.descripcion || 'Incidencia abierta';
+                return `
                 <tr>
-                  <td style="border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: 500;">${i.titulo_incidencia || i.descripcion}</td>
+                  <td style="border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: 500;">${desc}</td>
                   <td style="border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: bold;">${i.prioridad || i.severidad || 'MEDIA'}</td>
                 </tr>
-              `).join('')}
+              `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+  }
+
+  // Cambios de Alcance
+  if (reportOptions.cambios) {
+    const cambios = project.CambiosAlcance || project.Cambios_Alcances || [];
+    if (cambios.length > 0) {
+      html += `
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 14px; text-transform: uppercase; color: #7c3aed; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-top: 0; margin-bottom: 10px;">🔄 Cambios de Alcance (CR)</h3>
+          <table width="100%" cellPadding="8" cellSpacing="0" style="border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr style="background-color: #f3e8ff; text-align: left; color: #6b21a8;">
+                <th style="border-bottom: 2px solid #d8b4fe; padding: 8px;">Descripción / Motivo</th>
+                <th style="border-bottom: 2px solid #d8b4fe; padding: 8px;">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${cambios.slice(0, 5).map(c => {
+                const desc = c.descripcion_motivo || c.titulo_cambio || c.titulo || c.descripcion || c.motivo || `Solicitud de cambio #${c.id_cambio || ''}`;
+                const estado = c.estado_cambio || c.estado || 'PENDIENTE';
+                return `
+                <tr>
+                  <td style="border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: 500;">${desc}</td>
+                  <td style="border-bottom: 1px solid #e2e8f0; padding: 8px; font-weight: bold; color: #7c3aed;">${estado}</td>
+                </tr>
+              `;
+              }).join('')}
             </tbody>
           </table>
         </div>
@@ -325,7 +373,10 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
         <div style="margin-bottom: 24px;">
           <h3 style="font-size: 14px; text-transform: uppercase; color: #0284c7; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-top: 0; margin-bottom: 10px;">💡 Lecciones Aprendidas</h3>
           <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #334155;">
-            ${lecciones.slice(0, 3).map(l => `<li style="margin-bottom: 6px;">${l.titulo || l.descripcion}</li>`).join('')}
+            ${lecciones.slice(0, 3).map(l => {
+              const desc = l.titulo_leccion || l.descripcion_leccion || l.leccion_aprendida || l.titulo || l.descripcion || 'Lección registrada';
+              return `<li style="margin-bottom: 6px;">${desc}</li>`;
+            }).join('')}
           </ul>
         </div>
       `;
