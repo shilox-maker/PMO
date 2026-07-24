@@ -28,6 +28,22 @@ describe('Payload Validation Schemas (Joi)', () => {
       expect(error).toBeUndefined();
     });
 
+    it('debería permitir crear un proyecto sin id_proyecto (para auto-asignación)', () => {
+      const projectWithoutId = {
+        nombre_proyecto: 'Proyecto Auto ID',
+        descripcion: 'Test auto id',
+        id_pm: 1,
+        id_sede: 2,
+        fecha_inicio: '2026-07-06'
+      };
+      
+      const { error: err1 } = projectCreateSchema.validate(projectWithoutId);
+      expect(err1).toBeUndefined();
+
+      const { error: err2 } = projectCreateSchema.validate({ ...projectWithoutId, id_proyecto: '' });
+      expect(err2).toBeUndefined();
+    });
+
     it('debería fallar si el formato del id_proyecto no es correcto', () => {
       const invalidProject = {
         id_proyecto: 'INVALID-ID',

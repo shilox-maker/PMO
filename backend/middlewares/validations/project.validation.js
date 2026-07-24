@@ -1,13 +1,14 @@
 const Joi = require('joi');
 
 const projectCreateSchema = Joi.object({
-  id_proyecto: Joi.string().pattern(/^PRJ-\d{4}-\d{3}$/).required()
+  id_proyecto: Joi.string().pattern(/^PRJ-\d{4}-\d{3}$/).empty('').allow(null).optional()
     .messages({ 'string.pattern.base': 'El ID del proyecto debe tener el formato PRJ-YYYY-XXX' }),
   nombre_proyecto: Joi.string().max(255).required(),
   descripcion: Joi.string().required(),
   id_pm: Joi.number().integer().required(),
   id_proveedor: Joi.number().integer().allow(null).optional(),
   id_sede: Joi.number().integer().required(),
+  id_sede_distribuir: Joi.number().integer().allow(null).optional(),
   id_sponsor: Joi.number().integer().allow(null).optional(),
   id_estado: Joi.number().integer().optional(),
   portfolio_id: Joi.number().integer().allow(null).optional(),
@@ -58,6 +59,7 @@ const projectUpdateSchema = Joi.object({
   id_pm: Joi.number().integer().optional(),
   id_proveedor: Joi.number().integer().allow(null).optional(),
   id_sede: Joi.number().integer().optional(),
+  id_sede_distribuir: Joi.number().integer().allow(null).optional(),
   id_sponsor: Joi.number().integer().allow(null).optional(),
   id_estado: Joi.number().integer().optional(),
   portfolio_id: Joi.number().integer().allow(null).optional(),

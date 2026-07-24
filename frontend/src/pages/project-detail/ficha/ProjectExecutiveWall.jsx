@@ -1,5 +1,5 @@
-import React from 'react';
-import { MessageSquare, Star, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { MessageSquare, Star, Edit2, Trash2, Filter } from 'lucide-react';
 import RichTextEditor from '../../../components/RichTextEditor';
 
 export default function ProjectExecutiveWall({
@@ -25,6 +25,28 @@ export default function ProjectExecutiveWall({
   canSeeDireccion,
   formatDateTime
 }) {
+  const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'IMPORTANT' | 'DIRECCION'
+
+  const filteredComments = useMemo(() => {
+    if (!comments) return [];
+    if (filterType === 'IMPORTANT') {
+      return comments.filter(c => c.es_importante);
+    }
+    if (filterType === 'DIRECCION' && canSeeDireccion) {
+      return comments.filter(c => c.para_direccion);
+    }
+    return comments;
+  }, [comments, filterType, canSeeDireccion]);
+
+  const counts = useMemo(() => {
+    if (!comments) return { all: 0, important: 0, direccion: 0 };
+    return {
+      all: comments.length,
+      important: comments.filter(c => c.es_importante).length,
+      direccion: comments.filter(c => c.para_direccion).length
+    };
+  }, [comments]);
+
   return (
     <div className="m3-card glass-panel" style={{ marginTop: 12 }}>
       <h3 style={{ fontWeight: 600, fontSize: '1.25rem', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -74,6 +96,55 @@ export default function ProjectExecutiveWall({
         </div>
       </div>
 
+      {/* Filter Bar */}
+      {comments && comments.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap', paddingBottom: 12, borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--md-sys-color-on-surface-variant)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Filter size={15} /> Filtrar muro:
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className={`m3-btn ${filterType === 'ALL' ? 'm3-btn-primary' : 'm3-btn-outline'}`}
+              onClick={() => setFilterType('ALL')}
+              style={{ height: '30px', fontSize: '0.78rem', padding: '0 12px' }}
+            >
+              Todos ({counts.all})
+            </button>
+            <button
+              type="button"
+              className={`m3-btn ${filterType === 'IMPORTANT' ? 'm3-btn-primary' : 'm3-btn-outline'}`}
+              onClick={() => setFilterType('IMPORTANT')}
+              style={{
+                height: '30px',
+                fontSize: '0.78rem',
+                padding: '0 12px',
+                borderColor: filterType === 'IMPORTANT' ? undefined : '#f59e0b',
+                color: filterType === 'IMPORTANT' ? undefined : '#d97706'
+              }}
+            >
+              ⭐ Importantes ({counts.important})
+            </button>
+            {canSeeDireccion && (
+              <button
+                type="button"
+                className={`m3-btn ${filterType === 'DIRECCION' ? 'm3-btn-primary' : 'm3-btn-outline'}`}
+                onClick={() => setFilterType('DIRECCION')}
+                style={{
+                  height: '30px',
+                  fontSize: '0.78rem',
+                  padding: '0 12px',
+                  borderColor: filterType === 'DIRECCION' ? undefined : '#007aff',
+                  color: filterType === 'DIRECCION' ? undefined : '#007aff'
+                }}
+              >
+                📢 Dirección ({counts.direccion})
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Comments List */}
       {commentsLoading ? (
         <span>Cargando comentarios...</span>
@@ -81,9 +152,13 @@ export default function ProjectExecutiveWall({
         <p style={{ textAlign: 'center', color: 'var(--md-sys-color-outline)', padding: '24px 0', fontStyle: 'italic' }}>
           No hay comentarios registrados en este proyecto.
         </p>
+      ) : filteredComments.length === 0 ? (
+        <p style={{ textAlign: 'center', color: 'var(--md-sys-color-outline)', padding: '24px 0', fontStyle: 'italic' }}>
+          No hay comentarios que coincidan con el filtro seleccionado.
+        </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {comments.map(c => {
+          {filteredComments.map(c => {
             const isEditing = editingCommentId === c.id_comentario;
 
             return (
@@ -201,3 +276,4 @@ export default function ProjectExecutiveWall({
     </div>
   );
 }
+

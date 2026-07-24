@@ -19,6 +19,8 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-27 (IDEA-27): Filtro en el muro de comentarios para comentarios importantes y de dirección** (2026-07-24)
+- [x] **BUG-03: Error "id_proyecto is required" al registrar un nuevo proyecto dejando el código auto-generado** (2026-07-24)
 - [x] **FEATURE-26 (IDEA-26): Botón para enviar Informe de Proyecto por correo electrónico con selección de campos (cliente SO predeterminado)** (2026-07-24)
 - [x] **FEATURE-25 (IDEA-25): Relacionar riesgos e incidencias con una tarea existente del mismo proyecto** (2026-07-24)
 - [x] **FEATURE-24 (IDEA-24): Registro en lote de Facturas / Cobros Recurrentes** (2026-07-24)
