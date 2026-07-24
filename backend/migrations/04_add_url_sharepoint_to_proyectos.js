@@ -5,12 +5,13 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     const schema = queryInterface.sequelize.options.define.schema || 'dbo';
     const isSqlite = queryInterface.sequelize.options.dialect === 'sqlite';
+    const target = isSqlite ? 'Proyectos' : { tableName: 'Proyectos', schema };
 
     try {
-      const proyectosInfo = await queryInterface.describeTable('Proyectos');
+      const proyectosInfo = await queryInterface.describeTable(target);
       if (proyectosInfo && !proyectosInfo.url_sharepoint) {
         await queryInterface.addColumn(
-          isSqlite ? 'Proyectos' : { tableName: 'Proyectos', schema },
+          target,
           'url_sharepoint',
           {
             type: DataTypes.TEXT,

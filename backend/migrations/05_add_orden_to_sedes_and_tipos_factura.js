@@ -5,12 +5,14 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     const schema = queryInterface.sequelize.options.define.schema || 'dbo';
     const isSqlite = queryInterface.sequelize.options.dialect === 'sqlite';
+    const sedesTarget = isSqlite ? 'Sedes' : { tableName: 'Sedes', schema };
+    const tiposTarget = isSqlite ? 'Tipos_Factura' : { tableName: 'Tipos_Factura', schema };
 
     try {
-      const sedesInfo = await queryInterface.describeTable('Sedes');
+      const sedesInfo = await queryInterface.describeTable(sedesTarget);
       if (sedesInfo && !sedesInfo.orden) {
         await queryInterface.addColumn(
-          isSqlite ? 'Sedes' : { tableName: 'Sedes', schema },
+          sedesTarget,
           'orden',
           {
             type: DataTypes.INTEGER,
@@ -24,10 +26,10 @@ module.exports = {
     }
 
     try {
-      const tiposInfo = await queryInterface.describeTable('Tipos_Factura');
+      const tiposInfo = await queryInterface.describeTable(tiposTarget);
       if (tiposInfo && !tiposInfo.orden) {
         await queryInterface.addColumn(
-          isSqlite ? 'Tipos_Factura' : { tableName: 'Tipos_Factura', schema },
+          tiposTarget,
           'orden',
           {
             type: DataTypes.INTEGER,

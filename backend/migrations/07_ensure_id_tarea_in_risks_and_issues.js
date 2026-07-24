@@ -9,6 +9,7 @@ module.exports = {
     const incidenciasTarget = isSqlite ? 'Incidencias' : { tableName: 'Incidencias', schema };
     const tareasModel = isSqlite ? 'Tareas' : { tableName: 'Tareas', schema };
 
+    // 1. Asegurar id_tarea en Riesgos
     try {
       const riesgosInfo = await queryInterface.describeTable(riesgosTarget);
       if (riesgosInfo && !riesgosInfo.id_tarea) {
@@ -28,9 +29,10 @@ module.exports = {
         );
       }
     } catch (e) {
-      console.warn('Advertencia comprobando columna id_tarea en Riesgos:', e.message);
+      console.warn('Advertencia añadiendo id_tarea en Riesgos:', e.message);
     }
 
+    // 2. Asegurar id_tarea en Incidencias
     try {
       const incidenciasInfo = await queryInterface.describeTable(incidenciasTarget);
       if (incidenciasInfo && !incidenciasInfo.id_tarea) {
@@ -50,7 +52,7 @@ module.exports = {
         );
       }
     } catch (e) {
-      console.warn('Advertencia comprobando columna id_tarea en Incidencias:', e.message);
+      console.warn('Advertencia añadiendo id_tarea en Incidencias:', e.message);
     }
   },
 
