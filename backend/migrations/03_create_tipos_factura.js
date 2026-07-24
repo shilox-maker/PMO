@@ -3,8 +3,13 @@ const { DataTypes } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const schema = process.env.DB_SCHEMA || queryInterface.sequelize.options.define?.schema || 'dbo';
     const isSqlite = queryInterface.sequelize.options.dialect === 'sqlite';
+    const isMssql = queryInterface.sequelize.options.dialect === 'mssql' || process.env.DB_DIALECT === 'mssql';
+    const schema = process.env.DB_SCHEMA || queryInterface.sequelize.options.define?.schema;
+
+    if (isMssql && !schema) {
+      throw new Error('[FATAL] La variable de entorno DB_SCHEMA es obligatoria para conexiones MSSQL / Azure SQL.');
+    }
 
     const originalCreateTable = queryInterface.createTable.bind(queryInterface);
 
@@ -102,8 +107,13 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    const schema = process.env.DB_SCHEMA || queryInterface.sequelize.options.define?.schema || 'dbo';
     const isSqlite = queryInterface.sequelize.options.dialect === 'sqlite';
+    const isMssql = queryInterface.sequelize.options.dialect === 'mssql' || process.env.DB_DIALECT === 'mssql';
+    const schema = process.env.DB_SCHEMA || queryInterface.sequelize.options.define?.schema;
+
+    if (isMssql && !schema) {
+      throw new Error('[FATAL] La variable de entorno DB_SCHEMA es obligatoria para conexiones MSSQL / Azure SQL.');
+    }
 
     try {
       await queryInterface.removeColumn(

@@ -6,6 +6,9 @@ const dialect = process.env.DB_DIALECT || 'sqlite';
 let sequelize;
 
 if (dialect === 'mssql') {
+  if (!process.env.DB_SCHEMA) {
+    throw new Error('[FATAL] La variable de entorno DB_SCHEMA no está configurada. Es obligatoria para conexiones MSSQL / Azure SQL.');
+  }
   // Azure SQL Server connection (PRE / PRO via DB_SCHEMA)
   sequelize = new Sequelize(
     process.env.DB_NAME,
@@ -24,7 +27,7 @@ if (dialect === 'mssql') {
       define: {
         timestamps: true,
         freezeTableName: true,
-        schema: process.env.DB_SCHEMA || 'dbo'
+        schema: process.env.DB_SCHEMA
       },
       logging: false
     }
