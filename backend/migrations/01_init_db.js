@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const schema = queryInterface.sequelize.options.define.schema || 'dbo';
+    const schema = process.env.DB_SCHEMA || queryInterface.sequelize.options.define?.schema || 'dbo';
 
     // Guardar referencias originales
     const originalCreateTable = queryInterface.createTable.bind(queryInterface);
@@ -642,7 +642,7 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    const schema = queryInterface.sequelize.options.define.schema || 'dbo';
+    const schema = process.env.DB_SCHEMA || queryInterface.sequelize.options.define?.schema || 'dbo';
     const originalDropTable = queryInterface.dropTable.bind(queryInterface);
 
     // Envolver dropTable para inyectar esquema
