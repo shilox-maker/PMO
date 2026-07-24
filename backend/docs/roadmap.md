@@ -19,6 +19,7 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-26 (IDEA-26): Botón para enviar Informe de Proyecto por correo electrónico con selección de campos (cliente SO predeterminado)** (2026-07-24)
 - [x] **FEATURE-25 (IDEA-25): Relacionar riesgos e incidencias con una tarea existente del mismo proyecto** (2026-07-24)
 - [x] **FEATURE-24 (IDEA-24): Registro en lote de Facturas / Cobros Recurrentes** (2026-07-24)
 - [x] **FEATURE-23 (IDEA-23): Campo URL del site de SharePoint de documentación en proyectos** (2026-07-24)

@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
-import { MessageSquare, Users, Edit2 } from 'lucide-react';
+import { MessageSquare, Users, Edit2, Mail } from 'lucide-react';
 import CommitteeEditForm from './CommitteeEditForm';
+import EmailReportModal from '../../../components/modals/EmailReportModal';
 
 export default function ProjectComunicacionesTab({ project, handleUpdateProject }) {
   const [editingKey, setEditingKey] = useState(null);
   const [activo, setActivo] = useState(false);
   const [finalidad, setFinalidad] = useState('');
   const [selectedKus, setSelectedKus] = useState([]);
+  const [emailModalData, setEmailModalData] = useState({ isOpen: false, committeeTitle: '', contacts: [] });
+
+  const handleOpenEmailModal = (committee) => {
+    setEmailModalData({
+      isOpen: true,
+      committeeTitle: committee.title,
+      contacts: committee.contacts || []
+    });
+  };
+
+  const handleCloseEmailModal = () => {
+    setEmailModalData({ isOpen: false, committeeTitle: '', contacts: [] });
+  };
 
   const startEditing = (key) => {
     setEditingKey(key);
@@ -137,9 +151,20 @@ export default function ProjectComunicacionesTab({ project, handleUpdateProject 
 
               {c.active ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase' }}>Finalidad / Enfoque</div>
-                    <p style={{ fontSize: '0.9rem', marginTop: 4 }}>{c.purpose || 'Sin especificar finalidad.'}</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase' }}>Finalidad / Enfoque</div>
+                      <p style={{ fontSize: '0.9rem', marginTop: 4 }}>{c.purpose || 'Sin especificar finalidad.'}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="m3-btn m3-btn-outline"
+                      onClick={() => handleOpenEmailModal(c)}
+                      title={`Enviar informe de proyecto por correo a los miembros de ${c.title}`}
+                      style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
+                    >
+                      <Mail size={14} /> Enviar Informe por Correo
+                    </button>
                   </div>
 
                   <div>
@@ -182,6 +207,16 @@ export default function ProjectComunicacionesTab({ project, handleUpdateProject 
           );
         })}
       </div>
+
+      {/* Modal de Configuración y Envío de Correo */}
+      <EmailReportModal
+        isOpen={emailModalData.isOpen}
+        onClose={handleCloseEmailModal}
+        project={project}
+        committeeTitle={emailModalData.committeeTitle}
+        contacts={emailModalData.contacts}
+      />
     </div>
   );
 }
+

@@ -2,6 +2,10 @@
 
 ## [2.4.0] - 2026-07-24
 ### Added
+- **Envío de Informe de Proyecto por Correo Electrónico (FEATURE-26 / IDEA-26)**:
+  - Botón "Enviar Informe por Correo" en las tarjetas activas de la pestaña Plan de Comunicación ([ProjectComunicacionesTab.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/pages/project-detail/tabs/ProjectComunicacionesTab.jsx)).
+  - Modal interactivo de configuración ([EmailReportModal.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/components/modals/EmailReportModal.jsx)) para seleccionar destinatarios del comité y marcar secciones a incluir (Resumen/KPIs, Alcance, Hitos, Riesgos, Incidencias, Cambios, Lecciones y Cierre).
+  - Utilidad ([emailReportBuilder.js](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/utils/emailReportBuilder.js)) para generar formato de texto gráfico Unicode (`mailto:`) e informe enriquecido HTML/Rich Text que se copia automáticamente al portapapeles para su pegado en Outlook/Mail.
 - **Relación de Riesgos e Incidencias con Tareas (FEATURE-25 / IDEA-25)**:
   - Posibilidad de asociar riesgos preventivos e incidencias técnicas o presupuestarias a una tarea o hito del proyecto.
   - Selector de tarea/hito en los modales de edición/creación (`RiskModal.jsx` y `IssueModal.jsx`).
