@@ -25,6 +25,11 @@
 - **Popup de Tareas Preconfiguradas al Cambiar de Estado (FEATURE-20 / IDEA-20)**:
   - Diálogo de confirmación para auto-generar tareas por defecto al cambiar el estado del ciclo de vida del proyecto.
 
+### Changed
+- **Unificación de Criterio en Selección de Sponsor de Proyecto**:
+  - Removido el campo "Sponsor / Key User Líder" del modal de creación de proyectos ([CreateProjectModal.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/components/modals/CreateProjectModal.jsx)).
+  - La asignación del Sponsor se realiza exclusivamente al editar el proyecto ([ProjectEditModal.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/components/modals/ProjectEditModal.jsx)) tras haber agregado previamente los contactos participantes a la Matriz RACI del proyecto, unificando el funcionamiento del selector.
+
 ## [2.3.0] - 2026-06-25
 ### Added
 - **Soporte de Despliegue en Windows Server 2022**:
