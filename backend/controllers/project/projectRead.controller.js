@@ -2,7 +2,8 @@ const { Op } = require('sequelize');
 const { 
   Proyectos, Usuarios, Proveedores, Sedes, ContactosProveedor,
   Tareas, EstadosProyecto, CambiosAlcance, Facturas, ComentariosProyecto,
-  Incidencias, Riesgos, LeccionesAprendidas, Portfolios, Tags, TiposCapex, SubtiposCapex, TiposFactura
+  Incidencias, Riesgos, LeccionesAprendidas, Portfolios, Tags, TiposCapex, SubtiposCapex, TiposFactura,
+  PlanesComunicacion, PlanComunicacionLog
 } = require('../../models/index');
 const { getProjectCalculations } = require('../../models/automations');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -89,11 +90,35 @@ const getProjects = asyncHandler(async (req, res) => {
       });
       const ultimo_comentario = lastComment ? lastComment.texto_comentario.replace(/<[^>]+>/g, '') : '';
 
+      // Data Freshness & Adherencia PMO calculation
+      const projectDate = project.updatedAt || project.createdAt;
+      const lastCommentDate = lastComment ? (lastComment.fecha_registro || lastComment.updatedAt) : null;
+      const lastTask = await Tareas.findOne({
+        where: { id_proyecto: project.id_proyecto },
+        order: [['updatedAt', 'DESC']]
+      });
+      const lastTaskDate = lastTask ? lastTask.updatedAt : null;
+
+      const timestamps = [
+        projectDate ? new Date(projectDate).getTime() : 0,
+        lastCommentDate ? new Date(lastCommentDate).getTime() : 0,
+        lastTaskDate ? new Date(lastTaskDate).getTime() : 0
+      ];
+      const maxTime = Math.max(...timestamps);
+      const fecha_ultima_actividad = new Date(maxTime).toISOString();
+      const dias_sin_actualizar = Math.max(0, Math.floor((Date.now() - maxTime) / (1000 * 60 * 60 * 24)));
+      const es_desactualizado = dias_sin_actualizar > 14;
+      const nivel_frescura = dias_sin_actualizar <= 7 ? 'FRESCO' : (dias_sin_actualizar <= 14 ? 'MODERADO' : 'DESACTUALIZADO');
+
       return {
         ...project.toJSON(),
         calculations: calc,
         nextMilestone: nextMilestone ? nextMilestone.toJSON() : null,
-        ultimo_comentario
+        ultimo_comentario,
+        fecha_ultima_actividad,
+        dias_sin_actualizar,
+        es_desactualizado,
+        nivel_frescura
       };
     })
   );
@@ -138,6 +163,14 @@ const getProjectDetail = asyncHandler(async (req, res) => {
         as: 'ComSteerCoContactos', 
         through: { attributes: [] },
         include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }]
+      },
+      {
+        model: PlanesComunicacion,
+        as: 'PlanesComunicacion',
+        include: [
+          { model: ContactosProveedor, as: 'Contactos', through: { attributes: [] } },
+          { model: PlanComunicacionLog, as: 'Logs', limit: 5, order: [['fecha_envio', 'DESC']] }
+        ]
       },
       { model: Incidencias, include: [{ model: Tareas, as: 'tarea', attributes: ['id_tarea', 'titulo_tarea', 'es_hito', 'estado'] }], order: [['fecha_apertura', 'DESC']] },
       { model: Riesgos, include: [{ model: Tareas, as: 'tarea', attributes: ['id_tarea', 'titulo_tarea', 'es_hito', 'estado'] }], order: [['fecha_proxima_revision', 'ASC']] },

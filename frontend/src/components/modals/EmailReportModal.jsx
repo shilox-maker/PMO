@@ -12,7 +12,10 @@ export default function EmailReportModal({
   onClose,
   project,
   committeeTitle = 'Plan de Comunicación',
-  contacts = []
+  contacts = [],
+  planId = null,
+  getAuthHeaders,
+  onLogSent
 }) {
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [reportOptions, setReportOptions] = useState({
@@ -60,9 +63,28 @@ export default function EmailReportModal({
   };
 
   const handleSendEmail = async () => {
-    // También copiamos la versión HTML al portapapeles para facilitar pegar (Ctrl+V) en Outlook/Mail
+    // Copiamos versión HTML al portapapeles
     await copyHtmlToClipboard(htmlBody, plainTextBody);
     const subject = `[PMO Informe] ${project.nombre_proyecto || project.id_proyecto} - ${committeeTitle}`;
+    
+    // Registrar auditoría de envío en el backend
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      const authHeaders = getAuthHeaders ? getAuthHeaders() : {};
+      await fetch(`${API_URL}/projects/${project.id_proyecto}/planes-comunicacion/log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({
+          id_plan_comunicacion: planId,
+          destinatarios: selectedContacts,
+          observaciones: `Informe '${committeeTitle}' enviado/copiado.`
+        })
+      });
+      if (onLogSent) onLogSent();
+    } catch (err) {
+      console.error('Error registrando auditoría de envío:', err);
+    }
+
     openMailClient({
       recipientEmails: selectedContacts,
       subject,

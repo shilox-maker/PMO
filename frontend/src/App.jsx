@@ -11,11 +11,13 @@ import Vendor360 from './pages/Vendor360';
 import VendorDirectory from './pages/VendorDirectory';
 import AdminPanel from './pages/AdminPanel';
 import Dashboard from './pages/Dashboard';
+import DashboardProyectos from './pages/DashboardProyectos';
+import DashboardPortfolio from './pages/DashboardPortfolio';
 import PortfolioReport from './pages/PortfolioReport';
 import GeneralLessonsPage from './pages/GeneralLessonsPage';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
-  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info
+  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info, PieChart
 } from 'lucide-react';
 import pkg from '../package.json';
 
@@ -425,11 +427,19 @@ function NavigationRail() {
         </a>
 
         <a
-          className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`}
+          className={`nav-link ${(isActive('/dashboard') || isActive('/dashboard-proyectos')) && !isActive('/dashboard-portfolio') ? 'active' : ''}`}
           onClick={() => navigate('/dashboard')}
         >
           <Activity className="nav-link-icon" />
-          <span>Dashboard</span>
+          <span>Dashboard Proyectos</span>
+        </a>
+
+        <a
+          className={`nav-link ${isActive('/dashboard-portfolio') || isActive('/governance') ? 'active' : ''}`}
+          onClick={() => navigate('/dashboard-portfolio')}
+        >
+          <PieChart className="nav-link-icon" />
+          <span>Dashboard Portfolio</span>
         </a>
 
         <a
@@ -591,8 +601,8 @@ function MainAppContent() {
 
   const getPageTitle = () => {
     if (location.pathname.startsWith('/proyectos') || location.pathname === '/') return 'Proyectos';
-    if (location.pathname.startsWith('/governance')) return 'Control Ejecutivo de Cartera';
-    if (location.pathname.startsWith('/dashboard')) return 'Dashboard';
+    if (location.pathname.startsWith('/dashboard-portfolio') || location.pathname.startsWith('/governance')) return 'Dashboard Portfolio (Análisis de Cartera)';
+    if (location.pathname.startsWith('/dashboard-proyectos') || location.pathname.startsWith('/dashboard')) return 'Dashboard Proyectos (Seguimiento Periódico)';
     if (location.pathname.startsWith('/timeline')) return 'Timeline de Portfolio';
     if (location.pathname.startsWith('/portfolios/report')) return 'Control Presupuestario de Portfolios';
     if (location.pathname === '/proveedores') return 'Socios Tecnológicos (Directorio)';
@@ -600,7 +610,7 @@ function MainAppContent() {
     if (location.pathname.startsWith('/proveedor/')) return 'Vista 360º de Partner';
     if (location.pathname.startsWith('/lecciones')) return 'Lecciones Aprendidas';
     if (location.pathname.startsWith('/admin')) return 'Módulo de Administración (Exclusivo)';
-    return 'Gobernanza Dashboard';
+    return 'Dashboard';
   };
 
   return (
@@ -627,12 +637,21 @@ function MainAppContent() {
             } />
             
             <Route path="/governance" element={
-              <GovernanceDashboard onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+              <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+            } />
+
+            <Route path="/dashboard-portfolio" element={
+              <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+            } />
+
+            <Route path="/dashboard-proyectos" element={
+              <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
             } />
 
             <Route path="/dashboard" element={
-              <Dashboard onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+              <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
             } />
+
 
             <Route path="/timeline" element={
               <Timeline onViewProject={handleViewProject} />

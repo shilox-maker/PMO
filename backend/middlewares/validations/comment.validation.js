@@ -1,7 +1,7 @@
 const Joi = require('joi');
 
 const commentCreateSchema = Joi.object({
-  id_proyecto: Joi.string().required(),
+  id_proyecto: Joi.string().optional(),
   texto_comentario: Joi.string().required(),
   es_importante: Joi.boolean().default(false),
   para_direccion: Joi.boolean().default(false)

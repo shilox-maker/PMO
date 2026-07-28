@@ -24,7 +24,8 @@ const getProjectComments = asyncHandler(async (req, res) => {
 });
 
 const createComment = asyncHandler(async (req, res) => {
-  const { id_proyecto, texto_comentario, es_importante, para_direccion } = req.body;
+  const id_proyecto = req.body.id_proyecto || req.params.id_proyecto;
+  const { texto_comentario, es_importante, para_direccion } = req.body;
   const authorId = req.currentPmId;
   if (!authorId) {
     return res.status(401).json({ error: 'No autorizado. Inicie sesión.' });

@@ -19,5 +19,20 @@ router.delete('/projects/:id_proyecto/participants/:id_contacto', projectControl
 // State Tasks
 router.post('/projects/:id_proyecto/apply-state-tasks', projectController.applyStateTasks);
 
+// Planes de Comunicación y Auditoría de Envíos
+router.get('/projects/:id_proyecto/planes-comunicacion', projectController.getCommunicationPlans);
+router.post('/projects/:id_proyecto/planes-comunicacion', projectController.createCommunicationPlan);
+router.put('/projects/:id_proyecto/planes-comunicacion/:id_plan', projectController.updateCommunicationPlan);
+router.delete('/projects/:id_proyecto/planes-comunicacion/:id_plan', projectController.deleteCommunicationPlan);
+router.post('/projects/:id_proyecto/planes-comunicacion/log', projectController.createCommunicationLog);
+router.get('/projects/:id_proyecto/planes-comunicacion/log', projectController.getCommunicationLogs);
+
+// Encuestas Cualitativas y Satisfacción
+router.get('/projects/:id_proyecto/surveys', projectController.getProjectSurveys);
+router.post('/projects/:id_proyecto/surveys', projectController.createProjectSurvey);
+router.put('/projects/:id_proyecto/surveys/:id_encuesta', projectController.updateProjectSurvey);
+router.delete('/projects/:id_proyecto/surveys/:id_encuesta', projectController.deleteProjectSurvey);
 
 module.exports = router;
+
+

@@ -53,6 +53,10 @@ router.delete('/lessons/:id', itemController.deleteLesson);
 
 // Comments
 router.get('/projects/:id_proyecto/comments', itemController.getProjectComments);
+router.post('/projects/:id_proyecto/comments', validateBody(commentCreateSchema), itemController.createComment);
+router.put('/projects/:id_proyecto/comments/:id_comentario', validateBody(commentUpdateSchema), itemController.updateComment);
+router.delete('/projects/:id_proyecto/comments/:id_comentario', itemController.deleteComment);
+
 router.post('/comments', validateBody(commentCreateSchema), itemController.createComment);
 router.put('/comments/:id_comentario', validateBody(commentUpdateSchema), itemController.updateComment);
 router.delete('/comments/:id_comentario', itemController.deleteComment);

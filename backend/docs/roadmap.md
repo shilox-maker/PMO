@@ -2,13 +2,11 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
-
+- **IDEA-31**: Indicadores de Tendencia y Variación Temporal en KPIs (Velocity / Variance). Flechas y variaciones numéricas (ej. ▲ +2, ▼ -5%) comparando el valor del KPI actual con el periodo anterior (semana/mes).
 
 ## 🔍 2. En Análisis / Especificación
 
-
 ## 🟩 3. Listas para Codificar (Tú les has dado el OK)
-
 
 ## 📦 4. Implementadas
 
@@ -19,6 +17,13 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-34 (IDEA-34): Desacoplamiento del Dashboard en 2 vistas de menú independientes (Dashboard Proyectos y Dashboard Portfolio)** (2026-07-28)
+- [x] **BUG-04: Soporte de endpoints anidados /api/projects/:id_proyecto/comments (POST, PUT, DELETE) para solucionar error HTTP 404 al publicar comentarios** (2026-07-28)
+- [x] **FEATURE-33 (IDEA-33): Registro de Puntuación de Encuestas Cualitativas por Proyecto** (2026-07-28)
+- [x] **FEATURE-32 (IDEA-32): Planes de Comunicación Dinámicos y Registro de Auditoría de Envíos (Modelo Relacional Puro)** (2026-07-28)
+- [x] **FEATURE-30 (IDEA-30): Drill-down interactivo en tarjetas de KPI del Dashboard** (2026-07-28)
+- [x] **FEATURE-29 (IDEA-29): KPI de Volatilidad de Alcance (Scope Volatility / Scope Creep Rate)** (2026-07-28)
+- [x] **FEATURE-28 (IDEA-28): KPI de Calidad del Dato e Índice de Adherencia PMO (Data Freshness)** (2026-07-28)
 - [x] **FEATURE-27 (IDEA-27): Filtro en el muro de comentarios para comentarios importantes y de dirección** (2026-07-24)
 - [x] **BUG-03: Error "id_proyecto is required" al registrar un nuevo proyecto dejando el código auto-generado** (2026-07-24)
 - [x] **FEATURE-26 (IDEA-26): Botón para enviar Informe de Proyecto por correo electrónico con selección de campos (cliente SO predeterminado)** (2026-07-24)

@@ -24,6 +24,7 @@ import ProjectFinanzasTab from './project-detail/tabs/ProjectFinanzasTab';
 import ProjectCambiosTab from './project-detail/tabs/ProjectCambiosTab';
 import ProjectRiesgosTab from './project-detail/tabs/ProjectRiesgosTab';
 import ProjectComunicacionesTab from './project-detail/tabs/ProjectComunicacionesTab';
+import ProjectEncuestasTab from './project-detail/tabs/ProjectEncuestasTab';
 import ProjectChecklistTab from './project-detail/tabs/ProjectChecklistTab';
 import ProjectLeccionesTab from './project-detail/tabs/ProjectLeccionesTab';
 
@@ -496,6 +497,13 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           contactosList={contactosList}
           getAuthHeaders={getAuthHeaders}
           handleUpdateProject={handleUpdateProject}
+        />
+      )}
+
+      {activeTab === 'encuestas' && (
+        <ProjectEncuestasTab 
+          project={project}
+          getAuthHeaders={getAuthHeaders}
         />
       )}
 

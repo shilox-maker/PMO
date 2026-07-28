@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  FileText, Target, DollarSign, TrendingUp, ShieldAlert, MessageSquare, CheckSquare, BookOpen 
+  FileText, Target, DollarSign, TrendingUp, ShieldAlert, MessageSquare, CheckSquare, BookOpen, Award 
 } from 'lucide-react';
 
 export default function ProjectDetailTabsNav({ activeTab, setActiveTab, project }) {
@@ -11,6 +11,7 @@ export default function ProjectDetailTabsNav({ activeTab, setActiveTab, project 
     { id: 'cambios', label: 'Control de Cambios', icon: TrendingUp, badge: project.CambiosAlcance?.length },
     { id: 'riesgos', label: 'Riesgos e Incidencias', icon: ShieldAlert, badge: (project.Riesgos?.length || 0) + (project.Incidencias?.length || 0) },
     { id: 'comunicaciones', label: 'Plan de Comunicación', icon: MessageSquare },
+    { id: 'encuestas', label: 'Encuestas / Satisfacción', icon: Award, badge: project.Encuestas?.length },
     { id: 'checklist', label: 'Checklist / Tareas', icon: CheckSquare, badge: project.Tareas?.length },
     { id: 'lecciones', label: 'Lecciones Aprendidas', icon: BookOpen, badge: project.LeccionesAprendidas?.length }
   ];

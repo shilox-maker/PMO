@@ -130,24 +130,28 @@ export default function ProjectsFilterPanel({
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto', position: 'relative', zIndex: 50 }}>
           <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
           
-          <button 
-            className="m3-btn m3-btn-tonal" 
-            onClick={onOpenReport}
-            style={{ 
-              height: '40px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 8
-            }}
-          >
-            <Printer size={18} />
-            <span>Generar Informe</span>
-          </button>
+          {onOpenReport && (
+            <button 
+              className="m3-btn m3-btn-tonal" 
+              onClick={onOpenReport}
+              style={{ 
+                height: '40px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 8
+              }}
+            >
+              <Printer size={18} />
+              <span>Generar Informe</span>
+            </button>
+          )}
 
-          <button className="m3-btn m3-btn-primary" onClick={onOpenCreate} style={{ height: '40px' }}>
-            <Plus size={18} />
-            Crear Proyecto
-          </button>
+          {onOpenCreate && (
+            <button className="m3-btn m3-btn-primary" onClick={onOpenCreate} style={{ height: '40px' }}>
+              <Plus size={18} />
+              Crear Proyecto
+            </button>
+          )}
         </div>
       </div>
 

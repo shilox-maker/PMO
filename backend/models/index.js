@@ -1242,6 +1242,139 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
   ]
 });
 
+// 14. PlanesComunicacion Model
+const PlanesComunicacion = sequelize.define('Planes_Comunicacion', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  id_proyecto: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  titulo: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  finalidad: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  periodicidad: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'SEMANAL'
+  },
+  intervalo: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1
+  },
+  dia_semana: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  dia_mes: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  }
+});
+
+// 15. PlanComunicacionContacto Model (Pivot)
+const PlanComunicacionContacto = sequelize.define('Plan_Comunicacion_Contacto', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  id_plan_comunicacion: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  id_contacto: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
+});
+
+// 16. PlanComunicacionLog Model (Auditoría)
+const PlanComunicacionLog = sequelize.define('Plan_Comunicacion_Log', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  id_plan_comunicacion: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  id_proyecto: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  id_usuario: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  fecha_envio: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  destinatarios: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  observaciones: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
+});
+
+// 17. EncuestasCalidad Model
+const EncuestasCalidad = sequelize.define('Encuestas_Calidad', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  id_proyecto: {
+    type: DataTypes.STRING(50),
+    allowNull: false
+  },
+  concepto: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  puntuacion: {
+    type: DataTypes.DECIMAL(3, 1),
+    allowNull: false
+  },
+  escala_maxima: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 10
+  },
+  fecha_evaluacion: {
+    type: DataTypes.DATEONLY,
+    allowNull: false
+  },
+  evaluador: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  observaciones: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
+});
+
 // Set up Associations
 // Proveedor has many Contacts
 Proveedores.hasMany(ContactosProveedor, { foreignKey: 'id_proveedor', onDelete: 'CASCADE' });
@@ -1375,6 +1508,24 @@ PortfolioBudgets.belongsTo(TiposCapex, { foreignKey: 'id_tipo_capex', as: 'TipoC
 SubtiposCapex.hasMany(PortfolioBudgets, { foreignKey: 'id_subtipo_capex', onDelete: 'NO ACTION' });
 PortfolioBudgets.belongsTo(SubtiposCapex, { foreignKey: 'id_subtipo_capex', as: 'SubtipoCapex' });
 
+// PlanesComunicacion associations
+Proyectos.hasMany(PlanesComunicacion, { foreignKey: 'id_proyecto', as: 'PlanesComunicacion', onDelete: 'CASCADE' });
+PlanesComunicacion.belongsTo(Proyectos, { foreignKey: 'id_proyecto', as: 'Proyecto' });
+
+PlanesComunicacion.belongsToMany(ContactosProveedor, { through: PlanComunicacionContacto, foreignKey: 'id_plan_comunicacion', otherKey: 'id_contacto', as: 'Contactos' });
+ContactosProveedor.belongsToMany(PlanesComunicacion, { through: PlanComunicacionContacto, foreignKey: 'id_contacto', otherKey: 'id_plan_comunicacion', as: 'PlanesComunicacion' });
+
+PlanesComunicacion.hasMany(PlanComunicacionLog, { foreignKey: 'id_plan_comunicacion', as: 'Logs', onDelete: 'SET NULL' });
+PlanComunicacionLog.belongsTo(PlanesComunicacion, { foreignKey: 'id_plan_comunicacion', as: 'PlanComunicacion' });
+
+Proyectos.hasMany(PlanComunicacionLog, { foreignKey: 'id_proyecto', as: 'LogsComunicacion', onDelete: 'CASCADE' });
+PlanComunicacionLog.belongsTo(Proyectos, { foreignKey: 'id_proyecto', as: 'Proyecto' });
+PlanComunicacionLog.belongsTo(Usuarios, { foreignKey: 'id_usuario', as: 'Usuario' });
+
+// EncuestasCalidad associations
+Proyectos.hasMany(EncuestasCalidad, { foreignKey: 'id_proyecto', as: 'Encuestas', onDelete: 'CASCADE' });
+EncuestasCalidad.belongsTo(Proyectos, { foreignKey: 'id_proyecto', as: 'Proyecto' });
+
 // Audit associations
 [Proyectos, Facturas, Riesgos, Incidencias, CambiosAlcance].forEach(Model => {
   Model.belongsTo(Usuarios, { foreignKey: 'createdBy', as: 'Creator', onDelete: 'NO ACTION' });
@@ -1393,6 +1544,10 @@ module.exports = {
   ProyectoComSemanalContacto,
   ProyectoComMensualContacto,
   ProyectoComSteerCoContacto,
+  PlanesComunicacion,
+  PlanComunicacionContacto,
+  PlanComunicacionLog,
+  EncuestasCalidad,
   Incidencias,
   Riesgos,
   LeccionesAprendidas,
@@ -1411,3 +1566,5 @@ module.exports = {
   PortfolioBudgets,
   TiposFactura
 };
+
+

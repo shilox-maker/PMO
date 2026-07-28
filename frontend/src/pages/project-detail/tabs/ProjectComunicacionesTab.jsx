@@ -1,222 +1,240 @@
-import React, { useState } from 'react';
-import { MessageSquare, Users, Edit2, Mail } from 'lucide-react';
-import CommitteeEditForm from './CommitteeEditForm';
+import React, { useState, useEffect, useCallback } from 'react';
+import { MessageSquare, Users, Edit2, Mail, Plus, Trash2, Calendar, Clock, CheckCircle } from 'lucide-react';
 import EmailReportModal from '../../../components/modals/EmailReportModal';
+import CommunicationPlanModal from './CommunicationPlanModal';
+import CommunicationAuditHistory from './CommunicationAuditHistory';
 
-export default function ProjectComunicacionesTab({ project, handleUpdateProject }) {
-  const [editingKey, setEditingKey] = useState(null);
-  const [activo, setActivo] = useState(false);
-  const [finalidad, setFinalidad] = useState('');
-  const [selectedKus, setSelectedKus] = useState([]);
-  const [emailModalData, setEmailModalData] = useState({ isOpen: false, committeeTitle: '', contacts: [] });
+export default function ProjectComunicacionesTab({ project, getAuthHeaders, handleUpdateProject }) {
+  const [plans, setPlans] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [selectedPlanForEdit, setSelectedPlanForEdit] = useState(null);
+  const [emailModalData, setEmailModalData] = useState({ isOpen: false, committeeTitle: '', contacts: [], planId: null });
 
-  const handleOpenEmailModal = (committee) => {
-    setEmailModalData({
-      isOpen: true,
-      committeeTitle: committee.title,
-      contacts: committee.contacts || []
-    });
-  };
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
-  const handleCloseEmailModal = () => {
-    setEmailModalData({ isOpen: false, committeeTitle: '', contacts: [] });
-  };
-
-  const startEditing = (key) => {
-    setEditingKey(key);
-    if (key === 'semanal') {
-      setActivo(!!project.com_semanal_activo);
-      setFinalidad(project.com_semanal_finalidad || '');
-      setSelectedKus(project.ComSemanalContactos?.map(k => k.id_contacto) || []);
-    } else if (key === 'mensual') {
-      setActivo(!!project.com_mensual_activo);
-      setFinalidad(project.com_mensual_finalidad || '');
-      setSelectedKus(project.ComMensualContactos?.map(k => k.id_contacto) || []);
-    } else if (key === 'steerco') {
-      setActivo(!!project.com_steerco_activo);
-      setFinalidad(project.com_steerco_finalidad || '');
-      setSelectedKus(project.ComSteerCoContactos?.map(k => k.id_contacto) || []);
+  const fetchCommunicationData = useCallback(async () => {
+    if (!project?.id_proyecto) return;
+    setLoading(true);
+    try {
+      const authHeaders = getAuthHeaders ? getAuthHeaders() : {};
+      const [plansRes, logsRes] = await Promise.all([
+        fetch(`${API_URL}/projects/${project.id_proyecto}/planes-comunicacion`, { headers: authHeaders }),
+        fetch(`${API_URL}/projects/${project.id_proyecto}/planes-comunicacion/log`, { headers: authHeaders })
+      ]);
+      if (plansRes.ok) {
+        const plansData = await plansRes.json();
+        setPlans(plansData);
+      } else if (project.PlanesComunicacion) {
+        setPlans(project.PlanesComunicacion);
+      }
+      if (logsRes.ok) {
+        const logsData = await logsRes.json();
+        setLogs(logsData);
+      }
+    } catch (err) {
+      console.error('Error cargando planes de comunicación:', err);
+      if (project.PlanesComunicacion) setPlans(project.PlanesComunicacion);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [project?.id_proyecto]);
 
-  const handleSave = () => {
-    const payload = {};
-    if (editingKey === 'semanal') {
-      payload.com_semanal_activo = activo;
-      payload.com_semanal_finalidad = finalidad;
-      payload.comSemanalKus = selectedKus;
-    } else if (editingKey === 'mensual') {
-      payload.com_mensual_activo = activo;
-      payload.com_mensual_finalidad = finalidad;
-      payload.comMensualKus = selectedKus;
-    } else if (editingKey === 'steerco') {
-      payload.com_steerco_activo = activo;
-      payload.com_steerco_finalidad = finalidad;
-      payload.comSteercoKus = selectedKus;
-    }
-    handleUpdateProject(payload);
-    setEditingKey(null);
-  };
-
-  const handleToggleKu = (kuId) => {
-    setSelectedKus(prev => 
-      prev.includes(kuId) ? prev.filter(id => id !== kuId) : [...prev, kuId]
-    );
-  };
+  useEffect(() => {
+    fetchCommunicationData();
+  }, [fetchCommunicationData]);
 
   const raciContacts = project.InvolvedContacts || [];
 
-  const committees = [
-    {
-      key: 'semanal',
-      title: 'Comité de Seguimiento Semanal (Operativo)',
-      active: project.com_semanal_activo,
-      purpose: project.com_semanal_finalidad,
-      contacts: project.ComSemanalContactos || []
-    },
-    {
-      key: 'mensual',
-      title: 'Comité de Seguimiento Mensual (Táctico)',
-      active: project.com_mensual_activo,
-      purpose: project.com_mensual_finalidad,
-      contacts: project.ComMensualContactos || []
-    },
-    {
-      key: 'steerco',
-      title: 'Comité de Dirección / SteerCo (Estratégico)',
-      active: project.com_steerco_activo,
-      purpose: project.com_steerco_finalidad,
-      contacts: project.ComSteerCoContactos || []
+  const handleOpenCreateModal = () => {
+    setSelectedPlanForEdit(null);
+    setIsPlanModalOpen(true);
+  };
+
+  const handleOpenEditModal = (plan) => {
+    setSelectedPlanForEdit(plan);
+    setIsPlanModalOpen(true);
+  };
+
+  const handleSavePlan = async (planData) => {
+    try {
+      const isEdit = !!planData.id;
+      const url = isEdit
+        ? `${API_URL}/projects/${project.id_proyecto}/planes-comunicacion/${planData.id}`
+        : `${API_URL}/projects/${project.id_proyecto}/planes-comunicacion`;
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const authHeaders = getAuthHeaders ? getAuthHeaders() : {};
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify(planData)
+      });
+
+      if (res.ok) {
+        await fetchCommunicationData();
+      }
+    } catch (err) {
+      console.error('Error guardando plan de comunicación:', err);
     }
-  ];
+  };
+
+  const handleDeletePlan = async (planId) => {
+    if (!window.confirm('¿Deseas eliminar este plan de comunicación?')) return;
+    try {
+      const authHeaders = getAuthHeaders ? getAuthHeaders() : {};
+      const res = await fetch(`${API_URL}/projects/${project.id_proyecto}/planes-comunicacion/${planId}`, {
+        method: 'DELETE',
+        headers: authHeaders
+      });
+      if (res.ok) {
+        await fetchCommunicationData();
+      }
+    } catch (err) {
+      console.error('Error eliminando plan:', err);
+    }
+  };
+
+  const handleOpenEmailModal = (plan) => {
+    setEmailModalData({
+      isOpen: true,
+      committeeTitle: plan.titulo,
+      contacts: plan.Contactos || [],
+      planId: plan.id
+    });
+  };
+
+  const getLastSendLog = (planId) => {
+    return logs.find(l => l.id_plan_comunicacion === planId);
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ marginBottom: 8 }}>
-        <h3 style={{ fontWeight: 600, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <MessageSquare size={20} /> Estructura de Comités y Gobernanza de Comunicaciones
-        </h3>
-        <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
-          Canales formales configurados para reportes de avance, toma de decisiones y escalado de incidencias.
-        </p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h3 style={{ fontWeight: 600, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <MessageSquare size={20} color="var(--md-sys-color-primary)" /> Gobernanza y Planes de Comunicación
+          </h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginTop: 4 }}>
+            Planes dinámicos configurados para reportes de avance y seguimiento relacional con contactos RACI.
+          </p>
+        </div>
+        <button
+          className="m3-btn m3-btn-primary"
+          onClick={handleOpenCreateModal}
+          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <Plus size={16} /> Nuevo Plan de Comunicación
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
-        {committees.map((c) => {
-          const isEditing = c.key === editingKey;
+        {plans.map((p) => {
+          const lastLog = getLastSendLog(p.id);
+          const lastSendDate = lastLog?.fecha_envio
+            ? new Date(lastLog.fecha_envio).toLocaleDateString('es-ES')
+            : null;
 
-          if (isEditing) {
-            return (
-              <CommitteeEditForm 
-                key={c.key}
-                committeeKey={c.key}
-                activo={activo}
-                setActivo={setActivo}
-                finalidad={finalidad}
-                setFinalidad={setFinalidad}
-                selectedKus={selectedKus}
-                handleToggleKu={handleToggleKu}
-                raciContacts={raciContacts}
-                onCancel={() => setEditingKey(null)}
-                onSave={handleSave}
-              />
-            );
-          }
+          const freqLabel = p.periodicidad === 'SEMANAL'
+            ? `Semanal (cada ${p.intervalo} sem)`
+            : `Mensual (cada ${p.intervalo} mes)`;
 
           return (
-            <div 
-              key={c.key} 
-              className="m3-card glass-panel" 
-              style={{ 
-                opacity: c.active ? 1 : 0.5,
-                border: c.active ? '1px solid var(--md-sys-color-primary)' : '1px solid var(--md-sys-color-outline-variant)'
+            <div
+              key={p.id}
+              className="m3-card glass-panel"
+              style={{
+                opacity: p.activo ? 1 : 0.55,
+                border: p.activo ? '1px solid var(--md-sys-color-primary)' : '1px solid var(--md-sys-color-outline-variant)',
+                display: 'flex',
+                flexDirection: 'column',
+                justify: 'space-between'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <h4 style={{ fontWeight: 700, fontSize: '0.95rem' }}>{c.title}</h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className={`badge ${c.active ? 'badge-green' : 'badge-red'}`}>
-                    {c.active ? 'ACTIVO' : 'NO CONFIGURADO'}
-                  </span>
-                  <button 
-                    className="icon-btn" 
-                    onClick={() => startEditing(c.key)}
-                    title={`Editar ${c.title}`}
-                    style={{ padding: 4 }}
-                  >
-                    <Edit2 size={14} />
-                  </button>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <h4 style={{ fontWeight: 700, fontSize: '0.95rem' }}>{p.titulo}</h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className={`badge ${p.activo ? 'badge-green' : 'badge-red'}`}>
+                      {p.activo ? 'ACTIVO' : 'INACTIVO'}
+                    </span>
+                    <button className="icon-btn" onClick={() => handleOpenEditModal(p)} title="Editar Plan" style={{ padding: 4 }}>
+                      <Edit2 size={14} />
+                    </button>
+                    <button className="icon-btn" onClick={() => handleDeletePlan(p.id)} title="Eliminar Plan" style={{ padding: 4, color: 'var(--color-rag-red)' }}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem', color: 'var(--md-sys-color-primary)', fontWeight: 600, marginBottom: 8 }}>
+                  <Clock size={13} /> {freqLabel}
+                </div>
+
+                <p style={{ fontSize: '0.83rem', color: 'var(--md-sys-color-on-surface-variant)', marginBottom: 14, minHeight: '36px' }}>
+                  {p.finalidad || 'Sin finalidad especificada.'}
+                </p>
+
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Users size={13} /> Participantes ({p.Contactos?.length || 0})
+                  </div>
+                  {(!p.Contactos || p.Contactos.length === 0) ? (
+                    <span style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-outline)', fontStyle: 'italic' }}>
+                      Sin participantes asignados.
+                    </span>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {p.Contactos.map(c => (
+                        <span key={c.id_contacto} className="badge" style={{ backgroundColor: 'var(--md-sys-color-surface-container-high)', fontSize: '0.75rem' }}>
+                          {c.nombre} {c.apellidos}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {c.active ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase' }}>Finalidad / Enfoque</div>
-                      <p style={{ fontSize: '0.9rem', marginTop: 4 }}>{c.purpose || 'Sin especificar finalidad.'}</p>
-                    </div>
-                    <button
-                      type="button"
-                      className="m3-btn m3-btn-outline"
-                      onClick={() => handleOpenEmailModal(c)}
-                      title={`Enviar informe de proyecto por correo a los miembros de ${c.title}`}
-                      style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
-                    >
-                      <Mail size={14} /> Enviar Informe por Correo
-                    </button>
-                  </div>
-
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                      <Users size={14} /> Participantes Involucrados
-                    </div>
-                    {c.contacts.length === 0 ? (
-                      <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontStyle: 'italic' }}>Sin participantes definidos.</p>
-                    ) : (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        {c.contacts.map((ku) => {
-                          const companyName = ku.Proveedore?.nombre_razon_social || ku.Proveedor?.nombre_razon_social;
-                          const displayCompany = companyName ? ` (${companyName})` : '';
-                          return (
-                            <span 
-                              key={ku.id_contacto} 
-                              style={{ 
-                                fontSize: '0.75rem', 
-                                padding: '4px 10px', 
-                                backgroundColor: 'var(--md-sys-color-surface-container-high)',
-                                borderRadius: '20px',
-                                fontWeight: 500,
-                                border: '1px solid var(--md-sys-color-outline-variant)'
-                              }}
-                            >
-                              👤 {ku.nombre} {ku.apellidos}{displayCompany}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+              <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12, marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Calendar size={12} />
+                  {lastSendDate ? `Último envío: ${lastSendDate}` : 'Sin envíos registrados'}
                 </div>
-              ) : (
-                <p style={{ fontStyle: 'italic', fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
-                  Este comité no se encuentra habilitado para la gobernanza del proyecto actual.
-                </p>
-              )}
+                <button
+                  className="m3-btn m3-btn-outline"
+                  onClick={() => handleOpenEmailModal(p)}
+                  disabled={!p.activo}
+                  style={{ fontSize: '0.78rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                  <Mail size={13} /> Enviar Informe
+                </button>
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Modal de Configuración y Envío de Correo */}
+      <CommunicationAuditHistory logs={logs} loading={loading} />
+
+      <CommunicationPlanModal
+        isOpen={isPlanModalOpen}
+        onClose={() => setIsPlanModalOpen(false)}
+        plan={selectedPlanForEdit}
+        raciContacts={raciContacts}
+        onSave={handleSavePlan}
+      />
+
       <EmailReportModal
         isOpen={emailModalData.isOpen}
-        onClose={handleCloseEmailModal}
+        onClose={() => setEmailModalData({ isOpen: false, committeeTitle: '', contacts: [], planId: null })}
         project={project}
         committeeTitle={emailModalData.committeeTitle}
         contacts={emailModalData.contacts}
+        planId={emailModalData.planId}
+        getAuthHeaders={getAuthHeaders}
+        onLogSent={fetchCommunicationData}
       />
     </div>
   );
 }
-

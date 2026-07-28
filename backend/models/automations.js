@@ -62,13 +62,21 @@ async function getProjectCalculations(id_proyecto, budget_inicial, fecha_fin_ini
   const day = String(initialEndDate.getDate()).padStart(2, '0');
   const fecha_fin_estimada = `${year}-${month}-${day}`;
 
+  const parsedInitialBudget = parseFloat(budget_inicial || 0);
+  const tasa_volatilidad_pct = parsedInitialBudget > 0 
+    ? Number(((totalCRImporte / parsedInitialBudget) * 100).toFixed(1))
+    : 0;
+
   return {
     budget_actualizado: Number(budget_actualizado.toFixed(2)),
     consumo_real: Number(consumo_real.toFixed(2)),
     total_facturado: Number(total_facturado.toFixed(2)),
     total_pendiente: Number(total_pendiente.toFixed(2)),
     presupuesto_disponible: Number(presupuesto_disponible.toFixed(2)),
-    fecha_fin_estimada
+    fecha_fin_estimada,
+    total_cr_importe: Number(totalCRImporte.toFixed(2)),
+    total_cr_dias: totalCRDays,
+    tasa_volatilidad_pct
   };
 }
 

@@ -3,6 +3,7 @@ import ProjectTable from '../ProjectTable';
 
 export default function DashboardSummaryTable({
   filteredProjects,
+  projects,
   selectedKpi,
   setSelectedKpi,
   selectedChartFilter,
@@ -10,11 +11,12 @@ export default function DashboardSummaryTable({
   onViewProject,
   onViewVendor
 }) {
+  const displayProjects = filteredProjects || projects || [];
   return (
     <div className="m3-card glass-panel" style={{ marginTop: 24, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h3 style={{ fontSize: '1.15rem', fontWeight: 600, margin: 0 }}>
-          Proyectos ({filteredProjects.length})
+          Proyectos ({displayProjects.length})
         </h3>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {selectedKpi && (
@@ -31,7 +33,7 @@ export default function DashboardSummaryTable({
                 gap: 4,
                 cursor: 'pointer'
               }}
-              onClick={() => setSelectedKpi(null)}
+              onClick={() => setSelectedKpi && setSelectedKpi(null)}
             >
               KPI: {selectedKpi === 'overrun' ? 'Excedido coste (CAPEX)' : 
                     selectedKpi === 'overrun_extended' ? 'Excedido coste ampliado' : 
@@ -59,7 +61,7 @@ export default function DashboardSummaryTable({
                 gap: 4,
                 cursor: 'pointer'
               }}
-              onClick={() => setSelectedChartFilter(null)}
+              onClick={() => setSelectedChartFilter && setSelectedChartFilter(null)}
             >
               Gráfico: {selectedChartFilter.value} ✕
             </span>
@@ -69,8 +71,8 @@ export default function DashboardSummaryTable({
               className="m3-btn m3-btn-text" 
               style={{ padding: '2px 8px', fontSize: '0.8rem' }}
               onClick={() => {
-                setSelectedKpi(null);
-                setSelectedChartFilter(null);
+                if (setSelectedKpi) setSelectedKpi(null);
+                if (setSelectedChartFilter) setSelectedChartFilter(null);
               }}
             >
               Limpiar Filtros KPI/Gráfico
@@ -79,13 +81,13 @@ export default function DashboardSummaryTable({
         </div>
       </div>
       
-      {filteredProjects.length === 0 ? (
+      {displayProjects.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>
           No hay proyectos que cumplan con los filtros seleccionados.
         </div>
       ) : (
         <ProjectTable 
-          projects={filteredProjects} 
+          projects={displayProjects} 
           onViewProject={onViewProject} 
           onViewVendor={onViewVendor} 
           showHeaderSelector={true} 
