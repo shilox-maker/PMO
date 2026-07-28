@@ -150,18 +150,6 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
 
   return (
     <div className="dashboard-container" style={{ padding: '0 4px' }}>
-      {/* Header Info */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-            <Activity size={20} color="var(--md-sys-color-primary)" /> Dashboard de Proyectos (Seguimiento Periódico)
-          </h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', margin: '4px 0 0 0' }}>
-            Supervisión del avance operativo, alertas de hitos vencidos y frescura del seguimiento.
-          </p>
-        </div>
-      </div>
-
       {/* Complete Projects Filter Panel */}
       <ProjectsFilterPanel
         filterPm={filterPm} setFilterPm={setFilterPm}

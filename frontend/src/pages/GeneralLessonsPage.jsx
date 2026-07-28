@@ -62,15 +62,6 @@ export default function GeneralLessonsPage() {
 
   return (
     <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-        <div>
-          <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Lecciones Aprendidas de la Cartera</h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
-            Historial de buenas prácticas y errores a evitar documentados por los gestores de proyectos.
-          </p>
-        </div>
-      </div>
-
       {/* Barra de Filtros */}
       {!loading && lessons.length > 0 && (
         <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', borderRadius: 16, border: '1px solid var(--md-sys-color-outline-variant)' }}>

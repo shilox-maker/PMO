@@ -183,18 +183,6 @@ export default function DashboardPortfolio({ onViewProject }) {
 
   return (
     <div className="dashboard-container" style={{ padding: '0 4px' }}>
-      {/* Header Info */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-            <PieChart size={20} color="var(--md-sys-color-primary)" /> Dashboard Portfolio (Análisis de Cartera)
-          </h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', margin: '4px 0 0 0' }}>
-            Evaluación estratégica anual de la inversión, desviaciones de coste y plazo, y gobernanza del portfolio.
-          </p>
-        </div>
-      </div>
-
       {/* Reusable Projects Filter Panel */}
       <ProjectsFilterPanel
         filterPm={filterPm} setFilterPm={setFilterPm}
