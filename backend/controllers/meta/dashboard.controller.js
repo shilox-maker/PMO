@@ -10,7 +10,7 @@ const { getPortfolioBudgetReport } = require('./dashboardReport.controller');
 const { getTimeline } = require('./dashboardTimeline.controller');
 
 const getPortfolioDashboard = asyncHandler(async (req, res) => {
-  const { pm, fecha_desde, fecha_hasta, search, vendor, rag, state, portfolio, tag } = req.query;
+  const { pm, fecha_desde, fecha_hasta, search, vendor, rag, state, portfolio, tag, iniciativa_ligera, estrategico } = req.query;
   const user = await Usuarios.findByPk(req.currentPmId);
   const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
   
@@ -23,6 +23,12 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
   }
   if (rag) {
     where.indicador_rag = rag;
+  }
+  if (iniciativa_ligera) {
+    where.es_iniciativa_ligera = iniciativa_ligera === 'true';
+  }
+  if (estrategico) {
+    where.es_estrategico = estrategico === 'true';
   }
   if (portfolio) {
     where.portfolio_id = parseInt(portfolio, 10);

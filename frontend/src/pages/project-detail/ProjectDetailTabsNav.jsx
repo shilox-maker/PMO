@@ -7,14 +7,14 @@ export default function ProjectDetailTabsNav({ activeTab, setActiveTab, project 
   const tabs = [
     { id: 'ficha', label: 'Ficha Principal', icon: FileText },
     { id: 'alcance', label: 'Alcance y Justificación', icon: Target },
-    { id: 'finanzas', label: 'Finanzas y Facturas', icon: DollarSign, badge: project.Facturas?.length },
+    !project.es_iniciativa_ligera && { id: 'finanzas', label: 'Finanzas y Facturas', icon: DollarSign, badge: project.Facturas?.length },
     { id: 'cambios', label: 'Control de Cambios', icon: TrendingUp, badge: project.CambiosAlcance?.length },
     { id: 'riesgos', label: 'Riesgos e Incidencias', icon: ShieldAlert, badge: (project.Riesgos?.length || 0) + (project.Incidencias?.length || 0) },
     { id: 'comunicaciones', label: 'Plan de Comunicación', icon: MessageSquare },
     { id: 'encuestas', label: 'Encuestas / Satisfacción', icon: Award, badge: project.Encuestas?.length },
     { id: 'checklist', label: 'Checklist / Tareas', icon: CheckSquare, badge: project.Tareas?.length },
     { id: 'lecciones', label: 'Lecciones Aprendidas', icon: BookOpen, badge: project.LeccionesAprendidas?.length }
-  ];
+  ].filter(Boolean);
 
   return (
     <div className="m3-tabs-container" style={{ marginBottom: 24, borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>

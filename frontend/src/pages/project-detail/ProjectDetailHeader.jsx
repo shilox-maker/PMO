@@ -24,7 +24,11 @@ export default function ProjectDetailHeader({
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="project-id-badge">{project.id_proyecto}</span>
-            {project.es_capex ? (
+            {project.es_iniciativa_ligera ? (
+              <span className="badge" style={{ backgroundColor: '#e0a025', color: '#fff', fontWeight: 600 }}>
+                ⚡ Iniciativa Ligera
+              </span>
+            ) : project.es_capex ? (
               <span className="badge badge-blue">
                 CAPEX: {project.codigo_capex || 'Pendiente'}
                 {project.TipoCapex && ` (${project.TipoCapex.nombre}${project.SubtipoCapex ? ` - ${project.SubtipoCapex.nombre}` : ''})`}

@@ -15,6 +15,12 @@ function sanitizeRichTextFields(data) {
 }
 
 async function validateCapexFields(data, res) {
+  if (data.es_iniciativa_ligera) {
+    data.es_capex = false;
+    data.codigo_capex = null;
+    data.id_tipo_capex = null;
+    data.id_subtipo_capex = null;
+  }
   if (data.es_capex && (!data.codigo_capex || data.codigo_capex.trim() === '')) {
     res.status(400).json({ error: 'El código CAPEX es obligatorio para proyectos CAPEX.' });
     return false;

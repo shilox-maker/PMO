@@ -9,7 +9,7 @@ const { getProjectCalculations } = require('../../models/automations');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
 const getProjects = asyncHandler(async (req, res) => {
-  const { pm, vendor, rag, search, state, estrategico, portfolio, tag } = req.query;
+  const { pm, vendor, rag, search, state, estrategico, portfolio, tag, iniciativa_ligera } = req.query;
   const user = await Usuarios.findByPk(req.currentPmId);
   const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
   
@@ -19,6 +19,9 @@ const getProjects = asyncHandler(async (req, res) => {
   if (rag) where.indicador_rag = rag;
   if (estrategico) {
     where.es_estrategico = estrategico === 'true';
+  }
+  if (iniciativa_ligera) {
+    where.es_iniciativa_ligera = iniciativa_ligera === 'true';
   }
   if (portfolio) {
     where.portfolio_id = portfolio;

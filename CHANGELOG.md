@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [2.5.0] - 2026-07-29
+### Added / Changed
+- **Configuración de Columnas Visibles por Defecto en Listado de Proyectos**:
+  - Ocultadas por defecto las columnas de *Fecha de Inicio*, *Fecha Fin Base*, *Presupuesto* y *Progreso del Gasto* en la tabla principal de proyectos ([Projects.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/pages/Projects.jsx) y [ProjectTable.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/components/ProjectTable.jsx)).
+  - Actualizada la clave de almacenamiento `localStorage` a `ppm-projects-columns-v2` para asegurar que el cambio de visibilidad por defecto se aplique de forma inmediata a todos los usuarios.
+- **Gestión de Proyectos e Iniciativas Ligeras (FEATURE-35 / IDEA-35)**:
+  - Creación y seguimiento de iniciativas ligeras o tareas sin presupuesto ni asignación CAPEX/OPEX.
+  - Ocultación dinámica de campos presupuestarios y de proveedores en modales de creación y edición.
+  - Integración en agregación de KPIs del Dashboard y exclusión de alertas de sobredesvío financiero.
+  - Migración [`11_add_es_iniciativa_ligera_to_proyectos.js`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/migrations/11_add_es_iniciativa_ligera_to_proyectos.js).
+
 ## [2.4.0] - 2026-07-24
 ### Added
 - **Envío de Informe de Proyecto por Correo Electrónico (FEATURE-26 / IDEA-26)**:

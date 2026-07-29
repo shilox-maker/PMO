@@ -7,6 +7,7 @@ export default function ProjectsFilterPanel({
   filterVendor, setFilterVendor,
   filterRag, setFilterRag,
   filterEstrategico, setFilterEstrategico,
+  filterIniciativa, setFilterIniciativa,
   filterPortfolio, setFilterPortfolio,
   filterTag, setFilterTag,
   filterStates, setFilterStates,
@@ -96,6 +97,22 @@ export default function ProjectsFilterPanel({
             <option value="false">No</option>
           </select>
         </div>
+
+        {/* Tipo Iniciativa Filter */}
+        {setFilterIniciativa && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filterIniciativa || ''} 
+              onChange={(e) => setFilterIniciativa(e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">Todos los Tipos</option>
+              <option value="false">📁 Proyectos Estándar</option>
+              <option value="true">⚡ Iniciativas Ligeras</option>
+            </select>
+          </div>
+        )}
 
         {/* Portfolio Filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

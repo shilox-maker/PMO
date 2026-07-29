@@ -54,12 +54,16 @@ export default function ProjectGovernanceAttributes({
             <Building size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Partner Adjudicatario</div>
-              <span 
-                style={{ fontWeight: 500, textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)' }}
-                onClick={() => onViewVendor(project.id_proveedor)}
-              >
-                {project.Proveedor?.nombre_razon_social}
-              </span>
+              {project.es_iniciativa_ligera || !project.Proveedor ? (
+                <div style={{ fontWeight: 500, color: 'var(--md-sys-color-outline)' }}>N/A (Ligero)</div>
+              ) : (
+                <span 
+                  style={{ fontWeight: 500, textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)' }}
+                  onClick={() => onViewVendor(project.id_proveedor)}
+                >
+                  {project.Proveedor.nombre_razon_social}
+                </span>
+              )}
             </div>
           </div>
 

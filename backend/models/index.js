@@ -438,6 +438,11 @@ const Proyectos = sequelize.define('Proyectos', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  es_iniciativa_ligera: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
   estado_proyecto: {
     type: DataTypes.VIRTUAL,
     get() {

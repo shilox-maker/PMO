@@ -28,6 +28,7 @@ export default function CreateProjectModal({
     indicador_rag: 'VERDE',
     fecha_inicio: '',
     fecha_fin_inicial: '',
+    es_iniciativa_ligera: false,
     es_capex: false,
     codigo_capex: '',
     id_tipo_capex: '',
@@ -61,6 +62,7 @@ export default function CreateProjectModal({
         indicador_rag: 'VERDE',
         fecha_inicio: '',
         fecha_fin_inicial: '',
+        es_iniciativa_ligera: false,
         es_capex: false,
         codigo_capex: '',
         id_tipo_capex: '',
@@ -90,9 +92,9 @@ export default function CreateProjectModal({
         [name]: type === 'checkbox' ? checked : value
       };
       if (name === 'es_capex' && !checked) {
+        updated.codigo_capex = '';
         updated.id_tipo_capex = '';
         updated.id_subtipo_capex = '';
-        updated.codigo_capex = '';
       }
       return updated;
     });
@@ -110,36 +112,45 @@ export default function CreateProjectModal({
       }
     }
 
-    if (newProject.es_capex && (!newProject.codigo_capex || newProject.codigo_capex.trim() === '')) {
-      setFormError('El código CAPEX es obligatorio para proyectos CAPEX.');
-      return;
-    }
-    if (newProject.es_capex && !newProject.id_tipo_capex) {
-      setFormError('El tipo de CAPEX es obligatorio para proyectos CAPEX.');
-      return;
-    }
-    const selectedTipo = capexTypes.find(t => t.id === parseInt(newProject.id_tipo_capex, 10));
-    if (newProject.es_capex && selectedTipo?.Subtipos?.length > 0 && !newProject.id_subtipo_capex) {
-      setFormError('El subtipo de CAPEX es obligatorio para el tipo seleccionado.');
-      return;
+    if (!newProject.es_iniciativa_ligera) {
+      if (newProject.es_capex && (!newProject.codigo_capex || newProject.codigo_capex.trim() === '')) {
+        setFormError('El código CAPEX es obligatorio para proyectos CAPEX.');
+        return;
+      }
+      if (newProject.es_capex && !newProject.id_tipo_capex) {
+        setFormError('El tipo de CAPEX es obligatorio para proyectos CAPEX.');
+        return;
+      }
+      const selectedTipo = capexTypes.find(t => t.id === parseInt(newProject.id_tipo_capex, 10));
+      if (newProject.es_capex && selectedTipo?.Subtipos?.length > 0 && !newProject.id_subtipo_capex) {
+        setFormError('El subtipo de CAPEX es obligatorio para el tipo seleccionado.');
+        return;
+      }
+      if (!newProject.id_proveedor || !newProject.budget_inicial) {
+        setFormError('Por favor, rellene el socio tecnológico y el presupuesto inicial para proyectos estándar.');
+        return;
+      }
     }
 
-    if (!newProject.nombre_proyecto || !newProject.id_pm || !newProject.id_proveedor || !newProject.id_sede || !newProject.budget_inicial) {
+    if (!newProject.nombre_proyecto || !newProject.id_pm || !newProject.id_sede) {
       setFormError('Por favor, rellene todos los campos obligatorios.');
       return;
     }
 
     const payload = {
       ...newProject,
-      budget_inicial: parseFloat(newProject.budget_inicial),
+      es_iniciativa_ligera: !!newProject.es_iniciativa_ligera,
+      budget_inicial: newProject.es_iniciativa_ligera ? 0 : parseFloat(newProject.budget_inicial),
       id_pm: parseInt(newProject.id_pm, 10),
-      id_proveedor: parseInt(newProject.id_proveedor, 10),
+      id_proveedor: !newProject.es_iniciativa_ligera && newProject.id_proveedor ? parseInt(newProject.id_proveedor, 10) : null,
       id_sede: parseInt(newProject.id_sede, 10),
       id_sede_distribuir: newProject.id_sede_distribuir ? parseInt(newProject.id_sede_distribuir, 10) : null,
       id_sponsor: newProject.id_sponsor ? parseInt(newProject.id_sponsor, 10) : null,
       portfolio_id: newProject.portfolio_id ? parseInt(newProject.portfolio_id, 10) : null,
-      id_tipo_capex: newProject.es_capex && newProject.id_tipo_capex ? parseInt(newProject.id_tipo_capex, 10) : null,
-      id_subtipo_capex: newProject.es_capex && newProject.id_subtipo_capex ? parseInt(newProject.id_subtipo_capex, 10) : null
+      es_capex: newProject.es_iniciativa_ligera ? false : newProject.es_capex,
+      codigo_capex: newProject.es_iniciativa_ligera ? null : newProject.codigo_capex,
+      id_tipo_capex: !newProject.es_iniciativa_ligera && newProject.es_capex && newProject.id_tipo_capex ? parseInt(newProject.id_tipo_capex, 10) : null,
+      id_subtipo_capex: !newProject.es_iniciativa_ligera && newProject.es_capex && newProject.id_subtipo_capex ? parseInt(newProject.id_subtipo_capex, 10) : null
     };
 
     if (!payload.id_proyecto || payload.id_proyecto.trim() === '') {
@@ -180,6 +191,28 @@ export default function CreateProjectModal({
         <form onSubmit={handleCreateProject}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             
+            {/* Tipo de Iniciativa */}
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">Tipo de Iniciativa *</label>
+              <select 
+                name="es_iniciativa_ligera" 
+                value={newProject.es_iniciativa_ligera ? 'true' : 'false'} 
+                onChange={(e) => {
+                  const isLigera = e.target.value === 'true';
+                  setNewProject(prev => ({
+                    ...prev,
+                    es_iniciativa_ligera: isLigera,
+                    ...(isLigera ? { es_capex: false, codigo_capex: '', id_tipo_capex: '', id_subtipo_capex: '', id_proveedor: '', budget_inicial: '', budget_notas: '' } : {})
+                  }));
+                }}
+                className="user-select"
+                style={{ fontWeight: 600 }}
+              >
+                <option value="false">📁 Proyecto Estándar (con Presupuesto / CAPEX / Proveedor)</option>
+                <option value="true">⚡ Iniciativa Ligera / Tarea Individual (Sin CAPEX / Sin Presupuesto)</option>
+              </select>
+            </div>
+
             {/* ID Proyecto (Opcional - Autogeneración) */}
             <div className="form-group">
               <label className="form-label">Código Proyecto (Dejar vacío para auto-asignar)</label>
@@ -240,22 +273,24 @@ export default function CreateProjectModal({
               </div>
             </div>
 
-            {/* Socio Tecnológico (Proveedor) */}
-            <div className="form-group">
-              <label className="form-label">Socio Tecnológico *</label>
-              <select 
-                name="id_proveedor" 
-                value={newProject.id_proveedor} 
-                onChange={handleInputChange}
-                required
-                className="user-select"
-              >
-                <option value="">Seleccione Socio</option>
-                {vendorsList.map(v => (
-                  <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
-                ))}
-              </select>
-            </div>
+            {/* Socio Tecnológico (Proveedor) - Solo Proyectos Estándar */}
+            {!newProject.es_iniciativa_ligera && (
+              <div className="form-group">
+                <label className="form-label">Socio Tecnológico *</label>
+                <select 
+                  name="id_proveedor" 
+                  value={newProject.id_proveedor} 
+                  onChange={handleInputChange}
+                  required={!newProject.es_iniciativa_ligera}
+                  className="user-select"
+                >
+                  <option value="">Seleccione Socio</option>
+                  {vendorsList.map(v => (
+                    <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Gestor PM */}
             <div className="form-group">
@@ -329,33 +364,35 @@ export default function CreateProjectModal({
               />
             </div>
 
-            {/* Presupuesto Inicial + Notas */}
-            <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label className="form-label">Presupuesto Inicial (€) *</label>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  name="budget_inicial"
-                  value={newProject.budget_inicial}
-                  onChange={handleInputChange}
-                  placeholder="150000.00"
-                  required
-                  className="m3-input"
-                />
+            {/* Presupuesto Inicial + Notas - Solo Proyectos Estándar */}
+            {!newProject.es_iniciativa_ligera && (
+              <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label className="form-label">Presupuesto Inicial (€) *</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    name="budget_inicial"
+                    value={newProject.budget_inicial}
+                    onChange={handleInputChange}
+                    placeholder="150000.00"
+                    required={!newProject.es_iniciativa_ligera}
+                    className="m3-input"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Notas sobre el presupuesto</label>
+                  <input
+                    type="text"
+                    name="budget_notas"
+                    value={newProject.budget_notas || ''}
+                    onChange={handleInputChange}
+                    placeholder="Ej: Incluye licencias + implantación, excluye hardware"
+                    className="m3-input"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="form-label">Notas sobre el presupuesto</label>
-                <input
-                  type="text"
-                  name="budget_notas"
-                  value={newProject.budget_notas || ''}
-                  onChange={handleInputChange}
-                  placeholder="Ej: Incluye licencias + implantación, excluye hardware"
-                  className="m3-input"
-                />
-              </div>
-            </div>
+            )}
 
             {/* RAG */}
             <div className="form-group">
@@ -372,13 +409,15 @@ export default function CreateProjectModal({
               </select>
             </div>
 
-            {/* CAPEX & Estratégico Subcomponent */}
-            <CapexFieldsGroup
-              newProject={newProject}
-              handleInputChange={handleInputChange}
-              setNewProject={setNewProject}
-              capexTypes={capexTypes}
-            />
+            {/* CAPEX & Estratégico Subcomponent - Solo Proyectos Estándar */}
+            {!newProject.es_iniciativa_ligera && (
+              <CapexFieldsGroup
+                newProject={newProject}
+                handleInputChange={handleInputChange}
+                setNewProject={setNewProject}
+                capexTypes={capexTypes}
+              />
+            )}
 
           </div>
 

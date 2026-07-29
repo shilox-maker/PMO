@@ -73,7 +73,7 @@ export default function GovernanceHealthSection({
             <tbody>
               {getSortedData(filteredGridData, sortConfig).map(p => {
                 const calc = p.calculations;
-                const consumptionPercent = calc ? Math.min((calc.consumo_real / calc.budget_actualizado) * 100, 100) : 0;
+                const consumptionPercent = (calc && calc.budget_actualizado > 0) ? Math.min((calc.consumo_real / calc.budget_actualizado) * 100, 100) : 0;
 
                 const todayStr = new Date().toISOString().split('T')[0];
                 const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(p.estado_proyecto?.toUpperCase());

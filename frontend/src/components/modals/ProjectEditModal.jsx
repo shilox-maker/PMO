@@ -36,6 +36,7 @@ export default function ProjectEditModal({
         id_sede: project.id_sede ? project.id_sede.toString() : '',
         id_sede_distribuir: project.id_sede_distribuir ? project.id_sede_distribuir.toString() : '',
         id_sponsor: project.id_sponsor ? project.id_sponsor.toString() : '',
+        es_iniciativa_ligera: !!project.es_iniciativa_ligera,
         es_capex: !!project.es_capex,
         codigo_capex: project.codigo_capex || '',
         id_tipo_capex: project.id_tipo_capex ? project.id_tipo_capex.toString() : '',
@@ -83,31 +84,36 @@ export default function ProjectEditModal({
     e.preventDefault();
     setError('');
 
-    if (form.es_capex && (!form.codigo_capex || form.codigo_capex.trim() === '')) {
-      setError('El código CAPEX es obligatorio para proyectos CAPEX.');
-      return;
-    }
-    if (form.es_capex && !form.id_tipo_capex) {
-      setError('El tipo de CAPEX es obligatorio para proyectos CAPEX.');
-      return;
-    }
-    const selectedTipo = capexTypes.find(t => t.id === parseInt(form.id_tipo_capex, 10));
-    if (form.es_capex && selectedTipo?.Subtipos?.length > 0 && !form.id_subtipo_capex) {
-      setError('El subtipo de CAPEX es obligatorio para el tipo seleccionado.');
-      return;
+    if (!form.es_iniciativa_ligera) {
+      if (form.es_capex && (!form.codigo_capex || form.codigo_capex.trim() === '')) {
+        setError('El código CAPEX es obligatorio para proyectos CAPEX.');
+        return;
+      }
+      if (form.es_capex && !form.id_tipo_capex) {
+        setError('El tipo de CAPEX es obligatorio para proyectos CAPEX.');
+        return;
+      }
+      const selectedTipo = capexTypes.find(t => t.id === parseInt(form.id_tipo_capex, 10));
+      if (form.es_capex && selectedTipo?.Subtipos?.length > 0 && !form.id_subtipo_capex) {
+        setError('El subtipo de CAPEX es obligatorio para el tipo seleccionado.');
+        return;
+      }
     }
 
     const payload = {
       ...form,
-      budget_inicial: parseFloat(form.budget_inicial),
+      es_iniciativa_ligera: !!form.es_iniciativa_ligera,
+      budget_inicial: form.es_iniciativa_ligera ? 0 : parseFloat(form.budget_inicial),
       id_pm: form.id_pm ? parseInt(form.id_pm, 10) : null,
-      id_proveedor: form.id_proveedor ? parseInt(form.id_proveedor, 10) : null,
+      id_proveedor: !form.es_iniciativa_ligera && form.id_proveedor ? parseInt(form.id_proveedor, 10) : null,
       id_sede: form.id_sede ? parseInt(form.id_sede, 10) : null,
       id_sede_distribuir: form.id_sede_distribuir ? parseInt(form.id_sede_distribuir, 10) : null,
       id_sponsor: form.id_sponsor ? parseInt(form.id_sponsor, 10) : null,
       portfolio_id: form.portfolio_id ? parseInt(form.portfolio_id, 10) : null,
-      id_tipo_capex: form.es_capex && form.id_tipo_capex ? parseInt(form.id_tipo_capex, 10) : null,
-      id_subtipo_capex: form.es_capex && form.id_subtipo_capex ? parseInt(form.id_subtipo_capex, 10) : null
+      es_capex: form.es_iniciativa_ligera ? false : form.es_capex,
+      codigo_capex: form.es_iniciativa_ligera ? null : form.codigo_capex,
+      id_tipo_capex: !form.es_iniciativa_ligera && form.es_capex && form.id_tipo_capex ? parseInt(form.id_tipo_capex, 10) : null,
+      id_subtipo_capex: !form.es_iniciativa_ligera && form.es_capex && form.id_subtipo_capex ? parseInt(form.id_subtipo_capex, 10) : null
     };
 
     fetch(`${import.meta.env.VITE_API_URL}/projects/${project.id_proyecto}`, {

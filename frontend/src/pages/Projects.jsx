@@ -16,11 +16,11 @@ const DEFAULT_PROJECT_COLUMNS = [
   { id: 'proveedor', label: 'Socio Tecnológico', fixed: false, visible: false },
   { id: 'pm', label: 'Gestor PM', fixed: false, visible: true },
   { id: 'sede', label: 'Sede', fixed: false, visible: false },
-  { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: true },
+  { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: false },
   { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: false },
   { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
-  { id: 'budget', label: 'Presupuesto', fixed: false, visible: true },
-  { id: 'progreso', label: 'Progreso Gasto', fixed: false, visible: true },
+  { id: 'budget', label: 'Presupuesto', fixed: false, visible: false },
+  { id: 'progreso', label: 'Progreso Gasto', fixed: false, visible: false },
   { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true },
   { id: 'ultimo_comentario', label: 'Último Comentario', fixed: false, visible: true },
   { id: 'accion', label: 'Acción', fixed: true, visible: true }
@@ -33,7 +33,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
   const [loading, setLoading] = useState(true);
 
   // Column visibility
-  const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns', DEFAULT_PROJECT_COLUMNS);
+  const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
@@ -80,6 +80,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
   const [filterVendor, setFilterVendor] = useState('');
   const [filterRag, setFilterRag] = useState('');
   const [filterEstrategico, setFilterEstrategico] = useState('');
+  const [filterIniciativa, setFilterIniciativa] = useState('');
   const [filterPortfolio, setFilterPortfolio] = useState('');
   const [filterTag, setFilterTag] = useState('');
   const [filterStates, setFilterStates] = useState([]);
@@ -106,6 +107,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
     if (filterVendor) params.append('vendor', filterVendor);
     if (filterRag) params.append('rag', filterRag);
     if (filterEstrategico) params.append('estrategico', filterEstrategico);
+    if (filterIniciativa) params.append('iniciativa_ligera', filterIniciativa);
     if (filterStates.length > 0) params.append('state', filterStates.join(','));
     if (filterPortfolio) params.append('portfolio', filterPortfolio);
     if (filterTag) params.append('tag', filterTag);
@@ -138,7 +140,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
 
   useEffect(() => {
     fetchProjects();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterPortfolio, filterTag, filterStates, searchTerm]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm]);
 
   useEffect(() => {
     fetchMetadata();
@@ -152,6 +154,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
         filterVendor={filterVendor} setFilterVendor={setFilterVendor}
         filterRag={filterRag} setFilterRag={setFilterRag}
         filterEstrategico={filterEstrategico} setFilterEstrategico={setFilterEstrategico}
+        filterIniciativa={filterIniciativa} setFilterIniciativa={setFilterIniciativa}
         filterPortfolio={filterPortfolio} setFilterPortfolio={setFilterPortfolio}
         filterTag={filterTag} setFilterTag={setFilterTag}
         filterStates={filterStates} setFilterStates={setFilterStates}

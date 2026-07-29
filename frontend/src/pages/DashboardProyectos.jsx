@@ -33,6 +33,7 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
   const [filterVendor, setFilterVendor] = useState('');
   const [filterRag, setFilterRag] = useState('');
   const [filterEstrategico, setFilterEstrategico] = useState('');
+  const [filterIniciativa, setFilterIniciativa] = useState('');
   const [filterPortfolio, setFilterPortfolio] = useState('');
   const [filterTag, setFilterTag] = useState('');
   const [filterStates, setFilterStates] = useState([]);
@@ -68,6 +69,7 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
     if (filterVendor) params.append('vendor', filterVendor);
     if (filterRag) params.append('rag', filterRag);
     if (filterEstrategico) params.append('estrategico', filterEstrategico);
+    if (filterIniciativa) params.append('iniciativa_ligera', filterIniciativa);
     if (filterPortfolio) params.append('portfolio', filterPortfolio);
     if (filterTag) params.append('tag', filterTag);
     if (searchTerm) params.append('search', searchTerm);
@@ -89,7 +91,7 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterPortfolio, filterTag, filterStates, searchTerm]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm]);
 
   const getFilteredProjects = () => {
     let res = [...projects];
@@ -156,6 +158,7 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
         filterVendor={filterVendor} setFilterVendor={setFilterVendor}
         filterRag={filterRag} setFilterRag={setFilterRag}
         filterEstrategico={filterEstrategico} setFilterEstrategico={setFilterEstrategico}
+        filterIniciativa={filterIniciativa} setFilterIniciativa={setFilterIniciativa}
         filterPortfolio={filterPortfolio} setFilterPortfolio={setFilterPortfolio}
         filterTag={filterTag} setFilterTag={setFilterTag}
         filterStates={filterStates} setFilterStates={setFilterStates}

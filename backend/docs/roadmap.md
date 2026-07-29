@@ -17,6 +17,8 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-36: Ocultar por defecto Fecha de Inicio, Fecha Fin Base, Presupuesto y Progreso del Gasto en la tabla de proyectos** (2026-07-29)
+- [x] **FEATURE-35 (IDEA-35): Gestión de Proyectos e Iniciativas Ligeras (Sin CAPEX / Sin Presupuesto)** (2026-07-29)
 - [x] **FEATURE-34 (IDEA-34): Desacoplamiento del Dashboard en 2 vistas de menú independientes (Dashboard Proyectos y Dashboard Portfolio)** (2026-07-28)
 - [x] **BUG-04: Soporte de endpoints anidados /api/projects/:id_proyecto/comments (POST, PUT, DELETE) para solucionar error HTTP 404 al publicar comentarios** (2026-07-28)
 - [x] **FEATURE-33 (IDEA-33): Registro de Puntuación de Encuestas Cualitativas por Proyecto** (2026-07-28)

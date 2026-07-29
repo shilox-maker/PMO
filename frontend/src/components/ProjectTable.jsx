@@ -17,8 +17,8 @@ const DEFAULT_PROJECT_COLUMNS = [
   { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: false },
   { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: false },
   { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
-  { id: 'budget', label: 'Presupuesto', fixed: false, visible: true },
-  { id: 'progreso', label: 'Progreso Gasto', fixed: false, visible: true },
+  { id: 'budget', label: 'Presupuesto', fixed: false, visible: false },
+  { id: 'progreso', label: 'Progreso Gasto', fixed: false, visible: false },
   { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true },
   { id: 'ultimo_comentario', label: 'Último Comentario', fixed: false, visible: true },
   { id: 'cambios_alcance_count', label: 'Cambios Alcance', fixed: false, visible: true },
@@ -27,7 +27,7 @@ const DEFAULT_PROJECT_COLUMNS = [
 
 export default function ProjectTable({ projects, onViewProject, onViewVendor, showHeaderSelector = true }) {
   const { getAuthHeaders } = useAuth();
-  const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns', DEFAULT_PROJECT_COLUMNS);
+  const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
   const [isExportOpen, setIsExportOpen] = useState(false);
 
@@ -114,8 +114,9 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                 presupuesto_disponible: (project.budget_actualizado || project.budget_inicial || 0) - (project.gasto_total_facturas || 0),
                 fecha_fin_estimada: project.fecha_fin_estimada || project.fecha_fin_inicial
               };
-              const consumptionPercent = calc.budget_actualizado > 0 ? Math.min((calc.consumo_real / calc.budget_actualizado) * 100, 100) : 0;
-              const displayedPercent = calc.budget_actualizado > 0 ? Math.round((calc.consumo_real / calc.budget_actualizado) * 100) : 0;
+              const budgetAct = calc.budget_actualizado || 0;
+              const consumptionPercent = budgetAct > 0 ? Math.min(((calc.consumo_real || 0) / budgetAct) * 100, 100) : 0;
+              const displayedPercent = budgetAct > 0 ? Math.round(((calc.consumo_real || 0) / budgetAct) * 100) : 0;
 
               const todayStr = new Date().toISOString().split('T')[0];
               const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes(project.estado_proyecto?.toUpperCase());
@@ -136,12 +137,16 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                     >
                       {project.nombre_proyecto}
                     </span>
-                    {project.es_capex && (
+                    {project.es_iniciativa_ligera ? (
+                      <div style={{ fontSize: '0.7rem', color: '#e0a025', fontWeight: 600, marginTop: 2 }}>
+                        ⚡ Iniciativa Ligera
+                      </div>
+                    ) : project.es_capex ? (
                       <div style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-primary)', fontWeight: 600, marginTop: 2 }}>
                         CAPEX • {project.codigo_capex}
                         {project.TipoCapex && ` (${project.TipoCapex.nombre}${project.SubtipoCapex ? ` - ${project.SubtipoCapex.nombre}` : ''})`}
                       </div>
-                    )}
+                    ) : null}
                   </td>}
 
                   {/* Estado */}
@@ -168,12 +173,16 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
 
                   {/* Vendor */}
                   {visibleColumnsMap.proveedor && <td>
-                    <span 
-                      style={{ textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)', fontWeight: 500 }}
-                      onClick={() => onViewVendor && onViewVendor(project.id_proveedor)}
-                    >
-                      {project.Proveedor?.nombre_razon_social || project.prov_nombre || 'Sin Partner'}
-                    </span>
+                    {project.es_iniciativa_ligera || !project.Proveedor ? (
+                      <span style={{ color: 'var(--md-sys-color-outline)' }}>—</span>
+                    ) : (
+                      <span 
+                        style={{ textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)', fontWeight: 500 }}
+                        onClick={() => onViewVendor && onViewVendor(project.id_proveedor)}
+                      >
+                        {project.Proveedor.nombre_razon_social || project.prov_nombre || 'Sin Partner'}
+                      </span>
+                    )}
                   </td>}
 
                   {/* PM */}
@@ -191,33 +200,45 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
 
                   {/* Budget */}
                   {visibleColumnsMap.budget && <td>
-                    <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>
-                      Act: {calc?.budget_actualizado.toLocaleString('es-ES')} €
-                    </div>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      color: calc?.presupuesto_disponible < 0 ? 'var(--color-rag-red)' : 'var(--md-sys-color-outline)' 
-                    }}>
-                      Disp: {calc?.presupuesto_disponible.toLocaleString('es-ES')} €
-                    </div>
+                    {project.es_iniciativa_ligera ? (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>N/A (Ligero)</span>
+                    ) : (
+                      <>
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>
+                          Act: {(calc?.budget_actualizado || 0).toLocaleString('es-ES')} €
+                        </div>
+                        <div style={{ 
+                          fontSize: '0.75rem', 
+                          color: (calc?.presupuesto_disponible || 0) < 0 ? 'var(--color-rag-red)' : 'var(--md-sys-color-outline)' 
+                        }}>
+                          Disp: {(calc?.presupuesto_disponible || 0).toLocaleString('es-ES')} €
+                        </div>
+                      </>
+                    )}
                   </td>}
 
                   {/* Progress Bar */}
                   {visibleColumnsMap.progreso && <td style={{ minWidth: '120px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600, marginBottom: 4 }}>
-                      <span>{calc?.consumo_real.toLocaleString('es-ES', { maximumFractionDigits: 0 })} €</span>
-                      <span style={{ opacity: 0.6 }}>/</span>
-                      <span>{displayedPercent}%</span>
-                    </div>
-                    <div className="progress-track" style={{ height: 6 }}>
-                      <div 
-                        className="progress-fill" 
-                        style={{ 
-                          width: `${consumptionPercent}%`, 
-                          backgroundColor: getProgressColor(displayedPercent)
-                        }}
-                      ></div>
-                    </div>
+                    {project.es_iniciativa_ligera ? (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>N/A</span>
+                    ) : (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600, marginBottom: 4 }}>
+                          <span>{(calc?.consumo_real || 0).toLocaleString('es-ES', { maximumFractionDigits: 0 })} €</span>
+                          <span style={{ opacity: 0.6 }}>/</span>
+                          <span>{isNaN(displayedPercent) ? 0 : displayedPercent}%</span>
+                        </div>
+                        <div className="progress-track" style={{ height: 6 }}>
+                          <div 
+                            className="progress-fill" 
+                            style={{ 
+                              width: `${isNaN(consumptionPercent) ? 0 : consumptionPercent}%`, 
+                              backgroundColor: getProgressColor(displayedPercent)
+                            }}
+                          ></div>
+                        </div>
+                      </>
+                    )}
                   </td>}
 
                   {/* Milestone */}
