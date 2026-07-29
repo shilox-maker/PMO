@@ -31,10 +31,12 @@ module.exports = {
       return originalCreateTable(targetTable, qualifiedAttributes, options);
     };
 
+    const getTarget = (tbl) => isSqlite ? tbl : { tableName: tbl, schema };
+
     // 1. Crear Planes_Comunicacion
     let planesExists = false;
     try {
-      const info = await queryInterface.describeTable('Planes_Comunicacion');
+      const info = await queryInterface.describeTable(getTarget('Planes_Comunicacion'));
       if (info && Object.keys(info).length > 0) planesExists = true;
     } catch (e) {
       planesExists = false;
@@ -49,7 +51,7 @@ module.exports = {
           allowNull: false
         },
         id_proyecto: {
-          type: DataTypes.STRING(50),
+          type: DataTypes.STRING,
           allowNull: false,
           references: { model: 'Proyectos', key: 'id_proyecto' },
           onDelete: 'CASCADE'
@@ -101,7 +103,7 @@ module.exports = {
     // 2. Crear Plan_Comunicacion_Contacto
     let pivotExists = false;
     try {
-      const info = await queryInterface.describeTable('Plan_Comunicacion_Contacto');
+      const info = await queryInterface.describeTable(getTarget('Plan_Comunicacion_Contacto'));
       if (info && Object.keys(info).length > 0) pivotExists = true;
     } catch (e) {
       pivotExists = false;
@@ -143,7 +145,7 @@ module.exports = {
     // 3. Crear Plan_Comunicacion_Log
     let logExists = false;
     try {
-      const info = await queryInterface.describeTable('Plan_Comunicacion_Log');
+      const info = await queryInterface.describeTable(getTarget('Plan_Comunicacion_Log'));
       if (info && Object.keys(info).length > 0) logExists = true;
     } catch (e) {
       logExists = false;
@@ -164,7 +166,7 @@ module.exports = {
           onDelete: 'SET NULL'
         },
         id_proyecto: {
-          type: DataTypes.STRING(50),
+          type: DataTypes.STRING,
           allowNull: false,
           references: { model: 'Proyectos', key: 'id_proyecto' },
           onDelete: 'CASCADE'
@@ -247,9 +249,9 @@ module.exports = {
 
           let planId = existing ? existing.id : null;
           if (!planId) {
-            const now = new Date().toISOString();
+            const dateStr = isSqlite ? `'${new Date().toISOString()}'` : 'GETDATE()';
             await queryInterface.sequelize.query(
-              `INSERT INTO ${isSqlite ? 'Planes_Comunicacion' : `[${schema}].[Planes_Comunicacion]`} (id_proyecto, titulo, finalidad, periodicidad, intervalo, dia_semana, dia_mes, activo, createdAt, updatedAt) VALUES ('${p.id_proyecto}', '${plan.titulo.replace(/'/g, "''")}', '${(plan.finalidad || '').replace(/'/g, "''")}', '${plan.periodicidad}', ${plan.intervalo}, ${plan.dia_semana || 'NULL'}, ${plan.dia_mes || 'NULL'}, ${plan.activo ? 1 : 0}, '${now}', '${now}')`
+              `INSERT INTO ${isSqlite ? 'Planes_Comunicacion' : `[${schema}].[Planes_Comunicacion]`} (id_proyecto, titulo, finalidad, periodicidad, intervalo, dia_semana, dia_mes, activo, createdAt, updatedAt) VALUES ('${p.id_proyecto}', '${plan.titulo.replace(/'/g, "''")}', '${(plan.finalidad || '').replace(/'/g, "''")}', '${plan.periodicidad}', ${plan.intervalo}, ${plan.dia_semana || 'NULL'}, ${plan.dia_mes || 'NULL'}, ${plan.activo ? 1 : 0}, ${dateStr}, ${dateStr})`
             );
             const [newPlan] = await queryInterface.sequelize.query(
               `SELECT id FROM ${isSqlite ? 'Planes_Comunicacion' : `[${schema}].[Planes_Comunicacion]`} WHERE id_proyecto = '${p.id_proyecto}' AND titulo = '${plan.titulo.replace(/'/g, "''")}'`,
@@ -270,9 +272,9 @@ module.exports = {
                   { type: Sequelize.QueryTypes.SELECT }
                 );
                 if (!relExist) {
-                  const now = new Date().toISOString();
+                  const dateStr = isSqlite ? `'${new Date().toISOString()}'` : 'GETDATE()';
                   await queryInterface.sequelize.query(
-                    `INSERT INTO ${isSqlite ? 'Plan_Comunicacion_Contacto' : `[${schema}].[Plan_Comunicacion_Contacto]`} (id_plan_comunicacion, id_contacto, createdAt, updatedAt) VALUES (${planId}, ${lc.id_contacto}, '${now}', '${now}')`
+                    `INSERT INTO ${isSqlite ? 'Plan_Comunicacion_Contacto' : `[${schema}].[Plan_Comunicacion_Contacto]`} (id_plan_comunicacion, id_contacto, createdAt, updatedAt) VALUES (${planId}, ${lc.id_contacto}, ${dateStr}, ${dateStr})`
                   );
                 }
               }
