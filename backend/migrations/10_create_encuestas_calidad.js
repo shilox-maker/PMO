@@ -33,7 +33,8 @@ module.exports = {
 
     let exists = false;
     try {
-      const info = await queryInterface.describeTable('Encuestas_Calidad');
+      const targetTable = isSqlite ? 'Encuestas_Calidad' : { tableName: 'Encuestas_Calidad', schema };
+      const info = await queryInterface.describeTable(targetTable);
       if (info && Object.keys(info).length > 0) exists = true;
     } catch (e) {
       exists = false;
@@ -48,7 +49,7 @@ module.exports = {
           allowNull: false
         },
         id_proyecto: {
-          type: DataTypes.STRING(50),
+          type: DataTypes.STRING,
           allowNull: false,
           references: { model: 'Proyectos', key: 'id_proyecto' },
           onDelete: 'CASCADE'
