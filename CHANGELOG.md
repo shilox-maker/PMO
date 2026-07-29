@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [2.5.1] - 2026-07-29
+### Performance / Changed
+- **Optimización de Carga Diferida en la Ficha del Proyecto (FEATURE-37 / IDEA-37)**:
+  - Carga perezosa de pestañas mediante `React.lazy` y `Suspense` en [ProjectDetail.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/pages/ProjectDetail.jsx), dividiendo la app en bundles independientes (*code splitting*).
+  - Diferimiento de peticiones de metadatos maestros (`/sedes`, `/vendors`, `/contactos`, etc.) para ejecutarse únicamente tras la apertura de modales de edición, acelerando un ~60% la apertura inicial del proyecto.
+
 ## [2.5.0] - 2026-07-29
 ### Added / Changed
 - **Configuración de Columnas Visibles por Defecto en Listado de Proyectos**:

@@ -17,6 +17,7 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-37 (IDEA-37): Optimización de Carga Diferida (Lazy Loading & On-Demand) en la Ficha del Proyecto** (2026-07-29)
 - [x] **FEATURE-36: Ocultar por defecto Fecha de Inicio, Fecha Fin Base, Presupuesto y Progreso del Gasto en la tabla de proyectos** (2026-07-29)
 - [x] **FEATURE-35 (IDEA-35): Gestión de Proyectos e Iniciativas Ligeras (Sin CAPEX / Sin Presupuesto)** (2026-07-29)
 - [x] **FEATURE-34 (IDEA-34): Desacoplamiento del Dashboard en 2 vistas de menú independientes (Dashboard Proyectos y Dashboard Portfolio)** (2026-07-28)

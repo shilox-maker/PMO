@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
@@ -14,19 +14,20 @@ import ReportModal from '../components/modals/ReportModal';
 import RaciModal from '../components/modals/RaciModal';
 import ConfirmAddStateTasksModal from '../components/projects/ConfirmAddStateTasksModal';
 
-
-// Import Tabs & Header
+// Import Header & Nav
 import ProjectDetailHeader from './project-detail/ProjectDetailHeader';
 import ProjectDetailTabsNav from './project-detail/ProjectDetailTabsNav';
-import ProjectFichaTab from './project-detail/tabs/ProjectFichaTab';
-import ProjectAlcanceTab from './project-detail/tabs/ProjectAlcanceTab';
-import ProjectFinanzasTab from './project-detail/tabs/ProjectFinanzasTab';
-import ProjectCambiosTab from './project-detail/tabs/ProjectCambiosTab';
-import ProjectRiesgosTab from './project-detail/tabs/ProjectRiesgosTab';
-import ProjectComunicacionesTab from './project-detail/tabs/ProjectComunicacionesTab';
-import ProjectEncuestasTab from './project-detail/tabs/ProjectEncuestasTab';
-import ProjectChecklistTab from './project-detail/tabs/ProjectChecklistTab';
-import ProjectLeccionesTab from './project-detail/tabs/ProjectLeccionesTab';
+
+// Lazy Loaded Tabs
+const ProjectFichaTab = lazy(() => import('./project-detail/tabs/ProjectFichaTab'));
+const ProjectAlcanceTab = lazy(() => import('./project-detail/tabs/ProjectAlcanceTab'));
+const ProjectFinanzasTab = lazy(() => import('./project-detail/tabs/ProjectFinanzasTab'));
+const ProjectCambiosTab = lazy(() => import('./project-detail/tabs/ProjectCambiosTab'));
+const ProjectRiesgosTab = lazy(() => import('./project-detail/tabs/ProjectRiesgosTab'));
+const ProjectComunicacionesTab = lazy(() => import('./project-detail/tabs/ProjectComunicacionesTab'));
+const ProjectEncuestasTab = lazy(() => import('./project-detail/tabs/ProjectEncuestasTab'));
+const ProjectChecklistTab = lazy(() => import('./project-detail/tabs/ProjectChecklistTab'));
+const ProjectLeccionesTab = lazy(() => import('./project-detail/tabs/ProjectLeccionesTab'));
 
 export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const { getAuthHeaders, currentPm } = useAuth();
@@ -148,23 +149,32 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       });
   };
 
+  const [metadataLoaded, setMetadataLoaded] = useState(false);
+
   const fetchMetadata = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedes(data));
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendors(data));
-    fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPms(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowStates(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/capex-types`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setCapexTypes(data));
+    if (metadataLoaded) return;
+    setMetadataLoaded(true);
+    fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedes(data)).catch(() => {});
+    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendors(data)).catch(() => {});
+    fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data)).catch(() => {});
+    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPms(data)).catch(() => {});
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowStates(data)).catch(() => {});
+    fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data)).catch(() => {});
+    fetch(`${import.meta.env.VITE_API_URL}/capex-types`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setCapexTypes(data)).catch(() => {});
   };
 
   useEffect(() => {
     if (projectId) {
       fetchProjectData(true);
-      fetchMetadata();
       fetchComments();
     }
   }, [projectId]);
+
+  useEffect(() => {
+    if (showEditProjectModal || showRaciModal || showInvoiceModal || showCrModal || showRiskModal || showIssueModal || showTaskModal || showLessonModal || showReportModal) {
+      fetchMetadata();
+    }
+  }, [showEditProjectModal, showRaciModal, showInvoiceModal, showCrModal, showRiskModal, showIssueModal, showTaskModal, showLessonModal, showReportModal]);
 
   const executeUpdateProject = (fieldsToUpdate) => {
     return fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
@@ -386,158 +396,165 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       />
 
       {/* Active Tab Content */}
-      {activeTab === 'ficha' && (
-        <ProjectFichaTab 
-          project={project}
-          comments={comments}
-          commentsLoading={commentsLoading}
-          newCommentText={newCommentText}
-          setNewCommentText={setNewCommentText}
-          newCommentImportant={newCommentImportant}
-          setNewCommentImportant={setNewCommentImportant}
-          newCommentDireccion={newCommentDireccion}
-          setNewCommentDireccion={setNewCommentDireccion}
-          handleAddComment={handleAddComment}
-          handleDeleteComment={handleDeleteComment}
-          editingCommentId={editingCommentId}
-          setEditingCommentId={setEditingCommentId}
-          editingCommentText={editingCommentText}
-          setEditingCommentText={setEditingCommentText}
-          editingCommentImportant={editingCommentImportant}
-          setEditingCommentImportant={setEditingCommentImportant}
-          editingCommentDireccion={editingCommentDireccion}
-          setEditingCommentDireccion={setEditingCommentDireccion}
-          handleUpdateComment={handleUpdateComment}
-          isEditingLifecycle={isEditingLifecycle}
-          handleOpenEditLifecycle={handleOpenEditLifecycle}
-          handleDeleteParticipant={handleDeleteParticipant}
-          handleOpenAddRaci={handleOpenAddRaci}
-          handleOpenEditRaci={handleOpenEditRaci}
-          onViewVendor={onViewVendor}
-          contactosList={contactosList}
-          canSeeDireccion={canSeeDireccion}
-          getAuthHeaders={getAuthHeaders}
-          handleUpdateProject={handleUpdateProject}
-        />
-      )}
+      <Suspense fallback={
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '48px', gap: 12, color: 'var(--md-sys-color-outline)' }}>
+          <RefreshCw className="animate-spin" size={24} style={{ color: 'var(--md-sys-color-primary)' }} />
+          <span>Cargando sección...</span>
+        </div>
+      }>
+        {activeTab === 'ficha' && (
+          <ProjectFichaTab 
+            project={project}
+            comments={comments}
+            commentsLoading={commentsLoading}
+            newCommentText={newCommentText}
+            setNewCommentText={setNewCommentText}
+            newCommentImportant={newCommentImportant}
+            setNewCommentImportant={setNewCommentImportant}
+            newCommentDireccion={newCommentDireccion}
+            setNewCommentDireccion={setNewCommentDireccion}
+            handleAddComment={handleAddComment}
+            handleDeleteComment={handleDeleteComment}
+            editingCommentId={editingCommentId}
+            setEditingCommentId={setEditingCommentId}
+            editingCommentText={editingCommentText}
+            setEditingCommentText={setEditingCommentText}
+            editingCommentImportant={editingCommentImportant}
+            setEditingCommentImportant={setEditingCommentImportant}
+            editingCommentDireccion={editingCommentDireccion}
+            setEditingCommentDireccion={setEditingCommentDireccion}
+            handleUpdateComment={handleUpdateComment}
+            isEditingLifecycle={isEditingLifecycle}
+            handleOpenEditLifecycle={handleOpenEditLifecycle}
+            handleDeleteParticipant={handleDeleteParticipant}
+            handleOpenAddRaci={handleOpenAddRaci}
+            handleOpenEditRaci={handleOpenEditRaci}
+            onViewVendor={onViewVendor}
+            contactosList={contactosList}
+            canSeeDireccion={canSeeDireccion}
+            getAuthHeaders={getAuthHeaders}
+            handleUpdateProject={handleUpdateProject}
+          />
+        )}
 
-      {activeTab === 'alcance' && (
-        <ProjectAlcanceTab 
-          project={project}
-          editingBlock={editingBlock}
-          setEditingBlock={setEditingBlock}
-          blockValue={blockValue}
-          setBlockValue={setBlockValue}
-          handleSaveBlock={(fn) => {
-            fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
-              method: 'PUT',
-              headers: getAuthHeaders(),
-              body: JSON.stringify({ [fn]: blockValue })
-            }).then(() => { setEditingBlock(null); fetchProjectData(); });
-          }}
-        />
-      )}
-
-      {activeTab === 'finanzas' && (
-        <ProjectFinanzasTab 
-          project={project}
-          invoicesSort={invoicesSort}
-          setInvoicesSort={setInvoicesSort}
-          renderSortHeader={renderSortHeader}
-          setShowInvoiceModal={setShowInvoiceModal}
-          setEditingInvoice={setEditingInvoice}
-          fetchProjectData={fetchProjectData}
-          getAuthHeaders={getAuthHeaders}
-        />
-      )}
-
-      {activeTab === 'cambios' && (
-        <ProjectCambiosTab 
-          project={project}
-          openAddCr={() => { setEditingCr(null); setShowCrModal(true); }}
-          openEditCr={(cr) => { setEditingCr(cr); setShowCrModal(true); }}
-          crSort={crSort}
-          setCrSort={setCrSort}
-          renderSortHeader={renderSortHeader}
-        />
-      )}
-
-      {activeTab === 'riesgos' && (
-        <ProjectRiesgosTab 
-          project={project}
-          openAddRisk={() => { setEditingRisk(null); setShowRiskModal(true); }}
-          openEditRisk={(r) => { setEditingRisk(r); setShowRiskModal(true); }}
-          handleToggleRiskState={async (id_riesgo, estado_actual) => {
-            const nuevoEstado = estado_actual === 'ACTIVO' ? 'CERRADO' : 'ACTIVO';
-            try {
-              const res = await fetch(`${import.meta.env.VITE_API_URL}/risks/${id_riesgo}`, {
+        {activeTab === 'alcance' && (
+          <ProjectAlcanceTab 
+            project={project}
+            editingBlock={editingBlock}
+            setEditingBlock={setEditingBlock}
+            blockValue={blockValue}
+            setBlockValue={setBlockValue}
+            handleSaveBlock={(fn) => {
+              fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ estado_riesgo: nuevoEstado })
-              });
-              if (!res.ok) throw new Error('Error al cambiar el estado del riesgo');
-              fetchProjectData();
-            } catch (err) {
-              alert(err.message);
-            }
-          }}
-          openAddIssue={() => { setEditingIssue(null); setShowIssueModal(true); }}
-          openEditIssue={(i) => { setEditingIssue(i); setShowIssueModal(true); }}
-          risksSort={risksSort}
-          setRisksSort={setRisksSort}
-          issuesSort={issuesSort}
-          setIssuesSort={setIssuesSort}
-          renderSortHeader={renderSortHeader}
-        />
-      )}
+                body: JSON.stringify({ [fn]: blockValue })
+              }).then(() => { setEditingBlock(null); fetchProjectData(); });
+            }}
+          />
+        )}
 
-      {activeTab === 'comunicaciones' && (
-        <ProjectComunicacionesTab 
-          project={project}
-          contactosList={contactosList}
-          getAuthHeaders={getAuthHeaders}
-          handleUpdateProject={handleUpdateProject}
-        />
-      )}
+        {activeTab === 'finanzas' && (
+          <ProjectFinanzasTab 
+            project={project}
+            invoicesSort={invoicesSort}
+            setInvoicesSort={setInvoicesSort}
+            renderSortHeader={renderSortHeader}
+            setShowInvoiceModal={setShowInvoiceModal}
+            setEditingInvoice={setEditingInvoice}
+            fetchProjectData={fetchProjectData}
+            getAuthHeaders={getAuthHeaders}
+          />
+        )}
 
-      {activeTab === 'encuestas' && (
-        <ProjectEncuestasTab 
-          project={project}
-          getAuthHeaders={getAuthHeaders}
-        />
-      )}
+        {activeTab === 'cambios' && (
+          <ProjectCambiosTab 
+            project={project}
+            openAddCr={() => { setEditingCr(null); setShowCrModal(true); }}
+            openEditCr={(cr) => { setEditingCr(cr); setShowCrModal(true); }}
+            crSort={crSort}
+            setCrSort={setCrSort}
+            renderSortHeader={renderSortHeader}
+          />
+        )}
 
-      {activeTab === 'checklist' && (
-        <ProjectChecklistTab 
-          project={project}
-          tasksSort={tasksSort}
-          setTasksSort={setTasksSort}
-          renderSortHeader={renderSortHeader}
-          setShowTaskModal={setShowTaskModal}
-          setEditingTask={setEditingTask}
-          fetchProjectData={fetchProjectData}
-          getAuthHeaders={getAuthHeaders}
-        />
-      )}
+        {activeTab === 'riesgos' && (
+          <ProjectRiesgosTab 
+            project={project}
+            openAddRisk={() => { setEditingRisk(null); setShowRiskModal(true); }}
+            openEditRisk={(r) => { setEditingRisk(r); setShowRiskModal(true); }}
+            handleToggleRiskState={async (id_riesgo, estado_actual) => {
+              const nuevoEstado = estado_actual === 'ACTIVO' ? 'CERRADO' : 'ACTIVO';
+              try {
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/risks/${id_riesgo}`, {
+                  method: 'PUT',
+                  headers: getAuthHeaders(),
+                  body: JSON.stringify({ estado_riesgo: nuevoEstado })
+                });
+                if (!res.ok) throw new Error('Error al cambiar el estado del riesgo');
+                fetchProjectData();
+              } catch (err) {
+                alert(err.message);
+              }
+            }}
+            openAddIssue={() => { setEditingIssue(null); setShowIssueModal(true); }}
+            openEditIssue={(i) => { setEditingIssue(i); setShowIssueModal(true); }}
+            risksSort={risksSort}
+            setRisksSort={setRisksSort}
+            issuesSort={issuesSort}
+            setIssuesSort={setIssuesSort}
+            renderSortHeader={renderSortHeader}
+          />
+        )}
 
-      {activeTab === 'lecciones' && (
-        <ProjectLeccionesTab 
-          project={project}
-          openAddLesson={() => { setEditingLesson(null); setShowLessonModal(true); }}
-          openEditLesson={(l) => { setEditingLesson(l); setShowLessonModal(true); }}
-          handleDeleteLesson={(lessonId) => {
-            if (window.confirm('¿Seguro que deseas eliminar esta lección aprendida?')) {
-              fetch(`${import.meta.env.VITE_API_URL}/lessons/${lessonId}`, {
-                method: 'DELETE',
-                headers: getAuthHeaders()
-              }).then(() => fetchProjectData());
-            }
-          }}
-          lessonsSort={lessonsSort}
-          setLessonsSort={setLessonsSort}
-          renderSortHeader={renderSortHeader}
-        />
-      )}
+        {activeTab === 'comunicaciones' && (
+          <ProjectComunicacionesTab 
+            project={project}
+            contactosList={contactosList}
+            getAuthHeaders={getAuthHeaders}
+            handleUpdateProject={handleUpdateProject}
+          />
+        )}
+
+        {activeTab === 'encuestas' && (
+          <ProjectEncuestasTab 
+            project={project}
+            getAuthHeaders={getAuthHeaders}
+          />
+        )}
+
+        {activeTab === 'checklist' && (
+          <ProjectChecklistTab 
+            project={project}
+            tasksSort={tasksSort}
+            setTasksSort={setTasksSort}
+            renderSortHeader={renderSortHeader}
+            setShowTaskModal={setShowTaskModal}
+            setEditingTask={setEditingTask}
+            fetchProjectData={fetchProjectData}
+            getAuthHeaders={getAuthHeaders}
+          />
+        )}
+
+        {activeTab === 'lecciones' && (
+          <ProjectLeccionesTab 
+            project={project}
+            openAddLesson={() => { setEditingLesson(null); setShowLessonModal(true); }}
+            openEditLesson={(l) => { setEditingLesson(l); setShowLessonModal(true); }}
+            handleDeleteLesson={(lessonId) => {
+              if (window.confirm('¿Seguro que deseas eliminar esta lección aprendida?')) {
+                fetch(`${import.meta.env.VITE_API_URL}/lessons/${lessonId}`, {
+                  method: 'DELETE',
+                  headers: getAuthHeaders()
+                }).then(() => fetchProjectData());
+              }
+            }}
+            lessonsSort={lessonsSort}
+            setLessonsSort={setLessonsSort}
+            renderSortHeader={renderSortHeader}
+          />
+        )}
+      </Suspense>
 
       {/* Modals */}
       {showEditProjectModal && (
