@@ -17,6 +17,7 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-38 (IDEA-38): Optimización Masiva de Rendimiento en Listados de Proyectos y Dashboards (Eliminación de Consultas N+1)** (2026-07-29)
 - [x] **FEATURE-37 (IDEA-37): Optimización de Carga Diferida (Lazy Loading & On-Demand) en la Ficha del Proyecto** (2026-07-29)
 - [x] **FEATURE-36: Ocultar por defecto Fecha de Inicio, Fecha Fin Base, Presupuesto y Progreso del Gasto en la tabla de proyectos** (2026-07-29)
 - [x] **FEATURE-35 (IDEA-35): Gestión de Proyectos e Iniciativas Ligeras (Sin CAPEX / Sin Presupuesto)** (2026-07-29)
