@@ -28,19 +28,19 @@ function Test-Environment {
         Write-Host "  PM2 ($pm2Name): OFFLINE" -ForegroundColor Red
     }
 
-    # 2. API responde
+    # 2. API responde y BD conectada
     try {
-        $resp = Invoke-WebRequest -Uri "http://localhost:$Port/api/auth/login" `
-            -Method POST -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
-        Write-Host "  API (localhost:$Port): OK (HTTP $($resp.StatusCode))" -ForegroundColor Green
-    } catch {
-        $code = $_.Exception.Response.StatusCode.value__
-        if ($code) {
-            Write-Host "  API (localhost:$Port): OK (HTTP $code)" -ForegroundColor Green
+        $resp = Invoke-WebRequest -Uri "http://localhost:$Port/api/health" `
+            -Method GET -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
+        if ($resp.StatusCode -eq 200) {
+            Write-Host "  API (localhost:$Port): OK (HTTP 200 - BBDD Conectada)" -ForegroundColor Green
         } else {
-            Write-Host "  API (localhost:$Port): NO RESPONDE" -ForegroundColor Red
+            Write-Host "  API (localhost:$Port): ERROR (HTTP $($resp.StatusCode))" -ForegroundColor Red
         }
+    } catch {
+        Write-Host "  API (localhost:$Port): NO RESPONDE O ERROR" -ForegroundColor Red
     }
+
 
     # 3. Frontend compilado
     $distPath = "$AppDir\frontend\dist\index.html"

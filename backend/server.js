@@ -29,19 +29,30 @@ const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
-// Global Middlewares
+const isProdOrPre = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'pre';
+
+// Global Middlewares (FEATURE-43: HSTS en producción/pre)
 app.use(helmet({
   contentSecurityPolicy: false,
-  hsts: false
+  hsts: isProdOrPre ? { maxAge: 31536000, includeSubDomains: true } : false
 }));
 
-const allowedOrigins = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, 'http://localhost:5173'] : '*';
+// FEATURE-44: Política estricta de CORS sin comodín '*'
+const trustedOrigins = ['https://pmo.dacsa.com', 'https://prepmo.dacsa.com', 'http://localhost:5173', 'http://localhost:5000', 'http://localhost:5100'];
+const allowedOrigins = process.env.FRONTEND_URL ? [...new Set([process.env.FRONTEND_URL, ...trustedOrigins])] : trustedOrigins;
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'test') {
+      return callback(null, true);
+    }
+    return callback(new Error('Acceso restringido por política de seguridad CORS'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
 
 // Production: serve frontend static files (before auth to skip JWT)
 if (process.env.NODE_ENV === 'production') {

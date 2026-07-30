@@ -1,7 +1,7 @@
 const { 
   getSedes, getContactos, getPms, getChangelog, 
   getPortfolioStates, getPortfolios, getTags, createTag, 
-  getCapexTypes, getPortfolioBudgets, getInvoiceTypes 
+  getCapexTypes, getPortfolioBudgets, getInvoiceTypes, getHealth 
 } = require('./meta/taxonomy.controller');
 
 const { 
@@ -22,5 +22,7 @@ module.exports = {
   getCapexTypes,
   getPortfolioBudgets,
   getPortfolioBudgetReport,
-  getInvoiceTypes
+  getInvoiceTypes,
+  getHealth
 };
+

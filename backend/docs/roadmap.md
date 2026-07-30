@@ -13,11 +13,20 @@
 ## 🧪 5. En Testeo / Pruebas
 
 
+
+
 ## 🚀 6. Pendiente de Subir (Listo para Git)
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-44 (IDEA-44): Restricción estricta de políticas CORS sin comodín `*` en `server.js`** (2026-07-30)
+- [x] **FEATURE-43 (IDEA-43): Endurecimiento de cabeceras de seguridad HTTP con `helmet` (HSTS en producción/pre)** (2026-07-30)
+- [x] **FEATURE-42 (IDEA-42): Rate Limiting en endpoints de autenticación (`express-rate-limit`)** (2026-07-30)
+- [x] **FEATURE-41 (IDEA-41): Validación obligatoria de `JWT_SECRET` en el arranque del Backend** (2026-07-30)
+- [x] **FEATURE-40 (IDEA-40): Protección contra bypass de autenticación por `AZURE_MOCK` en entornos de producción** (2026-07-30)
+- [x] **FEATURE-39 (IDEA-39): Endpoint dedicado de Health Check (`GET /api/health`) que verifica el estado del servidor Express y conectividad con la BBDD** (2026-07-30)
 - [x] **FEATURE-38 (IDEA-38): Optimización Masiva de Rendimiento en Listados de Proyectos y Dashboards (Eliminación de Consultas N+1)** (2026-07-29)
+
 - [x] **FEATURE-37 (IDEA-37): Optimización de Carga Diferida (Lazy Loading & On-Demand) en la Ficha del Proyecto** (2026-07-29)
 - [x] **FEATURE-36: Ocultar por defecto Fecha de Inicio, Fecha Fin Base, Presupuesto y Progreso del Gasto en la tabla de proyectos** (2026-07-29)
 - [x] **FEATURE-35 (IDEA-35): Gestión de Proyectos e Iniciativas Ligeras (Sin CAPEX / Sin Presupuesto)** (2026-07-29)

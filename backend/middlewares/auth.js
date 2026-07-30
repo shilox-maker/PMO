@@ -5,7 +5,7 @@ const { handleErr } = require('../utils/helpers');
 
 // Auth Middleware: Verify JWT from Authorization header
 const verifyToken = (req, res, next) => {
-  if (req.path === '/api/login' || req.path === '/api/login/azure') {
+  if (req.path === '/api/login' || req.path === '/api/login/azure' || req.path === '/api/health') {
     return next();
   }
   

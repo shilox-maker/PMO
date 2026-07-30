@@ -33,6 +33,9 @@ const loginAzure = asyncHandler(async (req, res) => {
 
   // Soporte para MOCK
   if (process.env.AZURE_MOCK === 'true') {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ error: 'La autenticación simulada (AZURE_MOCK) no está permitida en entornos de producción.' });
+    }
     if (token.startsWith('mock-token-')) {
       const userPart = token.replace('mock-token-', '');
       if (userPart === 'rmoreno') {
@@ -46,6 +49,7 @@ const loginAzure = asyncHandler(async (req, res) => {
       correo = 'rmoreno@dacsa.com'; // Default seed user con ENTRA_ID
     }
   } else {
+
     // Validación real usando nodejs crypto y jsonwebtoken
     const decodedToken = jwt.decode(token, { complete: true });
     if (!decodedToken || !decodedToken.header || !decodedToken.header.kid) {

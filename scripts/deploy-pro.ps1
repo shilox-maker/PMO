@@ -121,17 +121,18 @@ Write-Host "`n[5/5] Verificando despliegue..." -ForegroundColor Yellow
 Start-Sleep -Seconds 3
 
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:5100/api/auth/login" `
-        -Method POST -UseBasicParsing -TimeoutSec 10 -ErrorAction SilentlyContinue
+    $response = Invoke-WebRequest -Uri "http://localhost:5100/api/health" `
+        -Method GET -UseBasicParsing -TimeoutSec 10 -ErrorAction SilentlyContinue
 } catch {
     $statusCode = $_.Exception.Response.StatusCode.value__
 }
 
-if ($statusCode -or ($response -and $response.StatusCode)) {
-    Write-Host "  API respondiendo correctamente" -ForegroundColor Green
+if ($response -and $response.StatusCode -eq 200) {
+    Write-Host "  API y Base de Datos respondiendo correctamente (HTTP 200 OK)" -ForegroundColor Green
 } else {
-    Write-Host "  AVISO: La API no responde. Revisa: pm2 logs $PM2_NAME" -ForegroundColor Red
+    Write-Host "  AVISO: La API no responde correctamente. Revisa: pm2 logs $PM2_NAME" -ForegroundColor Red
 }
+
 
 $distIndex = Test-Path "$APP_DIR\frontend\dist\index.html"
 if ($distIndex) {
@@ -151,14 +152,3 @@ Write-Host "  Commit: $(git -C $APP_DIR rev-parse --short HEAD)" -ForegroundColo
 Write-Host "  URL: https://pmo.dacsa.com" -ForegroundColor White
 Write-Host "==================================================" -ForegroundColor Magenta
 
-# Notificacion Telegram (opcional)
-if ($env:TELEGRAM_BOT_TOKEN -and $env:TELEGRAM_CHAT_ID) {
-    $msg = "🚀 *PMO PRO Desplegado*%0ACommit: $(git -C $APP_DIR rev-parse --short HEAD)"
-    $uri = "https://api.telegram.org/bot$($env:TELEGRAM_BOT_TOKEN)/sendMessage"
-    Invoke-RestMethod -Uri $uri -Method Post -Body @{
-        chat_id    = $env:TELEGRAM_CHAT_ID
-        text       = $msg
-        parse_mode = "Markdown"
-    } -ErrorAction SilentlyContinue | Out-Null
-    Write-Host "  Notificacion Telegram enviada" -ForegroundColor DarkGray
-}

@@ -104,6 +104,25 @@ const getInvoiceTypes = asyncHandler(async (req, res) => {
   res.json(tipos);
 });
 
+const getHealth = async (req, res) => {
+  try {
+    const { sequelize } = require('../../models/index');
+    await sequelize.authenticate();
+    res.json({
+      status: 'UP',
+      database: 'connected',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'DOWN',
+      database: 'disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
 module.exports = {
   getSedes,
   getContactos,
@@ -115,5 +134,7 @@ module.exports = {
   createTag,
   getCapexTypes,
   getPortfolioBudgets,
-  getInvoiceTypes
+  getInvoiceTypes,
+  getHealth
 };
+

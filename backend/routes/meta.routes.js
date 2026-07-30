@@ -3,7 +3,9 @@ const metaController = require('../controllers/metaController');
 
 const router = express.Router();
 
+router.get('/health', metaController.getHealth);
 router.get('/sedes', metaController.getSedes);
+
 router.get('/contactos', metaController.getContactos);
 router.get('/pms', metaController.getPms);
 router.get('/changelog', metaController.getChangelog);
