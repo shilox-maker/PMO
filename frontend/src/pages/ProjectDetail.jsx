@@ -167,6 +167,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     if (projectId) {
       fetchProjectData(true);
       fetchComments();
+      fetchMetadata();
     }
   }, [projectId]);
 
