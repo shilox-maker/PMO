@@ -18,10 +18,18 @@ if (dialect === 'mssql') {
       host: process.env.DB_HOST,
       port: parseInt(process.env.DB_PORT || '1433', 10),
       dialect: 'mssql',
+      pool: {
+        max: 20,
+        min: 2,
+        acquire: 30000,
+        idle: 10000
+      },
       dialectOptions: {
         options: {
           encrypt: true,
-          enableArithAbort: true
+          enableArithAbort: true,
+          requestTimeout: 30000,
+          connectTimeout: 30000
         }
       },
       define: {

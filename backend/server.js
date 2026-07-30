@@ -8,6 +8,15 @@ const umzug = require('./migrate');
 const { verifyToken } = require('./middlewares/auth');
 const { errorHandler } = require('./middlewares/errorHandler');
 
+// Prevent Node process crashes from throwing 502 Bad Gateway on IIS
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ [PROCESS WARNING] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('❌ [PROCESS ERROR] Uncaught Exception thrown:', err);
+});
+
 // Import routes
 const authRoutes = require('./routes/auth.routes');
 const projectRoutes = require('./routes/project.routes');
