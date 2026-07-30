@@ -92,6 +92,8 @@ const getProjects = asyncHandler(async (req, res) => {
 
 const getProjectDetail = asyncHandler(async (req, res) => {
   const { id_proyecto } = req.params;
+
+  // 1. Fetch main project record with lightweight primary metadata (no heavy child table cartesian joins)
   const project = await Proyectos.findByPk(id_proyecto, {
     include: [
       { model: Usuarios, as: 'PM', attributes: ['id_usuario', 'nombre', 'apellidos', 'correo'] },
@@ -103,24 +105,46 @@ const getProjectDetail = asyncHandler(async (req, res) => {
       { model: Tags, as: 'Tags', through: { attributes: [] } },
       { model: TiposCapex, as: 'TipoCapex', attributes: ['id', 'nombre'] },
       { model: SubtiposCapex, as: 'SubtipoCapex', attributes: ['id', 'nombre'] },
-      { model: ContactosProveedor, as: 'InvolvedContacts', through: { attributes: ['rol', 'raci'] }, include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }] },
-      { model: ContactosProveedor, as: 'ComSemanalContactos', through: { attributes: [] }, include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }] },
-      { model: ContactosProveedor, as: 'ComMensualContactos', through: { attributes: [] }, include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }] },
-      { model: ContactosProveedor, as: 'ComSteerCoContactos', through: { attributes: [] }, include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }] },
-      { model: PlanesComunicacion, as: 'PlanesComunicacion', include: [{ model: ContactosProveedor, as: 'Contactos', through: { attributes: [] } }, { model: PlanComunicacionLog, as: 'Logs', limit: 5, order: [['fecha_envio', 'DESC']] }] },
-      { model: Incidencias, include: [{ model: Tareas, as: 'tarea', attributes: ['id_tarea', 'titulo_tarea', 'es_hito', 'estado'] }], order: [['fecha_apertura', 'DESC']] },
-      { model: Riesgos, include: [{ model: Tareas, as: 'tarea', attributes: ['id_tarea', 'titulo_tarea', 'es_hito', 'estado'] }], order: [['fecha_proxima_revision', 'ASC']] },
-      { model: LeccionesAprendidas, order: [['fecha_registro', 'DESC']] },
-      { model: Facturas, include: [{ model: TiposFactura, as: 'TipoFactura' }], order: [['fecha_factura', 'DESC']] },
-      { model: CambiosAlcance, include: [{ model: ContactosProveedor, as: 'Solicitante', attributes: ['nombre', 'apellidos'] }, { model: ContactosProveedor, as: 'Aprobador', attributes: ['nombre', 'apellidos'] }], order: [['fecha_solicitud', 'DESC']] },
-      { model: Tareas, order: [['fecha_limite', 'ASC']] },
       { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'descripcion', 'pasos'] }
     ]
   });
 
   if (!project) return res.status(404).json({ error: 'Proyecto no encontrado' });
-  const calc = await getProjectCalculations(project.id_proyecto, project.budget_inicial, project.fecha_fin_inicial);
-  res.json({ ...project.toJSON(), calculations: calc });
+
+  // 2. Fetch child associations in parallel targeted queries to prevent 21-join SQL Server timeout -> IIS 502
+  const [
+    involvedContacts, comSemanalContactos, comMensualContactos, comSteerCoContactos,
+    planesComunicacion, incidencias, riesgos, leccionesAprendidas, facturas, cambiosAlcance, tareas, calc
+  ] = await Promise.all([
+    project.getInvolvedContacts({ include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }] }),
+    project.getComSemanalContactos({ include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }] }),
+    project.getComMensualContactos({ include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }] }),
+    project.getComSteerCoContactos({ include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }] }),
+    PlanesComunicacion.findAll({ where: { id_proyecto }, include: [{ model: ContactosProveedor, as: 'Contactos', through: { attributes: [] } }, { model: PlanComunicacionLog, as: 'Logs', limit: 5, order: [['fecha_envio', 'DESC']] }] }),
+    Incidencias.findAll({ where: { id_proyecto }, include: [{ model: Tareas, as: 'tarea', attributes: ['id_tarea', 'titulo_tarea', 'es_hito', 'estado'] }], order: [['fecha_apertura', 'DESC']] }),
+    Riesgos.findAll({ where: { id_proyecto }, include: [{ model: Tareas, as: 'tarea', attributes: ['id_tarea', 'titulo_tarea', 'es_hito', 'estado'] }], order: [['fecha_proxima_revision', 'ASC']] }),
+    LeccionesAprendidas.findAll({ where: { id_proyecto }, order: [['fecha_registro', 'DESC']] }),
+    Facturas.findAll({ where: { id_proyecto }, include: [{ model: TiposFactura, as: 'TipoFactura' }], order: [['fecha_factura', 'DESC']] }),
+    CambiosAlcance.findAll({ where: { id_proyecto }, include: [{ model: ContactosProveedor, as: 'Solicitante', attributes: ['nombre', 'apellidos'] }, { model: ContactosProveedor, as: 'Aprobador', attributes: ['nombre', 'apellidos'] }], order: [['fecha_solicitud', 'DESC']] }),
+    Tareas.findAll({ where: { id_proyecto }, order: [['fecha_limite', 'ASC']] }),
+    getProjectCalculations(project.id_proyecto, project.budget_inicial, project.fecha_fin_inicial)
+  ]);
+
+  const projectJson = project.toJSON();
+  projectJson.InvolvedContacts = involvedContacts;
+  projectJson.ComSemanalContactos = comSemanalContactos;
+  projectJson.ComMensualContactos = comMensualContactos;
+  projectJson.ComSteerCoContactos = comSteerCoContactos;
+  projectJson.PlanesComunicacion = planesComunicacion;
+  projectJson.Incidencias = incidencias;
+  projectJson.Riesgos = riesgos;
+  projectJson.LeccionesAprendidas = leccionesAprendidas;
+  projectJson.Facturas = facturas;
+  projectJson.CambiosAlcance = cambiosAlcance;
+  projectJson.Tareas = tareas;
+  projectJson.calculations = calc;
+
+  res.json(projectJson);
 });
 
 module.exports = { getProjects, getProjectDetail };
