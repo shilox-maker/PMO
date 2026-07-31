@@ -1,9 +1,12 @@
 const express = require('express');
 const metaController = require('../controllers/metaController');
 
+const { getStatus: getMaintenanceStatus } = require('../controllers/admin/maintenance.controller');
+
 const router = express.Router();
 
 router.get('/health', metaController.getHealth);
+router.get('/maintenance/status', getMaintenanceStatus);
 router.get('/sedes', metaController.getSedes);
 
 router.get('/contactos', metaController.getContactos);

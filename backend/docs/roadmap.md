@@ -11,6 +11,8 @@
 ## 📦 4. Implementadas
 
 ## 🧪 5. En Testeo / Pruebas
+- **FEATURE-45 (IDEA-45): Modo Mantenimiento Global de la Aplicación** (2026-07-31)
+  - **Descripción:** Opción en el módulo de administración para poner en modo mantenimiento la plataforma. Bloquea el acceso a todas las funcionalidades a los usuarios no administradores (retornando HTTP 503 en API y mostrando pantalla informativa en Frontend), permitiendo a los administradores seguir operando con normalidad.
 
 
 

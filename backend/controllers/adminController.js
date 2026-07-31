@@ -5,6 +5,7 @@ const { getUsers, createUser, updateUser, deleteUser } = require('./admin/user.c
 const { createPortfolio, updatePortfolio, deletePortfolio, createPortfolioBudget, updatePortfolioBudget, deletePortfolioBudget } = require('./admin/portfolio.controller');
 const { getTiposCapex, createTipoCapex, updateTipoCapex, deleteTipoCapex, createSubtipoCapex, updateSubtipoCapex, deleteSubtipoCapex } = require('./admin/capex.controller');
 const { getTiposFactura, createTipoFactura, updateTipoFactura, deleteTipoFactura } = require('./admin/invoiceTypes.controller');
+const { getStatus: getMaintenanceStatus, updateStatus: updateMaintenanceStatus } = require('./admin/maintenance.controller');
 
 module.exports = {
   createSede,
@@ -37,5 +38,7 @@ module.exports = {
   getTiposFactura,
   createTipoFactura,
   updateTipoFactura,
-  deleteTipoFactura
+  deleteTipoFactura,
+  getMaintenanceStatus,
+  updateMaintenanceStatus
 };

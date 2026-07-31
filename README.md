@@ -249,13 +249,16 @@ En la carpeta [/scripts](file:///c:/PruebasIA/Proyectos/PMO-1/scripts) se propor
 5. **[deploy-pro.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/deploy-pro.ps1)**: Muestra commits pendientes, requiere confirmación explícita (`DEPLOY`), realiza backup, corre migraciones de producción y recompila.
 6. **[promote-to-main.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/promote-to-main.ps1)**: Realiza el merge seguro de `develop` a `main` desde el servidor.
 7. **[health-check.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/health-check.ps1)**: Diagnóstico general del estado de PM2, HTTP API y frontend dist.
+8. **[restoreDB.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/restoreDB.ps1)**: Menú interactivo en PowerShell para listar y restaurar backups de la base de datos sin memorizar sintaxis de Node.
+9. **[backupDB.ps1](file:///c:/PruebasIA/Proyectos/PMO-1/scripts/backupDB.ps1)**: Script PowerShell para generación desatendida de backups de la base de datos (apto para Programador de Tareas de Windows o ejecución programada).
 
 ### 💾 Utilidad de Copias de Seguridad (Rollback)
 
-Se incluye la utilidad en [backup.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/utils/backup.js) (integrada de forma automática antes de cada migración de base de datos):
-* **Hacer backup**: `node utils/backup.js export` (o `npm run db:backup`)
+Se incluye la utilidad en [backup.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/utils/backup.js) (integrada de forma automática antes de cada migración de base de datos) y el menú interactivo [restore-interactive.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/utils/restore-interactive.js):
+* **Menú interactivo de restauración (Selección con confirmación)**: `node utils/restore-interactive.js` (o `npm run db:restore-menu`)
+* **Hacer backup manual**: `node utils/backup.js export` (o `npm run db:backup`)
 * **Listar backups**: `node utils/backup.js list` (o `npm run db:backups`)
-* **Restaurar snapshot**: `node utils/backup.js restore <fichero.json>` (o `npm run db:restore <fichero.json>`)
+* **Restaurar snapshot directa por nombre**: `node utils/backup.js restore <fichero.json>` (o `npm run db:restore <fichero.json>`)
 
 ---
 
@@ -279,6 +282,9 @@ El script gestiona el ciclo de vida completo de forma segura:
 
 | Componente | Comando | Descripción |
 | :--- | :--- | :--- |
+| **Backend** | `npm run db:restore-menu` | **Menú interactivo CLI**: lista backups, permite elegir uno e inicia la restauración con confirmación. |
+| **Backend** | `npm run db:backup` | Genera una exportación JSON timestamped de todas las tablas en `/backups`. |
+| **Backend** | `npm run db:backups` | Muestra el listado de backups JSON disponibles en el servidor. |
 | **Backend** | `npm run seed` | Reinicializa y puebla la base de datos `ppm_governance.db`. Destructivo (borra datos actuales). |
 | **Backend** | `npm run migrate` | Ejecuta las migraciones de base de datos pendientes (`umzug`). |
 | **Backend** | `npm start` | Inicia la API de Express (también ejecuta migraciones pendientes). |

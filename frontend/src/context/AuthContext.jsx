@@ -8,14 +8,39 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeRequests, setActiveRequests] = useState(0);
+  const [isMaintenanceActive, setIsMaintenanceActive] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState('');
 
-  // Interceptar fetch global para monitorear actividad en segundo plano
+  const checkMaintenanceStatus = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/maintenance/status`);
+      if (res.ok) {
+        const data = await res.json();
+        setIsMaintenanceActive(!!data.maintenance_mode);
+        if (data.maintenance_message) setMaintenanceMessage(data.maintenance_message);
+        return data;
+      }
+    } catch (err) {
+      console.error('Error al verificar estado de mantenimiento:', err);
+    }
+  };
+
+  // Interceptar fetch global para monitorear actividad en segundo plano y respuestas HTTP 503
   useEffect(() => {
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
       setActiveRequests(prev => prev + 1);
       try {
         const response = await originalFetch(...args);
+        if (response.status === 503) {
+          const clone = response.clone();
+          clone.json().then(data => {
+            if (data && data.maintenance) {
+              setIsMaintenanceActive(true);
+              if (data.error) setMaintenanceMessage(data.error);
+            }
+          }).catch(() => {});
+        }
         return response;
       } finally {
         setActiveRequests(prev => Math.max(0, prev - 1));
@@ -24,6 +49,11 @@ export const AuthProvider = ({ children }) => {
     return () => {
       window.fetch = originalFetch;
     };
+  }, []);
+
+  // Comprobar estado de mantenimiento al cargar
+  useEffect(() => {
+    checkMaintenanceStatus();
   }, []);
 
   // Toggle Theme (Light / Dark)
@@ -156,7 +186,11 @@ export const AuthProvider = ({ children }) => {
       loginAzure,
       logout,
       refreshUsers: fetchActiveUsers,
-      isGlobalWorking: activeRequests > 0
+      isGlobalWorking: activeRequests > 0,
+      isMaintenanceActive,
+      maintenanceMessage,
+      checkMaintenanceStatus,
+      setIsMaintenanceActive
     }}>
       {children}
     </AuthContext.Provider>

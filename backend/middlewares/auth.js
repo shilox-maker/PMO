@@ -5,23 +5,30 @@ const { handleErr } = require('../utils/helpers');
 
 // Auth Middleware: Verify JWT from Authorization header
 const verifyToken = (req, res, next) => {
-  if (req.path === '/api/login' || req.path === '/api/login/azure' || req.path === '/api/health') {
-    return next();
-  }
-  
+  const publicPaths = ['/api/login', '/api/login/azure', '/api/health', '/api/maintenance/status'];
   const authHeader = req.headers['authorization'];
+
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
       req.currentPmId = decoded.id_usuario;
-      return next();
     } catch (err) {
-      return res.status(401).json({ error: 'Token inválido o expirado.' });
+      if (!publicPaths.includes(req.path)) {
+        return res.status(401).json({ error: 'Token inválido o expirado.' });
+      }
     }
-  } else {
-    return res.status(401).json({ error: 'Acceso denegado. No se proporcionó token de autenticación.' });
   }
+
+  if (publicPaths.includes(req.path)) {
+    return next();
+  }
+
+  if (req.currentPmId) {
+    return next();
+  }
+
+  return res.status(401).json({ error: 'Acceso denegado. No se proporcionó token de autenticación.' });
 };
 
 // Middleware: Restrict access to administrators

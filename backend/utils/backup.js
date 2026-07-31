@@ -1,6 +1,7 @@
 const { sequelize } = require('../config/db.config');
 const fs = require('fs');
 const path = require('path');
+const { copySqliteDb, rotateBackups } = require('./backup-helpers');
 
 const BACKUP_DIR = path.join(__dirname, '../../backups');
 
@@ -53,6 +54,16 @@ async function exportData() {
 
   fs.writeFileSync(filepath, JSON.stringify(backup, null, 2), 'utf-8');
   console.log(`\n  Backup guardado: ${filepath}`);
+
+  // Copia fisica directa si la BD es SQLite
+  if (dialect === 'sqlite') {
+    const dbStorage = sequelize.options?.storage || path.join(__dirname, '../ppm_governance.db');
+    copySqliteDb(BACKUP_DIR, timestamp, dbStorage);
+  }
+
+  // Rotacion: mantener un maximo de 30 backups
+  rotateBackups(BACKUP_DIR, 30);
+
   return filepath;
 }
 
@@ -72,7 +83,7 @@ async function restoreData(backupFile) {
 
   const backup = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   const dialect = process.env.DB_DIALECT || 'sqlite';
-  const schema = backup.schema;
+  const schema = process.env.DB_SCHEMA || backup.schema || 'dbo';
   const tableNames = Object.keys(backup.tables);
 
   console.log(`  Restaurando backup del ${backup.timestamp} (${tableNames.length} tablas)`);
@@ -98,22 +109,24 @@ async function restoreData(backupFile) {
       // Insertar filas del backup
       if (rows.length > 0) {
         const columns = Object.keys(rows[0]);
+        const hasIdCol = dialect === 'mssql' && columns.includes('id');
+
+        if (hasIdCol) {
+          await sequelize.query(`SET IDENTITY_INSERT [${schema}].[${table}] ON`, { transaction });
+        }
+
         for (const row of rows) {
           const values = columns.map(c => row[c]);
           const placeholders = columns.map(() => '?').join(', ');
           const colNames = columns.map(c => dialect === 'mssql' ? `[${c}]` : `"${c}"`).join(', ');
-
-          // IDENTITY_INSERT para mssql si hay columna id
-          if (dialect === 'mssql' && columns.includes('id')) {
-            await sequelize.query(`SET IDENTITY_INSERT [${schema}].[${table}] ON`, { transaction });
-          }
 
           await sequelize.query(
             `INSERT INTO ${qualifiedName} (${colNames}) VALUES (${placeholders})`,
             { replacements: values, transaction }
           );
         }
-        if (dialect === 'mssql' && columns.includes('id')) {
+
+        if (hasIdCol) {
           await sequelize.query(`SET IDENTITY_INSERT [${schema}].[${table}] OFF`, { transaction });
         }
       }
@@ -159,19 +172,27 @@ function listBackups() {
   });
 }
 
-// CLI
-const [,, action, arg] = process.argv;
+// Exportaciones para uso como módulo
+module.exports = {
+  getTableNames,
+  exportData,
+  restoreData,
+  listBackups,
+  BACKUP_DIR
+};
 
-if (action === 'export') {
-  exportData().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
-} else if (action === 'restore') {
-  if (!arg) { console.error('  Uso: node backup.js restore <fichero.json>'); process.exit(1); }
-  restoreData(arg).then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
-} else if (action === 'list') {
-  listBackups();
-} else {
-  console.log('Uso:');
-  console.log('  node backup.js export         Exporta datos actuales');
-  console.log('  node backup.js list           Lista backups disponibles');
-  console.log('  node backup.js restore <file> Restaura desde un backup');
+// CLI Execution
+if (require.main === module) {
+  const [,, action, arg] = process.argv;
+
+  if (action === 'export') {
+    exportData().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
+  } else if (action === 'restore') {
+    if (!arg) { console.error('  Uso: node backup.js restore <fichero.json>'); process.exit(1); }
+    restoreData(arg).then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
+  } else if (action === 'list') {
+    listBackups();
+  } else {
+    console.log('Uso: node backup.js [export|list|restore <file>]');
+  }
 }

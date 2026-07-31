@@ -52,4 +52,8 @@ router.post('/admin/invoice-types', adminController.createTipoFactura);
 router.put('/admin/invoice-types/:id', adminController.updateTipoFactura);
 router.delete('/admin/invoice-types/:id', adminController.deleteTipoFactura);
 
+// Maintenance Mode admin
+router.get('/admin/maintenance', adminController.getMaintenanceStatus);
+router.put('/admin/maintenance', adminController.updateMaintenanceStatus);
+
 module.exports = router;

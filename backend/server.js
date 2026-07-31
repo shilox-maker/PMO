@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const { sequelize } = require('./models/index');
 const umzug = require('./migrate');
 const { verifyToken } = require('./middlewares/auth');
+const { checkMaintenance } = require('./middlewares/maintenance');
 const { errorHandler } = require('./middlewares/errorHandler');
 
 // Prevent Node process crashes from throwing 502 Bad Gateway on IIS
@@ -66,6 +67,9 @@ if (process.env.NODE_ENV === 'production') {
 
 // Apply global JWT Authentication Middleware
 app.use(verifyToken);
+
+// Apply Maintenance Mode Middleware
+app.use(checkMaintenance);
 
 // Register API Routes
 app.use('/api', authRoutes);

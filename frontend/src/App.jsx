@@ -15,6 +15,8 @@ import DashboardProyectos from './pages/DashboardProyectos';
 import DashboardPortfolio from './pages/DashboardPortfolio';
 import PortfolioReport from './pages/PortfolioReport';
 import GeneralLessonsPage from './pages/GeneralLessonsPage';
+import MaintenanceScreen from './components/MaintenanceScreen';
+import AdminMaintenanceBanner from './components/AdminMaintenanceBanner';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
   Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info, PieChart
@@ -591,7 +593,7 @@ function Vendor360Wrapper({ onBack }) {
 }
 
 function MainAppContent() {
-  const { currentPm } = useAuth();
+  const { currentPm, isMaintenanceActive } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -614,67 +616,70 @@ function MainAppContent() {
   };
 
   return (
-    <div className="app-container">
-      <NavigationRail />
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {isMaintenanceActive && currentPm?.perfil === 'ADMINISTRADOR' && <AdminMaintenanceBanner />}
+      <div className="app-container" style={{ flex: 1 }}>
+        <NavigationRail />
 
-      <div className="main-viewport">
-        {/* Sticky Top Bar */}
-        <div className="top-bar">
-          <h1 className="page-title">{getPageTitle()}</h1>
+        <div className="main-viewport">
+          {/* Sticky Top Bar */}
+          <div className="top-bar">
+            <h1 className="page-title">{getPageTitle()}</h1>
 
-          <div className="top-bar-actions">
-            {/* Topbar profile removed as per Rebranding requirements */}
+            <div className="top-bar-actions">
+              {/* Topbar profile removed as per Rebranding requirements */}
+            </div>
           </div>
-        </div>
 
-        {/* Dynamic content rendering */}
-        <div className="content-wrapper">
-          <Routes>
-            <Route path="/" element={<Navigate to="/proyectos" replace />} />
-            
-            <Route path="/proyectos" element={
-              <Projects onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
-            } />
-            
-            <Route path="/governance" element={
-              <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
-            } />
+          {/* Dynamic content rendering */}
+          <div className="content-wrapper">
+            <Routes>
+              <Route path="/" element={<Navigate to="/proyectos" replace />} />
+              
+              <Route path="/proyectos" element={
+                <Projects onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+              } />
+              
+              <Route path="/governance" element={
+                <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+              } />
 
-            <Route path="/dashboard-portfolio" element={
-              <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
-            } />
+              <Route path="/dashboard-portfolio" element={
+                <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+              } />
 
-            <Route path="/dashboard-proyectos" element={
-              <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
-            } />
+              <Route path="/dashboard-proyectos" element={
+                <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+              } />
 
-            <Route path="/dashboard" element={
-              <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
-            } />
+              <Route path="/dashboard" element={
+                <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+              } />
 
 
-            <Route path="/timeline" element={
-              <Timeline onViewProject={handleViewProject} />
-            } />
-            
-            <Route path="/proveedores" element={
-              <VendorDirectory onViewVendor={handleViewVendor} />
-            } />
-            
-            <Route path="/proyecto/:id" element={
-              <ProjectDetailWrapper onBack={handleBack} />
-            } />
-            
-            <Route path="/proveedor/:id" element={
-              <Vendor360Wrapper onBack={handleBack} />
-            } />
-            
-            <Route path="/lecciones" element={<GeneralLessonsPage />} />
-            
-            <Route path="/portfolios/report" element={<PortfolioReport />} />
-            
-            <Route path="/admin" element={<AdminPanel />} />
-          </Routes>
+              <Route path="/timeline" element={
+                <Timeline onViewProject={handleViewProject} />
+              } />
+              
+              <Route path="/proveedores" element={
+                <VendorDirectory onViewVendor={handleViewVendor} />
+              } />
+              
+              <Route path="/proyecto/:id" element={
+                <ProjectDetailWrapper onBack={handleBack} />
+              } />
+              
+              <Route path="/proveedor/:id" element={
+                <Vendor360Wrapper onBack={handleBack} />
+              } />
+              
+              <Route path="/lecciones" element={<GeneralLessonsPage />} />
+              
+              <Route path="/portfolios/report" element={<PortfolioReport />} />
+              
+              <Route path="/admin" element={<AdminPanel />} />
+            </Routes>
+          </div>
         </div>
       </div>
     </div>
@@ -682,7 +687,7 @@ function MainAppContent() {
 }
 
 function AppConsumer() {
-  const { currentPm, loading } = useAuth();
+  const { currentPm, loading, isMaintenanceActive, maintenanceMessage, checkMaintenanceStatus, logout } = useAuth();
 
   if (loading) {
     return (
@@ -690,6 +695,17 @@ function AppConsumer() {
         <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
         <span style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-outline)' }}>Iniciando plataforma...</span>
       </div>
+    );
+  }
+
+  // Si el modo mantenimiento está activo y el usuario NO es ADMINISTRADOR, se bloquea el acceso
+  if (isMaintenanceActive && currentPm?.perfil !== 'ADMINISTRADOR') {
+    return (
+      <MaintenanceScreen
+        message={maintenanceMessage}
+        onCheckStatus={checkMaintenanceStatus}
+        onLogout={currentPm ? logout : null}
+      />
     );
   }
 

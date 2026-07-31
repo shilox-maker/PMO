@@ -1537,6 +1537,25 @@ EncuestasCalidad.belongsTo(Proyectos, { foreignKey: 'id_proyecto', as: 'Proyecto
   Model.belongsTo(Usuarios, { foreignKey: 'modifiedBy', as: 'Modifier', onDelete: 'NO ACTION' });
 });
 
+// SystemConfig Model
+const SystemConfig = sequelize.define('System_Config', {
+  clave: {
+    type: DataTypes.STRING(100),
+    primaryKey: true,
+    allowNull: false
+  },
+  valor: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  descripcion: {
+    type: DataTypes.STRING(255),
+    allowNull: true
+  }
+}, {
+  tableName: 'System_Config'
+});
+
 module.exports = {
   sequelize,
   Sedes,
@@ -1569,7 +1588,9 @@ module.exports = {
   TiposCapex,
   SubtiposCapex,
   PortfolioBudgets,
-  TiposFactura
+  TiposFactura,
+  SystemConfig
 };
+
 
 

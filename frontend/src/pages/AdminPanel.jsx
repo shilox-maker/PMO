@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Sliders, Users, Edit2, Briefcase, Receipt } from 'lucide-react';
+import { Sliders, Users, Edit2, Briefcase, Receipt, ShieldAlert } from 'lucide-react';
 import StatesAdmin from '../components/admin/StatesAdmin';
 import UsersAdmin from '../components/admin/UsersAdmin';
 import SedesAdmin from '../components/admin/SedesAdmin';
 import PortfoliosAdmin from '../components/admin/PortfoliosAdmin';
 import CapexTypesAdmin from '../components/admin/CapexTypesAdmin';
 import InvoiceTypesAdmin from '../components/admin/InvoiceTypesAdmin';
+import MaintenanceConfigCard from '../components/admin/MaintenanceConfigCard';
 
 export default function AdminPanel() {
-  const { getAuthHeaders, refreshUsers } = useAuth();
-  const [activeTab, setActiveTab] = useState('states'); // 'states', 'users', 'sedes', 'portfolios', 'capex', 'invoices'
+  const { getAuthHeaders, refreshUsers, checkMaintenanceStatus } = useAuth();
+  const [activeTab, setActiveTab] = useState('states'); // 'states', 'users', 'sedes', 'portfolios', 'capex', 'invoices', 'maintenance'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -40,6 +41,10 @@ export default function AdminPanel() {
           <Receipt size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
           Tipos de Factura
         </button>
+        <button className={`m3-tab ${activeTab === 'maintenance' ? 'active' : ''}`} onClick={() => setActiveTab('maintenance')}>
+          <ShieldAlert size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          Modo Mantenimiento
+        </button>
       </div>
 
       {activeTab === 'states' && (
@@ -64,6 +69,10 @@ export default function AdminPanel() {
 
       {activeTab === 'invoices' && (
         <InvoiceTypesAdmin getAuthHeaders={getAuthHeaders} />
+      )}
+
+      {activeTab === 'maintenance' && (
+        <MaintenanceConfigCard getAuthHeaders={getAuthHeaders} onStatusChange={() => checkMaintenanceStatus()} />
       )}
     </div>
   );
