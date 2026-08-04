@@ -31,3 +31,6 @@ obj/
 *.njsproj
 *.sln
 *.sw?
+.git_msg.txt  
+.git_msg.txt  
+.git_msg2.txt  
