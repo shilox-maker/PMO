@@ -1556,6 +1556,36 @@ const SystemConfig = sequelize.define('System_Config', {
   tableName: 'System_Config'
 });
 
+// KpiSnapshots Model
+const KpiSnapshots = sequelize.define('Kpi_Snapshots', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  fecha: {
+    type: DataTypes.DATEONLY,
+    allowNull: false
+  },
+  metric_key: {
+    type: DataTypes.STRING(100),
+    allowNull: false
+  },
+  metric_value: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  portfolio_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  }
+}, {
+  tableName: 'Kpi_Snapshots',
+  indexes: [
+    { name: 'idx_kpi_snapshots_lookup', fields: ['fecha', 'metric_key', 'portfolio_id'] }
+  ]
+});
+
 module.exports = {
   sequelize,
   Sedes,
@@ -1578,7 +1608,6 @@ module.exports = {
   Facturas,
   CambiosAlcance,
   Tareas,
-  EstadosProyecto,
   EstadoTareasPlantilla,
   ComentariosProyecto,
 
@@ -1589,7 +1618,8 @@ module.exports = {
   SubtiposCapex,
   PortfolioBudgets,
   TiposFactura,
-  SystemConfig
+  SystemConfig,
+  KpiSnapshots
 };
 
 

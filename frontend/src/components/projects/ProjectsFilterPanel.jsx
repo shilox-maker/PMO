@@ -1,6 +1,7 @@
 import React from 'react';
 import { Filter, Search, Printer, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import ColumnSelector from '../ColumnSelector';
+import DensitySelector from '../DensitySelector';
 
 export default function ProjectsFilterPanel({
   filterPm, setFilterPm,
@@ -15,6 +16,7 @@ export default function ProjectsFilterPanel({
   isStatesOpen, setIsStatesOpen,
   pmsList, vendorsList, portfoliosList, tagsList, statesList, projects,
   tableCols, toggleColumn, resetColumns,
+  density, onDensityChange,
   onOpenReport, onOpenCreate
 }) {
   return (
@@ -145,6 +147,7 @@ export default function ProjectsFilterPanel({
         </div>
         
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto', position: 'relative', zIndex: 50 }}>
+          <DensitySelector density={density} onChange={onDensityChange} />
           <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
           
           {onOpenReport && (

@@ -4,6 +4,7 @@ import { Filter, Search, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid';
 import DashboardChartsSection from '../components/dashboard/DashboardChartsSection';
 import DashboardSummaryTable from '../components/dashboard/DashboardSummaryTable';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 export default function Dashboard({ onViewProject, onViewVendor }) {
   const { getAuthHeaders } = useAuth();
@@ -102,9 +103,14 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(data));
   }, []);
 
+  const [trends, setTrends] = useState({});
+  const [timeframe, setTimeframe] = useState(7);
+
   const fetchDashboardData = () => {
     setLoading(true);
     const params = new URLSearchParams();
+    params.append('include_trends', 'true');
+    params.append('timeframe', timeframe.toString());
     if (filters.pm) params.append('pm', filters.pm);
     if (filters.vendor) params.append('vendor', filters.vendor);
     if (filters.rag) params.append('rag', filters.rag);
@@ -116,12 +122,19 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     if (filters.portfolio) params.append('portfolio', filters.portfolio);
     if (filters.tag) params.append('tag', filters.tag);
 
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/dashboard?${params.toString()}`, {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    fetch(`${apiUrl}/portfolio/dashboard?${params.toString()}`, {
       headers: getAuthHeaders()
     })
       .then(res => res.json())
       .then(data => {
-        setProjects(Array.isArray(data) ? data : []);
+        if (Array.isArray(data)) {
+          setProjects(data);
+          setTrends({});
+        } else {
+          setProjects(data.projects || []);
+          setTrends(data.trends || {});
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -132,7 +145,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [filters]);
+  }, [filters, timeframe]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -347,9 +360,10 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
-          <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
-        </div>
+        <>
+          <SkeletonLoader variant="kpi" count={6} />
+          <SkeletonLoader variant="table" rows={5} columns={6} />
+        </>
       ) : (
         <>
           {/* KPI CARDS (8) */}
@@ -366,6 +380,9 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
             ragRojo={ragRojo}
             selectedKpi={selectedKpi}
             setSelectedKpi={setSelectedKpi}
+            trends={trends}
+            timeframe={timeframe}
+            setTimeframe={setTimeframe}
           />
 
           {/* CHARTS */}

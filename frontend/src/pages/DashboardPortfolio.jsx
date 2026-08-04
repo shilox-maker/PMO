@@ -50,6 +50,9 @@ export default function DashboardPortfolio({ onViewProject }) {
   const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-portfolio-columns', DEFAULT_GOV_COLUMNS);
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
   const [selectedKpi, setSelectedKpi] = useState(null);
+  const [trends, setTrends] = useState({});
+  const [timeframe, setTimeframe] = useState(7);
+  const [customDate, setCustomDate] = useState(null);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(Array.isArray(data) ? data : [])).catch(() => {});
@@ -62,6 +65,8 @@ export default function DashboardPortfolio({ onViewProject }) {
   const fetchDashboardData = () => {
     setLoading(true);
     const params = new URLSearchParams();
+    params.append('include_trends', 'true');
+    params.append('timeframe', timeframe.toString());
     if (filterPm) params.append('pm', filterPm);
     if (filterVendor) params.append('vendor', filterVendor);
     if (filterRag) params.append('rag', filterRag);
@@ -77,7 +82,15 @@ export default function DashboardPortfolio({ onViewProject }) {
     })
       .then(res => res.json())
       .then(data => {
-        setRawProjects(Array.isArray(data) ? data : (data.projects || []));
+        console.log('[Portfolio] API response keys:', Object.keys(data || {}));
+        console.log('[Portfolio] trends received:', JSON.stringify(data.trends));
+        if (Array.isArray(data)) {
+          setRawProjects(data);
+          setTrends({});
+        } else {
+          setRawProjects(data.projects || []);
+          setTrends(data.trends || {});
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -88,7 +101,15 @@ export default function DashboardPortfolio({ onViewProject }) {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm, timeframe]);
+
+  // Cuando cambia la fecha personalizada, convertir a días y disparar fetch
+  useEffect(() => {
+    if (customDate) {
+      const days = Math.max(1, Math.round((Date.now() - new Date(customDate).getTime()) / 86400000));
+      setTimeframe(days);
+    }
+  }, [customDate]);
 
   // Exclude non-executed projects (CANCELADO / PARKING / DESCARTADO) by default unless state filter selected explicitly
   const baseProjects = rawProjects.filter(p => {
@@ -213,6 +234,11 @@ export default function DashboardPortfolio({ onViewProject }) {
         volatilityCount={volatilityCount}
         activeKpiFilter={selectedKpi}
         setActiveKpiFilter={setSelectedKpi}
+        trends={trends}
+        timeframe={timeframe}
+        setTimeframe={setTimeframe}
+        customDate={customDate}
+        setCustomDate={setCustomDate}
       />
 
       {/* Active KPI Banner */}

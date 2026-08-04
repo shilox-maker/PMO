@@ -2,24 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams, Navigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { msalInstance } from './config/msal';
-import Projects from './pages/Projects';
-import GovernanceDashboard from './pages/GovernanceDashboard';
-import ProjectDetail from './pages/ProjectDetail';
-import Timeline from './pages/Timeline';
-import Vendor360 from './pages/Vendor360';
-import VendorDirectory from './pages/VendorDirectory';
-import AdminPanel from './pages/AdminPanel';
-import Dashboard from './pages/Dashboard';
-import DashboardProyectos from './pages/DashboardProyectos';
-import DashboardPortfolio from './pages/DashboardPortfolio';
-import PortfolioReport from './pages/PortfolioReport';
-import GeneralLessonsPage from './pages/GeneralLessonsPage';
+import { getMsalInstance } from './config/msal';
+// Lazy-loaded pages — solo se descargan al navegar a cada ruta
+const Projects           = React.lazy(() => import('./pages/Projects'));
+const ProjectDetail      = React.lazy(() => import('./pages/ProjectDetail'));
+const Timeline           = React.lazy(() => import('./pages/Timeline'));
+const Vendor360          = React.lazy(() => import('./pages/Vendor360'));
+const VendorDirectory    = React.lazy(() => import('./pages/VendorDirectory'));
+const AdminPanel         = React.lazy(() => import('./pages/AdminPanel'));
+const DashboardProyectos = React.lazy(() => import('./pages/DashboardProyectos'));
+const DashboardPortfolio = React.lazy(() => import('./pages/DashboardPortfolio'));
+const PortfolioReport    = React.lazy(() => import('./pages/PortfolioReport'));
+const GeneralLessonsPage = React.lazy(() => import('./pages/GeneralLessonsPage'));
 import MaintenanceScreen from './components/MaintenanceScreen';
 import AdminMaintenanceBanner from './components/AdminMaintenanceBanner';
+import CommandPaletteModal from './components/modals/CommandPaletteModal';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
-  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info, PieChart
+  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info, PieChart, Search
 } from 'lucide-react';
 import pkg from '../package.json';
 
@@ -151,6 +151,7 @@ function LoginScreen() {
           setLoading(false);
         });
     } else {
+      const msalInstance = getMsalInstance();
       if (!msalInstance) {
         setError('La autenticación con Azure AD requiere una conexión segura (HTTPS). Por favor, accede mediante HTTPS o utiliza el acceso por contraseña.');
         setLoading(false);
@@ -596,6 +597,18 @@ function MainAppContent() {
   const { currentPm, isMaintenanceActive } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleViewProject = (id) => navigate('/proyecto/' + id);
   const handleViewVendor = (id) => navigate('/proveedor/' + id);
@@ -618,6 +631,7 @@ function MainAppContent() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {isMaintenanceActive && currentPm?.perfil === 'ADMINISTRADOR' && <AdminMaintenanceBanner />}
+      <CommandPaletteModal isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
       <div className="app-container" style={{ flex: 1 }}>
         <NavigationRail />
 
@@ -626,59 +640,91 @@ function MainAppContent() {
           <div className="top-bar">
             <h1 className="page-title">{getPageTitle()}</h1>
 
-            <div className="top-bar-actions">
-              {/* Topbar profile removed as per Rebranding requirements */}
+            <div className="top-bar-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                className="m3-btn m3-btn-tonal"
+                onClick={() => setIsCommandPaletteOpen(true)}
+                title="Abrir paleta de comandos rápida (Ctrl + K)"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '6px 14px',
+                  borderRadius: 20,
+                  fontSize: '0.82rem',
+                  backgroundColor: 'var(--md-sys-color-surface-container-high)',
+                  border: '1px solid var(--md-sys-color-outline-variant)',
+                  cursor: 'pointer'
+                }}
+              >
+                <Search size={14} style={{ color: 'var(--md-sys-color-primary)' }} />
+                <span>Buscar...</span>
+                <kbd style={{
+                  fontSize: '0.68rem',
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  backgroundColor: 'var(--md-sys-color-surface-container-highest)',
+                  color: 'var(--md-sys-color-on-surface-variant)',
+                  fontWeight: 600
+                }}>Ctrl K</kbd>
+              </button>
             </div>
           </div>
 
           {/* Dynamic content rendering */}
           <div className="content-wrapper">
-            <Routes>
-              <Route path="/" element={<Navigate to="/proyectos" replace />} />
-              
-              <Route path="/proyectos" element={
-                <Projects onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
-              } />
-              
-              <Route path="/governance" element={
-                <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
-              } />
+            <React.Suspense fallback={
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 12, color: 'var(--md-sys-color-outline)' }}>
+                <RefreshCw className="animate-spin" size={20} style={{ color: 'var(--md-sys-color-primary)' }} />
+                <span style={{ fontSize: '0.9rem' }}>Cargando módulo...</span>
+              </div>
+            }>
+              <Routes>
+                <Route path="/" element={<Navigate to="/proyectos" replace />} />
 
-              <Route path="/dashboard-portfolio" element={
-                <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
-              } />
+                <Route path="/proyectos" element={
+                  <Projects onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+                } />
 
-              <Route path="/dashboard-proyectos" element={
-                <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
-              } />
+                <Route path="/governance" element={
+                  <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+                } />
 
-              <Route path="/dashboard" element={
-                <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
-              } />
+                <Route path="/dashboard-portfolio" element={
+                  <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+                } />
 
+                <Route path="/dashboard-proyectos" element={
+                  <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+                } />
 
-              <Route path="/timeline" element={
-                <Timeline onViewProject={handleViewProject} />
-              } />
-              
-              <Route path="/proveedores" element={
-                <VendorDirectory onViewVendor={handleViewVendor} />
-              } />
-              
-              <Route path="/proyecto/:id" element={
-                <ProjectDetailWrapper onBack={handleBack} />
-              } />
-              
-              <Route path="/proveedor/:id" element={
-                <Vendor360Wrapper onBack={handleBack} />
-              } />
-              
-              <Route path="/lecciones" element={<GeneralLessonsPage />} />
-              
-              <Route path="/portfolios/report" element={<PortfolioReport />} />
-              
-              <Route path="/admin" element={<AdminPanel />} />
-            </Routes>
+                <Route path="/dashboard" element={
+                  <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+                } />
+
+                <Route path="/timeline" element={
+                  <Timeline onViewProject={handleViewProject} />
+                } />
+
+                <Route path="/proveedores" element={
+                  <VendorDirectory onViewVendor={handleViewVendor} />
+                } />
+
+                <Route path="/proyecto/:id" element={
+                  <ProjectDetailWrapper onBack={handleBack} />
+                } />
+
+                <Route path="/proveedor/:id" element={
+                  <Vendor360Wrapper onBack={handleBack} />
+                } />
+
+                <Route path="/lecciones" element={<GeneralLessonsPage />} />
+
+                <Route path="/portfolios/report" element={<PortfolioReport />} />
+
+                <Route path="/admin" element={<AdminPanel />} />
+              </Routes>
+            </React.Suspense>
           </div>
         </div>
       </div>

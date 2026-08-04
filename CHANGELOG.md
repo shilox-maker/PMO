@@ -1,6 +1,22 @@
 # CHANGELOG
 
-## [2.5.1] - 2026-07-29
+## [2.6.0] - 2026-08-04
+### Added
+- **Indicadores de Tendencia y Variación Temporal en KPIs (FEATURE-31 / IDEA-31)**:
+  - Badges de variación (`▲ +2`, `▼ -1`, `— 0`) en el grid de KPIs del Dashboard que comparan los valores actuales frente a un período anterior (7 días o 30 días).
+  - Migración [`13_create_kpi_snapshots.js`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/migrations/13_create_kpi_snapshots.js) con tabla `kpi_snapshots` para almacenar instantáneas diarias.
+  - Servicio [`kpiSnapshotService.js`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/services/kpiSnapshotService.js) con registro automático vía cron diario y endpoint manual `POST /api/kpi-snapshots/capture`.
+  - Integración en [`dashboard.controller.js`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/controllers/dashboard.controller.js): enriquecimiento de respuesta con delta de variación por KPI.
+  - Componente [`DashboardKpiGrid.jsx`](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/pages/DashboardKpiGrid.jsx) con conmutador de período (7d / 30d) y badges de tendencia con iconografía direccional.
+
+### Performance
+- **Lazy Loading de Pages y Optimización de Bundle (PERF-01)**:
+  - Conversión de todos los imports estáticos de pages en [`App.jsx`](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/App.jsx) a `React.lazy` + `Suspense` — los módulos solo se descargan al navegar a cada ruta.
+  - Vendor splitting en [`vite.config.js`](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/vite.config.js): separación de MSAL (`vendor-msal`), Recharts+D3 (`vendor-charts`), Quill (`vendor-quill`) y React core (`vendor-react`) en chunks cacheables independientes.
+  - MSAL convertido a factory lazy en [`msal.js`](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/config/msal.js) mediante `getMsalInstance()`: la instancia de `PublicClientApplication` solo se crea al hacer click en "Login Azure", eliminando la inicialización bloqueante al arranque.
+  - Reducción estimada de ~500 KB en scripts descargados en la carga inicial del Dashboard.
+
+
 ### Performance / Changed
 - **Optimización de Carga Diferida en la Ficha del Proyecto (FEATURE-37 / IDEA-37)**:
   - Carga perezosa de pestañas mediante `React.lazy` y `Suspense` en [ProjectDetail.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/pages/ProjectDetail.jsx), dividiendo la app en bundles independientes (*code splitting*).

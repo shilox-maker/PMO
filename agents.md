@@ -15,10 +15,10 @@
 - **Flujo Single-Agent:** No delegues tareas a subagentes ni levantes arquitecturas en paralelo (Swarm) sin orden explícita.
 
 ## 🔄 Protocolo de Gestión de Features (Flujo Roadmap)
-Tú eres el encargado de mantener la trazabilidad del proyecto utilizando el archivo `docs/roadmap.md`. Sigue estrictamente estas reglas operativas según mis comandos:
+Tú eres el encargado de mantener la trazabilidad del proyecto utilizando el archivo `backend/docs/roadmap.md`. Sigue estrictamente estas reglas operativas según mis comandos:
 
 1. **Comando: "Analiza la IDEA-XX"**
-   - Ve a `docs/roadmap.md`, busca la idea en la sección "1. Bandeja de Entrada".
+   - Ve a `backend/docs/roadmap.md`, busca la idea en la sección "1. Bandeja de Entrada".
    - Analiza el código fuente actual del proyecto para evaluar la viabilidad.
    - **Acción:** Mueve el bloque de la idea a la sección "2. En Análisis / Especificación". Añade allí tu análisis técnico detallado, los archivos que se verán afectados y el impacto estimado. *No programes nada aún.*
 
@@ -33,6 +33,7 @@ Tú eres el encargado de mantener la trazabilidad del proyecto utilizando el arc
 4. **Al finalizar la programación de una feature:**
    - Mueve la tarea de la sección "4. Implementadas" a la sección "5. En Testeo / Pruebas".
    - Si la tarea incluye pruebas automatizadas, ejecútalas en la terminal del IDE. Si fallan 2 veces, detén la ejecución y pide intervención humana.
+   - Si la tarea incluye modificaciones en el Frontend, ejecuta un **smoke test visual** mediante `browser_subagent` para confirmar la integridad de la interfaz.
 
 5. **Comando: "Test OK para FEATURE-XX"**
    - Mueve la feature de "5. En Testeo / Pruebas" a "6. Pendiente de Subir (Listo para Git)".
@@ -40,7 +41,9 @@ Tú eres el encargado de mantener la trazabilidad del proyecto utilizando el arc
 6. **Comando: "Subido FEATURE-XX" (o si el agente tiene permiso para hacer git push):**
    - Mueve la feature a la sección "7. Completado e Integrado (Historial)", marca el check `[x]` y añade la fecha actual.
 
-   ## 🛡️ Protocolo de Calidad y Cambios de Base de Datos
+## 🛡️ Protocolo de Calidad, Higiene y Cambios de Base de Datos
 - **Ejecución Obligatoria de Migraciones:** Siempre que se cree o modifique un modelo/columna en la base de datos, el agente DEBE crear la migración Y ejecutarla inmediatamente (`node migrate.js up`) en la base de datos local antes de dar la tarea por completada.
 - **Verificación de Persistencia Real:** Prohibido declarar una funcionalidad de lectura/escritura (POST/PUT/DELETE) como terminada sin antes verificar mediante un test o script de consola que el dato se guarda y recupera correctamente en la BD.
 - **Protección de Contratos y Regresiones:** Antes de modificar un controlador o componente existente, verificar que no se alteren o eliminen parámetros existentes en los esquemas ni tipos de datos en la respuesta.
+- **Verificación de Límites de Código (KISS/SRP):** Antes de dar por completada una feature, ejecuta `node scripts/check-line-limits.js` para asegurar que los nuevos módulos respeten los límites de 200 líneas en backend y 300 en frontend.
+- **Higiene de Archivos Temporales:** Elimina automáticamente cualquier script de prueba o archivo temporal generado en `/scratch` al finalizar la verificación de la tarea.

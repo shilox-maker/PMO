@@ -25,6 +25,7 @@ const vendorRoutes = require('./routes/vendor.routes');
 const metaRoutes = require('./routes/meta.routes');
 const itemRoutes = require('./routes/item.routes');
 const adminRoutes = require('./routes/admin.routes');
+const searchRoutes = require('./routes/search.routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -78,6 +79,7 @@ app.use('/api', vendorRoutes);
 app.use('/api', metaRoutes);
 app.use('/api', itemRoutes);
 app.use('/api', adminRoutes);
+app.use('/api/search', searchRoutes);
 
 // API 404 JSON Handler
 app.use('/api/*', (req, res) => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 // Import Modals
 import ProjectEditModal from '../components/modals/ProjectEditModal';
@@ -366,8 +367,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   if (loading || !project) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
-        <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
+      <div style={{ padding: '24px 0' }}>
+        <SkeletonLoader variant="card" count={3} height="150px" />
       </div>
     );
   }
@@ -445,12 +446,13 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
             setEditingBlock={setEditingBlock}
             blockValue={blockValue}
             setBlockValue={setBlockValue}
-            handleSaveBlock={(fn) => {
-              fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
+            handleSaveBlock={(fn, customVal) => {
+              const valToSave = customVal !== undefined ? customVal : blockValue;
+              return fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ [fn]: blockValue })
-              }).then(() => { setEditingBlock(null); fetchProjectData(); });
+                body: JSON.stringify({ [fn]: valToSave })
+              }).then(() => fetchProjectData());
             }}
           />
         )}

@@ -1319,3 +1319,57 @@ button, input, select, textarea {
   from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+
+/* Glassmorphic Skeletons & Shimmer Animation */
+@keyframes shimmer-glass {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-glass {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-glass 1.8s infinite ease-in-out;
+  border-radius: var(--md-shape-corner-small);
+}
+
+.skeleton-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--md-shape-corner-medium);
+  backdrop-filter: blur(12px);
+}
+
+/* Table Density Controls (Comfortable, Standard, Compact) */
+[data-density="comfortable"] .m3-table th,
+[data-density="comfortable"] .m3-table td {
+  padding: 14px 16px;
+  font-size: 0.88rem;
+}
+
+[data-density="standard"] .m3-table th,
+[data-density="standard"] .m3-table td {
+  padding: 10px 12px;
+  font-size: 0.84rem;
+}
+
+[data-density="compact"] .m3-table th,
+[data-density="compact"] .m3-table td {
+  padding: 5px 8px;
+  font-size: 0.78rem;
+}
+
+[data-density="compact"] .badge {
+  padding: 2px 6px;
+  font-size: 0.7rem;
+}
+

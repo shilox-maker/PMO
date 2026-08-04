@@ -27,6 +27,7 @@ const DEFAULT_PROJECT_COLUMNS = [
 ];
 
 export default function Projects({ onViewProject, onViewVendor }) {
+  const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
   const { getAuthHeaders, currentPm } = useAuth();
   const canSeeDireccion = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR');
   const [projects, setProjects] = useState([]);
@@ -163,6 +164,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
         pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList}
         tagsList={tagsList} statesList={statesList} projects={projects}
         tableCols={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns}
+        density={density} onDensityChange={setDensity}
         onOpenReport={() => setIsReportOpen(true)}
         onOpenCreate={() => setShowCreateModal(true)}
       />
@@ -171,6 +173,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
       <ProjectsTable 
         projects={projects}
         loading={loading}
+        density={density}
         visibleColumnsMap={visibleColumnsMap}
         sortConfig={sortConfig}
         renderSortHeader={renderSortHeader}

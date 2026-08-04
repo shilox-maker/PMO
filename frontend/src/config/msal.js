@@ -13,17 +13,24 @@ const msalConfig = {
   }
 };
 
-let msalInstance = null;
+// Instancia lazy: solo se crea cuando se llama por primera vez (al hacer click en "Login Azure")
+let _msalInstance = null;
 
-try {
-  // MSAL requires window.crypto.subtle which is only available in secure contexts (HTTPS or localhost)
-  if (window.isSecureContext || (window.crypto && window.crypto.subtle)) {
-    msalInstance = new PublicClientApplication(msalConfig);
-  } else {
-    console.warn("Web Crypto API (window.crypto.subtle) is not available in this insecure context. Azure AD login will be disabled.");
+export function getMsalInstance() {
+  if (_msalInstance) return _msalInstance;
+
+  try {
+    if (window.isSecureContext || (window.crypto && window.crypto.subtle)) {
+      _msalInstance = new PublicClientApplication(msalConfig);
+    } else {
+      console.warn('Web Crypto API no disponible. Azure AD login deshabilitado.');
+    }
+  } catch (error) {
+    console.error('Failed to initialize MSAL:', error);
   }
-} catch (error) {
-  console.error("Failed to initialize MSAL:", error);
+
+  return _msalInstance;
 }
 
-export { msalInstance };
+// Mantener compatibilidad con código existente que usa msalInstance directamente
+export { _msalInstance as msalInstance };

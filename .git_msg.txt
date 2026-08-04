@@ -1,0 +1,8 @@
+feat: v2.6.0 - KPI Snapshots FEATURE-31 + Lazy Loading PERF-01
+
+- FEATURE-31: Indicadores de tendencia en KPIs (badges variacion 7d/30d)
+- PERF-01: Lazy loading de pages con React.lazy + Suspense en App.jsx
+- PERF-01: Vendor splitting en vite.config.js (msal/charts/quill/react)
+- PERF-01: MSAL lazy factory en msal.js (getMsalInstance)
+- Version bump 2.5.2 -> 2.6.0
+- CHANGELOG.md actualizado

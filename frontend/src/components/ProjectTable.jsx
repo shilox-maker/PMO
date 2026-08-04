@@ -3,6 +3,7 @@ import { Eye, ArrowUp, ArrowDown, ArrowUpDown, FileDown } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
 import { useTableColumns } from '../hooks/useTableColumns';
 import ColumnSelector from './ColumnSelector';
+import DensitySelector from './DensitySelector';
 import ExportProjectsModal from './modals/ExportProjectsModal';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,6 +28,7 @@ const DEFAULT_PROJECT_COLUMNS = [
 
 export default function ProjectTable({ projects, onViewProject, onViewVendor, showHeaderSelector = true }) {
   const { getAuthHeaders } = useAuth();
+  const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
   const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -81,10 +83,11 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
             <FileDown size={18} />
             <span>Exportar Excel</span>
           </button>
+          <DensitySelector density={density} onChange={setDensity} />
           <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
         </div>
       )}
-      <div className="m3-table-wrapper glass-panel">
+      <div className="m3-table-wrapper glass-panel" data-density={density}>
         <table className="m3-table">
           <thead>
             <tr>
@@ -286,12 +289,7 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
           </tbody>
         </table>
       </div>
-      <ExportProjectsModal 
-        isOpen={isExportOpen} 
-        onClose={() => setIsExportOpen(false)} 
-        projects={projects} 
-        getAuthHeaders={getAuthHeaders} 
-      />
+      <ExportProjectsModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} projects={projects} getAuthHeaders={getAuthHeaders} />
     </div>
   );
 }

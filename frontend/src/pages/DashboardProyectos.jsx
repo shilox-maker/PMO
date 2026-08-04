@@ -53,6 +53,9 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
   const [selectedKpi, setSelectedKpi] = useState(null);
   const [selectedChartFilter, setSelectedChartFilter] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [trends, setTrends] = useState({});
+  const [timeframe, setTimeframe] = useState(7);
+  const [customDate, setCustomDate] = useState(null);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(Array.isArray(data) ? data : [])).catch(() => {});
@@ -65,6 +68,8 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
   const fetchDashboardData = () => {
     setLoading(true);
     const params = new URLSearchParams();
+    params.append('include_trends', 'true');
+    params.append('timeframe', timeframe.toString());
     if (filterPm) params.append('pm', filterPm);
     if (filterVendor) params.append('vendor', filterVendor);
     if (filterRag) params.append('rag', filterRag);
@@ -80,7 +85,13 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
     })
       .then(res => res.json())
       .then(data => {
-        setProjects(Array.isArray(data) ? data : (data.projects || []));
+        if (Array.isArray(data)) {
+          setProjects(data);
+          setTrends({});
+        } else {
+          setProjects(data.projects || []);
+          setTrends(data.trends || {});
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -91,7 +102,14 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm, timeframe]);
+
+  useEffect(() => {
+    if (customDate) {
+      const days = Math.max(1, Math.round((Date.now() - new Date(customDate).getTime()) / 86400000));
+      setTimeframe(days);
+    }
+  }, [customDate]);
 
   const getFilteredProjects = () => {
     let res = [...projects];
@@ -179,6 +197,11 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
         ragRojo={ragRojo}
         selectedKpi={selectedKpi}
         setSelectedKpi={setSelectedKpi}
+        trends={trends}
+        timeframe={timeframe}
+        setTimeframe={setTimeframe}
+        customDate={customDate}
+        setCustomDate={setCustomDate}
       />
 
       {/* Charts Section */}

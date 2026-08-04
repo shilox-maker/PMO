@@ -52,24 +52,22 @@ export default function ProjectAlcanceTab({
                   {b.label}
                 </h4>
                 {isEditing ? (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button 
-                      className="icon-btn" 
-                      onClick={() => setEditingBlock(null)} 
-                      title="Cancelar"
-                      style={{ color: 'var(--color-rag-red)' }}
-                    >
-                      <X size={16} />
-                    </button>
-                    <button 
-                      className="icon-btn" 
-                      onClick={() => handleSaveBlock(b.key)} 
-                      title="Guardar"
-                      style={{ color: 'var(--color-rag-green)' }}
-                    >
-                      <Check size={16} />
-                    </button>
-                  </div>
+                  <button 
+                    type="button"
+                    className="m3-btn m3-btn-text" 
+                    onClick={() => setEditingBlock(null)} 
+                    title="Cerrar modo edición (auto-guardado activo)"
+                    style={{ 
+                      fontSize: '0.8rem', 
+                      padding: '4px 10px',
+                      color: 'var(--md-sys-color-primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Check size={14} /> Listo
+                  </button>
                 ) : (
                   <button 
                     className="icon-btn" 
@@ -86,7 +84,11 @@ export default function ProjectAlcanceTab({
 
               {isEditing ? (
                 <div style={{ minHeight: 200 }}>
-                  <RichTextEditor value={blockValue} onChange={setBlockValue} />
+                  <RichTextEditor 
+                    value={blockValue} 
+                    onChange={setBlockValue}
+                    onAutoSave={(newContent) => handleSaveBlock(b.key, newContent)}
+                  />
                 </div>
               ) : (
                 <div 

@@ -8,9 +8,10 @@ const { getProjectsCalculationsBatch } = require('../../models/automations');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 const { getPortfolioBudgetReport } = require('./dashboardReport.controller');
 const { getTimeline } = require('./dashboardTimeline.controller');
+const { recordDailySnapshots, getKpiTrends } = require('../../services/kpiSnapshotService');
 
 const getPortfolioDashboard = asyncHandler(async (req, res) => {
-  const { pm, fecha_desde, fecha_hasta, search, vendor, rag, state, portfolio, tag, iniciativa_ligera, estrategico } = req.query;
+  const { pm, fecha_desde, fecha_hasta, search, vendor, rag, state, portfolio, tag, iniciativa_ligera, estrategico, include_trends, timeframe } = req.query;
   const user = await Usuarios.findByPk(req.currentPmId);
   const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
   
@@ -42,7 +43,10 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
     order: [['createdAt', 'DESC']]
   });
 
-  if (!projectsList || projectsList.length === 0) return res.json([]);
+  if (!projectsList || projectsList.length === 0) {
+    if (include_trends === 'true') return res.json({ projects: [], trends: {}, timeframe: parseInt(timeframe || 7, 10) });
+    return res.json([]);
+  }
 
   const projectIds = projectsList.map(p => p.id_proyecto);
   const todayStr = new Date().toISOString().split('T')[0];
@@ -111,6 +115,37 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
   let finalData = dashboardData;
   if (fecha_desde || fecha_hasta) {
     finalData = dashboardData.filter(p => (!fecha_desde || p.fecha_fin_estimada >= fecha_desde) && (!fecha_hasta || p.fecha_inicio <= fecha_hasta));
+  }
+
+  // 2. Registros de Snapshots y Tendencias de KPIs
+  const portfolioId = portfolio ? parseInt(portfolio, 10) : null;
+  const daysTimeframe = parseInt(timeframe || 7, 10);
+
+  const metricsMap = {
+    delayed_partial: finalData.filter(p => p.has_hito_vencido).length,
+    inactive: finalData.filter(p => (Date.now() - new Date(p.ultima_actualizacion).getTime()) / 86400000 > 14).length,
+    rag_verde: finalData.filter(p => p.indicador_rag === 'VERDE').length,
+    rag_amarillo: finalData.filter(p => p.indicador_rag === 'AMARILLO').length,
+    rag_rojo: finalData.filter(p => p.indicador_rag === 'ROJO').length,
+    overrun: finalData.filter(p => p.gasto_total_facturas > p.budget_inicial).length,
+    overrun_extended: finalData.filter(p => p.gasto_total_facturas > (p.calculations?.budget_actualizado || p.budget_inicial)).length,
+    delayed_base: finalData.filter(p => {
+      const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes((p.estado_proyecto || '').toUpperCase());
+      return !isClosed && p.fecha_fin_inicial && p.fecha_fin_inicial < todayStr;
+    }).length,
+    delayed_extended: finalData.filter(p => {
+      const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes((p.estado_proyecto || '').toUpperCase());
+      return !isClosed && p.fecha_fin_estimada && p.fecha_fin_estimada < todayStr;
+    }).length,
+    non_governed: finalData.filter(p => !p.com_semanal_activo && !p.com_mensual_activo && !p.com_steerco_activo).length
+  };
+
+  recordDailySnapshots(metricsMap, portfolioId).catch(err => console.error('[KPI Snapshot Error]', err));
+  const trends = await getKpiTrends(metricsMap, daysTimeframe, portfolioId);
+  console.log('[Dashboard] trends keys:', Object.keys(trends), 'sample:', JSON.stringify(trends.delayed_base || trends.non_governed));
+
+  if (include_trends === 'true') {
+    return res.json({ projects: finalData, trends, timeframe: daysTimeframe });
   }
 
   res.json(finalData);

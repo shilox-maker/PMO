@@ -108,7 +108,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
     })
       .then(res => res.json())
       .then(data => {
-        setProjects(data);
+        setProjects(Array.isArray(data) ? data : (data.projects || []));
         setLoading(false);
       })
       .catch(err => {

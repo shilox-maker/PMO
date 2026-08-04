@@ -2,7 +2,6 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
-- **IDEA-31**: Indicadores de Tendencia y Variación Temporal en KPIs (Velocity / Variance). Flechas y variaciones numéricas (ej. ▲ +2, ▼ -5%) comparando el valor del KPI actual con el periodo anterior (semana/mes).
 
 ## 🔍 2. En Análisis / Especificación
 
@@ -11,13 +10,29 @@
 ## 📦 4. Implementadas
 
 ## 🧪 5. En Testeo / Pruebas
-- **FEATURE-45 (IDEA-45): Modo Mantenimiento Global de la Aplicación** (2026-07-31)
-  - **Descripción:** Opción en el módulo de administración para poner en modo mantenimiento la plataforma. Bloquea el acceso a todas las funcionalidades a los usuarios no administradores (retornando HTTP 503 en API y mostrando pantalla informativa en Frontend), permitiendo a los administradores seguir operando con normalidad.
-
 
 
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
+- **FEATURE-31 (IDEA-31): Indicadores de Tendencia y Variación Temporal en KPIs (Velocity / Variance - Opción B Snapshots)** (2026-08-04)
+  - **Descripción:** Muestra de badges de variación (`▲ +2`, `▼ -1`, `— 0`) comparando los KPIs del dashboard actual respecto a un periodo anterior (7 días o 30 días). Incluye migración `13_create_kpi_snapshots.js`, servicio `kpiSnapshotService.js` para registro diario automático, integración en `dashboard.controller.js` y componente frontend `DashboardKpiGrid.jsx` con conmutador de período.
+
+- **PERF-01: Lazy Loading de Pages y Optimización de Chunks (Vite)** (2026-08-04)
+  - **Descripción:** Conversión de todos los imports estáticos de pages en `App.jsx` a `React.lazy` + `Suspense`. Vendor splitting en `vite.config.js` para separar MSAL, Recharts, Quill y React en chunks cacheables independientes. MSAL convertido a factory lazy (`getMsalInstance()`) para no bloquear el arranque de la app.
+
+- **FEATURE-50 (IDEA-50): Rediseño de Navegación de Pestañas en Ficha de Proyecto (Pestañas Principales + Menú Overflow "Más...")** (2026-08-04)
+  - **Descripción:** Rediseño de la barra de navegación en [ProjectDetailTabsNav.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/pages/project-detail/ProjectDetailTabsNav.jsx) para eliminar el scroll horizontal en la ficha del proyecto. Incluye nombres acortados de pestañas y menú desplegable contextual overflow ("Más ▾") con indicador de pestaña activa, badges resumen y posicionamiento en primer plano (`z-index: 1000`).
+
+- **FEATURE-48 (IDEA-48): UI/UX Premium: Skeletons Glassmorphic y Conmutador de Densidad de Información** (2026-08-04)
+  - **Descripción:** Sustitución de loaders genéricos por Skeletons Glassmorphic con animaciones shimmer y selector de densidad de vista (Cómoda / Normal / Compacta) persistido en `localStorage` para la vista de tabla de proyectos y dashboards.
+- **FEATURE-49 (IDEA-49): Auto-guardado inteligente (Debounce) e Indicador de Estado en Editor WYSIWYG** (2026-08-04)
+  - **Descripción:** Implementación de auto-guardado progresivo en segundo plano con temporizador debounce (1500ms) e indicador visual de estado en tiempo real ("Guardando...", "Último guardado: HH:MM:SS", "Cambios sin guardar", "Error al guardar") en el editor `RichTextEditor`. Se refactorizó modularmente el componente en `RichTextToolbar.jsx`, `AutoSaveStatus.jsx` y `sanitizeHtml.js` cumpliendo estrictamente con el límite de 300 líneas por fichero.
+- **FEATURE-45 (IDEA-45): Modo Mantenimiento Global de la Aplicación** (2026-07-31)
+  - **Descripción:** Opción en el módulo de administración para poner en modo mantenimiento la plataforma. Bloquea el acceso a todas las funcionalidades a los usuarios no administradores (retornando HTTP 503 en API y mostrando pantalla informativa en Frontend), permitiendo a los administradores seguir operando con normalidad.
+- **FEATURE-46 (IDEA-46): Optimización del Protocolo Operativo del Agente (`agents.md`) y Herramientas de Calidad** (2026-08-03)
+  - **Descripción:** Actualización del archivo de reglas `agents.md` y creación de la herramienta `scripts/check-line-limits.js` para afinar el flujo operativo del agente IA. Corrección de rutas relativas (`backend/docs/roadmap.md`), pautas para smoke tests visuales en frontend mediante `browser_subagent`, política de higiene en `/scratch` y verificación automatizada de límites de líneas (200 backend / 300 frontend).
+- **FEATURE-47 (IDEA-47): Paleta de Comandos Rápida (`Ctrl + K`) para PMO Control Tower** (2026-08-03)
+  - **Descripción:** Buscador global modal e interactivo para navegar instantáneamente entre proyectos, riesgos, incidencias y opciones de menú desde cualquier lugar de la app mediante `Ctrl + K` / `Cmd + K` o botón en la cabecera.
 
 
 ## 📦 7. Completado e Integrado (Historial)

@@ -1,10 +1,12 @@
 import React from 'react';
-import { RefreshCw, Eye, MessageSquare } from 'lucide-react';
+import { Eye, MessageSquare } from 'lucide-react';
 import { getSortedData } from '../../utils/sorting';
+import SkeletonLoader from '../SkeletonLoader';
 
 export default function ProjectsTable({
   projects,
   loading,
+  density = 'standard',
   visibleColumnsMap,
   sortConfig,
   renderSortHeader,
@@ -19,12 +21,7 @@ export default function ProjectsTable({
   };
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', gap: 16 }}>
-        <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
-        <span>Cargando listado de proyectos...</span>
-      </div>
-    );
+    return <SkeletonLoader variant="table" rows={6} columns={8} />;
   }
 
   if (projects.length === 0) {
@@ -36,7 +33,7 @@ export default function ProjectsTable({
   }
 
   return (
-    <div className="m3-table-wrapper glass-panel">
+    <div className="m3-table-wrapper glass-panel" data-density={density}>
       <table className="m3-table">
         <thead>
           <tr>
