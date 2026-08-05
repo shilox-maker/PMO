@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## [2.7.0] - 2026-08-05
+### Added
+- **Servidor MCP (Model Context Protocol) para Agentes de IA (FEATURE-53 / IDEA-53)**:
+  - Servidor MCP integrado en el backend (`backend/mcp/`) para exponer las capacidades de la torre de control a asistentes y agentes de IA (Copilot, Claude Desktop, Antigravity, etc.).
+  - Soporte de transporte estándar `stdio` en [`backend/mcp/index.js`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/index.js) y transporte de red HTTP / SSE en [`backend/mcp/http.js`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/http.js) bajo los endpoints `/mcp/sse` y `/mcp/messages`.
+  - Seguridad mediante autenticación estricta por `MCP_API_KEY` (cabecera `Authorization: Bearer <token>`).
+  - Herramientas MCP expuestas:
+    - `list_projects`: Filtrado y consulta de lista de proyectos por estado o búsqueda.
+    - `get_project_detail`: Ficha completa de proyecto (KPIs, riesgos, incidencias, tareas).
+    - `get_lessons_learned`: Consulta y búsqueda de lecciones aprendidas registras en proyectos o por proveedor.
+    - `search_pmo`: Búsqueda global rápida en todo el repositorio de PMO.
+  - Script `npm run mcp` en [`package.json`](file:///c:/PruebasIA/Proyectos/PMO-1/backend/package.json).
+
+- **Redimensionamiento Dinámico de Columnas en Tabla de Proyectos (FEATURE-51 / IDEA-51)**:
+  - Redimensionamiento interactivo de columnas en la vista de tabla de proyectos mediante arrastre de tiradores.
+  - Persistencia de anchos personalizados en `localStorage` mediante hook `useTableColumns.js`.
+  - Refactorización modular creando `ProjectTableHeader.jsx`.
+
 ## [2.6.0] - 2026-08-04
 ### Added
 - **Indicadores de Tendencia y Variación Temporal en KPIs (FEATURE-31 / IDEA-31)**:
