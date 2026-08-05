@@ -22,8 +22,6 @@
 
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
-- **FEATURE-53 (IDEA-53): Servidor MCP (Model Context Protocol) para exponer el API de PMO Control Tower a Agentes de IA (Soporte stdio y HTTP/SSE con API Key)** (2026-08-05)
-  - **Descripción:** Implementación de un servidor MCP reutilizable sobre transporte `stdio` y transporte HTTP/SSE expuesto en los endpoints `/mcp/sse` y `/mcp/messages` protegido mediante middleware con `MCP_API_KEY`. Incluye herramientas de consulta expuestas en módulos independientes: `list_projects` y `get_project_detail` en [projects.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/projects.js), `get_lessons_learned` en [lessons.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/lessons.js), y `search_pmo` en [search.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/search.js).
 - **FEATURE-31 (IDEA-31): Indicadores de Tendencia y Variación Temporal en KPIs (Velocity / Variance - Opción B Snapshots)** (2026-08-04)
   - **Descripción:** Muestra de badges de variación (`▲ +2`, `▼ -1`, `— 0`) comparando los KPIs del dashboard actual respecto a un periodo anterior (7 días o 30 días). Incluye migración `13_create_kpi_snapshots.js`, servicio `kpiSnapshotService.js` para registro diario automático, integración en `dashboard.controller.js` y componente frontend `DashboardKpiGrid.jsx` con conmutador de período.
 
