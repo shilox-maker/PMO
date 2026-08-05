@@ -142,7 +142,6 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
 
   recordDailySnapshots(metricsMap, portfolioId).catch(err => console.error('[KPI Snapshot Error]', err));
   const trends = await getKpiTrends(metricsMap, daysTimeframe, portfolioId);
-  console.log('[Dashboard] trends keys:', Object.keys(trends), 'sample:', JSON.stringify(trends.delayed_base || trends.non_governed));
 
   if (include_trends === 'true') {
     return res.json({ projects: finalData, trends, timeframe: daysTimeframe });

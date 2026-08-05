@@ -20,7 +20,7 @@ const verifyToken = (req, res, next) => {
     }
   }
 
-  if (publicPaths.includes(req.path)) {
+  if (publicPaths.includes(req.path) || req.path.startsWith('/mcp')) {
     return next();
   }
 

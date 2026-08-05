@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Eye, ArrowUp, ArrowDown, ArrowUpDown, FileDown } from 'lucide-react';
+import { Eye, FileDown } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
 import { useTableColumns } from '../hooks/useTableColumns';
 import ColumnSelector from './ColumnSelector';
 import DensitySelector from './DensitySelector';
 import ExportProjectsModal from './modals/ExportProjectsModal';
 import { useAuth } from '../context/AuthContext';
+import ProjectTableHeader from './ProjectTableHeader';
 
 const DEFAULT_PROJECT_COLUMNS = [
   { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
@@ -20,16 +21,14 @@ const DEFAULT_PROJECT_COLUMNS = [
   { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
   { id: 'budget', label: 'Presupuesto', fixed: false, visible: false },
   { id: 'progreso', label: 'Progreso Gasto', fixed: false, visible: false },
-  { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true },
-  { id: 'ultimo_comentario', label: 'Último Comentario', fixed: false, visible: true },
-  { id: 'cambios_alcance_count', label: 'Cambios Alcance', fixed: false, visible: true },
-  { id: 'accion', label: 'Acción', fixed: true, visible: true }
+  { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true }, { id: 'ultimo_comentario', label: 'Último Comentario', fixed: false, visible: true },
+  { id: 'cambios_alcance_count', label: 'Cambios Alcance', fixed: false, visible: true }, { id: 'accion', label: 'Acción', fixed: true, visible: true }
 ];
 
 export default function ProjectTable({ projects, onViewProject, onViewVendor, showHeaderSelector = true }) {
   const { getAuthHeaders } = useAuth();
   const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
-  const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
+  const { columns: tableCols, visibleColumnsMap, columnWidths, updateColumnWidth, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
   const [isExportOpen, setIsExportOpen] = useState(false);
 
@@ -40,46 +39,51 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
     }));
   };
 
+  const handleMouseDown = (e, colId) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startX = e.clientX;
+    const thElement = e.target.parentElement;
+    const startWidth = thElement.getBoundingClientRect().width;
+
+    const onMouseMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      updateColumnWidth(colId, startWidth + deltaX);
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
   const getProgressColor = (percent) => {
     if (percent > 90) return 'var(--color-rag-red)';
     if (percent > 75) return 'var(--color-rag-yellow)';
     return 'var(--md-sys-color-primary)';
   };
 
-  const renderSortHeader = (label, key, extraStyle = {}) => {
-    const isSorted = sortConfig.key === key;
-    const isCentered = extraStyle.textAlign === 'center';
-    return (
-      <th 
-        onClick={() => handleSort(key)} 
-        style={{ cursor: 'pointer', userSelect: 'none', ...extraStyle }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: isCentered ? 'center' : 'flex-start' }}>
-          {label}
-          {isSorted ? (
-            sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
-          ) : (
-            <ArrowUpDown size={14} style={{ opacity: 0.3 }} />
-          )}
-        </div>
-      </th>
-    );
-  };
+  const renderTH = (label, sortKey, extraStyle = {}, colId = sortKey) => (
+    <ProjectTableHeader
+      label={label}
+      sortKey={sortKey}
+      sortConfig={sortConfig}
+      onSort={handleSort}
+      colId={colId}
+      columnWidths={columnWidths}
+      onMouseDown={handleMouseDown}
+      extraStyle={extraStyle}
+    />
+  );
 
   return (
     <div>
       {showHeaderSelector && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12, gap: 12 }}>
-          <button 
-            className="m3-btn m3-btn-tonal"
-            onClick={() => setIsExportOpen(true)}
-            style={{ 
-              height: '40px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 8 
-            }}
-          >
+          <button className="m3-btn m3-btn-tonal" onClick={() => setIsExportOpen(true)} style={{ height: '40px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <FileDown size={18} />
             <span>Exportar Excel</span>
           </button>
@@ -91,22 +95,22 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
         <table className="m3-table">
           <thead>
             <tr>
-              {visibleColumnsMap.id_proyecto && renderSortHeader('Código', 'id_proyecto')}
-              {visibleColumnsMap.nombre_proyecto && renderSortHeader('Nombre del Proyecto', 'nombre_proyecto')}
-              {visibleColumnsMap.estado_proyecto && renderSortHeader('Estado/Fase', 'estado_proyecto')}
-              {visibleColumnsMap.indicador_rag && renderSortHeader('RAG', 'indicador_rag', { textAlign: 'center' })}
-              {visibleColumnsMap.proveedor && renderSortHeader('Socio Tecnológico', 'Proveedor.nombre_razon_social')}
-              {visibleColumnsMap.pm && renderSortHeader('Gestor PM', 'PM.nombre')}
-              {visibleColumnsMap.sede && renderSortHeader('Sede', 'Sede.nombre_sede')}
-              {visibleColumnsMap.fecha_inicio && renderSortHeader('Fecha Inicio', 'fecha_inicio')}
-              {visibleColumnsMap.fecha_fin_inicial && renderSortHeader('Fecha Fin Base', 'fecha_fin_inicial')}
-              {visibleColumnsMap.fecha_fin_estimada && renderSortHeader('Fecha Fin Est.', 'calculations.fecha_fin_estimada')}
-              {visibleColumnsMap.budget && renderSortHeader('Presupuesto (Act. / Disp.)', 'calculations.budget_actualizado')}
-              {visibleColumnsMap.progreso && renderSortHeader('Progreso Gasto', 'calculations.consumo_real')}
-              {visibleColumnsMap.proximo_hito && renderSortHeader('Próximo Hito', 'nextMilestone.fecha_limite')}
-              {visibleColumnsMap.ultimo_comentario && renderSortHeader('Último Comentario', 'ultimo_comentario')}
-              {visibleColumnsMap.cambios_alcance_count && renderSortHeader('Cambios Alcance', 'cambios_alcance_count', { textAlign: 'center' })}
-              {visibleColumnsMap.accion && <th>Acción</th>}
+              {visibleColumnsMap.id_proyecto && renderTH('Código', 'id_proyecto')}
+              {visibleColumnsMap.nombre_proyecto && renderTH('Nombre del Proyecto', 'nombre_proyecto')}
+              {visibleColumnsMap.estado_proyecto && renderTH('Estado/Fase', 'estado_proyecto')}
+              {visibleColumnsMap.indicador_rag && renderTH('RAG', 'indicador_rag', { textAlign: 'center' })}
+              {visibleColumnsMap.proveedor && renderTH('Socio Tecnológico', 'Proveedor.nombre_razon_social', {}, 'proveedor')}
+              {visibleColumnsMap.pm && renderTH('Gestor PM', 'PM.nombre', {}, 'pm')}
+              {visibleColumnsMap.sede && renderTH('Sede', 'Sede.nombre_sede', {}, 'sede')}
+              {visibleColumnsMap.fecha_inicio && renderTH('Fecha Inicio', 'fecha_inicio')}
+              {visibleColumnsMap.fecha_fin_inicial && renderTH('Fecha Fin Base', 'fecha_fin_inicial')}
+              {visibleColumnsMap.fecha_fin_estimada && renderTH('Fecha Fin Est.', 'calculations.fecha_fin_estimada', {}, 'fecha_fin_estimada')}
+              {visibleColumnsMap.budget && renderTH('Presupuesto (Act. / Disp.)', 'calculations.budget_actualizado', {}, 'budget')}
+              {visibleColumnsMap.progreso && renderTH('Progreso Gasto', 'calculations.consumo_real', {}, 'progreso')}
+              {visibleColumnsMap.proximo_hito && renderTH('Próximo Hito', 'nextMilestone.fecha_limite', {}, 'proximo_hito')}
+              {visibleColumnsMap.ultimo_comentario && renderTH('Último Comentario', 'ultimo_comentario')}
+              {visibleColumnsMap.cambios_alcance_count && renderTH('Cambios Alcance', 'cambios_alcance_count', { textAlign: 'center' })}
+              {visibleColumnsMap.accion && renderTH('Acción', null, {}, 'accion')}
             </tr>
           </thead>
           <tbody>

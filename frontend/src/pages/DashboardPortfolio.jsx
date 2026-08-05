@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Filter, ArrowUp, ArrowDown, ArrowUpDown, PieChart } from 'lucide-react';
+import { Filter, PieChart } from 'lucide-react';
 import { useTableColumns } from '../hooks/useTableColumns';
 import ProjectsFilterPanel from '../components/projects/ProjectsFilterPanel';
 import GovernanceKpiHeader from '../components/governance/GovernanceKpiHeader';
+import ProjectTableHeader from '../components/ProjectTableHeader';
 
 const DEFAULT_GOV_COLUMNS = [
   { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
@@ -47,7 +48,7 @@ export default function DashboardPortfolio({ onViewProject }) {
   const [statesList, setStatesList] = useState([]);
 
   // Column visibility & Sorting
-  const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-portfolio-columns', DEFAULT_GOV_COLUMNS);
+  const { columns: tableCols, visibleColumnsMap, columnWidths, updateColumnWidth, toggleColumn, resetColumns } = useTableColumns('ppm-portfolio-columns', DEFAULT_GOV_COLUMNS);
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
   const [selectedKpi, setSelectedKpi] = useState(null);
   const [trends, setTrends] = useState({});
@@ -82,8 +83,6 @@ export default function DashboardPortfolio({ onViewProject }) {
     })
       .then(res => res.json())
       .then(data => {
-        console.log('[Portfolio] API response keys:', Object.keys(data || {}));
-        console.log('[Portfolio] trends received:', JSON.stringify(data.trends));
         if (Array.isArray(data)) {
           setRawProjects(data);
           setTrends({});
@@ -180,17 +179,39 @@ export default function DashboardPortfolio({ onViewProject }) {
     }));
   };
 
-  const renderSortHeader = (label, key, extraStyle = {}) => {
-    const isSorted = sortConfig.key === key;
-    return (
-      <th onClick={() => handleSort(key)} style={{ cursor: 'pointer', userSelect: 'none', ...extraStyle }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {label}
-          {isSorted ? (sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} style={{ opacity: 0.3 }} />}
-        </div>
-      </th>
-    );
+  const handleMouseDown = (e, colId) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startX = e.clientX;
+    const thElement = e.target.parentElement;
+    const startWidth = thElement.getBoundingClientRect().width;
+
+    const onMouseMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      updateColumnWidth(colId, startWidth + deltaX);
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
   };
+
+  const renderTH = (label, sortKey, extraStyle = {}, colId = sortKey) => (
+    <ProjectTableHeader
+      label={label}
+      sortKey={sortKey}
+      sortConfig={sortConfig}
+      onSort={handleSort}
+      colId={colId}
+      columnWidths={columnWidths}
+      onMouseDown={handleMouseDown}
+      extraStyle={extraStyle}
+    />
+  );
 
   const sortedProjects = [...filteredProjects].sort((a, b) => {
     let aValue = a[sortConfig.key];
@@ -282,16 +303,19 @@ export default function DashboardPortfolio({ onViewProject }) {
             <table className="m3-table" style={{ width: '100%', fontSize: '0.85rem' }}>
               <thead>
                 <tr>
-                  {visibleColumnsMap.id_proyecto && renderSortHeader('Código', 'id_proyecto')}
-                  {visibleColumnsMap.nombre_proyecto && renderSortHeader('Proyecto', 'nombre_proyecto')}
-                  {visibleColumnsMap.pm_nombre && renderSortHeader('PM', 'pm_nombre')}
-                  {visibleColumnsMap.indicador_rag && renderSortHeader('RAG', 'indicador_rag')}
-                  {visibleColumnsMap.fecha_inicio && renderSortHeader('Inicio', 'fecha_inicio')}
-                  {visibleColumnsMap.fecha_fin_inicial && renderSortHeader('Fin Base', 'fecha_fin_inicial')}
-                  {visibleColumnsMap.fecha_fin_estimada && renderSortHeader('Fin Est.', 'fecha_fin_estimada')}
-                  {visibleColumnsMap.gasto_total_facturas && renderSortHeader('Gasto', 'gasto_total_facturas')}
-                  {visibleColumnsMap.proximo_hito && <th>Próximo Hito</th>}
-                  {visibleColumnsMap.accion && <th style={{ textAlign: 'center' }}>Acción</th>}
+                  {visibleColumnsMap.id_proyecto && renderTH('Código', 'id_proyecto')}
+                  {visibleColumnsMap.nombre_proyecto && renderTH('Proyecto', 'nombre_proyecto')}
+                  {visibleColumnsMap.pm_nombre && renderTH('PM', 'pm_nombre')}
+                  {visibleColumnsMap.indicador_rag && renderTH('RAG', 'indicador_rag')}
+                  {visibleColumnsMap.fecha_inicio && renderTH('Inicio', 'fecha_inicio')}
+                  {visibleColumnsMap.fecha_fin_inicial && renderTH('Fin Base', 'fecha_fin_inicial')}
+                  {visibleColumnsMap.fecha_fin_estimada && renderTH('Fin Est.', 'calculations.fecha_fin_estimada', {}, 'fecha_fin_estimada')}
+                  {visibleColumnsMap.gasto_total_facturas && renderTH('Gasto Facturado', 'calculations.consumo_real', {}, 'gasto_total_facturas')}
+                  {visibleColumnsMap.alerta_tiempo && renderTH('Alerta Tiempo', null, {}, 'alerta_tiempo')}
+                  {visibleColumnsMap.alerta_dinero && renderTH('Alerta Dinero', null, {}, 'alerta_dinero')}
+                  {visibleColumnsMap.proximo_hito && renderTH('Próximo Hito', 'nextMilestone.fecha_limite', {}, 'proximo_hito')}
+                  {visibleColumnsMap.ultimo_comentario && renderTH('Último Comentario', 'ultimo_comentario')}
+                  {visibleColumnsMap.accion && renderTH('Ficha', null, {}, 'accion')}
                 </tr>
               </thead>
               <tbody>
@@ -325,12 +349,39 @@ export default function DashboardPortfolio({ onViewProject }) {
                       {visibleColumnsMap.gasto_total_facturas && (
                         <td>{p.gasto_total_facturas ? `${p.gasto_total_facturas.toLocaleString('es-ES')} €` : '0 €'}</td>
                       )}
+                      {visibleColumnsMap.alerta_tiempo && (
+                        <td style={{ fontSize: '0.8rem', maxWidth: '200px' }}>
+                          {p.alerta_tiempo ? (
+                            <span style={{ color: 'var(--color-rag-red)', fontWeight: 500 }}>{p.alerta_tiempo}</span>
+                          ) : (
+                            <span style={{ opacity: 0.5 }}>-</span>
+                          )}
+                        </td>
+                      )}
+                      {visibleColumnsMap.alerta_dinero && (
+                        <td style={{ fontSize: '0.8rem', maxWidth: '200px' }}>
+                          {p.alerta_dinero ? (
+                            <span style={{ color: 'var(--color-rag-red)', fontWeight: 500 }}>{p.alerta_dinero}</span>
+                          ) : (
+                            <span style={{ opacity: 0.5 }}>-</span>
+                          )}
+                        </td>
+                      )}
                       {visibleColumnsMap.proximo_hito && (
                         <td>
                           {p.proximo_hito ? (
                             <span style={{ fontSize: '0.8rem' }}>
                               {p.proximo_hito.titulo_tarea} ({p.proximo_hito.fecha_planificada || p.proximo_hito.fecha_limite})
                             </span>
+                          ) : (
+                            <span style={{ opacity: 0.5 }}>-</span>
+                          )}
+                        </td>
+                      )}
+                      {visibleColumnsMap.ultimo_comentario && (
+                        <td style={{ fontSize: '0.8rem', maxWidth: '250px', whiteSpace: 'normal', wordBreak: 'break-word', color: 'var(--md-sys-color-outline)' }}>
+                          {p.ultimo_comentario ? (
+                            <span>{p.ultimo_comentario}</span>
                           ) : (
                             <span style={{ opacity: 0.5 }}>-</span>
                           )}

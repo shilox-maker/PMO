@@ -2,14 +2,17 @@ import React from 'react';
 import { Eye, MessageSquare } from 'lucide-react';
 import { getSortedData } from '../../utils/sorting';
 import SkeletonLoader from '../SkeletonLoader';
+import ProjectTableHeader from '../ProjectTableHeader';
 
 export default function ProjectsTable({
   projects,
   loading,
   density = 'standard',
   visibleColumnsMap,
+  columnWidths = {},
   sortConfig,
-  renderSortHeader,
+  handleSort,
+  handleMouseDown,
   onViewProject,
   onViewVendor,
   onOpenQuickComment
@@ -19,6 +22,19 @@ export default function ProjectsTable({
     if (percent > 75) return 'var(--color-rag-yellow)';
     return 'var(--md-sys-color-primary)';
   };
+
+  const renderTH = (label, sortKey, extraStyle = {}, colId = sortKey) => (
+    <ProjectTableHeader
+      label={label}
+      sortKey={sortKey}
+      sortConfig={sortConfig}
+      onSort={handleSort}
+      colId={colId}
+      columnWidths={columnWidths}
+      onMouseDown={handleMouseDown}
+      extraStyle={extraStyle}
+    />
+  );
 
   if (loading) {
     return <SkeletonLoader variant="table" rows={6} columns={8} />;
@@ -37,21 +53,21 @@ export default function ProjectsTable({
       <table className="m3-table">
         <thead>
           <tr>
-            {visibleColumnsMap.id_proyecto && renderSortHeader('Código', 'id_proyecto')}
-            {visibleColumnsMap.nombre_proyecto && renderSortHeader('Nombre del Proyecto', 'nombre_proyecto')}
-            {visibleColumnsMap.estado_proyecto && renderSortHeader('Estado/Fase', 'estado_proyecto')}
-            {visibleColumnsMap.indicador_rag && renderSortHeader('RAG', 'indicador_rag')}
-            {visibleColumnsMap.proveedor && renderSortHeader('Socio Tecnológico', 'Proveedor.nombre_razon_social')}
-            {visibleColumnsMap.pm && renderSortHeader('Gestor PM', 'PM.nombre')}
-            {visibleColumnsMap.sede && renderSortHeader('Sede', 'Sede.nombre_sede')}
-            {visibleColumnsMap.fecha_inicio && renderSortHeader('Fecha Inicio', 'fecha_inicio')}
-            {visibleColumnsMap.fecha_fin_inicial && renderSortHeader('Fecha Fin Base', 'fecha_fin_inicial')}
-            {visibleColumnsMap.fecha_fin_estimada && renderSortHeader('Fecha Fin Est.', 'calculations.fecha_fin_estimada')}
-            {visibleColumnsMap.budget && renderSortHeader('Presupuesto (Act. / Disp.)', 'calculations.budget_actualizado')}
-            {visibleColumnsMap.progreso && renderSortHeader('Progreso Gasto', 'calculations.consumo_real')}
-            {visibleColumnsMap.proximo_hito && renderSortHeader('Próximo Hito', 'nextMilestone.fecha_limite')}
-            {visibleColumnsMap.ultimo_comentario && renderSortHeader('Último Comentario', 'ultimo_comentario')}
-            {visibleColumnsMap.accion && <th>Acción</th>}
+            {visibleColumnsMap.id_proyecto && renderTH('Código', 'id_proyecto')}
+            {visibleColumnsMap.nombre_proyecto && renderTH('Nombre del Proyecto', 'nombre_proyecto')}
+            {visibleColumnsMap.estado_proyecto && renderTH('Estado/Fase', 'estado_proyecto')}
+            {visibleColumnsMap.indicador_rag && renderTH('RAG', 'indicador_rag')}
+            {visibleColumnsMap.proveedor && renderTH('Socio Tecnológico', 'Proveedor.nombre_razon_social', {}, 'proveedor')}
+            {visibleColumnsMap.pm && renderTH('Gestor PM', 'PM.nombre', {}, 'pm')}
+            {visibleColumnsMap.sede && renderTH('Sede', 'Sede.nombre_sede', {}, 'sede')}
+            {visibleColumnsMap.fecha_inicio && renderTH('Fecha Inicio', 'fecha_inicio')}
+            {visibleColumnsMap.fecha_fin_inicial && renderTH('Fecha Fin Base', 'fecha_fin_inicial')}
+            {visibleColumnsMap.fecha_fin_estimada && renderTH('Fecha Fin Est.', 'calculations.fecha_fin_estimada', {}, 'fecha_fin_estimada')}
+            {visibleColumnsMap.budget && renderTH('Presupuesto (Act. / Disp.)', 'calculations.budget_actualizado', {}, 'budget')}
+            {visibleColumnsMap.progreso && renderTH('Progreso Gasto', 'calculations.consumo_real', {}, 'progreso')}
+            {visibleColumnsMap.proximo_hito && renderTH('Próximo Hito', 'nextMilestone.fecha_limite', {}, 'proximo_hito')}
+            {visibleColumnsMap.ultimo_comentario && renderTH('Último Comentario', 'ultimo_comentario')}
+            {visibleColumnsMap.accion && renderTH('Acción', null, {}, 'accion')}
           </tr>
         </thead>
         <tbody>

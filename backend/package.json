@@ -13,9 +13,11 @@
     "db:restore": "node utils/backup.js restore",
     "db:restore-menu": "node utils/restore-interactive.js",
     "db:backups": "node utils/backup.js list",
+    "mcp": "node mcp/index.js",
     "test": "cross-env NODE_ENV=test jest --detectOpenHandles"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",

@@ -61,10 +61,14 @@ if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(__dirname, '../frontend/dist');
   app.use(express.static(distPath));
   app.use((req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
+    if (req.path.startsWith('/api') || req.path.startsWith('/mcp')) return next();
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
+
+// Register MCP HTTP/SSE endpoints (Protected by MCP_API_KEY, before global JWT)
+const { registerMcpHttpRoutes } = require('./mcp/http');
+registerMcpHttpRoutes(app);
 
 // Apply global JWT Authentication Middleware
 app.use(verifyToken);

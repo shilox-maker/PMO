@@ -2,18 +2,28 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
+- [] **IDEA-52: En la parte de comunicacion, al enviar un informe, la parte de KPI y salud del proyecto es diferente que cuando generas un informe en el proyecto. Hay que hacer que coincidan en la mayoría de lo posible**
 
 ## 🔍 2. En Análisis / Especificación
 
 ## 🟩 3. Listas para Codificar (Tú les has dado el OK)
 
 ## 📦 4. Implementadas
+- **FEATURE-53 (IDEA-53): Servidor MCP (Model Context Protocol) para exponer el API de PMO Control Tower a Agentes de IA** (2026-08-05)
+  - **Descripción:** Implementación de un servidor MCP sobre transporte `stdio` en [backend/mcp/index.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/index.js) utilizando `@modelcontextprotocol/sdk`. Incluye herramientas de consulta expuestas en módulos independientes: `list_projects` y `get_project_detail` en [projects.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/projects.js), `get_lessons_learned` en [lessons.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/lessons.js), y `search_pmo` en [search.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/search.js). Se añade script `npm run mcp` en [package.json](file:///c:/PruebasIA/Proyectos/PMO-1/backend/package.json).
+
+- **FEATURE-51 (IDEA-51): Redimensionamiento dinámico de ancho de columnas en Tabla de Proyectos con persistencia local** (2026-08-05)
+  - **Descripción:** Redimensionamiento interactivo de columnas en [ProjectTable.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/components/ProjectTable.jsx) mediante arrastre con ratón en tiradores `table-resizer`. Los anchos se persisten en `localStorage` mediante el hook `useTableColumns.js`. Se refactorizó modularmente creando `ProjectTableHeader.jsx` cumpliendo el límite de 300 líneas.
 
 ## 🧪 5. En Testeo / Pruebas
+- **FEATURE-51 (IDEA-51): Redimensionamiento dinámico de ancho de columnas en Tabla de Proyectos con persistencia local** (2026-08-05)
+
 
 
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
+- **FEATURE-53 (IDEA-53): Servidor MCP (Model Context Protocol) para exponer el API de PMO Control Tower a Agentes de IA (Soporte stdio y HTTP/SSE con API Key)** (2026-08-05)
+  - **Descripción:** Implementación de un servidor MCP reutilizable sobre transporte `stdio` y transporte HTTP/SSE expuesto en los endpoints `/mcp/sse` y `/mcp/messages` protegido mediante middleware con `MCP_API_KEY`. Incluye herramientas de consulta expuestas en módulos independientes: `list_projects` y `get_project_detail` en [projects.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/projects.js), `get_lessons_learned` en [lessons.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/lessons.js), y `search_pmo` en [search.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/search.js).
 - **FEATURE-31 (IDEA-31): Indicadores de Tendencia y Variación Temporal en KPIs (Velocity / Variance - Opción B Snapshots)** (2026-08-04)
   - **Descripción:** Muestra de badges de variación (`▲ +2`, `▼ -1`, `— 0`) comparando los KPIs del dashboard actual respecto a un periodo anterior (7 días o 30 días). Incluye migración `13_create_kpi_snapshots.js`, servicio `kpiSnapshotService.js` para registro diario automático, integración en `dashboard.controller.js` y componente frontend `DashboardKpiGrid.jsx` con conmutador de período.
 

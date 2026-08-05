@@ -41,8 +41,39 @@ export function useTableColumns(storageKey, defaultColumns) {
     }));
   };
 
+  // Estado para los anchos de columna en px
+  const [columnWidths, setColumnWidths] = useState(() => {
+    try {
+      const savedWidths = localStorage.getItem(`${storageKey}_widths`);
+      if (savedWidths) return JSON.parse(savedWidths);
+    } catch (e) {
+      console.warn(`Error reading ${storageKey}_widths from localStorage`, e);
+    }
+    return {};
+  });
+
+  // Guardar anchos en localStorage cuando cambien
+  useEffect(() => {
+    try {
+      if (Object.keys(columnWidths).length > 0) {
+        localStorage.setItem(`${storageKey}_widths`, JSON.stringify(columnWidths));
+      }
+    } catch (e) {
+      console.warn(`Error saving ${storageKey}_widths to localStorage`, e);
+    }
+  }, [columnWidths, storageKey]);
+
+  const updateColumnWidth = (colId, width) => {
+    setColumnWidths(prev => ({
+      ...prev,
+      [colId]: Math.max(60, width) // Límite mínimo de 60px
+    }));
+  };
+
   const resetColumns = () => {
     setColumns(defaultColumns);
+    setColumnWidths({});
+    localStorage.removeItem(`${storageKey}_widths`);
   };
 
   // Helper para facilitar condicionales: visibleColumns.id_proyecto === true
@@ -54,6 +85,8 @@ export function useTableColumns(storageKey, defaultColumns) {
   return {
     columns,
     visibleColumnsMap,
+    columnWidths,
+    updateColumnWidth,
     toggleColumn,
     resetColumns
   };

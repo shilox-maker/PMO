@@ -34,7 +34,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
   const [loading, setLoading] = useState(true);
 
   // Column visibility
-  const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
+  const { columns: tableCols, visibleColumnsMap, columnWidths, updateColumnWidth, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
@@ -55,23 +55,25 @@ export default function Projects({ onViewProject, onViewVendor }) {
     }));
   };
 
-  const renderSortHeader = (label, key, extraStyle = {}) => {
-    const isSorted = sortConfig.key === key;
-    return (
-      <th 
-        onClick={() => handleSort(key)} 
-        style={{ cursor: 'pointer', userSelect: 'none', ...extraStyle }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {label}
-          {isSorted ? (
-            sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
-          ) : (
-            <ArrowUpDown size={14} style={{ opacity: 0.3 }} />
-          )}
-        </div>
-      </th>
-    );
+  const handleMouseDown = (e, colId) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startX = e.clientX;
+    const thElement = e.target.parentElement;
+    const startWidth = thElement.getBoundingClientRect().width;
+
+    const onMouseMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      updateColumnWidth(colId, startWidth + deltaX);
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
   };
 
   const [isReportOpen, setIsReportOpen] = useState(false);
@@ -175,8 +177,10 @@ export default function Projects({ onViewProject, onViewVendor }) {
         loading={loading}
         density={density}
         visibleColumnsMap={visibleColumnsMap}
+        columnWidths={columnWidths}
         sortConfig={sortConfig}
-        renderSortHeader={renderSortHeader}
+        handleSort={handleSort}
+        handleMouseDown={handleMouseDown}
         onViewProject={onViewProject}
         onViewVendor={onViewVendor}
         onOpenQuickComment={handleOpenQuickComment}
