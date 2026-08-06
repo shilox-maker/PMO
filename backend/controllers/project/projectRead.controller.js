@@ -3,7 +3,7 @@ const {
   Proyectos, Usuarios, Proveedores, Sedes, ContactosProveedor,
   Tareas, EstadosProyecto, CambiosAlcance, Facturas, ComentariosProyecto,
   Incidencias, Riesgos, LeccionesAprendidas, Portfolios, Tags, TiposCapex, SubtiposCapex, TiposFactura,
-  PlanesComunicacion, PlanComunicacionLog
+  PlanesComunicacion, PlanComunicacionLog, EncuestasCalidad
 } = require('../../models/index');
 const { getProjectCalculations, getProjectsCalculationsBatch } = require('../../models/automations');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -114,7 +114,7 @@ const getProjectDetail = asyncHandler(async (req, res) => {
   // 2. Fetch child associations in parallel targeted queries to prevent 21-join SQL Server timeout -> IIS 502
   const [
     involvedContacts, comSemanalContactos, comMensualContactos, comSteerCoContactos,
-    planesComunicacion, incidencias, riesgos, leccionesAprendidas, facturas, cambiosAlcance, tareas, calc
+    planesComunicacion, incidencias, riesgos, leccionesAprendidas, facturas, cambiosAlcance, tareas, encuestas, calc
   ] = await Promise.all([
     project.getInvolvedContacts({ include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }] }),
     project.getComSemanalContactos({ include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }] }),
@@ -127,6 +127,7 @@ const getProjectDetail = asyncHandler(async (req, res) => {
     Facturas.findAll({ where: { id_proyecto }, include: [{ model: TiposFactura, as: 'TipoFactura' }], order: [['fecha_factura', 'DESC']] }),
     CambiosAlcance.findAll({ where: { id_proyecto }, include: [{ model: ContactosProveedor, as: 'Solicitante', attributes: ['nombre', 'apellidos'] }, { model: ContactosProveedor, as: 'Aprobador', attributes: ['nombre', 'apellidos'] }], order: [['fecha_solicitud', 'DESC']] }),
     Tareas.findAll({ where: { id_proyecto }, order: [['fecha_limite', 'ASC']] }),
+    EncuestasCalidad.findAll({ where: { id_proyecto }, order: [['createdAt', 'DESC']] }),
     getProjectCalculations(project.id_proyecto, project.budget_inicial, project.fecha_fin_inicial)
   ]);
 
@@ -142,6 +143,7 @@ const getProjectDetail = asyncHandler(async (req, res) => {
   projectJson.Facturas = facturas;
   projectJson.CambiosAlcance = cambiosAlcance;
   projectJson.Tareas = tareas;
+  projectJson.Encuestas = encuestas;
   projectJson.calculations = calc;
 
   res.json(projectJson);

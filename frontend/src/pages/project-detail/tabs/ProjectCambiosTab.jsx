@@ -5,7 +5,7 @@ import { getSortedData } from '../../../utils/sorting';
 export default function ProjectCambiosTab({
   project, openAddCr, openEditCr, setShowCrModal, setEditingCr, crSort, setCrSort, renderSortHeader
 }) {
-  const sortedCrs = getSortedData(project.Cambios_Alcances || [], crSort);
+  const sortedCrs = getSortedData(project.CambiosAlcance || [], crSort);
 
   const handleOpenAdd = openAddCr || (() => {
     if (setEditingCr) setEditingCr(null);
@@ -33,7 +33,7 @@ export default function ProjectCambiosTab({
         </button>
       </div>
 
-      {(!project.Cambios_Alcances || project.Cambios_Alcances.length === 0) ? (
+      {sortedCrs.length === 0 ? (
         <p style={{ color: 'var(--md-sys-color-outline)', fontStyle: 'italic', textAlign: 'center', padding: '24px 0' }}>
           No hay solicitudes de cambio de alcance (CR) en este proyecto.
         </p>

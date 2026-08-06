@@ -27,7 +27,7 @@ export default function ProjectDetailTabsNav({ activeTab, setActiveTab, project 
 
   const moreTabs = [
     { id: 'cambios', label: 'Cambios', icon: TrendingUp, badge: project.CambiosAlcance?.length },
-    { id: 'comunicaciones', label: 'Comunicación', icon: MessageSquare },
+    { id: 'comunicaciones', label: 'Comunicación', icon: MessageSquare, badge: project.PlanesComunicacion?.length },
     { id: 'encuestas', label: 'Encuestas', icon: Award, badge: project.Encuestas?.length },
     { id: 'lecciones', label: 'Lecciones aprendidas', icon: BookOpen, badge: project.LeccionesAprendidas?.length }
   ].filter(Boolean);

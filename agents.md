@@ -13,6 +13,8 @@
 - **Límite de Bucles:** Si un comando de consola (build/test/run) falla 2 veces seguidas, **detén tu ejecución de inmediato** y pide ayuda. No intentes corregirlo a ciegas.
 - **Exploración Acotada:** No escanees directorios ni leas archivos fuera del scope de la tarea actual. Usa el índice vectorial del codebase; si dudas, pregunta.
 - **Flujo Single-Agent:** No delegues tareas a subagentes ni levantes arquitecturas en paralelo (Swarm) sin orden explícita.
+- **Ejecución de Comandos en Windows:** Al ejecutar comandos de terminal (`run_command`), usa siempre `cmd /c "comando"` o la extensión explícita `.cmd` (ej: `npm.cmd`, `npx.cmd`) para evitar fallos de ejecución en PowerShell.
+
 
 ## 🔄 Protocolo de Gestión de Features (Flujo Roadmap)
 Tú eres el encargado de mantener la trazabilidad del proyecto utilizando el archivo `backend/docs/roadmap.md`. Sigue estrictamente estas reglas operativas según mis comandos:

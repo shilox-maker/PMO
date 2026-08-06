@@ -112,7 +112,7 @@ export function buildProjectEmailBody(project, reportOptions, committeeName) {
 
   // Cambios de Alcance
   if (reportOptions.cambios) {
-    const cambios = project.CambiosAlcance || project.Cambios_Alcances || [];
+    const cambios = project.CambiosAlcance || [];
     if (cambios.length > 0) {
       lines.push('════════════════════════════════════════════════════');
       lines.push('🔄 CAMBIOS DE ALCANCE (CR)');
@@ -128,7 +128,7 @@ export function buildProjectEmailBody(project, reportOptions, committeeName) {
 
   // Lecciones Aprendidas
   if (reportOptions.lecciones) {
-    const lecciones = project.LeccionesAprendidas || project.Lecciones_Aprendidas || [];
+    const lecciones = project.LeccionesAprendidas || [];
     if (lecciones.length > 0) {
       lines.push('════════════════════════════════════════════════════');
       lines.push('💡 LECCIONES APRENDIDAS');
@@ -335,7 +335,7 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
 
   // Cambios de Alcance
   if (reportOptions.cambios) {
-    const cambios = project.CambiosAlcance || project.Cambios_Alcances || [];
+    const cambios = project.CambiosAlcance || [];
     if (cambios.length > 0) {
       html += `
         <div style="margin-bottom: 24px;">
@@ -367,7 +367,7 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
 
   // Lecciones
   if (reportOptions.lecciones) {
-    const lecciones = project.LeccionesAprendidas || project.Lecciones_Aprendidas || [];
+    const lecciones = project.LeccionesAprendidas || [];
     if (lecciones.length > 0) {
       html += `
         <div style="margin-bottom: 24px;">

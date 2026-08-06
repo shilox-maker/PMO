@@ -7,7 +7,7 @@ export default function ProjectLeccionesTab({
   setShowLessonModal, setEditingLesson, fetchProjectData, getAuthHeaders,
   lessonsSort, setLessonsSort, renderSortHeader
 }) {
-  const lessons = project.Lecciones_Aprendidas || project.LeccionesAprendidas || [];
+  const lessons = project.LeccionesAprendidas || [];
   const sortedLessons = getSortedData(lessons, lessonsSort);
 
   const handleOpenAdd = openAddLesson || (() => {

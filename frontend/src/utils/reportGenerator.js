@@ -36,8 +36,8 @@ export const generateProjectReport = (project, comments, reportOptions) => {
   const hitosHtml = getHitosHtml(completed, pending, reportOptions);
   const risksHtml = getRisksHtml(project.Riesgos || [], reportOptions);
   const incidentsHtml = getIncidentsHtml(project.Incidencias || [], reportOptions);
-  const crHtml = getCrHtml(project.Cambios_Alcances || [], reportOptions);
-  const lessonsHtml = getLessonsHtml(project.Lecciones_Aprendidas || project.LeccionesAprendidas || [], reportOptions);
+  const crHtml = getCrHtml(project.CambiosAlcance || [], reportOptions);
+  const lessonsHtml = getLessonsHtml(project.LeccionesAprendidas || [], reportOptions);
 
   const sortedTimelineEvents = [...allTasks].sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
   const timelineHtml = getTimelineHtml(sortedTimelineEvents, reportOptions);
