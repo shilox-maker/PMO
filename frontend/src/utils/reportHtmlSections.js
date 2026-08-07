@@ -5,34 +5,58 @@ export const getKpisHtml = (project, calc, reportOptions) => {
   const budgetInitial = parseFloat(project.budget_inicial) || 0;
   const gastoTotal = calc.gasto_comprometido || 0;
   const budgetOverrun = gastoTotal > budgetInitial;
-  const budgetPercent = budgetInitial > 0 ? ((gastoTotal / budgetInitial) * 100).toFixed(1) : 0;
+  const budgetPercent = calc.gastoEjecutadoPorcentaje ?? (budgetInitial > 0 ? ((gastoTotal / budgetInitial) * 100).toFixed(1) : 0);
 
   const fechaFinInicial = project.fecha_fin_inicial || '—';
   const fechaFinEstimada = calc.fecha_fin_estimada || fechaFinInicial;
   const diasRetraso = calc.dias_retraso_aprobados || 0;
   const hasDelay = diasRetraso > 0;
 
+  const estadoStr = project.Estado?.nombre_estado || project.estado || 'En Ejecución';
+  const saludStr = project.salud_proyecto !== null && project.salud_proyecto !== undefined ? `${project.salud_proyecto}%` : 'N/A';
+  const tiempoPct = calc.tiempoTranscurridoPorcentaje ?? 0;
+
   return `
     <div class="section">
-      <h2>📊 KPIs de Control</h2>
+      <h2>📊 Resumen General y KPIs de Control</h2>
       <div class="kpi-grid">
         <div class="kpi-box">
-          <div class="label">Fecha Fin Inicial</div>
-          <div class="value">${formatDate(fechaFinInicial)}</div>
+          <div class="label">Estado y Salud General</div>
+          <div class="value" style="display:flex; align-items:center; justify-content:space-between; font-size:15px; margin-top:4px;">
+            <span>🟢 ${estadoStr}</span>
+            <span style="color:#2563eb; font-size:16px;">${saludStr}</span>
+          </div>
         </div>
         <div class="kpi-box">
-          <div class="label">Fecha Fin Estimada</div>
-          <div class="value ${hasDelay ? 'alert-red' : ''}">${formatDate(fechaFinEstimada)} ${hasDelay ? `<span style="font-size:12px;font-weight:500;">(+${diasRetraso} días)</span>` : ''}</div>
+          <div class="label">Avance de Tiempo</div>
+          <div class="value">${tiempoPct}%</div>
+          <div style="font-size:11px; color:#666; margin-top:2px;">Inicio a Fin Estimado</div>
         </div>
         <div class="kpi-box">
-          <div class="label">Presupuesto Inicial</div>
-          <div class="value">${formatCurrency(budgetInitial)}</div>
+          <div class="label">Fecha Fin Inicial / Estimada</div>
+          <div class="value ${hasDelay ? 'alert-red' : ''}">
+            ${formatDate(fechaFinInicial)} ➔ ${formatDate(fechaFinEstimada)} 
+            ${hasDelay ? `<span style="font-size:12px;font-weight:500;">(+${diasRetraso}d)</span>` : ''}
+          </div>
         </div>
         <div class="kpi-box">
-          <div class="label">Gasto Comprometido (${budgetPercent}%)</div>
-          <div class="value ${budgetOverrun ? 'alert-red' : 'alert-green'}">${formatCurrency(gastoTotal)} ${budgetOverrun ? '<span style="font-size:12px;">⚠️ SOBRECOSTO</span>' : ''}</div>
+          <div class="label">Presupuesto Inicial / Gasto</div>
+          <div class="value ${budgetOverrun ? 'alert-red' : 'alert-green'}">
+            ${formatCurrency(budgetInitial)} / ${formatCurrency(gastoTotal)} (${budgetPercent}%)
+            ${budgetOverrun ? '<span style="font-size:11px; display:block; color:#dc2626;">⚠️ SOBRECOSTO</span>' : ''}
+          </div>
         </div>
       </div>
+      ${project.proximo_hito ? `
+        <div style="margin-top: 10px; font-size: 12px; background: #eff6ff; padding: 10px 14px; border-radius: 8px; border-left: 4px solid #2563eb;">
+          <strong>🎯 Próximo Hito:</strong> ${project.proximo_hito}
+        </div>
+      ` : ''}
+      ${project.ultimo_comentario ? `
+        <div style="margin-top: 8px; font-size: 12px; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #e2e8f0; font-style: italic;">
+          <strong>💬 Comentario PMO:</strong> "${project.ultimo_comentario}"
+        </div>
+      ` : ''}
     </div>
   `;
 };

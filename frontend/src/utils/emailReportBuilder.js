@@ -32,13 +32,22 @@ export function buildProjectEmailBody(project, reportOptions, committeeName) {
 
   // Resumen / KPIs
   if (reportOptions.resumen) {
+    const fechaFinInicial = project.fecha_fin_inicial ? new Date(project.fecha_fin_inicial).toLocaleDateString('es-ES') : '—';
+    const fechaFinEstimada = calc.fecha_fin_estimada ? new Date(calc.fecha_fin_estimada).toLocaleDateString('es-ES') : fechaFinInicial;
+    const diasRetraso = calc.dias_retraso_aprobados || 0;
+    const budgetInitial = parseFloat(project.budget_inicial) || 0;
+    const gastoTotal = calc.gasto_comprometido || 0;
+    const fmtCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
+
     lines.push('┌──────────────────────────────────────────────────┐');
     lines.push('│ 📈 RESUMEN GENERAL Y KPIS DE CONTROL             │');
     lines.push('└──────────────────────────────────────────────────┘');
     lines.push(`  • Estado: ${getStatusBadge(project.Estado?.nombre_estado || project.estado)}`);
     lines.push(`  • Salud General: ${project.salud_proyecto !== null && project.salud_proyecto !== undefined ? `${project.salud_proyecto}%` : 'N/A'}`);
+    lines.push(`  • Fechas: Fin Inicial ${fechaFinInicial} ➔ Estimada ${fechaFinEstimada}${diasRetraso > 0 ? ` (+${diasRetraso}d)` : ''}`);
     lines.push(`  • Avance Tiempo:  ${getProgressBar(calc.tiempoTranscurridoPorcentaje)}`);
-    lines.push(`  • Progreso Gasto: ${getProgressBar(calc.gastoEjecutadoPorcentaje)}`);
+    lines.push(`  • Presupuesto / Gasto: ${fmtCurrency(budgetInitial)} / ${fmtCurrency(gastoTotal)}`);
+    lines.push(`  • Progreso Gasto: ${getProgressBar(calc.gastoEjecutadoPorcentaje)}${gastoTotal > budgetInitial ? ' ⚠️ SOBRECOSTO' : ''}`);
     if (project.proximo_hito) lines.push(`  • Próximo Hito: 🎯 ${project.proximo_hito}`);
     if (project.ultimo_comentario) lines.push(`  • Comentario PMO: 💬 "${project.ultimo_comentario}"`);
     lines.push('');
@@ -154,6 +163,14 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
   const dateStr = new Date().toLocaleDateString('es-ES');
   const estadoStr = project.Estado?.nombre_estado || project.estado || 'En Ejecución';
   const saludStr = project.salud_proyecto !== null && project.salud_proyecto !== undefined ? `${project.salud_proyecto}%` : 'N/A';
+  
+  const fechaFinInicial = project.fecha_fin_inicial ? new Date(project.fecha_fin_inicial).toLocaleDateString('es-ES') : '—';
+  const fechaFinEstimada = calc.fecha_fin_estimada ? new Date(calc.fecha_fin_estimada).toLocaleDateString('es-ES') : fechaFinInicial;
+  const diasRetraso = calc.dias_retraso_aprobados || 0;
+  const budgetInitial = parseFloat(project.budget_inicial) || 0;
+  const gastoTotal = calc.gasto_comprometido || 0;
+  const budgetOverrun = gastoTotal > budgetInitial;
+  const fmtCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
 
   let html = `
   <div style="font-family: Arial, Helvetica, sans-serif; max-width: 680px; margin: 0 auto; color: #1e293b; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
@@ -184,24 +201,30 @@ export function buildProjectEmailHtml(project, reportOptions, committeeName) {
         <table width="100%" cellPadding="12" cellSpacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
           <tr>
             <td width="50%" valign="top" style="border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-              <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Estado del Proyecto</div>
-              <div style="font-size: 14px; font-weight: bold; margin-top: 4px; color: #0f172a;">
+              <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Estado y Salud General</div>
+              <div style="font-size: 14px; font-weight: bold; margin-top: 4px; color: #0f172a; display: flex; align-items: center; justify-content: space-between;">
                 <span style="display: inline-block; padding: 3px 10px; background-color: #dcfce7; color: #166534; border-radius: 12px; font-size: 12px;">🟢 ${estadoStr}</span>
+                <span style="color: #2563eb; font-size: 16px;">${saludStr}</span>
               </div>
             </td>
             <td width="50%" valign="top" style="border-bottom: 1px solid #e2e8f0;">
-              <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Salud General</div>
-              <div style="font-size: 16px; font-weight: bold; margin-top: 4px; color: #2563eb;">${saludStr}</div>
+              <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Avance de Tiempo</div>
+              <div style="font-size: 14px; font-weight: bold; margin-top: 4px; color: #334155;">${calc.tiempoTranscurridoPorcentaje ?? 0}%</div>
             </td>
           </tr>
           <tr>
             <td width="50%" valign="top" style="border-right: 1px solid #e2e8f0;">
-              <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Avance de Tiempo</div>
-              <div style="font-size: 14px; font-weight: bold; margin-top: 4px; color: #334155;">${calc.tiempoTranscurridoPorcentaje ?? 0}%</div>
+              <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Fecha Fin Inicial / Estimada</div>
+              <div style="font-size: 13px; font-weight: bold; margin-top: 4px; color: ${diasRetraso > 0 ? '#dc2626' : '#334155'};">
+                ${fechaFinInicial} ➔ ${fechaFinEstimada} ${diasRetraso > 0 ? `(+${diasRetraso}d)` : ''}
+              </div>
             </td>
             <td width="50%" valign="top">
-              <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Progreso de Gasto</div>
-              <div style="font-size: 14px; font-weight: bold; margin-top: 4px; color: #334155;">${calc.gastoEjecutadoPorcentaje ?? 0}%</div>
+              <div style="font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase;">Presupuesto Inicial / Gasto</div>
+              <div style="font-size: 13px; font-weight: bold; margin-top: 4px; color: ${budgetOverrun ? '#dc2626' : '#334155'};">
+                ${fmtCurrency(budgetInitial)} / ${fmtCurrency(gastoTotal)} (${calc.gastoEjecutadoPorcentaje ?? 0}%)
+                ${budgetOverrun ? '<span style="font-size: 11px; color: #dc2626; margin-left: 4px;">⚠️ SOBRECOSTO</span>' : ''}
+              </div>
             </td>
           </tr>
         </table>

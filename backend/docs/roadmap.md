@@ -2,9 +2,43 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
-- [ ] **IDEA-52: En la parte de comunicacion, al enviar un informe, la parte de KPI y salud del proyecto es diferente que cuando generas un informe en el proyecto. Hay que hacer que coincidan en la mayoría de lo posible**
 
 ## 🔍 2. En Análisis / Especificación
+- [ ] **FEATURE-56 (IDEA-56): Segregación por Ámbito / Unidad de Negocio (Multi-tenancy con Maestros Compartidos)**
+  - **Descripción:** Implementación de arquitectura multi-ámbito/multi-departamento para aislar la gestión de proyectos, presupuestos y portafolios entre diferentes equipos/unidades de negocio, iniciando con el ámbito **"IT Corporate"** y manteniendo compartidos los catálogos globales (**Proveedores**, **Sedes/Sites**, **Tipos de Capex/Subtipos**, **Tipos de Factura** y moneda única en **€**).
+  - **Análisis Técnico y Especificación Acordada:**
+    1. **Nuevos Modelos en Base de Datos (Sequelize):**
+       - `Ambitos`: Modelo maestro (`id_ambito`, `nombre`, `code`, `descripcion`, `activo`).
+       - `Usuario_Ambitos`: Modelo de asociación N:M (`id_usuario`, `id_ambito`, `rol_ambito`).
+    2. **Modelos Segregados (Clave foránea `id_ambito`):**
+       - `Proyectos`: Añadir columna `id_ambito` (FK -> `Ambitos`).
+       - `Portfolios`: Añadir columna `id_ambito` (FK -> `Ambitos`). Cada ámbito gestiona sus propios Portfolios y Presupuestos de Portfolio (`Portfolio_Budgets`).
+    3. **Modelos Heredados (Segregados indirectamente vía `id_proyecto` / `portfolio_id`):**
+       - Facturas, Pedidos, Riesgos, Hitos, Tareas, Lecciones Aprendidas, Solicitudes de Cambio (CR), Planes de Comunicación.
+    4. **Maestros Compartidos Globalmente (Sin `id_ambito`):**
+       - `Proveedores` y `Contactos_Proveedor` (Grupo Dacsa / Externos).
+       - `Sedes` (Sites).
+       - `Tipos_Capex` y `Subtipos_Capex`.
+       - `Tipos_Factura` y `Estados_Proyecto`.
+    5. **Backend Middleware & Control de Permisos en Servidor (`tenantScope`):**
+       - Middleware `scopeMiddleware.js`: Valida el Token JWT y comprueba los ámbitos autorizados del usuario en la tabla `Usuario_Ambitos`.
+       - **Anti-Manipulación (Zero-Trust):** Si un cliente o la IA intenta enviar un `X-Ambito-Id` al que no tiene acceso, el servidor rechaza la petición con un `HTTP 403 Forbidden`. La opción `ALL` solo se autoriza si el perfil del JWT es `ADMINISTRADOR` o `DIRECTOR`.
+    6. **Frontend UI/UX (Conmutador de Ámbito):**
+       - `AuthContext`: Estado `selectedAmbito` con almacenamiento local (`localStorage`).
+       - Selector de Ámbito activo en `UserMenuDropdown` / NavigationRail (incluye opción "Todos los Ámbitos (Vista Global)" para Admins/Directores).
+       - Interceptor en `api.js` para inyectar automáticamente la cabecera `X-Ambito-Id` en cada llamada.
+    7. **Seguridad Inmutable en el Servidor MCP (Model Context Protocol):**
+       - **Mapa de Claves en `.env` (`MCP_KEYS_CONFIG`):** Se admitirá en `.env` un JSON con el mapa de claves API y sus ámbitos autorizados (ej: `[{"key":"key-admin","ambitos":["ALL"],"default":"IT_CORP"},{"key":"key-it","ambitos":["IT_CORP"],"default":"IT_CORP"}]`).
+       - **Fallback Retrocompatible:** Si solo existe `MCP_API_KEY`, el servidor le asigna por defecto el ámbito `IT_CORP`.
+       - **Validación de Cabecera:** Si el cliente MCP envía `X-Ambito-Code`, el middleware verifica si esa API Key en el mapa JSON tiene autorización para dicho ámbito. Si no tiene autorización, rechaza la conexión con `HTTP 403 Forbidden`.
+       - **Seguridad en Tools:** El `id_ambito` **no es un argumento de las herramientas MCP JSON**; se inyecta desde la sesión validada del servidor en Sequelize (`projects.js`, `lessons.js`, `search.js`).
+    8. **Estrategia de Migración Inicial:**
+       - Se crea la migración SQL (`node migrate.js up`) que inserta automáticamente el ámbito inicial **"IT Corporate"** (`code: IT_CORP`).
+       - Se migran todos los proyectos, portfolios y usuarios existentes asignándoles `id_ambito = 1` (IT Corporate).
+  - **Archivos Afectados:**
+    - Backend: `backend/models/index.js`, `backend/migrations/20260807_create_ambitos_and_scope.js`, `backend/middlewares/auth.js`, `backend/middlewares/scopeMiddleware.js`, `backend/controllers/proyectosController.js`, `backend/controllers/portfoliosController.js`, `backend/controllers/dashboardController.js`, `backend/controllers/usuariosController.js`, `backend/mcp/http.js`, `backend/mcp/serverFactory.js`, `backend/mcp/tools/projects.js`, `backend/mcp/tools/lessons.js`, `backend/mcp/tools/search.js`.
+    - Frontend: `frontend/src/context/AuthContext.jsx`, `frontend/src/services/api.js`, `frontend/src/components/UserMenuDropdown.jsx`, `frontend/src/pages/admin/AdminUsuariosPage.jsx`.
+  - **Impacto Estimado:** Alto. Requerirá ejecutar `node migrate.js up` y verificar la integridad de las consultas en Backend, el servidor MCP y el selector en Frontend.
 
 ## 🟩 3. Listas para Codificar (Tú les has dado el OK)
 
@@ -15,6 +49,8 @@
 ## 🚀 6. Pendiente de Subir (Listo para Git)
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-52 (IDEA-52): Homogeneización de KPIs y Salud del Proyecto en Informes (Generador HTML/PDF vs. Envío por Email de Comunicación)** (2026-08-07)
+  - **Descripción:** Homogeneización integral de la sección "Resumen General, KPIs y Salud del Proyecto" para sincronizar la presentación de datos entre el informe ejecutivo HTML/PDF (`reportHtmlSections.js`) y el informe enviado por correo desde el Plan de Comunicación (`emailReportBuilder.js`). Incluye Estado (Badge), Salud General (%), Fechas Fin Inicial/Estimada, Días de Retraso, Avance de Tiempo (%), Presupuesto Inicial vs. Gasto Comprometido (€), Alerta de Sobrecosto, Próximo Hito (🎯) y Último Comentario PMO (💬).
 - [x] **FEATURE-55 (IDEA-55): Agrupar perfil de usuario en submenú desplegable M3 y barra lateral colapsable (NavigationRail)** (2026-08-07)
   - **Descripción:** Rediseño del perfil de usuario en el menú lateral `NavigationRail` agrupando Cambio de Idioma (ES/EN/PT), Cambio de Tema (Oscuro/Dacsa), Cambiar Contraseña y Cerrar Sesión en un submenú desplegable Glassmorphic M3. Incluye soporte para colapsar/expandir el menú lateral izquierdo a `72px` con persistencia en `localStorage` y nombre completo multilínea sin truncar.
 - [x] **FEATURE-54 (IDEA-54): Internacionalización y Localización Integral Multilenguaje (ES / EN / PT)** (2026-08-07)
