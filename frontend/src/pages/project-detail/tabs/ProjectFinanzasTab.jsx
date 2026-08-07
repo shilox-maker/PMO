@@ -1,5 +1,6 @@
 import React from 'react';
 import { Euro, Plus, Edit2, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getSortedData } from '../../../utils/sorting';
 
 export default function ProjectFinanzasTab({
@@ -7,6 +8,7 @@ export default function ProjectFinanzasTab({
   setShowInvoiceModal, setEditingInvoice, fetchProjectData, getAuthHeaders,
   invoicesSort, setInvoicesSort, renderSortHeader
 }) {
+  const { t } = useTranslation();
   const calc = project.calculations || {};
   const sortedInvoices = getSortedData(project.Facturas || [], invoicesSort);
 
@@ -75,7 +77,7 @@ export default function ProjectFinanzasTab({
           </div>
           <div className="metric-info">
             <span className="metric-value" style={{ color: 'var(--color-rag-green)' }}>{formatCurrency(calc.consumo_real)}</span>
-            <span className="metric-label">Gasto Comprometido / Facturado</span>
+            <span className="metric-label">{t('financeTab.executedBudget')}</span>
           </div>
         </div>
 
@@ -90,7 +92,7 @@ export default function ProjectFinanzasTab({
             <span className="metric-value" style={{ color: calc.presupuesto_disponible < 0 ? 'var(--color-rag-red)' : 'var(--color-rag-green)' }}>
               {formatCurrency(calc.presupuesto_disponible)}
             </span>
-            <span className="metric-label">Presupuesto Disponible</span>
+            <span className="metric-label">{t('financeTab.availableBudget')}</span>
           </div>
         </div>
       </div>
@@ -99,17 +101,17 @@ export default function ProjectFinanzasTab({
       <div className="m3-card glass-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
-            <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Registro de Cobros Realizados / PO</h3>
+            <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>{t('financeTab.invoicesTitle')}</h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Seguimiento contable de hitos de cobro y órdenes de compra</p>
           </div>
           <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
-            <Plus size={16} /> Registrar Cobro / PO
+            <Plus size={16} /> {t('financeTab.newInvoice')}
           </button>
         </div>
 
         {(!project.Facturas || project.Facturas.length === 0) ? (
           <p style={{ color: 'var(--md-sys-color-outline)', fontStyle: 'italic', textAlign: 'center', padding: '24px 0' }}>
-            No hay cobros ni facturas registradas en este proyecto.
+            {t('financeTab.noInvoices')}
           </p>
         ) : (
           <div className="m3-table-wrapper" style={{ border: '1px solid var(--md-sys-color-outline-variant)', borderRadius: 12 }}>

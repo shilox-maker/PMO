@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function IssueModal({ 
   isOpen, onClose, projectId, tasks = [], editingIssue, issue, getAuthHeaders, onSuccess 
 }) {
+  const { t } = useTranslation();
   const targetIssue = editingIssue || issue;
   const [form, setForm] = useState({
     id_incidencia: '',

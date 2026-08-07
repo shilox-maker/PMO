@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Filter, Search, Printer, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import ColumnSelector from '../ColumnSelector';
 import DensitySelector from '../DensitySelector';
@@ -19,20 +20,21 @@ export default function ProjectsFilterPanel({
   density, onDensityChange,
   onOpenReport, onOpenCreate
 }) {
+  const { t } = useTranslation();
   return (
     <div className="m3-card glass-panel" style={{ padding: '20px 24px', marginBottom: 24, position: 'relative', zIndex: 10, overflow: 'visible' }}>
       {/* Row 1: Search & Master Dropdowns */}
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--md-sys-color-outline)' }}>
           <Filter size={18} />
-          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Filtros:</span>
+          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{t('common.filters')}</span>
         </div>
       
         {/* Search */}
         <div style={{ position: 'relative', flexGrow: 1, minWidth: '180px' }}>
           <input 
             type="text" 
-            placeholder="Buscar por nombre..." 
+            placeholder={t('projectsTable.searchPlaceholder')} 
             value={searchTerm} 
             onChange={(e) => setSearchTerm(e.target.value)}
             className="m3-input"
@@ -49,7 +51,7 @@ export default function ProjectsFilterPanel({
             className="user-select"
             style={{ width: 'auto', minWidth: '140px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
           >
-            <option value="">Todos los PM</option>
+            <option value="">{t('projectsTable.allPms')}</option>
             {pmsList.map(p => (
               <option key={p.id_usuario} value={p.id_usuario}>{p.nombre} {p.apellidos}</option>
             ))}
@@ -64,7 +66,7 @@ export default function ProjectsFilterPanel({
             className="user-select"
             style={{ width: 'auto', minWidth: '140px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
           >
-            <option value="">Todos los Partners</option>
+            <option value="">{t('projectsTable.allPartners')}</option>
             {vendorsList.map(v => (
               <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
             ))}
@@ -79,7 +81,7 @@ export default function ProjectsFilterPanel({
             className="user-select"
             style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
           >
-            <option value="">Todos los RAG</option>
+            <option value="">{t('projectsTable.allRags')}</option>
             <option value="VERDE">VERDE 🟢</option>
             <option value="AMARILLO">AMARILLO 🟡</option>
             <option value="ROJO">ROJO 🔴</option>
@@ -94,9 +96,9 @@ export default function ProjectsFilterPanel({
             className="user-select"
             style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
           >
-            <option value="">¿Estratégico?</option>
-            <option value="true">Sí</option>
-            <option value="false">No</option>
+            <option value="">{t('projectsTable.isStrategic')}</option>
+            <option value="true">{t('common.yes')}</option>
+            <option value="false">{t('common.no')}</option>
           </select>
         </div>
 
@@ -109,7 +111,7 @@ export default function ProjectsFilterPanel({
               className="user-select"
               style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
             >
-              <option value="">Todos los Tipos</option>
+              <option value="">{t('projectsTable.allTypes')}</option>
               <option value="false">📁 Proyectos Estándar</option>
               <option value="true">⚡ Iniciativas Ligeras</option>
             </select>
@@ -124,7 +126,7 @@ export default function ProjectsFilterPanel({
             className="user-select"
             style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
           >
-            <option value="">Todos los Portfolios</option>
+            <option value="">{t('projectsTable.allPortfolios')}</option>
             {portfoliosList.map(p => (
               <option key={p.id} value={p.id}>{p.nombre}</option>
             ))}
@@ -139,7 +141,7 @@ export default function ProjectsFilterPanel({
             className="user-select"
             style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
           >
-            <option value="">Todos los Tags</option>
+            <option value="">{t('projectsTable.allTags')}</option>
             {tagsList.map(t => (
               <option key={t.id} value={t.id}>{t.nombre}</option>
             ))}
@@ -162,14 +164,14 @@ export default function ProjectsFilterPanel({
               }}
             >
               <Printer size={18} />
-              <span>Generar Informe</span>
+              <span>{t('projectsTable.generateReport')}</span>
             </button>
           )}
 
           {onOpenCreate && (
             <button className="m3-btn m3-btn-primary" onClick={onOpenCreate} style={{ height: '40px' }}>
               <Plus size={18} />
-              Crear Proyecto
+              {t('projectsTable.newProject')}
             </button>
           )}
         </div>
@@ -185,7 +187,7 @@ export default function ProjectsFilterPanel({
           onClick={() => setIsStatesOpen(!isStatesOpen)}
         >
           <h4 style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Filtro por Estados del Proyecto
+            {t('projectsTable.filterByStatus')}
           </h4>
           {isStatesOpen ? <ChevronUp size={18} color="var(--md-sys-color-outline)" /> : <ChevronDown size={18} color="var(--md-sys-color-outline)" />}
         </div>

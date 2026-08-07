@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RefreshCw } from 'lucide-react';
 
 export default function ExportProjectsModal({ isOpen, onClose, projects, getAuthHeaders }) {
+  const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
   const [fields, setFields] = useState({
     id_proyecto: true,

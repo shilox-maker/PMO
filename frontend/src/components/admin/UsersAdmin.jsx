@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Edit2, Trash2, RefreshCw, XCircle, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { getSortedData } from '../../utils/sorting';
 import { validatePassword } from '../../utils/passwordValidation';
 import UserFormAdmin from './UserFormAdmin';
 
 export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersSort, setUsersSort] = useState({ key: 'nombre', direction: 'asc' });
@@ -172,25 +174,25 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 32, alignItems: 'flex-start' }}>
       <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
-          <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Personal Interno / Gestores</h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Lista de usuarios con acceso a la plataforma.</p>
+          <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>{t('usersAdmin.title', { count: users.length })}</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t('usersAdmin.subtitle')}</p>
         </div>
 
         {usersLoading ? (
           <RefreshCw className="animate-spin" size={24} style={{ color: 'var(--md-sys-color-primary)', alignSelf: 'center' }} />
         ) : users.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>No hay usuarios en la base de datos.</div>
+          <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>{t('usersAdmin.noUsers')}</div>
         ) : (
           <div className="m3-table-wrapper">
             <table className="m3-table">
               <thead>
                 <tr>
-                  {renderSortHeader('Nombre y Apellidos', 'nombre', usersSort, handleUsersSort)}
-                  {renderSortHeader('Correo', 'correo', usersSort, handleUsersSort)}
-                  {renderSortHeader('Perfil', 'perfil', usersSort, handleUsersSort)}
-                  {renderSortHeader('Método', 'metodo_acceso', usersSort, handleUsersSort)}
-                  {renderSortHeader('Estado', 'activo', usersSort, handleUsersSort, { width: '100px', textAlign: 'center' })}
-                  <th style={{ width: '90px' }}>Acción</th>
+                  {renderSortHeader(t('usersAdmin.nameAndSurname'), 'nombre', usersSort, handleUsersSort)}
+                  {renderSortHeader(t('usersAdmin.email'), 'correo', usersSort, handleUsersSort)}
+                  {renderSortHeader(t('usersAdmin.profile'), 'perfil', usersSort, handleUsersSort)}
+                  {renderSortHeader(t('usersAdmin.method'), 'metodo_acceso', usersSort, handleUsersSort)}
+                  {renderSortHeader(t('usersAdmin.status'), 'activo', usersSort, handleUsersSort, { width: '100px', textAlign: 'center' })}
+                  <th style={{ width: '90px' }}>{t('usersAdmin.action')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -210,22 +212,22 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
                         backgroundColor: usr.metodo_acceso === 'ENTRA_ID' ? 'rgba(52, 199, 89, 0.15)' : 'rgba(0, 122, 255, 0.15)',
                         color: usr.metodo_acceso === 'ENTRA_ID' ? 'var(--color-rag-green, #34c759)' : 'var(--md-sys-color-primary, #007aff)'
                       }}>
-                        {usr.metodo_acceso === 'ENTRA_ID' ? 'Entra ID' : 'Contraseña'}
+                        {usr.metodo_acceso === 'ENTRA_ID' ? 'Entra ID' : 'Password'}
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       {usr.activo ? (
-                        <CheckCircle size={18} style={{ color: 'var(--color-rag-green)' }} title="Activo" />
+                        <CheckCircle size={18} style={{ color: 'var(--color-rag-green)' }} title="Active" />
                       ) : (
-                        <XCircle size={18} style={{ color: 'var(--color-rag-red)' }} title="Inactivo" />
+                        <XCircle size={18} style={{ color: 'var(--color-rag-red)' }} title="Inactive" />
                       )}
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button className="icon-btn" onClick={() => handleEditUserClick(usr)} style={{ color: 'var(--md-sys-color-primary)' }} title="Editar">
+                        <button className="icon-btn" onClick={() => handleEditUserClick(usr)} style={{ color: 'var(--md-sys-color-primary)' }} title={t('common.edit')}>
                           <Edit2 size={15} />
                         </button>
-                        <button className="icon-btn" onClick={() => handleDeleteUserClick(usr.id_usuario)} style={{ color: 'var(--color-rag-red)' }} title="Eliminar">
+                        <button className="icon-btn" onClick={() => handleDeleteUserClick(usr.id_usuario)} style={{ color: 'var(--color-rag-red)' }} title={t('common.delete')}>
                           <Trash2 size={15} />
                         </button>
                       </div>

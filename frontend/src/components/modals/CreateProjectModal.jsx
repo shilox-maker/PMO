@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import CapexFieldsGroup from './CapexFieldsGroup';
 
 export default function CreateProjectModal({
@@ -14,6 +15,7 @@ export default function CreateProjectModal({
   portfoliosList,
   capexTypes
 }) {
+  const { t } = useTranslation();
   const [newProject, setNewProject] = useState({
     id_proyecto: '',
     nombre_proyecto: '',
@@ -252,9 +254,11 @@ export default function CreateProjectModal({
                   className="user-select"
                 >
                   <option value="">Seleccione Sede</option>
-                  {sedesList.map(s => (
-                    <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>
-                  ))}
+                  {sedesList.map(s => {
+                    const code = s.code || s.nombre_sede?.toUpperCase().replace(/\s+/g, '_');
+                    const label = code && t(`sede.${code}`) !== `sede.${code}` ? t(`sede.${code}`) : s.nombre_sede;
+                    return <option key={s.id_sede} value={s.id_sede}>{label}</option>;
+                  })}
                 </select>
               </div>
               <div>
@@ -266,9 +270,11 @@ export default function CreateProjectModal({
                   className="user-select"
                 >
                   <option value="">Seleccione Sede</option>
-                  {sedesList.map(s => (
-                    <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>
-                  ))}
+                  {sedesList.map(s => {
+                    const code = s.code || s.nombre_sede?.toUpperCase().replace(/\s+/g, '_');
+                    const label = code && t(`sede.${code}`) !== `sede.${code}` ? t(`sede.${code}`) : s.nombre_sede;
+                    return <option key={s.id_sede} value={s.id_sede}>{label}</option>;
+                  })}
                 </select>
               </div>
             </div>

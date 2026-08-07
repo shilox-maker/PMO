@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Filter, Activity } from 'lucide-react';
 import { useTableColumns } from '../hooks/useTableColumns';
@@ -23,6 +24,7 @@ const DEFAULT_DASHBOARD_COLUMNS = [
 ];
 
 export default function DashboardProyectos({ onViewProject, onViewVendor }) {
+  const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
 
   const [projects, setProjects] = useState([]);
@@ -206,7 +208,9 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
 
       {/* Charts Section */}
       <div className="m3-card glass-panel" style={{ marginBottom: 20, padding: '12px 16px' }}>
-        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 12 }}>Análisis de Distribución Operativa</h3>
+        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 12 }}>
+          {t('dashboards.operationalDistribution')}
+        </h3>
         <DashboardChartsSection
           projects={projects}
           statesList={statesList}
@@ -226,20 +230,20 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Filter size={16} color="var(--md-sys-color-primary)" />
             <span>
-              Filtrado por KPI: <strong style={{ color: 'var(--md-sys-color-primary)' }}>
+              {t('portfolioDashboard.filterBanner')} <strong style={{ color: 'var(--md-sys-color-primary)' }}>
                 {selectedKpi ? {
-                  delayed_partial: 'Retrasados (Hitos vencidos)',
-                  governance: 'Sin Gobernanza (Sin Plan/Comités)',
-                  inactive: 'Proyectos Inactivos (>14 días)',
-                  rag_verde: 'Estado RAG Verde',
-                  rag_amarillo: 'Estado RAG Amarillo',
-                  rag_rojo: 'Estado RAG Rojo'
+                  delayed_partial: t('dashboards.overdueProjects'),
+                  governance: t('governanceKpis.nonGoverned'),
+                  inactive: t('dashboards.inactive'),
+                  rag_verde: `${t('projectsTable.status')} ${t('status.VERDE')}`,
+                  rag_amarillo: `${t('projectsTable.status')} ${t('status.AMARILLO')}`,
+                  rag_rojo: `${t('projectsTable.status')} ${t('status.ROJO')}`
                 }[selectedKpi] : `${selectedChartFilter.type}: ${selectedChartFilter.value}`}
-              </strong> ({filteredProjects.length} de {projects.length} proyectos)
+              </strong> ({filteredProjects.length} / {projects.length})
             </span>
           </div>
           <button className="m3-btn m3-btn-outline" onClick={() => { setSelectedKpi(null); setSelectedChartFilter(null); }} style={{ padding: '2px 8px', fontSize: '0.78rem' }}>
-            Limpiar Filtro KPI
+            {t('portfolioDashboard.clearFilter')}
           </button>
         </div>
       )}

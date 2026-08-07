@@ -125,7 +125,8 @@ const loginAzure = asyncHandler(async (req, res) => {
       apellidos: user.apellidos,
       correo: user.correo,
       perfil: user.perfil,
-      activo: user.activo
+      activo: user.activo,
+      idioma: user.idioma || 'es'
     }
   });
 });

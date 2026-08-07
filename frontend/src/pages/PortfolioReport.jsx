@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, AlertCircle, RefreshCw, Calendar } from 'lucide-react';
@@ -7,6 +8,7 @@ import PortfolioBudgetChart from '../components/portfolio-report/PortfolioBudget
 import PortfolioBudgetSection from '../components/portfolio-report/PortfolioBudgetSection';
 
 export default function PortfolioReport() {
+  const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
 
@@ -76,7 +78,7 @@ export default function PortfolioReport() {
 
   // Format currency
   const formatCurrency = (val) => {
-    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
   };
 
   if (portfoliosLoading) {
@@ -94,9 +96,9 @@ export default function PortfolioReport() {
       const label = sec.subtipo ? `${sec.tipo} (${sec.subtipo})` : sec.tipo;
       return {
         name: label,
-        Aprobado: sec.aprobado,
-        Reservado: sec.reservado,
-        Ejecutado: sec.ejecutado
+        [t('portfolioReport.approved')]: sec.aprobado,
+        [t('portfolioReport.reserved')]: sec.reservado,
+        [t('portfolioReport.executed')]: sec.ejecutado
       };
     }) : [];
 
@@ -107,14 +109,14 @@ export default function PortfolioReport() {
       <div className="m3-card glass-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, padding: '16px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Calendar size={20} style={{ color: 'var(--md-sys-color-primary)' }} />
-          <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>Seleccionar Cartera de Portfolio:</span>
+          <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{t('portfolioReport.selectPortfolio')}</span>
           <select 
             value={selectedPortfolioId}
             onChange={(e) => setSelectedPortfolioId(e.target.value)}
             className="user-select"
             style={{ width: '220px', height: '38px', margin: 0, padding: '0 12px' }}
           >
-            <option value="">Seleccione un Portfolio...</option>
+            <option value="">{t('portfolioReport.choosePortfolio')}</option>
             {portfolios.map(p => (
               <option key={p.id} value={p.id}>{p.nombre}</option>
             ))}
@@ -155,11 +157,11 @@ export default function PortfolioReport() {
 
           {/* Detailed table and project lists */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <h3 style={{ fontWeight: 600, fontSize: '1.1rem', margin: '8px 0 0 0' }}>Desglose por Secciones Presupuestarias</h3>
+            <h3 style={{ fontWeight: 600, fontSize: '1.1rem', margin: '8px 0 0 0' }}>{t('portfolioReport.breakdownSection')}</h3>
 
             {reportData.secciones.length === 0 ? (
               <div className="m3-card glass-panel" style={{ textAlign: 'center', padding: '32px', color: 'var(--md-sys-color-outline)' }}>
-                No se han definido presupuestos para este portfolio en el panel de administración.
+                {t('portfolioReport.noBudgetsDefined')}
               </div>
             ) : (
               reportData.secciones.map(sec => (
@@ -179,8 +181,8 @@ export default function PortfolioReport() {
         <div className="m3-card glass-panel" style={{ textAlign: 'center', padding: '60px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
           <Briefcase size={40} style={{ opacity: 0.3 }} />
           <div>
-            <h3 style={{ fontWeight: 600, fontSize: '1.1rem' }}>No hay información disponible</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', marginTop: 4 }}>Por favor, seleccione un portfolio para cargar su informe.</p>
+            <h3 style={{ fontWeight: 600, fontSize: '1.1rem' }}>{t('portfolioReport.noInfoAvailable')}</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', marginTop: 4 }}>{t('portfolioReport.selectPortfolioPrompt')}</p>
           </div>
         </div>
       )}

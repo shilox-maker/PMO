@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Trash2, RefreshCw, XCircle, CheckCircle, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Edit2, Trash2, RefreshCw, XCircle, CheckCircle } from 'lucide-react';
 
 export default function InvoiceTypesAdmin({ getAuthHeaders }) {
+  const { t } = useTranslation();
   const [types, setTypes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ id_tipo_factura: '', nombre: '', orden: 0 });
@@ -95,25 +97,19 @@ export default function InvoiceTypesAdmin({ getAuthHeaders }) {
       .catch(err => setError(err.message));
   };
 
-  const cancelEdit = () => {
-    setForm({ id_tipo_factura: '', nombre: '', orden: 0 });
-    setEditingId(null);
-    setError('');
-  };
-
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 32, alignItems: 'flex-start' }}>
       {/* Table list */}
       <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h3 style={{ margin: 0, fontWeight: 600 }}>Tipos de Factura</h3>
+            <h3 style={{ margin: 0, fontWeight: 600 }}>{t('invoicesAdmin.title', { count: types.length })}</h3>
             <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
-              Mantenimiento del catálogo de tipologías financieras para facturas y cobros.
+              {t('invoicesAdmin.subtitle')}
             </p>
           </div>
-          <button className="icon-btn" onClick={fetchTypes} title="Recargar lista">
-            <RefreshCw size={16} className={loading ? 'spin' : ''} />
+          <button className="icon-btn" onClick={fetchTypes} title={t('common.refresh')}>
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
 
@@ -134,30 +130,30 @@ export default function InvoiceTypesAdmin({ getAuthHeaders }) {
             <thead>
               <tr>
                 <th style={{ width: 60 }}>ID</th>
-                <th style={{ width: 70, textAlign: 'center' }}>Orden</th>
-                <th>Nombre del Tipo</th>
-                <th style={{ textAlign: 'right' }}>Acciones</th>
+                <th style={{ width: 70, textAlign: 'center' }}>{t('sedesAdmin.order')}</th>
+                <th>{t('invoicesAdmin.typeName')}</th>
+                <th style={{ textAlign: 'right' }}>{t('usersAdmin.action')}</th>
               </tr>
             </thead>
             <tbody>
               {types.length === 0 && !loading && (
                 <tr>
                   <td colSpan="4" style={{ textAlign: 'center', color: 'var(--md-sys-color-outline)', padding: 24 }}>
-                    No hay tipos de factura registrados.
+                    {t('invoicesAdmin.noTypes')}
                   </td>
                 </tr>
               )}
-              {types.map(t => (
-                <tr key={t.id_tipo_factura}>
-                  <td style={{ fontWeight: 600, width: 60 }}>{t.id_tipo_factura}</td>
-                  <td style={{ fontWeight: 600, textAlign: 'center' }}>{t.orden ?? 0}</td>
-                  <td style={{ fontWeight: 500 }}>{t.nombre}</td>
+              {types.map(tObj => (
+                <tr key={tObj.id_tipo_factura}>
+                  <td style={{ fontWeight: 'bold' }}>{tObj.id_tipo_factura}</td>
+                  <td style={{ textAlign: 'center', fontWeight: 600 }}>{tObj.orden ?? 0}</td>
+                  <td style={{ fontWeight: 500 }}>{tObj.nombre}</td>
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                      <button className="icon-btn" onClick={() => handleEditClick(t)} title="Editar tipo">
+                      <button className="icon-btn" onClick={() => handleEditClick(tObj)} title={t('common.edit')}>
                         <Edit2 size={16} />
                       </button>
-                      <button className="icon-btn" onClick={() => handleDeleteClick(t.id_tipo_factura)} title="Eliminar tipo" style={{ color: 'var(--color-rag-red)' }}>
+                      <button className="icon-btn danger" onClick={() => handleDeleteClick(tObj.id_tipo_factura)} title={t('common.delete')}>
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -169,44 +165,51 @@ export default function InvoiceTypesAdmin({ getAuthHeaders }) {
         </div>
       </div>
 
-      {/* Form panel */}
-      <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <h3 style={{ margin: 0, fontWeight: 600 }}>
-          {editingId ? 'Editar Tipo de Factura' : 'Nuevo Tipo de Factura'}
+      {/* Form Side */}
+      <div className="m3-card glass-panel" style={{ position: 'sticky', top: 24 }}>
+        <h3 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: 16 }}>
+          {editingId ? t('invoicesAdmin.editType') : t('invoicesAdmin.addType')}
         </h3>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="form-group">
-            <label className="form-label">Nombre del Tipo *</label>
-            <input
-              type="text"
+            <label className="form-label">{t('invoicesAdmin.typeName')}</label>
+            <input 
+              type="text" 
               value={form.nombre}
-              onChange={e => setForm({ ...form, nombre: e.target.value })}
-              placeholder="Ej. Consultoría Externa"
-              className="m3-input"
+              onChange={(e) => setForm(prev => ({ ...prev, nombre: e.target.value }))}
               required
+              placeholder="Ej: SERVICIOS IT"
+              className="m3-input"
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label">Orden</label>
-            <input
-              type="number"
+            <label className="form-label">{t('sedesAdmin.order')}</label>
+            <input 
+              type="number" 
               value={form.orden}
-              onChange={e => setForm({ ...form, orden: e.target.value })}
-              placeholder="0"
+              onChange={(e) => setForm(prev => ({ ...prev, orden: e.target.value }))}
               className="m3-input"
             />
           </div>
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
+          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
             {editingId && (
-              <button type="button" className="m3-btn m3-btn-outline" onClick={cancelEdit}>
-                Cancelar
+              <button 
+                type="button" 
+                className="m3-btn m3-btn-outline" 
+                style={{ flexGrow: 1 }}
+                onClick={() => {
+                  setEditingId(null);
+                  setForm({ id_tipo_factura: '', nombre: '', orden: 0 });
+                }}
+              >
+                {t('usersAdmin.cancel')}
               </button>
             )}
-            <button type="submit" className="m3-btn m3-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {editingId ? 'Guardar Cambios' : <><Plus size={16} /> Crear Tipo</>}
+            <button type="submit" className="m3-btn m3-btn-primary" style={{ flexGrow: 1 }}>
+              {editingId ? t('usersAdmin.saveChanges') : t('invoicesAdmin.addType')}
             </button>
           </div>
         </form>

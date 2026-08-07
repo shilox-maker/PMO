@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Building, Phone, Mail, User, Plus, Trash2 } from 'lucide-react';
 
 export default function VendorContactCard({ vendor, contacts, onAddContact, onDeleteContact }) {
+  const { t } = useTranslation();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       {/* Vendor profile details */}
@@ -10,17 +12,17 @@ export default function VendorContactCard({ vendor, contacts, onAddContact, onDe
           <div className="metric-icon-wrapper" style={{ width: 44, height: 44 }}>
             <Building size={20} />
           </div>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Información General</h3>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t('vendorDirectory.generalInfo')}</h3>
         </div>
 
         <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.9rem' }}>
             <Phone size={16} style={{ color: 'var(--md-sys-color-outline)' }} />
-            <span>Teléfono: {vendor.telefono_general || 'No registrado'}</span>
+            <span>{t('vendorDirectory.phone')} {vendor.telefono_general || t('vendorDirectory.notRegistered')}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.9rem' }}>
             <Mail size={16} style={{ color: 'var(--md-sys-color-outline)' }} />
-            <span>Email: {vendor.email_general || 'No registrado'}</span>
+            <span>{t('vendorDirectory.email')} {vendor.email_general || t('vendorDirectory.notRegistered')}</span>
           </div>
         </div>
       </div>
@@ -30,7 +32,7 @@ export default function VendorContactCard({ vendor, contacts, onAddContact, onDe
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <User style={{ color: 'var(--md-sys-color-primary)' }} />
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Contactos ({contacts?.length || 0})</h3>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t('vendorDirectory.contactsCount', { count: contacts?.length || 0 })}</h3>
           </div>
           <button className="icon-btn" onClick={onAddContact}>
             <Plus size={20} />
@@ -38,7 +40,7 @@ export default function VendorContactCard({ vendor, contacts, onAddContact, onDe
         </div>
 
         {contacts?.length === 0 ? (
-          <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.85rem' }}>No se han agregado contactos de enlace técnico.</p>
+          <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.85rem' }}>{t('vendorDirectory.noContacts')}</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {contacts.map(c => (

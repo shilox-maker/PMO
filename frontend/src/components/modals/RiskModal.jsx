@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function RiskModal({ 
   isOpen, onClose, projectId, tasks = [], editingRisk, risk, getAuthHeaders, onSuccess 
 }) {
+  const { t } = useTranslation();
   const targetRisk = editingRisk || risk;
   const [form, setForm] = useState({
     id_riesgo: '',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, FileDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getSortedData } from '../utils/sorting';
 import { useTableColumns } from '../hooks/useTableColumns';
 import ColumnSelector from './ColumnSelector';
@@ -26,6 +27,7 @@ const DEFAULT_PROJECT_COLUMNS = [
 ];
 
 export default function ProjectTable({ projects, onViewProject, onViewVendor, showHeaderSelector = true }) {
+  const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
   const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
   const { columns: tableCols, visibleColumnsMap, columnWidths, updateColumnWidth, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
@@ -66,9 +68,9 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
     return 'var(--md-sys-color-primary)';
   };
 
-  const renderTH = (label, sortKey, extraStyle = {}, colId = sortKey) => (
+  const renderTH = (labelKey, fallbackLabel, sortKey, extraStyle = {}, colId = sortKey) => (
     <ProjectTableHeader
-      label={label}
+      label={t(labelKey) !== labelKey ? t(labelKey) : fallbackLabel}
       sortKey={sortKey}
       sortConfig={sortConfig}
       onSort={handleSort}
@@ -95,22 +97,22 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
         <table className="m3-table">
           <thead>
             <tr>
-              {visibleColumnsMap.id_proyecto && renderTH('Código', 'id_proyecto')}
-              {visibleColumnsMap.nombre_proyecto && renderTH('Nombre del Proyecto', 'nombre_proyecto')}
-              {visibleColumnsMap.estado_proyecto && renderTH('Estado/Fase', 'estado_proyecto')}
-              {visibleColumnsMap.indicador_rag && renderTH('RAG', 'indicador_rag', { textAlign: 'center' })}
-              {visibleColumnsMap.proveedor && renderTH('Socio Tecnológico', 'Proveedor.nombre_razon_social', {}, 'proveedor')}
-              {visibleColumnsMap.pm && renderTH('Gestor PM', 'PM.nombre', {}, 'pm')}
-              {visibleColumnsMap.sede && renderTH('Sede', 'Sede.nombre_sede', {}, 'sede')}
-              {visibleColumnsMap.fecha_inicio && renderTH('Fecha Inicio', 'fecha_inicio')}
-              {visibleColumnsMap.fecha_fin_inicial && renderTH('Fecha Fin Base', 'fecha_fin_inicial')}
-              {visibleColumnsMap.fecha_fin_estimada && renderTH('Fecha Fin Est.', 'calculations.fecha_fin_estimada', {}, 'fecha_fin_estimada')}
-              {visibleColumnsMap.budget && renderTH('Presupuesto (Act. / Disp.)', 'calculations.budget_actualizado', {}, 'budget')}
-              {visibleColumnsMap.progreso && renderTH('Progreso Gasto', 'calculations.consumo_real', {}, 'progreso')}
-              {visibleColumnsMap.proximo_hito && renderTH('Próximo Hito', 'nextMilestone.fecha_limite', {}, 'proximo_hito')}
-              {visibleColumnsMap.ultimo_comentario && renderTH('Último Comentario', 'ultimo_comentario')}
-              {visibleColumnsMap.cambios_alcance_count && renderTH('Cambios Alcance', 'cambios_alcance_count', { textAlign: 'center' })}
-              {visibleColumnsMap.accion && renderTH('Acción', null, {}, 'accion')}
+              {visibleColumnsMap.id_proyecto && renderTH('projectsTable.code', 'Código', 'id_proyecto')}
+              {visibleColumnsMap.nombre_proyecto && renderTH('projectsTable.name', 'Nombre del Proyecto', 'nombre_proyecto')}
+              {visibleColumnsMap.estado_proyecto && renderTH('projectsTable.status', 'Estado/Fase', 'estado_proyecto')}
+              {visibleColumnsMap.indicador_rag && renderTH('RAG', 'RAG', 'indicador_rag', { textAlign: 'center' })}
+              {visibleColumnsMap.proveedor && renderTH('projectsTable.partner', 'Socio Tecnológico', 'Proveedor.nombre_razon_social', {}, 'proveedor')}
+              {visibleColumnsMap.pm && renderTH('projectsTable.pm', 'Gestor PM', 'PM.nombre', {}, 'pm')}
+              {visibleColumnsMap.sede && renderTH('projectsTable.sede', 'Sede', 'Sede.nombre_sede', {}, 'sede')}
+              {visibleColumnsMap.fecha_inicio && renderTH('projectsTable.startDate', 'Fecha Inicio', 'fecha_inicio')}
+              {visibleColumnsMap.fecha_fin_inicial && renderTH('projectsTable.endDate', 'Fecha Fin Base', 'fecha_fin_inicial')}
+              {visibleColumnsMap.fecha_fin_estimada && renderTH('Fecha Fin Est.', 'Fecha Fin Est.', 'calculations.fecha_fin_estimada', {}, 'fecha_fin_estimada')}
+              {visibleColumnsMap.budget && renderTH('projectsTable.budget', 'Presupuesto', 'calculations.budget_actualizado', {}, 'budget')}
+              {visibleColumnsMap.progreso && renderTH('projectsTable.spentProgress', 'Progreso Gasto', 'calculations.consumo_real', {}, 'progreso')}
+              {visibleColumnsMap.proximo_hito && renderTH('Próximo Hito', 'Próximo Hito', 'nextMilestone.fecha_limite', {}, 'proximo_hito')}
+              {visibleColumnsMap.ultimo_comentario && renderTH('Último Comentario', 'Último Comentario', 'ultimo_comentario')}
+              {visibleColumnsMap.cambios_alcance_count && renderTH('Cambios Alcance', 'Cambios Alcance', 'cambios_alcance_count', { textAlign: 'center' })}
+              {visibleColumnsMap.accion && renderTH('projectsTable.actions', 'Acción', null, {}, 'accion')}
             </tr>
           </thead>
           <tbody>
@@ -130,6 +132,12 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
               const isProjectOverdue = !isClosed && calc?.fecha_fin_estimada && calc.fecha_fin_estimada < todayStr;
               const milestone = project.nextMilestone || project.proximo_hito;
               const isMilestoneOverdue = milestone && milestone.fecha_limite && milestone.fecha_limite < todayStr;
+
+              const statusCode = project.Estado?.code || project.estado_code || project.estado_proyecto?.toUpperCase().replace(/\s+/g, '_');
+              const statusLabel = statusCode && t(`status.${statusCode}`) !== `status.${statusCode}` ? t(`status.${statusCode}`) : project.estado_proyecto;
+
+              const sedeCode = project.Sede?.code || project.sede_code || project.Sede?.nombre_sede?.toUpperCase().replace(/\s+/g, '_');
+              const sedeLabel = sedeCode && t(`sede.${sedeCode}`) !== `sede.${sedeCode}` ? t(`sede.${sedeCode}`) : (project.Sede?.nombre_sede || project.sede_nombre);
 
               return (
                 <tr key={project.id_proyecto} style={isProjectOverdue ? { backgroundColor: 'rgba(255, 69, 58, 0.1)' } : {}}>
@@ -163,7 +171,7 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                       style={{ backgroundColor: 'var(--md-sys-color-surface-container-highest)', color: 'var(--md-sys-color-on-surface)', fontWeight: 600, cursor: project.estado_descripcion ? 'help' : 'default' }}
                       title={project.estado_descripcion || undefined}
                     >
-                      {project.estado_proyecto}
+                      {statusLabel}
                     </span>
                   </td>}
 
@@ -198,7 +206,7 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                   </td>}
 
                   {/* Sede */}
-                  {visibleColumnsMap.sede && <td>{project.Sede?.nombre_sede || project.sede_nombre}</td>}
+                  {visibleColumnsMap.sede && <td>{sedeLabel}</td>}
 
                   {/* Dates */}
                   {visibleColumnsMap.fecha_inicio && <td>{project.fecha_inicio ? new Date(project.fecha_inicio).toLocaleDateString('es-ES') : '—'}</td>}

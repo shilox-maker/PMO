@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Sliders, Users, Edit2, Briefcase, Receipt, ShieldAlert } from 'lucide-react';
 import StatesAdmin from '../components/admin/StatesAdmin';
@@ -10,8 +11,9 @@ import InvoiceTypesAdmin from '../components/admin/InvoiceTypesAdmin';
 import MaintenanceConfigCard from '../components/admin/MaintenanceConfigCard';
 
 export default function AdminPanel() {
+  const { t } = useTranslation();
   const { getAuthHeaders, refreshUsers, checkMaintenanceStatus } = useAuth();
-  const [activeTab, setActiveTab] = useState('states'); // 'states', 'users', 'sedes', 'portfolios', 'capex', 'invoices', 'maintenance'
+  const [activeTab, setActiveTab] = useState('states');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -19,31 +21,31 @@ export default function AdminPanel() {
       <div className="m3-tabs-container">
         <button className={`m3-tab ${activeTab === 'states' ? 'active' : ''}`} onClick={() => setActiveTab('states')}>
           <Sliders size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Mantenimiento de Estados
+          {t('adminPanel.states')}
         </button>
         <button className={`m3-tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
           <Users size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Mantenimiento de Usuarios
+          {t('adminPanel.users')}
         </button>
         <button className={`m3-tab ${activeTab === 'sedes' ? 'active' : ''}`} onClick={() => setActiveTab('sedes')}>
           <Edit2 size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Sedes
+          {t('adminPanel.sedes')}
         </button>
         <button className={`m3-tab ${activeTab === 'portfolios' ? 'active' : ''}`} onClick={() => setActiveTab('portfolios')}>
           <Briefcase size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Portfolios
+          {t('adminPanel.portfolios')}
         </button>
         <button className={`m3-tab ${activeTab === 'capex' ? 'active' : ''}`} onClick={() => setActiveTab('capex')}>
           <Sliders size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Tipos CAPEX
+          {t('adminPanel.capex')}
         </button>
         <button className={`m3-tab ${activeTab === 'invoices' ? 'active' : ''}`} onClick={() => setActiveTab('invoices')}>
           <Receipt size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Tipos de Factura
+          {t('adminPanel.invoices')}
         </button>
         <button className={`m3-tab ${activeTab === 'maintenance' ? 'active' : ''}`} onClick={() => setActiveTab('maintenance')}>
           <ShieldAlert size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-          Modo Mantenimiento
+          {t('adminPanel.maintenance')}
         </button>
       </div>
 

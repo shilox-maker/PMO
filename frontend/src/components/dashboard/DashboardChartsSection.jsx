@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell 
 } from 'recharts';
@@ -17,6 +18,7 @@ export default function DashboardChartsSection({
   selectedChartFilter,
   setSelectedChartFilter
 }) {
+  const { t } = useTranslation();
   const [chartType, setChartType] = useState('estado');
 
   const chartData = useMemo(() => {
@@ -24,6 +26,7 @@ export default function DashboardChartsSection({
 
     const counts = {};
     const stateOrders = {};
+    const rawToTranslated = {};
 
     if (statesList && statesList.length > 0) {
       statesList.forEach((s, idx) => {
@@ -35,22 +38,35 @@ export default function DashboardChartsSection({
 
     projects.forEach(p => {
       let key = 'Sin datos';
+      let translatedName = 'Sin datos';
+
       if (chartType === 'estado') {
         key = p.estado_proyecto || p.Estado?.nombre_estado || 'Sin Estado';
+        const code = p.Estado?.code || key.toUpperCase().replace(/\s+/g, '_');
+        translatedName = t(`status.${code}`) !== `status.${code}` ? t(`status.${code}`) : key;
         if (p.Estado?.orden !== undefined && stateOrders[key] === undefined) {
           stateOrders[key] = p.Estado.orden;
         }
       } else if (chartType === 'rag') {
         key = p.indicador_rag || 'Sin RAG';
+        translatedName = t(`status.${key}`) !== `status.${key}` ? t(`status.${key}`) : key;
       } else if (chartType === 'pm') {
         key = `${p.PM?.nombre || ''} ${p.PM?.apellidos || ''}`.trim() || 'Sin PM';
+        translatedName = key;
       } else if (chartType === 'vendor') {
         key = p.Proveedor?.nombre_razon_social || p.vendor_nombre || 'Sin Partner';
+        translatedName = key;
       }
+
       counts[key] = (counts[key] || 0) + 1;
+      rawToTranslated[key] = translatedName;
     });
 
-    const items = Object.keys(counts).map(name => ({ name, value: counts[name] }));
+    const items = Object.keys(counts).map(name => ({
+      name,
+      displayName: rawToTranslated[name] || name,
+      value: counts[name]
+    }));
 
     if (chartType === 'estado') {
       return items.sort((a, b) => {
@@ -62,7 +78,7 @@ export default function DashboardChartsSection({
     }
 
     return items.sort((a, b) => b.value - a.value);
-  }, [projects, statesList, chartType]);
+  }, [projects, statesList, chartType, t]);
 
   const handleBarClick = (entry) => {
     if (!entry || !entry.name) return;
@@ -79,7 +95,7 @@ export default function DashboardChartsSection({
     <div style={{ marginTop: 4 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--md-sys-color-on-surface-variant)' }}>
-          Distribución de Proyectos
+          {t('dashboards.projectDistribution')}
         </span>
         <select
           value={chartType}
@@ -87,24 +103,24 @@ export default function DashboardChartsSection({
           className="user-select"
           style={{ width: 'auto', minWidth: '240px', height: '36px', fontSize: '0.85rem' }}
         >
-          <option value="estado">Proyectos por Fase / Estado</option>
-          <option value="rag">Proyectos por RAG (Salud)</option>
-          <option value="pm">Proyectos por PM</option>
-          <option value="vendor">Proyectos por Partner / Proveedor</option>
+          <option value="estado">{t('dashboards.chartByState')}</option>
+          <option value="rag">{t('dashboards.chartByRag')}</option>
+          <option value="pm">{t('dashboards.chartByPm')}</option>
+          <option value="vendor">{t('dashboards.chartByVendor')}</option>
         </select>
       </div>
 
       <div style={{ height: 320, width: '100%', marginTop: 8 }}>
         {chartData.length === 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--md-sys-color-outline)', fontSize: '0.85rem' }}>
-            Sin datos disponibles para esta distribución.
+            {t('dashboards.noChartData')}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
               <XAxis 
-                dataKey="name" 
+                dataKey="displayName" 
                 tick={{ fontSize: 11, fill: 'var(--md-sys-color-on-surface)' }} 
                 angle={-25} 
                 textAnchor="end" 

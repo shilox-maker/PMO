@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Edit2, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getSortedData } from '../../../utils/sorting';
 
 export default function ProjectRiesgosTab({
@@ -8,6 +9,7 @@ export default function ProjectRiesgosTab({
   setShowIssueModal, setEditingIssue, fetchProjectData, getAuthHeaders,
   risksSort, setRisksSort, issuesSort, setIssuesSort, renderSortHeader
 }) {
+  const { t } = useTranslation();
   const sortedRisks = getSortedData(project.Riesgos || [], risksSort);
   const sortedIssues = getSortedData(project.Incidencias || [], issuesSort);
 
@@ -68,12 +70,12 @@ export default function ProjectRiesgosTab({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <h3 style={{ fontWeight: 600, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ShieldAlert size={20} /> Matriz de Riesgos Preventivos
+              <ShieldAlert size={20} /> {t('risksTab.risksTitle')}
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Identificación y planificación de planes de contingencia para mitigar desviaciones</p>
           </div>
           <button className="m3-btn m3-btn-primary" onClick={handleOpenAddRisk}>
-            <Plus size={16} /> Identificar Riesgo
+            <Plus size={16} /> {t('risksTab.newRisk')}
           </button>
         </div>
 
@@ -88,24 +90,29 @@ export default function ProjectRiesgosTab({
                 <tr>
                   {renderSortHeader('Código', 'id_riesgo', risksSort, setRisksSort)}
                   {renderSortHeader('Riesgo Identificado', 'titulo_riesgo', risksSort, setRisksSort)}
-                  {renderSortHeader('Probabilidad', 'probabilidad', risksSort, setRisksSort)}
-                  {renderSortHeader('Impacto', 'impacto', risksSort, setRisksSort)}
-                  {renderSortHeader('Mitigación / Contingencia', 'plan_mitigacion', risksSort, setRisksSort)}
+                  {renderSortHeader(t('risksTab.probability'), 'probabilidad', risksSort, setRisksSort)}
+                  {renderSortHeader(t('risksTab.impact'), 'impacto', risksSort, setRisksSort)}
+                  {renderSortHeader(t('risksTab.mitigation'), 'plan_mitigacion', risksSort, setRisksSort)}
                   {renderSortHeader('Próxima Revisión', 'fecha_proxima_revision', risksSort, setRisksSort)}
                   {renderSortHeader('Tarea Relacionada', 'id_tarea', risksSort, setRisksSort)}
-                  {renderSortHeader('Estado', 'estado_riesgo', risksSort, setRisksSort)}
-                  <th>Acciones</th>
+                  {renderSortHeader(t('common.status') || 'Estado', 'estado_riesgo', risksSort, setRisksSort)}
+                  <th>{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedRisks.map((r) => {
                   const linkedTask = getLinkedTask(r);
+                  const probKey = r.probabilidad ? r.probabilidad.toLowerCase() : '';
+                  const probLabel = t(`risksTab.${probKey}`) !== `risksTab.${probKey}` ? t(`risksTab.${probKey}`) : r.probabilidad;
+                  const impactKey = r.impacto ? r.impacto.toLowerCase() : '';
+                  const impactLabel = t(`risksTab.${impactKey}`) !== `risksTab.${impactKey}` ? t(`risksTab.${impactKey}`) : r.impacto;
+
                   return (
                     <tr key={r.id_riesgo}>
                       <td style={{ fontWeight: 700 }}>{r.id_riesgo}</td>
                       <td style={{ fontWeight: 600 }}>{r.titulo_riesgo}</td>
-                      <td style={{ color: getPriorityColor(r.probabilidad), fontWeight: 700 }}>{r.probabilidad}</td>
-                      <td style={{ color: getPriorityColor(r.impacto), fontWeight: 700 }}>{r.impacto}</td>
+                      <td style={{ color: getPriorityColor(r.probabilidad), fontWeight: 700 }}>{probLabel}</td>
+                      <td style={{ color: getPriorityColor(r.impacto), fontWeight: 700 }}>{impactLabel}</td>
                       <td style={{ fontSize: '0.8rem', maxWidth: '260px' }}>{r.plan_mitigacion}</td>
                       <td>{r.fecha_proxima_revision}</td>
                       <td>

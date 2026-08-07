@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, AlertCircle, ArrowRight, FileText } from 'lucide-react';
 
 export default function PortfolioBudgetSection({ sec, isExpanded, onToggle, formatCurrency, onNavigateProject }) {
+  const { t } = useTranslation();
   const pctReservado = sec.aprobado > 0 ? (sec.reservado / sec.aprobado) * 100 : 0;
   const pctEjecutado = sec.aprobado > 0 ? (sec.ejecutado / sec.aprobado) * 100 : 0;
   const isExceeded = sec.disponible < 0;
@@ -32,13 +34,15 @@ export default function PortfolioBudgetSection({ sec, isExpanded, onToggle, form
             )}
           </span>
           <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', marginTop: 2 }}>
-            {sec.proyectos.length} proyecto{sec.proyectos.length === 1 ? '' : 's'} asociado{sec.proyectos.length === 1 ? '' : 's'}
+            {sec.proyectos.length === 1 
+              ? t('portfolioReport.associatedProject', { count: sec.proyectos.length })
+              : t('portfolioReport.associatedProject_plural', { count: sec.proyectos.length })}
           </span>
         </div>
 
         {/* Approved */}
         <div>
-          <span style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--md-sys-color-outline)' }}>Aprobado</span>
+          <span style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--md-sys-color-outline)' }}>{t('portfolioReport.approved')}</span>
           <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
             {sec.id_presupuesto === 'sin_presupuesto' ? '—' : formatCurrency(sec.aprobado)}
           </span>
@@ -46,19 +50,19 @@ export default function PortfolioBudgetSection({ sec, isExpanded, onToggle, form
 
         {/* Reserved */}
         <div>
-          <span style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--md-sys-color-outline)' }}>Reservado</span>
+          <span style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--md-sys-color-outline)' }}>{t('portfolioReport.reserved')}</span>
           <span style={{ fontWeight: 600, fontSize: '0.9rem', color: sec.reservado > 0 ? '#e8a600' : 'inherit' }}>{formatCurrency(sec.reservado)}</span>
         </div>
 
         {/* Executed */}
         <div>
-          <span style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--md-sys-color-outline)' }}>Ejecutado</span>
+          <span style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--md-sys-color-outline)' }}>{t('portfolioReport.executed')}</span>
           <span style={{ fontWeight: 600, fontSize: '0.9rem', color: sec.ejecutado > 0 ? '#00c7b2' : 'inherit' }}>{formatCurrency(sec.ejecutado)}</span>
         </div>
 
         {/* Disp. Compromiso */}
         <div>
-          <span style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--md-sys-color-outline)' }}>Disp. Proy</span>
+          <span style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--md-sys-color-outline)' }}>{t('portfolioReport.dispProy')}</span>
           <span style={{ 
             fontWeight: 700, 
             fontSize: '0.9rem', 
@@ -70,7 +74,7 @@ export default function PortfolioBudgetSection({ sec, isExpanded, onToggle, form
 
         {/* Disp. Ejecución */}
         <div>
-          <span style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--md-sys-color-outline)' }}>Disp. Caja</span>
+          <span style={{ display: 'block', fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--md-sys-color-outline)' }}>{t('portfolioReport.dispCaja')}</span>
           <span style={{ 
             fontWeight: 700, 
             fontSize: '0.9rem', 
@@ -87,7 +91,7 @@ export default function PortfolioBudgetSection({ sec, isExpanded, onToggle, form
               {/* Reservado progress */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', fontWeight: 600 }}>
-                  <span>Reserva: {pctReservado.toFixed(0)}%</span>
+                  <span>{t('portfolioReport.reservaPct', { pct: pctReservado.toFixed(0) })}</span>
                 </div>
                 <div style={{ height: 4, backgroundColor: 'var(--md-sys-color-outline-variant)', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{ 
@@ -101,7 +105,7 @@ export default function PortfolioBudgetSection({ sec, isExpanded, onToggle, form
               {/* Ejecutado progress */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', fontWeight: 600 }}>
-                  <span>Ejecutado: {pctEjecutado.toFixed(0)}%</span>
+                  <span>{t('portfolioReport.ejecutadoPct', { pct: pctEjecutado.toFixed(0) })}</span>
                 </div>
                 <div style={{ height: 4, backgroundColor: 'var(--md-sys-color-outline-variant)', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{ 
@@ -115,7 +119,7 @@ export default function PortfolioBudgetSection({ sec, isExpanded, onToggle, form
             </div>
           ) : (
             <span style={{ fontSize: '0.75rem', color: 'var(--color-rag-red)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <AlertCircle size={14} /> Gasto Sin Presupuesto
+              <AlertCircle size={14} /> {t('portfolioReport.noBudgetExpense')}
             </span>
           )}
         </div>
@@ -130,20 +134,20 @@ export default function PortfolioBudgetSection({ sec, isExpanded, onToggle, form
       {isExpanded && (
         <div style={{ padding: '8px 20px 20px 20px', backgroundColor: 'rgba(0, 0, 0, 0.05)' }}>
           {sec.proyectos.length === 0 ? (
-            <p style={{ fontSize: '0.8rem', opacity: 0.6, fontStyle: 'italic', margin: '8px 0 0 0' }}>No hay proyectos asignados a esta sección en el portfolio.</p>
+            <p style={{ fontSize: '0.8rem', opacity: 0.6, fontStyle: 'italic', margin: '8px 0 0 0' }}>{t('portfolioReport.noAssignedProjects')}</p>
           ) : (
             <div className="m3-table-wrapper" style={{ border: '1px solid var(--md-sys-color-outline-variant)', borderRadius: '12px', marginTop: 8 }}>
               <table className="m3-table" style={{ fontSize: '0.8rem' }}>
                 <thead>
                   <tr>
-                    <th style={{ width: '120px' }}>Código</th>
-                    <th>Nombre del Proyecto</th>
-                    <th>Project Manager</th>
-                    <th>Fase Workflow</th>
-                    <th>Subtipo</th>
+                    <th style={{ width: '120px' }}>{t('projectsTable.code')}</th>
+                    <th>{t('projectsTable.name')}</th>
+                    <th>{t('projectsTable.pm')}</th>
+                    <th>{t('portfolioReport.workflowPhase')}</th>
+                    <th>{t('portfolioReport.subtype')}</th>
                     <th style={{ textAlign: 'center', width: '80px' }}>RAG</th>
-                    <th style={{ textAlign: 'right', width: '120px' }}>Reservado (Budget)</th>
-                    <th style={{ textAlign: 'right', width: '120px' }}>Ejecutado (Facturas)</th>
+                    <th style={{ textAlign: 'right', width: '120px' }}>{t('portfolioReport.reservedBudget')}</th>
+                    <th style={{ textAlign: 'right', width: '120px' }}>{t('portfolioReport.executedInvoices')}</th>
                     <th style={{ width: '50px' }}></th>
                   </tr>
                 </thead>
@@ -192,7 +196,7 @@ export default function PortfolioBudgetSection({ sec, isExpanded, onToggle, form
                           className="icon-btn" 
                           style={{ color: 'var(--md-sys-color-primary)', padding: 4 }}
                           onClick={() => onNavigateProject(p.id_proyecto)}
-                          title="Ver Ficha de Proyecto"
+                          title={t('projectsTable.viewFicha')}
                         >
                           <ArrowRight size={14} />
                         </button>

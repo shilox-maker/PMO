@@ -17,9 +17,10 @@ const GeneralLessonsPage = React.lazy(() => import('./pages/GeneralLessonsPage')
 import MaintenanceScreen from './components/MaintenanceScreen';
 import AdminMaintenanceBanner from './components/AdminMaintenanceBanner';
 import CommandPaletteModal from './components/modals/CommandPaletteModal';
+import { useTranslation } from 'react-i18next';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
-  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info, PieChart, Search
+  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info, PieChart, Search, Globe
 } from 'lucide-react';
 import pkg from '../package.json';
 
@@ -124,7 +125,8 @@ function ChangePasswordModal({ isOpen, onClose }) {
 }
 
 function LoginScreen() {
-  const { login, loginAzure, theme, toggleTheme } = useAuth();
+  const { t } = useTranslation();
+  const { login, loginAzure, theme, toggleTheme, language, changeLanguage } = useAuth();
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -248,7 +250,7 @@ function LoginScreen() {
 
         <div>
           <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#3c4858', margin: '4px 0 2px 0' }}>Dacsa Group – PMO Control Tower</h3>
-          <p style={{ fontSize: '0.75rem', color: '#8898aa', margin: 0 }}>PMO governance tool by SopraSteria</p>
+          <p style={{ fontSize: '0.75rem', color: '#8898aa', margin: 0 }}>{t('loginScreen.subtitle')}</p>
         </div>
 
         {error && (
@@ -266,14 +268,14 @@ function LoginScreen() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: '#525f7f' }}>
-              <Mail size={12} /> Correo Electrónico
+              <Mail size={12} /> {t('loginScreen.emailLabel')}
             </label>
             <input
               type="email"
               required
               className="m3-input"
               style={{ padding: '10px 14px', fontSize: '0.9rem', color: '#333', backgroundColor: '#f4f5f7', border: '1px solid #cad1d7' }}
-              placeholder="usuario@dacsa.com"
+              placeholder={t('loginScreen.emailPlaceholder')}
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
             />
@@ -281,7 +283,7 @@ function LoginScreen() {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: '#525f7f' }}>
-              <Lock size={12} /> Contraseña
+              <Lock size={12} /> {t('loginScreen.passwordLabel')}
             </label>
             <input
               type="password"
@@ -295,12 +297,12 @@ function LoginScreen() {
           </div>
 
           <button type="submit" disabled={loading} className="m3-btn" style={{ marginTop: '8px', height: '42px', backgroundColor: '#1A5B36', color: '#ffffff', borderRadius: '6px', fontSize: '0.9rem', width: '100%' }}>
-            {loading ? 'Accediendo...' : 'Entrar'}
+            {loading ? t('loginScreen.submitting') : t('loginScreen.submit')}
           </button>
         </form>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, borderTop: '1px solid #e9ecef', paddingTop: '16px' }}>
-          <span style={{ fontSize: '0.8rem', color: '#8898aa' }}>Sign in with</span>
+          <span style={{ fontSize: '0.8rem', color: '#8898aa' }}>{t('loginScreen.signInWith')}</span>
           <div 
             style={{ 
               display: 'flex', 
@@ -324,8 +326,31 @@ function LoginScreen() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: '8px', flexWrap: 'wrap' }}>
           <button 
+            type="button"
+            className="m3-btn m3-btn-tonal" 
+            onClick={() => {
+              const nextLang = language === 'es' ? 'en' : language === 'en' ? 'pt' : 'es';
+              changeLanguage(nextLang);
+            }} 
+            style={{ 
+              borderRadius: '6px', 
+              fontSize: '0.75rem', 
+              padding: '6px 12px', 
+              backgroundColor: '#f4f5f7', 
+              color: '#525f7f',
+              border: '1px solid #cad1d7',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <Globe size={14} />
+            <span>{language.toUpperCase()}</span>
+          </button>
+          <button 
+            type="button"
             className="m3-btn m3-btn-tonal" 
             onClick={toggleTheme} 
             style={{ 
@@ -337,7 +362,7 @@ function LoginScreen() {
               border: '1px solid #cad1d7'
             }}
           >
-            Tema: {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Corporativo Dacsa'}
+            {t('loginScreen.theme')}: {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Dacsa'}
           </button>
         </div>
       </div>
@@ -346,6 +371,7 @@ function LoginScreen() {
 }
 
 function ChangelogModal({ isOpen, onClose }) {
+  const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
@@ -372,11 +398,11 @@ function ChangelogModal({ isOpen, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 800 }}>
         <div className="modal-header">
-          <h3 className="modal-title">Notas de Versión (Changelog)</h3>
+          <h3 className="modal-title">{t('user.releaseNotes')}</h3>
           <button className="icon-btn" onClick={onClose}>✕</button>
         </div>
         <div style={{ padding: '0 8px', overflowY: 'auto', maxHeight: '60vh', whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--md-sys-color-on-surface)' }}>
-          {loading ? 'Cargando...' : content}
+          {loading ? t('common.loading') : content}
         </div>
       </div>
     </div>,
@@ -385,7 +411,8 @@ function ChangelogModal({ isOpen, onClose }) {
 }
 
 function NavigationRail() {
-  const { currentPm, logout, theme, toggleTheme, isGlobalWorking } = useAuth();
+  const { currentPm, logout, theme, toggleTheme, isGlobalWorking, language, changeLanguage } = useAuth();
+  const { t } = useTranslation();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   const navigate = useNavigate();
@@ -408,16 +435,29 @@ function NavigationRail() {
                 height: 10,
                 backgroundColor: 'var(--color-rag-green)',
                 borderRadius: '50%',
-                border: '2px solid var(--md-sys-color-surface-container)',
                 boxShadow: '0 0 8px var(--color-rag-green)'
-              }} className="animate-pulse" />
+              }} title="Procesando datos..." />
             )}
           </div>
-          <span className="brand-name">PMO Control Tower</span>
+          <span className="brand-title">Control Tower</span>
         </div>
-        {isGlobalWorking && (
-          <RefreshCw className="animate-spin" size={14} style={{ color: 'var(--md-sys-color-primary)', opacity: 0.8 }} />
-        )}
+        <button
+          onClick={() => setIsChangelogOpen(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--md-sys-color-outline)',
+            cursor: 'pointer',
+            padding: '4px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Ver Novedades y Versión"
+        >
+          <Info size={18} />
+        </button>
       </div>
 
       <div className="nav-links">
@@ -426,7 +466,7 @@ function NavigationRail() {
           onClick={() => navigate('/proyectos')}
         >
           <Briefcase className="nav-link-icon" />
-          <span>Proyectos</span>
+          <span>{t('nav.projects')}</span>
         </a>
 
         <a
@@ -434,7 +474,7 @@ function NavigationRail() {
           onClick={() => navigate('/dashboard')}
         >
           <Activity className="nav-link-icon" />
-          <span>Dashboard Proyectos</span>
+          <span>{t('nav.dashboardProjects')}</span>
         </a>
 
         <a
@@ -442,7 +482,7 @@ function NavigationRail() {
           onClick={() => navigate('/dashboard-portfolio')}
         >
           <PieChart className="nav-link-icon" />
-          <span>Dashboard Portfolio</span>
+          <span>{t('nav.dashboardPortfolio')}</span>
         </a>
 
         <a
@@ -466,7 +506,7 @@ function NavigationRail() {
           onClick={() => navigate('/proveedores')}
         >
           <Building className="nav-link-icon" />
-          <span>Partners</span>
+          <span>{t('nav.vendors')}</span>
         </a>
 
         <a
@@ -474,7 +514,7 @@ function NavigationRail() {
           onClick={() => navigate('/lecciones')}
         >
           <BookOpen className="nav-link-icon" />
-          <span>Lecciones aprendidas</span>
+          <span>{t('nav.lessonsLearned')}</span>
         </a>
 
         {currentPm && currentPm.perfil === 'ADMINISTRADOR' && (
@@ -483,7 +523,7 @@ function NavigationRail() {
             onClick={() => navigate('/admin')}
           >
             <Settings className="nav-link-icon" />
-            <span>Administración</span>
+            <span>{t('nav.admin')}</span>
           </a>
         )}
       </div>
@@ -528,11 +568,29 @@ function NavigationRail() {
 
             <button
               className="m3-btn m3-btn-tonal"
+              onClick={() => {
+                const nextLang = language === 'es' ? 'en' : language === 'en' ? 'pt' : 'es';
+                changeLanguage(nextLang);
+              }}
+              style={{ padding: '8px 12px', justifyContent: 'space-between', gap: 8, fontSize: '0.8rem', borderRadius: '12px', width: '100%' }}
+              title={t('user.language')}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Globe size={16} />
+                <span>{t('user.language')}</span>
+              </div>
+              <span style={{ fontWeight: 'bold', fontSize: '0.75rem', padding: '2px 6px', borderRadius: '6px', backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>
+                {language.toUpperCase()}
+              </span>
+            </button>
+
+            <button
+              className="m3-btn m3-btn-tonal"
               onClick={() => setIsChangePasswordOpen(true)}
               style={{ padding: '8px 12px', justifyContent: 'flex-start', gap: 8, fontSize: '0.8rem', borderRadius: '12px', width: '100%' }}
             >
               <Key size={16} />
-              <span>Cambiar Contraseña</span>
+              <span>{t('user.changePassword')}</span>
             </button>
             <button
               className="m3-btn m3-btn-tonal"
@@ -540,7 +598,7 @@ function NavigationRail() {
               style={{ padding: '8px 12px', justifyContent: 'flex-start', gap: 8, fontSize: '0.8rem', borderRadius: '12px', width: '100%' }}
             >
               <LogOut size={16} />
-              <span>Cerrar Sesión</span>
+              <span>{t('user.logout')}</span>
             </button>
           </div>
         )}
@@ -555,7 +613,7 @@ function NavigationRail() {
         >
           {theme === 'dark' && <Moon size={18} />}
           {theme === 'dacsa' && <Building2 size={18} />}
-          <span>Tema {theme === 'dark' ? 'Oscuro' : 'Dacsa'}</span>
+          <span>{theme === 'dark' ? t('user.themeDark') : t('user.themeDacsa')}</span>
         </button>
 
         {/* Version / Changelog */}
@@ -569,7 +627,7 @@ function NavigationRail() {
             }}
           >
             <Info size={12} />
-            v{pkg.version} — Notas de versión
+            v{pkg.version} — {t('user.releaseNotes')}
           </button>
         </div>
 
@@ -594,6 +652,7 @@ function Vendor360Wrapper({ onBack }) {
 }
 
 function MainAppContent() {
+  const { t } = useTranslation();
   const { currentPm, isMaintenanceActive } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -615,17 +674,17 @@ function MainAppContent() {
   const handleBack = () => navigate(-1);
 
   const getPageTitle = () => {
-    if (location.pathname.startsWith('/proyectos') || location.pathname === '/') return 'Proyectos';
-    if (location.pathname.startsWith('/dashboard-portfolio') || location.pathname.startsWith('/governance')) return 'Dashboard Portfolio (Análisis de Cartera)';
-    if (location.pathname.startsWith('/dashboard-proyectos') || location.pathname.startsWith('/dashboard')) return 'Dashboard Proyectos (Seguimiento Periódico)';
-    if (location.pathname.startsWith('/timeline')) return 'Timeline de Portfolio';
-    if (location.pathname.startsWith('/portfolios/report')) return 'Control Presupuestario de Portfolios';
-    if (location.pathname === '/proveedores') return 'Socios Tecnológicos (Directorio)';
-    if (location.pathname.startsWith('/proyecto/')) return 'Detalle de Proyecto';
-    if (location.pathname.startsWith('/proveedor/')) return 'Vista 360º de Partner';
-    if (location.pathname.startsWith('/lecciones')) return 'Lecciones Aprendidas';
-    if (location.pathname.startsWith('/admin')) return 'Módulo de Administración (Exclusivo)';
-    return 'Dashboard';
+    if (location.pathname.startsWith('/proyectos') || location.pathname === '/') return t('pageTitles.projects');
+    if (location.pathname.startsWith('/dashboard-portfolio') || location.pathname.startsWith('/governance')) return t('pageTitles.dashboardPortfolio');
+    if (location.pathname.startsWith('/dashboard-proyectos') || location.pathname.startsWith('/dashboard')) return t('pageTitles.dashboardProjects');
+    if (location.pathname.startsWith('/timeline')) return t('pageTitles.timeline');
+    if (location.pathname.startsWith('/portfolios/report')) return t('pageTitles.portfolioReport');
+    if (location.pathname === '/proveedores') return t('pageTitles.vendors');
+    if (location.pathname.startsWith('/proyecto/')) return t('pageTitles.projectDetail');
+    if (location.pathname.startsWith('/proveedor/')) return t('pageTitles.vendor360');
+    if (location.pathname.startsWith('/lecciones')) return t('pageTitles.lessonsLearned');
+    if (location.pathname.startsWith('/admin')) return t('pageTitles.admin');
+    return t('pageTitles.dashboard');
   };
 
   return (
@@ -644,7 +703,7 @@ function MainAppContent() {
               <button
                 className="m3-btn m3-btn-tonal"
                 onClick={() => setIsCommandPaletteOpen(true)}
-                title="Abrir paleta de comandos rápida (Ctrl + K)"
+                title={t('header.commandPaletteTooltip')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -658,7 +717,7 @@ function MainAppContent() {
                 }}
               >
                 <Search size={14} style={{ color: 'var(--md-sys-color-primary)' }} />
-                <span>Buscar...</span>
+                <span>{t('pageTitles.search')}</span>
                 <kbd style={{
                   fontSize: '0.68rem',
                   padding: '2px 6px',

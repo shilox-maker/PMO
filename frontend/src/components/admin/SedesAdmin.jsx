@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Edit2, Trash2, RefreshCw, XCircle, CheckCircle } from 'lucide-react';
 
 export default function SedesAdmin({ getAuthHeaders }) {
+  const { t } = useTranslation();
   const [sedes, setSedes] = useState([]);
   const [sedesLoading, setSedesLoading] = useState(false);
   const [sedeForm, setSedeForm] = useState({ id_sede: '', nombre_sede: '', orden: 0 });
@@ -99,23 +101,23 @@ export default function SedesAdmin({ getAuthHeaders }) {
     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 32, alignItems: 'flex-start' }}>
       <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
-          <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Sedes ({sedes.length})</h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Listado de oficinas y sedes corporativas.</p>
+          <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>{t('sedesAdmin.title', { count: sedes.length })}</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t('sedesAdmin.subtitle')}</p>
         </div>
 
         {sedesLoading ? (
           <RefreshCw className="animate-spin" size={24} style={{ color: 'var(--md-sys-color-primary)', alignSelf: 'center' }} />
         ) : sedes.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>No hay sedes creadas.</div>
+          <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>{t('sedesAdmin.noSedes')}</div>
         ) : (
           <div className="m3-table-wrapper">
             <table className="m3-table">
               <thead>
                 <tr>
                   <th style={{ width: '60px', textAlign: 'center' }}>ID</th>
-                  <th style={{ width: '70px', textAlign: 'center' }}>Orden</th>
-                  <th>Nombre de Sede</th>
-                  <th style={{ width: '90px' }}>Acción</th>
+                  <th style={{ width: '70px', textAlign: 'center' }}>{t('sedesAdmin.order')}</th>
+                  <th>{t('sedesAdmin.sedeName')}</th>
+                  <th style={{ width: '90px' }}>{t('usersAdmin.action')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -126,10 +128,10 @@ export default function SedesAdmin({ getAuthHeaders }) {
                     <td style={{ fontWeight: 500 }}>{s.nombre_sede}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button className="icon-btn" onClick={() => handleEditSedeClick(s)} title="Editar Sede">
+                        <button className="icon-btn" onClick={() => handleEditSedeClick(s)} title={t('common.edit')}>
                           <Edit2 size={16} />
                         </button>
-                        <button className="icon-btn danger" onClick={() => handleDeleteSedeClick(s.id_sede)} title="Eliminar Sede">
+                        <button className="icon-btn danger" onClick={() => handleDeleteSedeClick(s.id_sede)} title={t('common.delete')}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -144,7 +146,7 @@ export default function SedesAdmin({ getAuthHeaders }) {
 
       <div className="m3-card glass-panel" style={{ position: 'sticky', top: 24 }}>
         <h3 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: 16 }}>
-          {editingSedeId ? 'Editar Sede' : 'Añadir Nueva Sede'}
+          {editingSedeId ? t('sedesAdmin.editSede') : t('sedesAdmin.addSede')}
         </h3>
         
         {sedeError && (
@@ -163,7 +165,7 @@ export default function SedesAdmin({ getAuthHeaders }) {
 
         <form onSubmit={handleSedeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="form-group">
-            <label className="form-label">Nombre de Sede *</label>
+            <label className="form-label">{t('sedesAdmin.sedeName')} *</label>
             <input 
               type="text" 
               value={sedeForm.nombre_sede}
@@ -175,7 +177,7 @@ export default function SedesAdmin({ getAuthHeaders }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Orden</label>
+            <label className="form-label">{t('sedesAdmin.order')}</label>
             <input 
               type="number" 
               value={sedeForm.orden}
@@ -196,11 +198,11 @@ export default function SedesAdmin({ getAuthHeaders }) {
                   setSedeForm({ id_sede: '', nombre_sede: '', orden: 0 });
                 }}
               >
-                Cancelar
+                {t('usersAdmin.cancel')}
               </button>
             )}
             <button type="submit" className="m3-btn m3-btn-primary" style={{ flexGrow: 1 }} disabled={!sedeForm.nombre_sede}>
-              {editingSedeId ? 'Guardar Cambios' : 'Registrar Sede'}
+              {editingSedeId ? t('usersAdmin.saveChanges') : t('sedesAdmin.addSede')}
             </button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import {
   Search, LayoutDashboard, Briefcase, Activity, Calendar, Building,
@@ -19,6 +20,7 @@ const STATIC_ROUTES = [
 ];
 
 export default function CommandPaletteModal({ isOpen, onClose }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { getAuthHeaders } = useAuth();
   const [query, setQuery] = useState('');

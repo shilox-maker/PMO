@@ -17,6 +17,10 @@ const Sedes = sequelize.define('Sedes', {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0
+  },
+  code: {
+    type: DataTypes.STRING(50),
+    allowNull: true
   }
 });
 
@@ -134,6 +138,11 @@ const Usuarios = sequelize.define('Usuarios', {
     validate: {
       isIn: [['PASSWORD', 'ENTRA_ID']]
     }
+  },
+  idioma: {
+    type: DataTypes.STRING(5),
+    allowNull: false,
+    defaultValue: 'es'
   }
 }, {
   defaultScope: {
@@ -178,6 +187,10 @@ const EstadosProyecto = sequelize.define('Estados_Proyecto', {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: false
+  },
+  code: {
+    type: DataTypes.STRING(50),
+    allowNull: true
   }
 }, {
   timestamps: false
@@ -274,6 +287,10 @@ const TiposCapex = sequelize.define('Tipos_Capex', {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0
+  },
+  code: {
+    type: DataTypes.STRING(50),
+    allowNull: true
   }
 }, { timestamps: false });
 
@@ -946,6 +963,10 @@ const TiposFactura = sequelize.define('Tipos_Factura', {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0
+  },
+  code: {
+    type: DataTypes.STRING(50),
+    allowNull: true
   }
 }, {
   tableName: 'Tipos_Factura'

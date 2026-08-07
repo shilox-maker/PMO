@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchableContactSelect from '../SearchableContactSelect';
 
 export default function ProjectEditModal({
   isOpen, onClose, project, getAuthHeaders, onSuccess,
   sedes, vendors, contactosList, pms, workflowStates, portfolios = [], capexTypes = []
 }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     nombre_proyecto: '',
     descripcion: '',
@@ -173,9 +175,11 @@ export default function ProjectEditModal({
                   className="user-select"
                 >
                   <option value="">Seleccione Sede</option>
-                  {sedes.map(s => (
-                    <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>
-                  ))}
+                  {sedes.map(s => {
+                    const code = s.code || s.nombre_sede?.toUpperCase().replace(/\s+/g, '_');
+                    const label = code && t(`sede.${code}`) !== `sede.${code}` ? t(`sede.${code}`) : s.nombre_sede;
+                    return <option key={s.id_sede} value={s.id_sede}>{label}</option>;
+                  })}
                 </select>
               </div>
               <div>
@@ -187,9 +191,11 @@ export default function ProjectEditModal({
                   className="user-select"
                 >
                   <option value="">Seleccione Sede</option>
-                  {sedes.map(s => (
-                    <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>
-                  ))}
+                  {sedes.map(s => {
+                    const code = s.code || s.nombre_sede?.toUpperCase().replace(/\s+/g, '_');
+                    const label = code && t(`sede.${code}`) !== `sede.${code}` ? t(`sede.${code}`) : s.nombre_sede;
+                    return <option key={s.id_sede} value={s.id_sede}>{label}</option>;
+                  })}
                 </select>
               </div>
             </div>

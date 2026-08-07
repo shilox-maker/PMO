@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlignJustify, AlignCenter, Menu } from 'lucide-react';
 
 const DENSITY_OPTIONS = [
-  { id: 'comfortable', label: 'Cómoda', icon: AlignJustify },
-  { id: 'standard', label: 'Normal', icon: AlignCenter },
-  { id: 'compact', label: 'Compacta', icon: Menu }
+  { id: 'comfortable', icon: AlignJustify },
+  { id: 'standard', icon: AlignCenter },
+  { id: 'compact', icon: Menu }
 ];
 
 export default function DensitySelector({ density, onChange }) {
+  const { t } = useTranslation();
   const [selectedDensity, setSelectedDensity] = useState(() => {
     return density || localStorage.getItem('pmo_table_density') || 'standard';
   });
@@ -64,7 +66,7 @@ export default function DensitySelector({ density, onChange }) {
             }}
           >
             <Icon size={14} />
-            <span>{opt.label}</span>
+            <span>{t('density.' + opt.id)}</span>
           </button>
         );
       })}

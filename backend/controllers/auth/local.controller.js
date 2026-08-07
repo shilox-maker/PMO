@@ -62,7 +62,8 @@ const login = asyncHandler(async (req, res) => {
       apellidos: user.apellidos,
       correo: user.correo,
       perfil: user.perfil,
-      activo: user.activo
+      activo: user.activo,
+      idioma: user.idioma || 'es'
     }
   });
 });
@@ -85,7 +86,8 @@ const verify = asyncHandler(async (req, res) => {
       apellidos: user.apellidos,
       correo: user.correo,
       perfil: user.perfil,
-      activo: user.activo
+      activo: user.activo,
+      idioma: user.idioma || 'es'
     }
   });
 });
@@ -135,8 +137,31 @@ const changePassword = asyncHandler(async (req, res) => {
   res.json({ message: 'Contraseña actualizada correctamente.' });
 });
 
+const updateLanguage = asyncHandler(async (req, res) => {
+  const userId = req.currentPmId;
+  const { idioma } = req.body;
+
+  if (!userId) {
+    return res.status(401).json({ error: 'No autorizado.' });
+  }
+
+  if (!idioma || !['es', 'en', 'pt'].includes(idioma)) {
+    return res.status(400).json({ error: 'Idioma inválido. Valores permitidos: es, en, pt.' });
+  }
+
+  const user = await Usuarios.findByPk(userId);
+  if (!user) {
+    return res.status(404).json({ error: 'Usuario no encontrado.' });
+  }
+
+  await user.update({ idioma });
+
+  res.json({ message: 'Idioma actualizado correctamente.', idioma });
+});
+
 module.exports = {
   login,
   verify,
-  changePassword
+  changePassword,
+  updateLanguage
 };

@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Wrench, RefreshCw, LogOut } from 'lucide-react';
 
 export default function MaintenanceScreen({ message, onCheckStatus, onLogout }) {
+  const { t } = useTranslation();
   return (
     <div style={{
       minHeight: '100vh',
@@ -40,7 +42,7 @@ export default function MaintenanceScreen({ message, onCheckStatus, onLogout }) 
         </div>
 
         <h1 style={{ margin: '0 0 12px', fontSize: '1.75rem', fontWeight: 700 }}>
-          Plataforma en Mantenimiento
+          {t('maintenanceScreen.title')}
         </h1>
 
         <p style={{
@@ -53,7 +55,7 @@ export default function MaintenanceScreen({ message, onCheckStatus, onLogout }) 
           background: 'rgba(255, 255, 255, 0.04)',
           border: '1px solid rgba(255, 255, 255, 0.08)'
         }}>
-          {message || 'Estamos realizando tareas de mantenimiento programado. Por favor, vuelva a intentarlo más tarde.'}
+          {message || t('maintenanceScreen.defaultMessage')}
         </p>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -67,7 +69,7 @@ export default function MaintenanceScreen({ message, onCheckStatus, onLogout }) 
               }}
             >
               <RefreshCw size={18} />
-              <span>Comprobar Estado</span>
+              <span>{t('maintenanceScreen.checkStatus')}</span>
             </button>
           )}
 
@@ -81,7 +83,7 @@ export default function MaintenanceScreen({ message, onCheckStatus, onLogout }) 
               }}
             >
               <LogOut size={18} />
-              <span>Cerrar Sesión</span>
+              <span>{t('maintenanceScreen.logout')}</span>
             </button>
           )}
         </div>

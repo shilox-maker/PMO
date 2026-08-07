@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { 
   Building, Plus, Edit2, Trash2, Search, Eye, RefreshCw, Phone, Mail,
@@ -8,6 +9,7 @@ import { getSortedData } from '../utils/sorting';
 import VendorModal from '../components/modals/VendorModal';
 
 export default function VendorDirectory({ onViewVendor }) {
+  const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -106,14 +108,14 @@ export default function VendorDirectory({ onViewVendor }) {
       <div className="filter-panel glass-panel" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--md-sys-color-outline)' }}>
           <Building size={18} />
-          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Socios Tecnológicos:</span>
+          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{t('vendorDirectory.techPartners')}</span>
         </div>
 
         {/* Search */}
         <div style={{ position: 'relative', flexGrow: 1, minWidth: '220px' }}>
           <input 
             type="text" 
-            placeholder="Buscar por razón social o correo..." 
+            placeholder={t('vendorDirectory.searchPlaceholder')} 
             value={searchTerm} 
             onChange={(e) => setSearchTerm(e.target.value)}
             className="m3-input"
@@ -124,7 +126,7 @@ export default function VendorDirectory({ onViewVendor }) {
 
         <button className="m3-btn m3-btn-primary" onClick={openCreateModal} style={{ height: '40px' }}>
           <Plus size={18} />
-          Registrar Socio
+          {t('vendorDirectory.registerPartner')}
         </button>
       </div>
 
@@ -132,22 +134,22 @@ export default function VendorDirectory({ onViewVendor }) {
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', gap: 16 }}>
           <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
-          <span>Cargando lista de socios tecnológicos...</span>
+          <span>{t('vendorDirectory.loading')}</span>
         </div>
       ) : filteredVendors.length === 0 ? (
         <div className="m3-card" style={{ textAlign: 'center', padding: '48px', color: 'var(--md-sys-color-outline)' }}>
-          No se encontraron socios registrados.
+          {t('vendorDirectory.noVendors')}
         </div>
       ) : (
         <div className="m3-table-wrapper glass-panel">
           <table className="m3-table">
             <thead>
               <tr>
-                {renderSortHeader('Código', 'id_proveedor', { width: '120px' })}
-                {renderSortHeader('Razón Social / Nombre', 'nombre_razon_social')}
-                {renderSortHeader('Teléfono General', 'telefono_general')}
-                {renderSortHeader('Correo Electrónico', 'email_general')}
-                <th style={{ width: '220px', textAlign: 'right' }}>Acciones</th>
+                {renderSortHeader(t('projectsTable.code'), 'id_proveedor', { width: '120px' })}
+                {renderSortHeader(t('vendorDirectory.companyName'), 'nombre_razon_social')}
+                {renderSortHeader(t('vendorDirectory.generalPhone'), 'telefono_general')}
+                {renderSortHeader(t('vendorDirectory.email'), 'email_general')}
+                <th style={{ width: '220px', textAlign: 'right' }}>{t('projectsTable.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -170,7 +172,7 @@ export default function VendorDirectory({ onViewVendor }) {
                         <span>{vendor.telefono_general}</span>
                       </div>
                     ) : (
-                      <span style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.8rem' }}>Sin teléfono</span>
+                      <span style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.8rem' }}>—</span>
                     )}
                   </td>
                   <td>
@@ -180,7 +182,7 @@ export default function VendorDirectory({ onViewVendor }) {
                         <span>{vendor.email_general}</span>
                       </div>
                     ) : (
-                      <span style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.8rem' }}>Sin correo</span>
+                      <span style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.8rem' }}>—</span>
                     )}
                   </td>
                   <td>
@@ -191,14 +193,14 @@ export default function VendorDirectory({ onViewVendor }) {
                         style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px' }}
                       >
                         <Eye size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                        Ficha 360º
+                        {t('projectsTable.viewFicha')}
                       </button>
 
                       <button 
                         className="icon-btn" 
                         onClick={() => openEditModal(vendor)}
                         style={{ color: 'var(--md-sys-color-primary)', width: 32, height: 32 }}
-                        title="Editar Socio"
+                        title={t('common.edit')}
                       >
                         <Edit2 size={16} />
                       </button>
@@ -207,7 +209,7 @@ export default function VendorDirectory({ onViewVendor }) {
                         className="icon-btn" 
                         onClick={() => handleDeleteVendor(vendor.id_proveedor, vendor.nombre_razon_social)}
                         style={{ color: 'var(--color-rag-red)', width: 32, height: 32 }}
-                        title="Eliminar Socio"
+                        title={t('common.delete')}
                       >
                         <Trash2 size={16} />
                       </button>

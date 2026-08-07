@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import TimelineToolbar from '../components/timeline/TimelineToolbar';
 
@@ -17,12 +18,12 @@ function parseDate(str) {
   return new Date(y, m - 1, d);
 }
 
-function formatMonthYear(date) {
-  return date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+function formatMonthYear(date, lang = 'es') {
+  return date.toLocaleDateString(lang, { month: 'short', year: '2-digit' });
 }
 
-function formatWeek(date) {
-  return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+function formatWeek(date, lang = 'es') {
+  return date.toLocaleDateString(lang, { day: '2-digit', month: 'short' });
 }
 
 function diffDays(a, b) {
@@ -30,6 +31,7 @@ function diffDays(a, b) {
 }
 
 export default function Timeline({ onViewProject, projectId, hideHeader }) {
+  const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -157,7 +159,7 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
   if (loading) {
     return (
       <div className="m3-card glass-panel" style={{ padding: 40, textAlign: 'center' }}>
-        <span>Cargando timeline...</span>
+        <span>{t('timeline.loadingTimeline')}</span>
       </div>
     );
   }
@@ -178,12 +180,12 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
 
       {filtered.length === 0 ? (
         <div className="m3-card glass-panel" style={{ padding: 40, textAlign: 'center', color: 'var(--md-sys-color-outline)' }}>
-          No hay proyectos que mostrar con los filtros actuales.
+          {t('timeline.noProjects')}
         </div>
       ) : (
         <div className="timeline-chart-wrapper">
           <div className="timeline-labels">
-            <div className="timeline-labels-header">Proyecto</div>
+            <div className="timeline-labels-header">{t('timeline.project')}</div>
             {filtered.map((p, i) => (
               <div
                 key={p.id_proyecto}
@@ -226,7 +228,7 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
                   className="timeline-today-line"
                   style={{ left: todayOffset }}
                 >
-                  <span className="timeline-today-badge">Hoy</span>
+                  <span className="timeline-today-badge">{t('timeline.today')}</span>
                 </div>
               )}
 

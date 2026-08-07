@@ -1,5 +1,6 @@
 import React from 'react';
 import { Clock, AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 function TrendPill({ trendData, timeframe = 7 }) {
   if (!trendData || trendData.delta === undefined || trendData.delta === 0) return null;
@@ -105,6 +106,7 @@ export default function DashboardKpiGrid({
   trends = {}, timeframe = 7, setTimeframe,
   customDate = null, setCustomDate
 }) {
+  const { t } = useTranslation();
   const today = new Date().toISOString().split('T')[0];
 
   return (
@@ -113,14 +115,14 @@ export default function DashboardKpiGrid({
       {/* Timeframe selector */}
       {setTimeframe && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
-          <span style={{ fontWeight: 600 }}>Comparar variación:</span>
+          <span style={{ fontWeight: 600 }}>{t('governanceKpis.compareVariation')}</span>
           {[7, 30, 180].map(days => {
             const isActive = customDate === null && timeframe === days;
             return (
               <button key={days} type="button" className="m3-button-text"
                 onClick={() => { setTimeframe(days); if (setCustomDate) setCustomDate(null); }}
                 style={{ padding: '2px 8px', borderRadius: 6, fontSize: '0.72rem', border: 'none', cursor: 'pointer', fontWeight: isActive ? 700 : 500, backgroundColor: isActive ? 'rgba(255,255,255,0.12)' : 'transparent', color: isActive ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline)' }}
-              >{days} Días</button>
+              >{days} {t('governanceKpis.days')}</button>
             );
           })}
           {setCustomDate && (
@@ -128,7 +130,7 @@ export default function DashboardKpiGrid({
               <button type="button" className="m3-button-text"
                 onClick={() => { if (setCustomDate) setCustomDate(customDate || today); }}
                 style={{ padding: '2px 8px', borderRadius: 6, fontSize: '0.72rem', border: 'none', cursor: 'pointer', fontWeight: customDate !== null ? 700 : 500, backgroundColor: customDate !== null ? 'rgba(255,255,255,0.12)' : 'transparent', color: customDate !== null ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline)' }}
-              >📅 Personalizado</button>
+              >📅 {t('governanceKpis.custom')}</button>
               {customDate !== null && (
                 <input type="date" value={customDate} max={today}
                   onChange={e => { if (setCustomDate) setCustomDate(e.target.value); }}
@@ -146,7 +148,7 @@ export default function DashboardKpiGrid({
         <KpiSegment id="delayed_partial" isSelected={selectedKpi === 'delayed_partial'}
           onClick={() => setSelectedKpi(selectedKpi === 'delayed_partial' ? null : 'delayed_partial')}
           icon={<Clock size={18} />} color="var(--priority-alta)" bgColor="rgba(255,159,10,0.15)"
-          value={delayedPartialCount} label="Retrasados (Hitos)"
+          value={delayedPartialCount} label={t('dashboards.overdueProjects')}
           trendData={trends.delayed_partial} timeframe={timeframe}
           title="Proyectos no cerrados con al menos un hito vencido pendiente"
         />
@@ -156,7 +158,7 @@ export default function DashboardKpiGrid({
         <KpiSegment id="inactive" isSelected={selectedKpi === 'inactive'}
           onClick={() => setSelectedKpi(selectedKpi === 'inactive' ? null : 'inactive')}
           icon={<AlertTriangle size={18} />} color="#ff9500" bgColor="rgba(255,149,0,0.15)"
-          value={inactiveCount} label="Inactivos (+14 días)"
+          value={inactiveCount} label={t('dashboards.inactive')}
           trendData={trends.inactive} timeframe={timeframe}
           title="Proyectos sin actualizar en más de 14 días"
         />
@@ -171,17 +173,17 @@ export default function DashboardKpiGrid({
           <RagSegment id="rag_verde" isSelected={selectedKpi === 'rag_verde'}
             onClick={() => setSelectedKpi(selectedKpi === 'rag_verde' ? null : 'rag_verde')}
             color="var(--color-rag-green, #34c759)" bgColor="rgba(52,199,89,0.15)"
-            value={ragVerde} label="VERDE" trendData={trends.rag_verde} timeframe={timeframe}
+            value={ragVerde} label={t('status.VERDE')} trendData={trends.rag_verde} timeframe={timeframe}
           />
           <RagSegment id="rag_amarillo" isSelected={selectedKpi === 'rag_amarillo'}
             onClick={() => setSelectedKpi(selectedKpi === 'rag_amarillo' ? null : 'rag_amarillo')}
             color="var(--color-rag-yellow, #ffd60a)" bgColor="rgba(255,214,10,0.15)"
-            value={ragAmarillo} label="AMARILLO" trendData={trends.rag_amarillo} timeframe={timeframe}
+            value={ragAmarillo} label={t('status.AMARILLO')} trendData={trends.rag_amarillo} timeframe={timeframe}
           />
           <RagSegment id="rag_rojo" isSelected={selectedKpi === 'rag_rojo'}
             onClick={() => setSelectedKpi(selectedKpi === 'rag_rojo' ? null : 'rag_rojo')}
             color="var(--color-rag-red, #ff3b30)" bgColor="rgba(255,59,48,0.15)"
-            value={ragRojo} label="ROJO" trendData={trends.rag_rojo} timeframe={timeframe}
+            value={ragRojo} label={t('status.ROJO')} trendData={trends.rag_rojo} timeframe={timeframe}
           />
         </div>
 

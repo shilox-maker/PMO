@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertOctagon, Coins, Clock, TrendingUp, TrendingDown, Minus, ShieldOff, CalendarX } from 'lucide-react';
 
 function TrendPill({ trendData, timeframe = 7 }) {
@@ -61,12 +62,14 @@ export default function GovernanceKpiHeader({
   customDate = null,
   setCustomDate
 }) {
+  const { t } = useTranslation();
+
   const kpis = [
     {
       id: 'scope_volatility',
-      title: 'Volatilidad Alcance',
+      title: t('governanceKpis.scopeVolatility'),
       value: `+${scopeVolatilityPercent}%`,
-      subtitle: `${volatilityCount} proy. con CRs`,
+      subtitle: t('governanceKpis.scopeVolatilitySub', { count: volatilityCount }),
       icon: <TrendingUp size={22} />,
       color: '#32ade6',
       bgColor: 'rgba(50, 173, 230, 0.15)',
@@ -75,9 +78,9 @@ export default function GovernanceKpiHeader({
     },
     {
       id: 'overrun',
-      title: 'Exc. coste (CAPEX Inicial)',
+      title: t('governanceKpis.overrun'),
       value: overrunCount,
-      subtitle: 'Proyectos > Pres. Inicial',
+      subtitle: t('governanceKpis.overrunSub'),
       icon: <AlertOctagon size={22} />,
       color: 'var(--color-rag-red)',
       bgColor: 'rgba(255, 69, 58, 0.15)',
@@ -86,9 +89,9 @@ export default function GovernanceKpiHeader({
     },
     {
       id: 'overrun_extended',
-      title: 'Exc. coste (CAPEX Ampliado)',
+      title: t('governanceKpis.overrunExtended'),
       value: overrunExtendedCount,
-      subtitle: 'Proyectos > Pres. Ampliado',
+      subtitle: t('governanceKpis.overrunExtendedSub'),
       icon: <Coins size={22} />,
       color: '#ff9f0a',
       bgColor: 'rgba(255, 159, 10, 0.15)',
@@ -97,9 +100,9 @@ export default function GovernanceKpiHeader({
     },
     {
       id: 'delayed_base',
-      title: 'Retrasados (L.Base Original)',
+      title: t('governanceKpis.delayedBase'),
       value: delayedBaseCount,
-      subtitle: 'Exceden Fin Inicial',
+      subtitle: t('governanceKpis.delayedBaseSub'),
       icon: <Clock size={22} />,
       color: '#ff453a',
       bgColor: 'rgba(255, 69, 58, 0.15)',
@@ -108,9 +111,9 @@ export default function GovernanceKpiHeader({
     },
     {
       id: 'delayed_extended',
-      title: 'Retrasados (L.Base Ampliada)',
+      title: t('governanceKpis.delayedExtended'),
       value: delayedExtendedCount,
-      subtitle: 'Exceden Fin Ampliada',
+      subtitle: t('governanceKpis.delayedExtendedSub'),
       icon: <CalendarX size={22} />,
       color: '#ac5dd9',
       bgColor: 'rgba(172, 93, 217, 0.15)',
@@ -119,9 +122,9 @@ export default function GovernanceKpiHeader({
     },
     {
       id: 'non_governed',
-      title: 'Sin Gobernanza',
+      title: t('governanceKpis.nonGoverned'),
       value: nonGovernedCount,
-      subtitle: 'Sin plan ni comités',
+      subtitle: t('governanceKpis.nonGovernedSub'),
       icon: <ShieldOff size={22} />,
       color: '#ff3b30',
       bgColor: 'rgba(255, 59, 48, 0.15)',
@@ -134,7 +137,7 @@ export default function GovernanceKpiHeader({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
       {setTimeframe && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
-          <span style={{ fontWeight: 600 }}>Comparar variación:</span>
+          <span style={{ fontWeight: 600 }}>{t('governanceKpis.compareVariation')}</span>
           {[7, 30, 180].map(days => {
             const isActive = customDate === null && timeframe === days;
             return (
@@ -154,7 +157,7 @@ export default function GovernanceKpiHeader({
                   cursor: 'pointer'
                 }}
               >
-                {days} Días
+                {days} {t('governanceKpis.days')}
               </button>
             );
           })}
@@ -175,7 +178,7 @@ export default function GovernanceKpiHeader({
                   cursor: 'pointer'
                 }}
               >
-                📅 Personalizado
+                📅 {t('governanceKpis.custom')}
               </button>
               {customDate !== null && (
                 <input

@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { DollarSign, Briefcase, TrendingUp, Coins } from 'lucide-react';
 
 export default function PortfolioReportKpis({ resumen, formatCurrency }) {
+  const { t } = useTranslation();
   if (!resumen) return null;
 
   return (
@@ -26,7 +28,7 @@ export default function PortfolioReportKpis({ resumen, formatCurrency }) {
           <DollarSign size={18} />
         </div>
         <div>
-          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Aprobado</span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('portfolioReport.approved')}</span>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '2px 0 0 0' }}>{formatCurrency(resumen.aprobado_total)}</h2>
         </div>
       </div>
@@ -51,7 +53,7 @@ export default function PortfolioReportKpis({ resumen, formatCurrency }) {
           <Briefcase size={18} />
         </div>
         <div>
-          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reservado (Budgets)</span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('portfolioReport.reserved')}</span>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '2px 0 0 0' }}>{formatCurrency(resumen.reservado_total)}</h2>
         </div>
       </div>
@@ -76,7 +78,7 @@ export default function PortfolioReportKpis({ resumen, formatCurrency }) {
           <TrendingUp size={18} />
         </div>
         <div>
-          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ejecutado (Facturas)</span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('portfolioReport.executed')}</span>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '2px 0 0 0' }}>{formatCurrency(resumen.ejecutado_total)}</h2>
         </div>
       </div>
@@ -102,7 +104,7 @@ export default function PortfolioReportKpis({ resumen, formatCurrency }) {
         </div>
         <div style={{ flexGrow: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Disponible (Proyectos)</span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('portfolioReport.dispProy')}</span>
           </div>
           <h2 style={{ 
             fontSize: '1.25rem', 
@@ -134,7 +136,7 @@ export default function PortfolioReportKpis({ resumen, formatCurrency }) {
         </div>
         <div style={{ flexGrow: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Disponible (Caja)</span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('portfolioReport.dispCaja')}</span>
           </div>
           <h2 style={{ 
             fontSize: '1.25rem', 

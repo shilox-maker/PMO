@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function UserFormAdmin({
   userForm,
@@ -11,10 +12,11 @@ export default function UserFormAdmin({
   isUserSubmitDisabled,
   pwdErrors
 }) {
+  const { t } = useTranslation();
   return (
     <div className="m3-card glass-panel" style={{ position: 'sticky', top: '24px' }}>
       <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 16 }}>
-        {editingUserId ? 'Modificar Usuario' : 'Nuevo Usuario Interno'}
+        {editingUserId ? t('usersAdmin.modifyUser') : t('usersAdmin.newUser')}
       </h3>
 
       {userError && (
@@ -32,7 +34,7 @@ export default function UserFormAdmin({
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div className="form-group">
-            <label className="form-label">Nombre *</label>
+            <label className="form-label">{t('usersAdmin.nameLabel')}</label>
             <input 
               type="text" 
               value={userForm.nombre}
@@ -43,7 +45,7 @@ export default function UserFormAdmin({
             />
           </div>
           <div className="form-group">
-            <label className="form-label">Apellidos *</label>
+            <label className="form-label">{t('usersAdmin.surnameLabel')}</label>
             <input 
               type="text" 
               value={userForm.apellidos}
@@ -56,7 +58,7 @@ export default function UserFormAdmin({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Correo Electrónico *</label>
+          <label className="form-label">{t('usersAdmin.emailLabel')}</label>
           <input 
             type="email" 
             value={userForm.correo}
@@ -69,7 +71,7 @@ export default function UserFormAdmin({
 
         <div className="form-group">
           <label className="form-label">
-            Contraseña {userForm.metodo_acceso === 'ENTRA_ID' ? '(No requerida para Entra ID)' : (editingUserId ? '(Dejar vacío para mantener actual)' : '*')}
+            {t('usersAdmin.passwordLabel')} {userForm.metodo_acceso === 'ENTRA_ID' ? t('usersAdmin.passwordNotReq') : (editingUserId ? t('usersAdmin.passwordKeep') : '*')}
           </label>
           <input 
             type="password" 
@@ -92,19 +94,19 @@ export default function UserFormAdmin({
         </div>
 
         <div className="form-group">
-          <label className="form-label">Método de Acceso *</label>
+          <label className="form-label">{t('usersAdmin.accessMethodLabel')}</label>
           <select 
             value={userForm.metodo_acceso || 'PASSWORD'}
             onChange={(e) => setUserForm(prev => ({ ...prev, metodo_acceso: e.target.value, password: e.target.value === 'ENTRA_ID' ? '' : prev.password }))}
             className="user-select"
           >
-            <option value="PASSWORD">Contraseña Local</option>
-            <option value="ENTRA_ID">Microsoft Entra ID (SSO)</option>
+            <option value="PASSWORD">{t('usersAdmin.localPassword')}</option>
+            <option value="ENTRA_ID">{t('usersAdmin.ssoEntra')}</option>
           </select>
         </div>
 
         <div className="form-group">
-          <label className="form-label">Perfil / Rol *</label>
+          <label className="form-label">{t('usersAdmin.roleLabel')}</label>
           <select 
             value={userForm.perfil}
             onChange={(e) => setUserForm(prev => ({ ...prev, perfil: e.target.value }))}
@@ -124,7 +126,7 @@ export default function UserFormAdmin({
               onChange={(e) => setUserForm(prev => ({ ...prev, activo: e.target.checked }))}
               className="m3-checkbox"
             />
-            <span>Usuario Activo (Permitir acceso)</span>
+            <span>{t('usersAdmin.activeUser')}</span>
           </label>
         </div>
 
@@ -139,11 +141,11 @@ export default function UserFormAdmin({
                 setUserForm({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true, metodo_acceso: 'PASSWORD' });
               }}
             >
-              Cancelar
+              {t('usersAdmin.cancel')}
             </button>
           )}
           <button type="submit" className="m3-btn m3-btn-primary" style={{ flexGrow: 1 }} disabled={isUserSubmitDisabled}>
-            {editingUserId ? 'Guardar Cambios' : 'Registrar PM / User'}
+            {editingUserId ? t('usersAdmin.saveChanges') : t('usersAdmin.registerUser')}
           </button>
         </div>
       </form>

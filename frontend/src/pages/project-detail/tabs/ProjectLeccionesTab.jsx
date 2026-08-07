@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Edit2, Trash2, BookOpen } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getSortedData } from '../../../utils/sorting';
 
 export default function ProjectLeccionesTab({
@@ -7,6 +8,7 @@ export default function ProjectLeccionesTab({
   setShowLessonModal, setEditingLesson, fetchProjectData, getAuthHeaders,
   lessonsSort, setLessonsSort, renderSortHeader
 }) {
+  const { t } = useTranslation();
   const lessons = project.LeccionesAprendidas || [];
   const sortedLessons = getSortedData(lessons, lessonsSort);
 
@@ -33,12 +35,12 @@ export default function ProjectLeccionesTab({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div>
           <h3 style={{ fontWeight: 600, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <BookOpen size={20} /> Historial de Lecciones Aprendidas del Proyecto
+            <BookOpen size={20} /> {t('lessonsTab.title')}
           </h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>Base de conocimiento técnica: aciertos, buenas prácticas y errores detectados</p>
         </div>
         <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
-          <Plus size={16} /> Registrar Lección
+          <Plus size={16} /> {t('lessonsTab.newLesson')}
         </button>
       </div>
 
@@ -54,9 +56,9 @@ export default function ProjectLeccionesTab({
                 {renderSortHeader('Código', 'id_leccion', lessonsSort, setLessonsSort)}
                 {renderSortHeader('Tipo', 'tipo_leccion', lessonsSort, setLessonsSort)}
                 {renderSortHeader('Título / Resumen', 'titulo', lessonsSort, setLessonsSort)}
-                {renderSortHeader('Contexto / Problema', 'contexto', lessonsSort, setLessonsSort)}
-                {renderSortHeader('Recomendación Futura', 'recomendacion_futura', lessonsSort, setLessonsSort)}
-                <th>Acciones</th>
+                {renderSortHeader(t('lessonsTab.description'), 'contexto', lessonsSort, setLessonsSort)}
+                {renderSortHeader(t('lessonsTab.recommendation'), 'recomendacion_futura', lessonsSort, setLessonsSort)}
+                <th>{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -65,7 +67,7 @@ export default function ProjectLeccionesTab({
                   <td style={{ fontWeight: 700 }}>{l.id_leccion}</td>
                   <td>
                     <span className={`badge ${l.tipo_leccion === 'BUENA_PRACTICA' ? 'badge-green' : 'badge-red'}`}>
-                      {l.tipo_leccion === 'BUENA_PRACTICA' ? 'Buena Práctica' : 'Error a Evitar'}
+                      {l.tipo_leccion === 'BUENA_PRACTICA' ? t('lessonsTab.goodPractice') : t('lessonsTab.errorToAvoid')}
                     </span>
                   </td>
                   <td style={{ fontWeight: 600 }}>{l.titulo}</td>

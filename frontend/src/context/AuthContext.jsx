@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import i18n from '../i18n';
 
 const AuthContext = createContext();
 
@@ -159,6 +160,34 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  useEffect(() => {
+    if (currentPm?.idioma) {
+      i18n.changeLanguage(currentPm.idioma);
+      localStorage.setItem('user_language', currentPm.idioma);
+    }
+  }, [currentPm?.idioma]);
+
+  const changeLanguage = async (newLang) => {
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('user_language', newLang);
+    if (currentPm) {
+      setCurrentPm(prev => prev ? { ...prev, idioma: newLang } : null);
+      try {
+        const savedToken = token || localStorage.getItem('pm_token');
+        await fetch(`${import.meta.env.VITE_API_URL}/users/me/language`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': savedToken ? `Bearer ${savedToken}` : ''
+          },
+          body: JSON.stringify({ idioma: newLang })
+        });
+      } catch (err) {
+        console.error('Error guardando preferencia de idioma:', err);
+      }
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('pm_token');
     localStorage.removeItem('pm_user');
@@ -182,6 +211,8 @@ export const AuthProvider = ({ children }) => {
       getAuthHeaders,
       theme,
       toggleTheme,
+      language: i18n.language || 'es',
+      changeLanguage,
       login,
       loginAzure,
       logout,

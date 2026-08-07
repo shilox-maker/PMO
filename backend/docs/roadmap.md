@@ -9,46 +9,25 @@
 ## 🟩 3. Listas para Codificar (Tú les has dado el OK)
 
 ## 📦 4. Implementadas
-- **FEATURE-53 (IDEA-53): Servidor MCP (Model Context Protocol) para exponer el API de PMO Control Tower a Agentes de IA** (2026-08-05)
-  - **Descripción:** Implementación de un servidor MCP sobre transporte `stdio` en [backend/mcp/index.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/index.js) utilizando `@modelcontextprotocol/sdk`. Incluye herramientas de consulta expuestas en módulos independientes: `list_projects` y `get_project_detail` en [projects.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/projects.js), `get_lessons_learned` en [lessons.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/lessons.js), y `search_pmo` en [search.js](file:///c:/PruebasIA/Proyectos/PMO-1/backend/mcp/tools/search.js). Se añade script `npm run mcp` en [package.json](file:///c:/PruebasIA/Proyectos/PMO-1/backend/package.json).
-
-- **FEATURE-51 (IDEA-51): Redimensionamiento dinámico de ancho de columnas en Tabla de Proyectos con persistencia local** (2026-08-05)
-  - **Descripción:** Redimensionamiento interactivo de columnas en [ProjectTable.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/components/ProjectTable.jsx) mediante arrastre con ratón en tiradores `table-resizer`. Los anchos se persisten en `localStorage` mediante el hook `useTableColumns.js`. Se refactorizó modularmente creando `ProjectTableHeader.jsx` cumpliendo el límite de 300 líneas.
 
 ## 🧪 5. En Testeo / Pruebas
-- **FEATURE-51 (IDEA-51): Redimensionamiento dinámico de ancho de columnas en Tabla de Proyectos con persistencia local** (2026-08-05)
-
-
-
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
-- **FEATURE-31 (IDEA-31): Indicadores de Tendencia y Variación Temporal en KPIs (Velocity / Variance - Opción B Snapshots)** (2026-08-04)
-  - **Descripción:** Muestra de badges de variación (`▲ +2`, `▼ -1`, `— 0`) comparando los KPIs del dashboard actual respecto a un periodo anterior (7 días o 30 días). Incluye migración `13_create_kpi_snapshots.js`, servicio `kpiSnapshotService.js` para registro diario automático, integración en `dashboard.controller.js` y componente frontend `DashboardKpiGrid.jsx` con conmutador de período.
-
-- **PERF-01: Lazy Loading de Pages y Optimización de Chunks (Vite)** (2026-08-04)
-  - **Descripción:** Conversión de todos los imports estáticos de pages en `App.jsx` a `React.lazy` + `Suspense`. Vendor splitting en `vite.config.js` para separar MSAL, Recharts, Quill y React en chunks cacheables independientes. MSAL convertido a factory lazy (`getMsalInstance()`) para no bloquear el arranque de la app.
-
-- **FEATURE-50 (IDEA-50): Rediseño de Navegación de Pestañas en Ficha de Proyecto (Pestañas Principales + Menú Overflow "Más...")** (2026-08-04)
-  - **Descripción:** Rediseño de la barra de navegación en [ProjectDetailTabsNav.jsx](file:///c:/PruebasIA/Proyectos/PMO-1/frontend/src/pages/project-detail/ProjectDetailTabsNav.jsx) para eliminar el scroll horizontal en la ficha del proyecto. Incluye nombres acortados de pestañas y menú desplegable contextual overflow ("Más ▾") con indicador de pestaña activa, badges resumen y posicionamiento en primer plano (`z-index: 1000`).
-
-- **FEATURE-48 (IDEA-48): UI/UX Premium: Skeletons Glassmorphic y Conmutador de Densidad de Información** (2026-08-04)
-  - **Descripción:** Sustitución de loaders genéricos por Skeletons Glassmorphic con animaciones shimmer y selector de densidad de vista (Cómoda / Normal / Compacta) persistido en `localStorage` para la vista de tabla de proyectos y dashboards.
-- **FEATURE-49 (IDEA-49): Auto-guardado inteligente (Debounce) e Indicador de Estado en Editor WYSIWYG** (2026-08-04)
-  - **Descripción:** Implementación de auto-guardado progresivo en segundo plano con temporizador debounce (1500ms) e indicador visual de estado en tiempo real ("Guardando...", "Último guardado: HH:MM:SS", "Cambios sin guardar", "Error al guardar") en el editor `RichTextEditor`. Se refactorizó modularmente el componente en `RichTextToolbar.jsx`, `AutoSaveStatus.jsx` y `sanitizeHtml.js` cumpliendo estrictamente con el límite de 300 líneas por fichero.
-- **FEATURE-45 (IDEA-45): Modo Mantenimiento Global de la Aplicación** (2026-07-31)
-  - **Descripción:** Opción en el módulo de administración para poner en modo mantenimiento la plataforma. Bloquea el acceso a todas las funcionalidades a los usuarios no administradores (retornando HTTP 503 en API y mostrando pantalla informativa en Frontend), permitiendo a los administradores seguir operando con normalidad.
-- **FEATURE-46 (IDEA-46): Optimización del Protocolo Operativo del Agente (`agents.md`) y Herramientas de Calidad** (2026-08-03)
-  - **Descripción:** Actualización del archivo de reglas `agents.md` y creación de la herramienta `scripts/check-line-limits.js` para afinar el flujo operativo del agente IA. Corrección de rutas relativas (`backend/docs/roadmap.md`), pautas para smoke tests visuales en frontend mediante `browser_subagent`, política de higiene en `/scratch` y verificación automatizada de límites de líneas (200 backend / 300 frontend).
-- **FEATURE-47 (IDEA-47): Paleta de Comandos Rápida (`Ctrl + K`) para PMO Control Tower** (2026-08-03)
-  - **Descripción:** Buscador global modal e interactivo para navegar instantáneamente entre proyectos, riesgos, incidencias y opciones de menú desde cualquier lugar de la app mediante `Ctrl + K` / `Cmd + K` o botón en la cabecera.
-
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-54 (IDEA-54): Internacionalización y Localización Integral Multilenguaje (ES / EN / PT)** (2026-08-07)
+  - **Descripción:** Implementación total de i18n reactivo multilenguaje en la plataforma con soporte para Español 🇪🇸, Inglés 🇬🇧 y Portugués 🇵🇹. Incluye preferencia guardada por usuario, conmutadores en NavigationRail y pantalla de Login, normalización de catalogos maestros en BBDD con campo `code`, e internacionalización al 100% de Proyectos, Dashboards, PIPs, Timeline, Partners 360, Lecciones Aprendidas y los 6 submódulos del Panel de Administración.
+- [x] **FEATURE-53 (IDEA-53): Servidor MCP (Model Context Protocol) para exponer el API de PMO Control Tower a Agentes de IA** (2026-08-05)
+- [x] **FEATURE-51 (IDEA-51): Redimensionamiento dinámico de ancho de columnas en Tabla de Proyectos con persistencia local** (2026-08-05)
+- [x] **FEATURE-31 (IDEA-31): Indicadores de Tendencia y Variación Temporal en KPIs (Velocity / Variance - Opción B Snapshots)** (2026-08-04)
+- [x] **PERF-01: Lazy Loading de Pages y Optimización de Chunks (Vite)** (2026-08-04)
+- [x] **FEATURE-50 (IDEA-50): Rediseño de Navegación de Pestañas en Ficha de Proyecto (Pestañas Principales + Menú Overflow "Más...")** (2026-08-04)
+- [x] **FEATURE-48 (IDEA-48): UI/UX Premium: Skeletons Glassmorphic y Conmutador de Densidad de Información** (2026-08-04)
+- [x] **FEATURE-49 (IDEA-49): Auto-guardado inteligente (Debounce) e Indicador de Estado en Editor WYSIWYG** (2026-08-04)
+- [x] **FEATURE-45 (IDEA-45): Modo Mantenimiento Global de la Aplicación** (2026-07-31)
+- [x] **FEATURE-46 (IDEA-46): Optimización del Protocolo Operativo del Agente (`agents.md`) y Herramientas de Calidad** (2026-08-03)
+- [x] **FEATURE-47 (IDEA-47): Paleta de Comandos Rápida (`Ctrl + K`) para PMO Control Tower** (2026-08-03)
 - [x] **FEATURE-44 (IDEA-44): Restricción estricta de políticas CORS sin comodín `*` en `server.js`** (2026-07-30)
-- [x] **FEATURE-43 (IDEA-43): Endurecimiento de cabeceras de seguridad HTTP con `helmet` (HSTS en producción/pre)** (2026-07-30)
-- [x] **FEATURE-42 (IDEA-42): Rate Limiting en endpoints de autenticación (`express-rate-limit`)** (2026-07-30)
-- [x] **FEATURE-41 (IDEA-41): Validación obligatoria de `JWT_SECRET` en el arranque del Backend** (2026-07-30)
-- [x] **FEATURE-40 (IDEA-40): Protección contra bypass de autenticación por `AZURE_MOCK` en entornos de producción** (2026-07-30)
 - [x] **FEATURE-39 (IDEA-39): Endpoint dedicado de Health Check (`GET /api/health`) que verifica el estado del servidor Express y conectividad con la BBDD** (2026-07-30)
 - [x] **FEATURE-38 (IDEA-38): Optimización Masiva de Rendimiento en Listados de Proyectos y Dashboards (Eliminación de Consultas N+1)** (2026-07-29)
 

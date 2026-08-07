@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Edit2, Trash2, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import CapexTypeForm from './CapexTypeForm';
 import CapexSubtypeForm from './CapexSubtypeForm';
 
 export default function CapexTypesAdmin({ getAuthHeaders }) {
+  const { t } = useTranslation();
   const [types, setTypes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -80,9 +82,9 @@ export default function CapexTypesAdmin({ getAuthHeaders }) {
       .catch(err => setError(err.message));
   };
 
-  const startEditType = (t) => {
-    setEditingTypeId(t.id);
-    setTypeForm({ id: t.id, nombre: t.nombre, orden: t.orden });
+  const startEditType = (tObj) => {
+    setEditingTypeId(tObj.id);
+    setTypeForm({ id: tObj.id, nombre: tObj.nombre, orden: tObj.orden });
   };
 
   const deleteType = (id) => {
@@ -146,6 +148,13 @@ export default function CapexTypesAdmin({ getAuthHeaders }) {
     setAddingSubtypeToId(null);
   };
 
+  const startAddSubtype = (typeId) => {
+    setAddingSubtypeToId(typeId);
+    setSubtypeForm({ id: '', nombre: '', orden: '', id_tipo_capex: typeId });
+    setEditingSubtypeId(null);
+    setExpandedTypes(prev => ({ ...prev, [typeId]: true }));
+  };
+
   const deleteSubtype = (id) => {
     if (!window.confirm('¿Seguro que desea eliminar este subtipo CAPEX?')) return;
     setError('');
@@ -157,7 +166,7 @@ export default function CapexTypesAdmin({ getAuthHeaders }) {
     })
       .then(async res => {
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al eliminar');
+        if (!res.ok) throw new Error(data.error || 'Error al eliminar subtipo');
         return data;
       })
       .then(() => {
@@ -168,104 +177,107 @@ export default function CapexTypesAdmin({ getAuthHeaders }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {error && <div className="toast toast-error">{error}</div>}
-      {success && <div className="toast toast-success">{success}</div>}
+    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 32, alignItems: 'flex-start' }}>
+      <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div>
+          <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>{t('capexAdmin.title', { count: types.length })}</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t('capexAdmin.subtitle')}</p>
+        </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 32, alignItems: 'flex-start' }}>
-        {/* List of Capex Types */}
-        <div className="m3-card glass-panel">
-          <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 12 }}>Tipos de CAPEX</h3>
-          {loading ? (
-            <p>Cargando catálogo...</p>
-          ) : (
-            <table className="m3-table" style={{ width: '100%' }}>
+        {error && (
+          <div style={{ backgroundColor: 'rgba(255, 69, 58, 0.1)', color: 'var(--color-rag-red)', padding: 12, borderRadius: 12, fontSize: '0.85rem' }}>
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div style={{ backgroundColor: 'rgba(52, 199, 89, 0.1)', color: 'var(--color-rag-green)', padding: 12, borderRadius: 12, fontSize: '0.85rem' }}>
+            {success}
+          </div>
+        )}
+
+        {types.length === 0 && !loading ? (
+          <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>{t('capexAdmin.noTypes')}</div>
+        ) : (
+          <div className="m3-table-wrapper">
+            <table className="m3-table">
               <thead>
                 <tr>
                   <th style={{ width: '40px' }}></th>
-                  <th>Nombre</th>
-                  <th style={{ width: '80px', textAlign: 'center' }}>Orden</th>
-                  <th style={{ width: '140px', textAlign: 'right' }}>Acciones</th>
+                  <th style={{ width: '60px', textAlign: 'center' }}>ID</th>
+                  <th style={{ width: '70px', textAlign: 'center' }}>{t('sedesAdmin.order')}</th>
+                  <th>{t('capexAdmin.typeName')}</th>
+                  <th style={{ width: '130px', textAlign: 'center' }}>{t('usersAdmin.action')}</th>
                 </tr>
               </thead>
               <tbody>
-                {types.map(t => (
-                  <React.Fragment key={t.id}>
-                    <tr>
-                      <td>
-                        <button className="icon-btn" onClick={() => toggleExpand(t.id)}>
-                          {expandedTypes[t.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        </button>
-                      </td>
-                      <td style={{ fontWeight: 600 }}>{t.nombre}</td>
-                      <td style={{ textAlign: 'center' }}>{t.orden}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                          <button 
-                            className="m3-btn m3-btn-outline" 
-                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                            onClick={() => {
-                              setAddingSubtypeToId(t.id);
-                              setEditingSubtypeId(null);
-                              setSubtypeForm({ id: '', nombre: '', orden: '', id_tipo_capex: t.id });
-                            }}
-                          >
-                            + Subtipo
-                          </button>
-                          <button className="icon-btn" onClick={() => startEditType(t)}><Edit2 size={14} /></button>
-                          <button className="icon-btn text-danger" onClick={() => deleteType(t.id)}><Trash2 size={14} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                    {expandedTypes[t.id] && (
+                {types.map(tObj => {
+                  const isExpanded = !!expandedTypes[tObj.id];
+                  const subtypes = tObj.Subtipos || tObj.subtipos || [];
+                  return (
+                    <React.Fragment key={tObj.id}>
                       <tr>
-                        <td colSpan={4} style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', padding: '12px 24px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--md-sys-color-outline)' }}>
-                              Subtipos de {t.nombre} ({t.Subtipos?.length || 0})
-                            </div>
-                            {t.Subtipos && t.Subtipos.length > 0 ? (
-                              <table className="m3-table" style={{ width: '100%', marginTop: 4 }}>
-                                <thead>
-                                  <tr>
-                                    <th>Nombre del Subtipo</th>
-                                    <th style={{ width: '80px', textAlign: 'center' }}>Orden</th>
-                                    <th style={{ width: '100px', textAlign: 'right' }}>Acciones</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {t.Subtipos.map(s => (
-                                    <tr key={s.id}>
-                                      <td>{s.nombre}</td>
-                                      <td style={{ textAlign: 'center' }}>{s.orden}</td>
-                                      <td style={{ textAlign: 'right' }}>
-                                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                                          <button className="icon-btn" onClick={() => startEditSubtype(s)}><Edit2 size={12} /></button>
-                                          <button className="icon-btn text-danger" onClick={() => deleteSubtype(s.id)}><Trash2 size={12} /></button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            ) : (
-                              <div style={{ fontSize: '0.8rem', fontStyle: 'italic', color: 'var(--md-sys-color-outline)' }}>
-                                No hay subtipos definidos.
-                              </div>
-                            )}
+                        <td style={{ textAlign: 'center' }}>
+                          <button className="icon-btn" onClick={() => toggleExpand(tObj.id)}>
+                            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </button>
+                        </td>
+                        <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{tObj.id}</td>
+                        <td style={{ textAlign: 'center', fontWeight: 600 }}>{tObj.orden ?? 0}</td>
+                        <td style={{ fontWeight: 600 }}>
+                          {tObj.nombre}
+                          <span style={{ marginLeft: 8, fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>({subtypes.length})</span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                            <button className="icon-btn" onClick={() => startAddSubtype(tObj.id)} title={t('capexAdmin.addSubtype')}>
+                              <Plus size={15} />
+                            </button>
+                            <button className="icon-btn" onClick={() => startEditType(tObj)} title={t('common.edit')}>
+                              <Edit2 size={15} />
+                            </button>
+                            <button className="icon-btn danger" onClick={() => deleteType(tObj.id)} title={t('common.delete')}>
+                              <Trash2 size={15} />
+                            </button>
                           </div>
                         </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                ))}
+
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan="5" style={{ backgroundColor: 'var(--md-sys-color-surface-container-low)', padding: '12px 16px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              {subtypes.length === 0 ? (
+                                <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', fontStyle: 'italic' }}>Sin subtipos</span>
+                              ) : (
+                                subtypes.map(s => (
+                                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: 8, fontSize: '0.85rem' }}>
+                                    <span><strong>#{s.orden ?? 0}</strong> - {s.nombre}</span>
+                                    <div style={{ display: 'flex', gap: 6 }}>
+                                      <button className="icon-btn" onClick={() => startEditSubtype(s)} title={t('common.edit')}>
+                                        <Edit2 size={14} />
+                                      </button>
+                                      <button className="icon-btn danger" onClick={() => deleteSubtype(s.id)} title={t('common.delete')}>
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
-        {/* Action Panel (Forms) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div>
           <CapexTypeForm 
             editingTypeId={editingTypeId}
             setEditingTypeId={setEditingTypeId}
@@ -285,7 +297,6 @@ export default function CapexTypesAdmin({ getAuthHeaders }) {
             onSubmit={handleSubtypeSubmit}
           />
         </div>
-      </div>
     </div>
   );
 }

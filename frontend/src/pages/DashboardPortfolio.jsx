@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Filter, PieChart } from 'lucide-react';
 import { useTableColumns } from '../hooks/useTableColumns';
@@ -7,22 +8,23 @@ import GovernanceKpiHeader from '../components/governance/GovernanceKpiHeader';
 import ProjectTableHeader from '../components/ProjectTableHeader';
 
 const DEFAULT_GOV_COLUMNS = [
-  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
-  { id: 'nombre_proyecto', label: 'Proyecto', fixed: true, visible: true },
-  { id: 'pm_nombre', label: 'PM', fixed: false, visible: true },
-  { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
-  { id: 'fecha_inicio', label: 'Fecha de Inicio', fixed: false, visible: true },
-  { id: 'fecha_fin_inicial', label: 'Fecha Fin Base', fixed: false, visible: true },
-  { id: 'fecha_fin_estimada', label: 'Fecha Fin Estimada', fixed: false, visible: true },
-  { id: 'gasto_total_facturas', label: 'Gasto Facturado', fixed: false, visible: true },
-  { id: 'alerta_tiempo', label: 'Alerta Tiempo', fixed: false, visible: true },
-  { id: 'alerta_dinero', label: 'Alerta Dinero', fixed: false, visible: true },
-  { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true },
-  { id: 'ultimo_comentario', label: 'Último Comentario', fixed: false, visible: true },
-  { id: 'accion', label: 'Ficha', fixed: true, visible: true }
+  { id: 'id_proyecto', labelKey: 'projectsTable.code', label: 'Código', fixed: true, visible: true },
+  { id: 'nombre_proyecto', labelKey: 'projectsTable.name', label: 'Proyecto', fixed: true, visible: true },
+  { id: 'pm_nombre', labelKey: 'projectsTable.pm', label: 'PM', fixed: false, visible: true },
+  { id: 'indicador_rag', labelKey: 'projectsTable.status', label: 'RAG', fixed: false, visible: true },
+  { id: 'fecha_inicio', labelKey: 'projectsTable.startDate', label: 'Fecha de Inicio', fixed: false, visible: true },
+  { id: 'fecha_fin_inicial', labelKey: 'projectsTable.endDate', label: 'Fecha Fin Base', fixed: false, visible: true },
+  { id: 'fecha_fin_estimada', labelKey: 'projectsTable.estimatedEndDate', label: 'Fecha Fin Estimada', fixed: false, visible: true },
+  { id: 'gasto_total_facturas', labelKey: 'projectsTable.spentProgress', label: 'Gasto Facturado', fixed: false, visible: true },
+  { id: 'alerta_tiempo', labelKey: 'dashboards.scopeVolatility', label: 'Alerta Tiempo', fixed: false, visible: true },
+  { id: 'alerta_dinero', labelKey: 'projectsTable.budget', label: 'Alerta Dinero', fixed: false, visible: true },
+  { id: 'proximo_hito', labelKey: 'projectsTable.nextMilestone', label: 'Próximo Hito', fixed: false, visible: true },
+  { id: 'ultimo_comentario', labelKey: 'projectsTable.lastComment', label: 'Último Comentario', fixed: false, visible: true },
+  { id: 'accion', labelKey: 'projectsTable.actions', label: 'Ficha', fixed: true, visible: true }
 ];
 
 export default function DashboardPortfolio({ onViewProject }) {
+  const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
 
   const [rawProjects, setRawProjects] = useState([]);
@@ -273,54 +275,56 @@ export default function DashboardPortfolio({ onViewProject }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Filter size={16} color="var(--md-sys-color-primary)" />
             <span>
-              Filtrado por KPI: <strong style={{ color: 'var(--md-sys-color-primary)' }}>
+              {t('portfolioDashboard.filterBanner')} <strong style={{ color: 'var(--md-sys-color-primary)' }}>
                 {
                   {
-                    scope_volatility: 'Volatilidad de Alcance (CRs Aprobados)',
-                    overrun: 'Exc. coste (CAPEX Inicial)',
-                    overrun_extended: 'Exc. coste (CAPEX Ampliado)',
-                    delayed_base: 'Retrasados (L.Base Original)',
-                    delayed_extended: 'Retrasados (L.Base Ampliada)',
-                    non_governed: 'Sin Gobernanza (Sin Plan/Comités)'
+                    scope_volatility: t('governanceKpis.scopeVolatility'),
+                    overrun: t('governanceKpis.overrun'),
+                    overrun_extended: t('governanceKpis.overrunExtended'),
+                    delayed_base: t('governanceKpis.delayedBase'),
+                    delayed_extended: t('governanceKpis.delayedExtended'),
+                    non_governed: t('governanceKpis.nonGoverned')
                   }[selectedKpi]
                 }
-              </strong> ({filteredProjects.length} de {baseProjects.length} proyectos)
+              </strong> ({filteredProjects.length} / {baseProjects.length})
             </span>
           </div>
           <button className="m3-btn m3-btn-text" onClick={() => setSelectedKpi(null)} style={{ fontSize: '0.8rem', padding: '2px 8px' }}>
-            Limpiar Filtro
+            {t('portfolioDashboard.clearFilter')}
           </button>
         </div>
       )}
 
       {/* Projects Table */}
       <div className="m3-card glass-panel" style={{ padding: 16 }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 14 }}>Resumen de Proyectos del Portfolio ({sortedProjects.length})</h3>
+        <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 14 }}>
+          {t('portfolioDashboard.summaryTitle', { count: sortedProjects.length })}
+        </h3>
         {loading ? (
-          <div style={{ padding: 20, textAlign: 'center', opacity: 0.7 }}>Cargando proyectos de cartera...</div>
+          <div style={{ padding: 20, textAlign: 'center', opacity: 0.7 }}>{t('common.loading')}</div>
         ) : (
           <div className="table-responsive" style={{ overflowX: 'auto' }}>
             <table className="m3-table" style={{ width: '100%', fontSize: '0.85rem' }}>
               <thead>
                 <tr>
-                  {visibleColumnsMap.id_proyecto && renderTH('Código', 'id_proyecto')}
-                  {visibleColumnsMap.nombre_proyecto && renderTH('Proyecto', 'nombre_proyecto')}
-                  {visibleColumnsMap.pm_nombre && renderTH('PM', 'pm_nombre')}
+                  {visibleColumnsMap.id_proyecto && renderTH(t('projectsTable.code'), 'id_proyecto')}
+                  {visibleColumnsMap.nombre_proyecto && renderTH(t('projectsTable.name'), 'nombre_proyecto')}
+                  {visibleColumnsMap.pm_nombre && renderTH(t('projectsTable.pm'), 'pm_nombre')}
                   {visibleColumnsMap.indicador_rag && renderTH('RAG', 'indicador_rag')}
-                  {visibleColumnsMap.fecha_inicio && renderTH('Inicio', 'fecha_inicio')}
-                  {visibleColumnsMap.fecha_fin_inicial && renderTH('Fin Base', 'fecha_fin_inicial')}
-                  {visibleColumnsMap.fecha_fin_estimada && renderTH('Fin Est.', 'calculations.fecha_fin_estimada', {}, 'fecha_fin_estimada')}
-                  {visibleColumnsMap.gasto_total_facturas && renderTH('Gasto Facturado', 'calculations.consumo_real', {}, 'gasto_total_facturas')}
-                  {visibleColumnsMap.alerta_tiempo && renderTH('Alerta Tiempo', null, {}, 'alerta_tiempo')}
-                  {visibleColumnsMap.alerta_dinero && renderTH('Alerta Dinero', null, {}, 'alerta_dinero')}
-                  {visibleColumnsMap.proximo_hito && renderTH('Próximo Hito', 'nextMilestone.fecha_limite', {}, 'proximo_hito')}
-                  {visibleColumnsMap.ultimo_comentario && renderTH('Último Comentario', 'ultimo_comentario')}
-                  {visibleColumnsMap.accion && renderTH('Ficha', null, {}, 'accion')}
+                  {visibleColumnsMap.fecha_inicio && renderTH(t('projectsTable.startDate'), 'fecha_inicio')}
+                  {visibleColumnsMap.fecha_fin_inicial && renderTH(t('projectsTable.endDate'), 'fecha_fin_inicial')}
+                  {visibleColumnsMap.fecha_fin_estimada && renderTH(t('projectsTable.estimatedEndDate'), 'calculations.fecha_fin_estimada', {}, 'fecha_fin_estimada')}
+                  {visibleColumnsMap.gasto_total_facturas && renderTH(t('projectsTable.spentProgress'), 'calculations.consumo_real', {}, 'gasto_total_facturas')}
+                  {visibleColumnsMap.alerta_tiempo && renderTH(t('governanceKpis.scopeVolatility'), null, {}, 'alerta_tiempo')}
+                  {visibleColumnsMap.alerta_dinero && renderTH(t('projectsTable.budget'), null, {}, 'alerta_dinero')}
+                  {visibleColumnsMap.proximo_hito && renderTH(t('projectsTable.nextMilestone'), 'nextMilestone.fecha_limite', {}, 'proximo_hito')}
+                  {visibleColumnsMap.ultimo_comentario && renderTH(t('projectsTable.lastComment'), 'ultimo_comentario')}
+                  {visibleColumnsMap.accion && renderTH(t('projectsTable.actions'), null, {}, 'accion')}
                 </tr>
               </thead>
               <tbody>
                 {sortedProjects.map(p => {
-                  const pmName = `${p.PM?.nombre || ''} ${p.PM?.apellidos || ''}`.trim() || p.pm_nombre || 'Sin PM';
+                  const pmName = `${p.PM?.nombre || ''} ${p.PM?.apellidos || ''}`.trim() || p.pm_nombre || '—';
                   return (
                     <tr key={p.id_proyecto}>
                       {visibleColumnsMap.id_proyecto && <td><strong>{p.id_proyecto}</strong></td>}
@@ -347,7 +351,7 @@ export default function DashboardPortfolio({ onViewProject }) {
                       {visibleColumnsMap.fecha_fin_inicial && <td>{p.fecha_fin_inicial || '-'}</td>}
                       {visibleColumnsMap.fecha_fin_estimada && <td>{p.fecha_fin_estimada || '-'}</td>}
                       {visibleColumnsMap.gasto_total_facturas && (
-                        <td>{p.gasto_total_facturas ? `${p.gasto_total_facturas.toLocaleString('es-ES')} €` : '0 €'}</td>
+                        <td>{p.gasto_total_facturas ? `${p.gasto_total_facturas.toLocaleString()} €` : '0 €'}</td>
                       )}
                       {visibleColumnsMap.alerta_tiempo && (
                         <td style={{ fontSize: '0.8rem', maxWidth: '200px' }}>
@@ -394,7 +398,7 @@ export default function DashboardPortfolio({ onViewProject }) {
                             onClick={() => onViewProject && onViewProject(p.id_proyecto)}
                             style={{ padding: '2px 8px', fontSize: '0.75rem' }}
                           >
-                            Ver Ficha
+                            {t('projectsTable.viewFicha')}
                           </button>
                         </td>
                       )}

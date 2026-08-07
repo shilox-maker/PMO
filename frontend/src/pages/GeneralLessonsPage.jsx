@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { RefreshCw } from 'lucide-react';
 
 export default function GeneralLessonsPage() {
+  const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,14 +69,14 @@ export default function GeneralLessonsPage() {
         <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', borderRadius: 16, border: '1px solid var(--md-sys-color-outline-variant)' }}>
           {/* Tipo (Chips) */}
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>Tipo:</span>
-            {['', 'BUENA_PRACTICA', 'ERROR_A_EVITAR'].map(t => {
-              const isSelected = tipoFilter === t;
-              const label = t === '' ? 'Todas' : t === 'BUENA_PRACTICA' ? 'Buenas Prácticas' : 'Errores a evitar';
+            <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>{t('generalLessons.type')}</span>
+            {['', 'BUENA_PRACTICA', 'ERROR_A_EVITAR'].map(tKey => {
+              const isSelected = tipoFilter === tKey;
+              const label = tKey === '' ? t('generalLessons.allTypes') : tKey === 'BUENA_PRACTICA' ? t('generalLessons.goodPractices') : t('generalLessons.errorsToAvoid');
               return (
                 <button
-                  key={t}
-                  onClick={() => setTipoFilter(t)}
+                  key={tKey}
+                  onClick={() => setTipoFilter(tKey)}
                   style={{
                     padding: '6px 14px',
                     backgroundColor: isSelected ? 'var(--md-sys-color-primary)' : 'transparent',
@@ -97,14 +99,14 @@ export default function GeneralLessonsPage() {
 
           {/* Partner Select */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>Partner:</span>
+            <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>{t('generalLessons.partner')}</span>
             <select
               value={partnerFilter}
               onChange={(e) => setPartnerFilter(e.target.value)}
               className="user-select"
               style={{ height: 36, padding: '0 12px', fontSize: '0.85rem', minWidth: 150 }}
             >
-              <option value="">Todos los Partners</option>
+              <option value="">{t('generalLessons.allPartners')}</option>
               {uniquePartners.map(p => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
@@ -113,14 +115,14 @@ export default function GeneralLessonsPage() {
 
           {/* Proyecto Select */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>Proyecto:</span>
+            <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 500 }}>{t('generalLessons.project')}</span>
             <select
               value={proyectoFilter}
               onChange={(e) => setProyectoFilter(e.target.value)}
               className="user-select"
               style={{ height: 36, padding: '0 12px', fontSize: '0.85rem', minWidth: 180 }}
             >
-              <option value="">Todos los Proyectos</option>
+              <option value="">{t('generalLessons.allProjects')}</option>
               {uniqueProyectos.map(p => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
@@ -134,7 +136,7 @@ export default function GeneralLessonsPage() {
               onClick={clearFilters}
               style={{ padding: '4px 8px', fontSize: '0.8rem', marginLeft: 'auto' }}
             >
-              Limpiar Filtros
+              {t('generalLessons.clearFilters')}
             </button>
           )}
         </div>
@@ -143,19 +145,19 @@ export default function GeneralLessonsPage() {
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <RefreshCw className="animate-spin" size={18} style={{ color: 'var(--md-sys-color-primary)' }} />
-          <span>Cargando base de conocimiento...</span>
+          <span>{t('generalLessons.loading')}</span>
         </div>
       ) : lessons.length === 0 ? (
-        <p style={{ color: 'var(--md-sys-color-outline)' }}>No se registran lecciones en el histórico.</p>
+        <p style={{ color: 'var(--md-sys-color-outline)' }}>{t('generalLessons.noLessonsHistory')}</p>
       ) : filteredLessons.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '40px 20px', textAlign: 'center', backgroundColor: 'var(--md-sys-color-surface-container-low)', borderRadius: 16 }}>
-          <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.95rem', margin: 0 }}>No hay lecciones que coincidan con los filtros seleccionados.</p>
+          <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.95rem', margin: 0 }}>{t('generalLessons.noMatchingLessons')}</p>
           <button
             className="m3-btn m3-btn-primary"
             onClick={clearFilters}
             style={{ borderRadius: 12 }}
           >
-            Restablecer Filtros
+            {t('generalLessons.resetFilters')}
           </button>
         </div>
       ) : (
@@ -166,21 +168,21 @@ export default function GeneralLessonsPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                   <span className="project-id-badge">{lesson.id_leccion}</span>
                   <span className={`badge ${lesson.tipo_leccion === 'BUENA_PRACTICA' ? 'badge-green' : 'badge-red'}`}>
-                    {lesson.tipo_leccion.replace(/_/g, ' ')}
+                    {lesson.tipo_leccion === 'BUENA_PRACTICA' ? t('generalLessons.goodPractices') : t('generalLessons.errorsToAvoid')}
                   </span>
                 </div>
                 <h4 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 8 }}>{lesson.titulo}</h4>
                 <p style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-outline)', marginBottom: 12 }}>
-                  <strong>Contexto:</strong> {lesson.contexto}
+                  <strong>{t('vendor360.context')}</strong> {lesson.contexto}
                 </p>
                 <p style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface)' }}>
-                  <strong>Recomendación futura:</strong> {lesson.recomendacion_futura}
+                  <strong>{t('vendor360.futureRec')}</strong> {lesson.recomendacion_futura}
                 </p>
               </div>
 
               <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
-                {lesson.Proyecto && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '50%' }} title={lesson.Proyecto.nombre_proyecto}>Proyecto: {lesson.Proyecto.nombre_proyecto}</span>}
-                {lesson.Proveedore && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '50%' }} title={lesson.Proveedore.nombre_razon_social}>Partner: {lesson.Proveedore.nombre_razon_social}</span>}
+                {lesson.Proyecto && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '50%' }} title={lesson.Proyecto.nombre_proyecto}>{t('generalLessons.project')} {lesson.Proyecto.nombre_proyecto}</span>}
+                {lesson.Proveedore && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '50%' }} title={lesson.Proveedore.nombre_razon_social}>{t('generalLessons.partner')} {lesson.Proveedore.nombre_razon_social}</span>}
               </div>
             </div>
           ))}

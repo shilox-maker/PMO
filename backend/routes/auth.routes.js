@@ -16,5 +16,6 @@ router.post('/login', loginLimiter, authController.login);
 router.post('/login/azure', loginLimiter, authController.loginAzure);
 router.get('/auth/verify', authController.verify);
 router.put('/users/me/change-password', authController.changePassword);
+router.patch('/users/me/language', authController.updateLanguage);
 
 module.exports = router;

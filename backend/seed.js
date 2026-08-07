@@ -39,14 +39,14 @@ async function seed() {
     // 1. SEDES (Only those requested)
     // ==========================================
     const sedesData = [
-      { nombre_sede: 'Corporate' },
-      { nombre_sede: 'UK' },
-      { nombre_sede: 'Sevilla' },
-      { nombre_sede: 'Valencia' },
-      { nombre_sede: 'Portugal' },
-      { nombre_sede: 'Molendum' },
-      { nombre_sede: 'Polonia' },
-      { nombre_sede: 'Ucrania' }
+      { nombre_sede: 'Corporate', code: 'CORPORATE' },
+      { nombre_sede: 'UK', code: 'UK' },
+      { nombre_sede: 'Sevilla', code: 'SEVILLA' },
+      { nombre_sede: 'Valencia', code: 'VALENCIA' },
+      { nombre_sede: 'Portugal', code: 'PORTUGAL' },
+      { nombre_sede: 'Molendum', code: 'MOLENDUM' },
+      { nombre_sede: 'Polonia', code: 'POLONIA' },
+      { nombre_sede: 'Ucrania', code: 'UCRANIA' }
     ];
     const seededSedes = await Sedes.bulkCreate(sedesData);
     console.log('Sedes seeded.');
@@ -87,19 +87,19 @@ async function seed() {
     // 4. ESTADOS PROYECTO (13 estados estándar)
     // ==========================================
     const statesData = [
-      { nombre_estado: 'Petición', icono: '📩', orden: 1, proyecto_cerrado: false, descripcion: 'Fase inicial en la que se registra la solicitud o idea de proyecto para su evaluación.' },
-      { nombre_estado: 'Estudio de viabilidad', icono: '📋', orden: 2, proyecto_cerrado: false, descripcion: 'Análisis detallado de los requisitos, costes, beneficios y viabilidad técnica del proyecto.' },
-      { nombre_estado: 'Buscar propuestas', icono: '🔍', orden: 3, proyecto_cerrado: false, descripcion: 'Fase de solicitud y recepción de ofertas o propuestas de proveedores y partners tecnológicos.' },
-      { nombre_estado: 'Tener aprobación', icono: '⏳', orden: 4, proyecto_cerrado: false, descripcion: 'Período de espera para la revisión y aprobación formal del proyecto por parte del comité de dirección o sponsor.' },
-      { nombre_estado: 'Planificar', icono: '📅', orden: 5, proyecto_cerrado: false, descripcion: 'Elaboración del cronograma detallado, asignación de recursos y definición de entregables del proyecto.' },
-      { nombre_estado: 'Kickoff', icono: '🚀', orden: 6, proyecto_cerrado: false, descripcion: 'Reunión de lanzamiento oficial del proyecto con todos los stakeholders y el equipo de trabajo.' },
-      { nombre_estado: 'Ejecución', icono: '🛠️', orden: 7, proyecto_cerrado: false, descripcion: 'Fase de desarrollo, construcción e implementación de las soluciones definidas en la planificación.' },
-      { nombre_estado: 'Pausado', icono: '⏸️', orden: 8, proyecto_cerrado: false, descripcion: 'El proyecto se encuentra temporalmente detenido por decisión de la dirección o causas externas.' },
-      { nombre_estado: 'Go Live', icono: '📦', orden: 9, proyecto_cerrado: false, descripcion: 'Puesta en producción de la solución técnica o despliegue final a los usuarios finales.' },
-      { nombre_estado: 'Estabilización', icono: '🛡️', orden: 10, proyecto_cerrado: false, descripcion: 'Período de soporte y resolución de incidencias iniciales tras la salida a producción.' },
-      { nombre_estado: 'Cierre', icono: '🏁', orden: 11, proyecto_cerrado: true, descripcion: 'Formalización de la entrega, evaluación de resultados y cierre administrativo del proyecto.' },
-      { nombre_estado: 'Descartado', icono: '🗑️', orden: 12, proyecto_cerrado: true, descripcion: 'Proyectos que tras el estudio de viabilidad o análisis inicial no se consideran viables o necesarios.' },
-      { nombre_estado: 'Cancelado', icono: '❌', orden: 13, proyecto_cerrado: true, descripcion: 'Proyectos iniciados que se interrumpen y finalizan definitivamente antes de su conclusión planificada.' }
+      { nombre_estado: 'Petición', code: 'PETICION', icono: '📩', orden: 1, proyecto_cerrado: false, descripcion: 'Fase inicial en la que se registra la solicitud o idea de proyecto para su evaluación.' },
+      { nombre_estado: 'Estudio de viabilidad', code: 'ESTUDIO_DE_VIABILIDAD', icono: '📋', orden: 2, proyecto_cerrado: false, descripcion: 'Análisis detallado de los requisitos, costes, beneficios y viabilidad técnica del proyecto.' },
+      { nombre_estado: 'Buscar propuestas', code: 'BUSCAR_PROPUESTAS', icono: '🔍', orden: 3, proyecto_cerrado: false, descripcion: 'Fase de solicitud y recepción de ofertas o propuestas de proveedores y partners tecnológicos.' },
+      { nombre_estado: 'Tener aprobación', code: 'TENER_APROBACION', icono: '⏳', orden: 4, proyecto_cerrado: false, descripcion: 'Período de espera para la revisión y aprobación formal del proyecto por parte del comité de dirección o sponsor.' },
+      { nombre_estado: 'Planificar', code: 'PLANIFICAR', icono: '📅', orden: 5, proyecto_cerrado: false, descripcion: 'Elaboración del cronograma detallado, asignación de recursos y definición de entregables del proyecto.' },
+      { nombre_estado: 'Kickoff', code: 'KICKOFF', icono: '🚀', orden: 6, proyecto_cerrado: false, descripcion: 'Reunión de lanzamiento oficial del proyecto con todos los stakeholders y el equipo de trabajo.' },
+      { nombre_estado: 'Ejecución', code: 'EJECUCION', icono: '🛠️', orden: 7, proyecto_cerrado: false, descripcion: 'Fase de desarrollo, construcción e implementación de las soluciones definidas en la planificación.' },
+      { nombre_estado: 'Pausado', code: 'PAUSADO', icono: '⏸️', orden: 8, proyecto_cerrado: false, descripcion: 'El proyecto se encuentra temporalmente detenido por decisión de la dirección o causas externas.' },
+      { nombre_estado: 'Go Live', code: 'GO_LIVE', icono: '📦', orden: 9, proyecto_cerrado: false, descripcion: 'Puesta en producción de la solución técnica o despliegue final a los usuarios finales.' },
+      { nombre_estado: 'Estabilización', code: 'ESTABILIZACION', icono: '🛡️', orden: 10, proyecto_cerrado: false, descripcion: 'Período de soporte y resolución de incidencias iniciales tras la salida a producción.' },
+      { nombre_estado: 'Cierre', code: 'CIERRE', icono: '🏁', orden: 11, proyecto_cerrado: true, descripcion: 'Formalización de la entrega, evaluación de resultados y cierre administrativo del proyecto.' },
+      { nombre_estado: 'Descartado', code: 'DESCARTADO', icono: '🗑️', orden: 12, proyecto_cerrado: true, descripcion: 'Proyectos que tras el estudio de viabilidad o análisis inicial no se consideran viables o necesarios.' },
+      { nombre_estado: 'Cancelado', code: 'CANCELADO', icono: '❌', orden: 13, proyecto_cerrado: true, descripcion: 'Proyectos iniciados que se interrumpen y finalizan definitivamente antes de su conclusión planificada.' }
     ];
     const seededStates = await EstadosProyecto.bulkCreate(statesData);
     const sm = {};

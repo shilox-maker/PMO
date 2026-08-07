@@ -49,3 +49,8 @@ Tú eres el encargado de mantener la trazabilidad del proyecto utilizando el arc
 - **Protección de Contratos y Regresiones:** Antes de modificar un controlador o componente existente, verificar que no se alteren o eliminen parámetros existentes en los esquemas ni tipos de datos en la respuesta.
 - **Verificación de Límites de Código (KISS/SRP):** Antes de dar por completada una feature, ejecuta `node scripts/check-line-limits.js` para asegurar que los nuevos módulos respeten los límites de 200 líneas en backend y 300 en frontend.
 - **Higiene de Archivos Temporales:** Elimina automáticamente cualquier script de prueba o archivo temporal generado en `/scratch` al finalizar la verificación de la tarea.
+
+## 🌐 Protocolo de Localización e Internacionalización (i18n)
+- **Prohibido Texto Hardcodeado en JSX:** Queda estrictamente prohibido incluir cadenas de texto o etiquetas fijas escritas directamente en JSX/componentes. Todo texto visible debe invocarse obligatoriamente mediante `useTranslation()` / `t('clave')`.
+- **Sincronización Obligatoria en 3 Idiomas:** Al crear cualquier nueva clave i18n, el agente DEBE actualizar simultáneamente los tres diccionarios oficializados: Español (`es.json`), Inglés (`en.json`) y Portugués (`pt.json`).
+- **Desacoplamiento vía Campo `code` en BD:** Los modelos de catálogo/maestros en Sequelize siempre incluirán y usarán la columna inmutable `code` (slug en mayúsculas) para resolver traducciones dinámicas (ej: `t('status.' + model.code)`).

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { 
   ShieldAlert, BookOpen, Layers, ArrowLeft, RefreshCw,
@@ -9,6 +10,7 @@ import AddVendorContactModal from '../components/modals/AddVendorContactModal';
 import VendorContactCard from '../components/vendor/VendorContactCard';
 
 export default function Vendor360({ vendorId, onBack, onViewProject }) {
+  const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
   
   const [data, setData] = useState(null);
@@ -94,7 +96,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', gap: 16 }}>
         <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
-        <span>Cargando perfil técnico de Partner...</span>
+        <span>{t('vendor360.loading')}</span>
       </div>
     );
   }
@@ -102,9 +104,9 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
   if (!data) {
     return (
       <div className="m3-card" style={{ textAlign: 'center', padding: 32 }}>
-        No se pudieron cargar los datos del proveedor.
+        {t('vendor360.notFound')}
         <button className="m3-btn m3-btn-primary" onClick={onBack} style={{ marginTop: 16 }}>
-          <ArrowLeft size={16} /> Volver
+          <ArrowLeft size={16} /> {t('vendor360.back')}
         </button>
       </div>
     );
@@ -121,7 +123,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
         </button>
         <div>
           <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, uppercase: 'true' }}>
-            Ficha de Socio Estratégico
+            {t('vendor360.partnerFile')}
           </span>
           <h2 className="page-title" style={{ marginTop: -4 }}>{vendor.nombre_razon_social}</h2>
         </div>
@@ -136,22 +138,22 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
           <div className="m3-card glass-panel">
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <Layers style={{ color: 'var(--md-sys-color-primary)' }} />
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>Proyectos Administrados ({projects.length})</h3>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>{t('vendor360.managedProjects', { count: projects.length })}</h3>
             </div>
 
             {projects.length === 0 ? (
-              <p style={{ color: 'var(--md-sys-color-outline)' }}>Este partner no tiene proyectos asignados actualmente.</p>
+              <p style={{ color: 'var(--md-sys-color-outline)' }}>{t('vendor360.noProjects')}</p>
             ) : (
               <div className="m3-table-wrapper">
                 <table className="m3-table">
                   <thead>
                     <tr>
-                      {renderSortHeader('Código', 'id_proyecto', projectsSort, handleProjectsSort)}
-                      {renderSortHeader('Nombre Proyecto', 'nombre_proyecto', projectsSort, handleProjectsSort)}
-                      {renderSortHeader('PM Interno', 'PM.nombre', projectsSort, handleProjectsSort)}
+                      {renderSortHeader(t('projectsTable.code'), 'id_proyecto', projectsSort, handleProjectsSort)}
+                      {renderSortHeader(t('projectsTable.name'), 'nombre_proyecto', projectsSort, handleProjectsSort)}
+                      {renderSortHeader(t('vendor360.internalPm'), 'PM.nombre', projectsSort, handleProjectsSort)}
                       {renderSortHeader('RAG', 'indicador_rag', projectsSort, handleProjectsSort)}
-                      {renderSortHeader('Presupuesto', 'calculations.budget_actualizado', projectsSort, handleProjectsSort)}
-                      <th>Acción</th>
+                      {renderSortHeader(t('projectsTable.budget'), 'calculations.budget_actualizado', projectsSort, handleProjectsSort)}
+                      <th>{t('projectsTable.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -166,10 +168,10 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
                             <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{p.indicador_rag}</span>
                           </div>
                         </td>
-                        <td>{p.calculations?.budget_actualizado.toLocaleString('es-ES')} €</td>
+                        <td>{p.calculations?.budget_actualizado.toLocaleString()} €</td>
                         <td>
                           <button className="m3-btn m3-btn-outline" onClick={() => onViewProject(p.id_proyecto)} style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-                            Ver Ficha
+                            {t('projectsTable.viewFicha')}
                           </button>
                         </td>
                       </tr>
@@ -184,22 +186,22 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
           <div className="m3-card glass-panel">
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <ShieldAlert style={{ color: 'var(--color-rag-red)' }} />
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>Historial de Incidencias ({incidents.length})</h3>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>{t('vendor360.incidentsHistory', { count: incidents.length })}</h3>
             </div>
 
             {incidents.length === 0 ? (
-              <p style={{ color: 'var(--md-sys-color-outline)' }}>No se registran incidencias técnicas ni de plazos para este socio.</p>
+              <p style={{ color: 'var(--md-sys-color-outline)' }}>{t('vendor360.noIncidents')}</p>
             ) : (
               <div className="m3-table-wrapper">
                 <table className="m3-table">
                   <thead>
                     <tr>
-                      {renderSortHeader('Código', 'id_incidencia', incidentsSort, handleIncidentsSort)}
-                      {renderSortHeader('Proyecto', 'Proyecto.nombre_proyecto', incidentsSort, handleIncidentsSort)}
-                      {renderSortHeader('Incidencia', 'titulo', incidentsSort, handleIncidentsSort)}
-                      {renderSortHeader('Criticidad', 'criticidad', incidentsSort, handleIncidentsSort)}
-                      {renderSortHeader('Estado', 'estado', incidentsSort, handleIncidentsSort)}
-                      {renderSortHeader('Apertura', 'fecha_apertura', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader(t('projectsTable.code'), 'id_incidencia', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader(t('projectsTable.name'), 'Proyecto.nombre_proyecto', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader(t('vendor360.incident'), 'titulo', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader(t('vendor360.criticality'), 'criticidad', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader(t('projectsTable.status'), 'estado', incidentsSort, handleIncidentsSort)}
+                      {renderSortHeader(t('vendor360.opening'), 'fecha_apertura', incidentsSort, handleIncidentsSort)}
                     </tr>
                   </thead>
                   <tbody>
@@ -242,11 +244,11 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
           <div className="m3-card glass-panel">
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <BookOpen style={{ color: 'var(--md-sys-color-tertiary)' }} />
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>Lecciones Aprendidas ({lessons.length})</h3>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>{t('vendor360.lessonsTitle', { count: lessons.length })}</h3>
             </div>
 
             {lessons.length === 0 ? (
-              <p style={{ color: 'var(--md-sys-color-outline)' }}>Aún no se han documentado lecciones aprendidas sobre este proveedor.</p>
+              <p style={{ color: 'var(--md-sys-color-outline)' }}>{t('vendor360.noLessons')}</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {lessons.map(lesson => (
@@ -259,14 +261,14 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
                     </div>
                     <h4 style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: 6 }}>{lesson.titulo}</h4>
                     <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', marginBottom: 10 }}>
-                      <strong>Contexto:</strong> {lesson.contexto}
+                      <strong>{t('vendor360.context')}</strong> {lesson.contexto}
                     </p>
                     <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-on-surface)' }}>
-                      <strong>Recomendación futura:</strong> {lesson.recomendacion_futura}
+                      <strong>{t('vendor360.futureRec')}</strong> {lesson.recomendacion_futura}
                     </p>
                     {lesson.Proyecto && (
                       <div style={{ marginTop: 8, fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
-                        Originado en: <em>{lesson.Proyecto.nombre_proyecto}</em>
+                        {t('vendor360.originatedIn')} <em>{lesson.Proyecto.nombre_proyecto}</em>
                       </div>
                     )}
                   </div>

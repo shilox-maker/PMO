@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [3.0.0] - 2026-08-07
+### Added
+- **Internacionalización y Localización Integral Multilenguaje (FEATURE-54 / IDEA-54)**:
+  - Sistema completo de i18n reactivo con soporte oficial trilingüe para **Español** 🇪🇸, **Inglés** 🇬🇧 y **Portugués** 🇵🇹 mediante `i18next` y `react-i18next`.
+  - Preferencia de idioma persistida en la base de datos por usuario (`Usuarios.idioma`) y sincronizada automáticamente tras el login.
+  - Conmutador dinámico de idioma en la barra de navegación lateral (`NavigationRail`) y selector público en la pantalla de login.
+  - Normalización de tablas maestras Sequelize (`Estados_Proyecto`, `Sedes`, `Tipos_Factura`, `Tipos_Capex`) con campo inmutable `code` para desacoplamiento total de traducciones dinámicas.
+  - Cobertura i18n al 100% en todas las vistas de la plataforma:
+    - **Dashboard de Proyectos y Portfolio**: Tarjetas KPI, leyendas, selectores de rango (7d/30d/180d) e hipergráficos.
+    - **Control Presupuestario de Portfolio (PIPs)**: Tarjetas ejecutivas, distribuciones financieras y desglose por secciones.
+    - **Timeline / Diagrama Gantt**: Controles de zoom (Trimestral/Mensual/Semanal), badges de hitos y fechas.
+    - **Directorio de Socios Tecnológicos y Ficha 360º**: Fichas corporativas, directorio y sub-tarjetas de enlace técnico.
+    - **Base de Conocimiento de Lecciones Aprendidas**: Filtros por tipo, partner y proyecto.
+    - **Módulo de Administración**: Todos los submódulos de gestión (Usuarios, Sedes, Portfolios, Tipos CAPEX/Subtipos, Tipos de Factura y Workflow de Estados).
+    - **Modales e Interfaz**: Riesgos, Incidencias, Lecciones, Cambios de Alcance, Paleta de Comandos, Mantenimiento y Release Notes.
+
 ## [2.7.0] - 2026-08-05
 ### Added
 - **Servidor MCP (Model Context Protocol) para Agentes de IA (FEATURE-53 / IDEA-53)**:

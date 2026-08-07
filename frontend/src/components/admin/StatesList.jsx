@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Edit2, Trash2, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown, ListChecks } from 'lucide-react';
 import { getSortedData } from '../../utils/sorting';
 
@@ -10,6 +11,7 @@ export default function StatesList({
   onDeleteStateClick,
   renderSortHeader 
 }) {
+  const { t } = useTranslation();
   const [statesSort, setStatesSort] = useState({ key: 'orden', direction: 'asc' });
 
   const handleStatesSort = (key) => {
@@ -42,9 +44,9 @@ export default function StatesList({
     <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>Workflow del Portfolio ({states.length} estados)</h3>
+          <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>{t('statesAdmin.workflowTitle', { count: states.length })}</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
-            Lista de estados ordenados secuencialmente. Haz clic en "Editar" para ver su detalle y gestionar sus tareas.
+            {t('statesAdmin.workflowDesc')}
           </p>
         </div>
         <button 
@@ -53,7 +55,7 @@ export default function StatesList({
           onClick={onNewStateClick}
           style={{ display: 'flex', alignItems: 'center', gap: 8 }}
         >
-          <Plus size={18} /> Nuevo Estado
+          <Plus size={18} /> {t('statesAdmin.newState')}
         </button>
       </div>
 
@@ -63,20 +65,20 @@ export default function StatesList({
         </div>
       ) : states.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '32px', color: 'var(--md-sys-color-outline)' }}>
-          No hay estados creados en la base de datos.
+          {t('statesAdmin.noStates')}
         </div>
       ) : (
         <div className="m3-table-wrapper">
           <table className="m3-table">
             <thead>
               <tr>
-                {defaultRenderSortHeader('Orden', 'orden', { width: '80px', textAlign: 'center' })}
-                {defaultRenderSortHeader('Estado', 'nombre_estado', { width: '200px' })}
-                <th>Descripción</th>
-                {defaultRenderSortHeader('Icono', 'icono', { width: '80px', textAlign: 'center' })}
-                {defaultRenderSortHeader('Tipo', 'proyecto_cerrado', { width: '110px', textAlign: 'center' })}
-                <th style={{ width: '130px', textAlign: 'center' }}>Tareas Plantilla</th>
-                <th style={{ width: '100px', textAlign: 'center' }}>Acción</th>
+                {defaultRenderSortHeader(t('statesAdmin.order'), 'orden', { width: '80px', textAlign: 'center' })}
+                {defaultRenderSortHeader(t('statesAdmin.state'), 'nombre_estado', { width: '200px' })}
+                <th>{t('statesAdmin.description')}</th>
+                {defaultRenderSortHeader(t('statesAdmin.icon'), 'icono', { width: '80px', textAlign: 'center' })}
+                {defaultRenderSortHeader(t('generalLessons.type'), 'proyecto_cerrado', { width: '110px', textAlign: 'center' })}
+                <th style={{ width: '130px', textAlign: 'center' }}>{t('statesAdmin.templateTasks')}</th>
+                <th style={{ width: '100px', textAlign: 'center' }}>{t('statesAdmin.action')}</th>
               </tr>
             </thead>
             <tbody>
@@ -85,14 +87,14 @@ export default function StatesList({
                   <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{st.orden}</td>
                   <td style={{ fontWeight: 600 }}>{st.nombre_estado}</td>
                   <td style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
-                    {st.descripcion || <em style={{ opacity: 0.5 }}>Sin descripción</em>}
+                    {st.descripcion || <em style={{ opacity: 0.5 }}>{t('statesAdmin.noDesc')}</em>}
                   </td>
                   <td style={{ fontSize: '1.2rem', textAlign: 'center' }}>{st.icono || '❓'}</td>
                   <td style={{ textAlign: 'center' }}>
                     {st.proyecto_cerrado ? (
-                      <span className="badge badge-red" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Cerrado</span>
+                      <span className="badge badge-red" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{t('statesAdmin.closed')}</span>
                     ) : (
-                      <span className="badge badge-blue" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Abierto</span>
+                      <span className="badge badge-blue" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{t('statesAdmin.open')}</span>
                     )}
                   </td>
                   <td style={{ textAlign: 'center' }}>
@@ -119,7 +121,7 @@ export default function StatesList({
                         className="icon-btn" 
                         onClick={() => onEditStateClick(st)} 
                         style={{ color: 'var(--md-sys-color-primary)' }} 
-                        title="Editar estado y tareas"
+                        title={t('common.edit')}
                       >
                         <Edit2 size={16} />
                       </button>
@@ -127,7 +129,7 @@ export default function StatesList({
                         className="icon-btn" 
                         onClick={() => onDeleteStateClick(st.id_estado)} 
                         style={{ color: 'var(--color-rag-red)' }} 
-                        title="Eliminar estado"
+                        title={t('common.delete')}
                       >
                         <Trash2 size={16} />
                       </button>
