@@ -33,7 +33,7 @@ export default function ColumnSelector({ columns, toggleColumn, resetColumns }) 
         title="Configurar Columnas"
       >
         <Columns size={18} />
-        <span style={{ display: 'none', '@media(min-width: 768px)': { display: 'inline' }}}>Columnas</span>
+        <span className="column-selector-text">Columnas</span>
       </button>
 
       {isOpen && (
