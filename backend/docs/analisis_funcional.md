@@ -86,11 +86,11 @@ Para resolver las deficiencias anteriores, **PMO Control Tower** establece los s
 ### 2.1. Estructura Jerárquica de Dominio (Portafolios, Sedes y Proyectos)
 
 ```mermaid
-hierarchyDiagram
-    PortafolioMacro[Portafolio Macro / PIPs]
-    SedePlanta[Sede / Planta Industrial]
-    ProyectoEstandar[Proyecto Estándar]
-    IniciativaLigera[Iniciativa Ligera / Tarea]
+flowchart TD
+    PortafolioMacro["Portafolio Macro / PIPs"]
+    SedePlanta["Sede / Planta Industrial"]
+    ProyectoEstandar["Proyecto Estándar"]
+    IniciativaLigera["Iniciativa Ligera / Tarea"]
 
     PortafolioMacro --> SedePlanta
     SedePlanta --> ProyectoEstandar
@@ -356,17 +356,17 @@ El servidor empaquetado en `backend/mcp/` implementa el estándar `@modelcontext
 ### 8.1. Arquitectura General y Diagrama de Componentes
 
 ```mermaid
-componentDiagram
-    component Client [Frontend SPA - React 19 + Vite 8]
-    component API [Backend REST API - Node.js + Express]
-    component Logger [Sistema Logging - Winston + Morgan]
-    component MCP [MCP Server - Model Context Protocol]
-    component DB [(Base de Datos Dual - SQLite / Azure SQL)]
+flowchart TD
+    Client["Client: Frontend SPA (React 19 + Vite 8)"]
+    API["API: Backend REST API (Node.js + Express)"]
+    Logger["Logger: Sistema Logging (Winston + Morgan)"]
+    MCP["MCP: MCP Server (Model Context Protocol)"]
+    DB[("DB: Base de Datos Dual (SQLite / Azure SQL)")]
 
-    Client --> API : HTTP / REST API (JWT)
-    API --> Logger : Trazas, Errores & HTTP Access Logs
-    API --> DB : Sequelize ORM 6
-    MCP --> DB : Sequelize ORM 6
+    Client -->|HTTP / REST API JWT| API
+    API -->|Trazas, Errores & HTTP Logs| Logger
+    API -->|Sequelize ORM 6| DB
+    MCP -->|Sequelize ORM 6| DB
 ```
 
 ### 8.2. Capa Backend Node.js / Express y Middlewares de Seguridad
