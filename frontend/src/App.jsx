@@ -17,10 +17,12 @@ const GeneralLessonsPage = React.lazy(() => import('./pages/GeneralLessonsPage')
 import MaintenanceScreen from './components/MaintenanceScreen';
 import AdminMaintenanceBanner from './components/AdminMaintenanceBanner';
 import CommandPaletteModal from './components/modals/CommandPaletteModal';
+import UserMenuDropdown from './components/UserMenuDropdown';
 import { useTranslation } from 'react-i18next';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
-  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info, PieChart, Search, Globe
+  Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info, PieChart, Search, Globe,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import pkg from '../package.json';
 
@@ -415,16 +417,23 @@ function NavigationRail() {
   const { t } = useTranslation();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('pmo_nav_collapsed') === 'true');
   const navigate = useNavigate();
   const location = useLocation();
+
+  const toggleCollapse = () => {
+    const nextState = !isCollapsed;
+    setIsCollapsed(nextState);
+    localStorage.setItem('pmo_nav_collapsed', String(nextState));
+  };
 
   const isActive = (path) => location.pathname.startsWith(path);
 
   return (
-    <div className="nav-rail">
-      <div className="brand-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div className="brand-icon" style={{ fontSize: '1rem', position: 'relative' }}>
+    <div className={`nav-rail ${isCollapsed ? 'collapsed' : ''}`}>
+      <div className="brand-section">
+        <div className="brand-logo-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="brand-icon" style={{ fontSize: '1rem', position: 'relative' }} title="PMO Control Tower">
             CT
             {isGlobalWorking && (
               <span style={{
@@ -439,24 +448,15 @@ function NavigationRail() {
               }} title="Procesando datos..." />
             )}
           </div>
-          <span className="brand-title">Control Tower</span>
+          {!isCollapsed && <span className="brand-title">Control Tower</span>}
         </div>
+
         <button
-          onClick={() => setIsChangelogOpen(true)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--md-sys-color-outline)',
-            cursor: 'pointer',
-            padding: '4px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          title="Ver Novedades y Versión"
+          onClick={toggleCollapse}
+          className="nav-collapse-btn"
+          title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
         >
-          <Info size={18} />
+          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
       </div>
 
@@ -464,170 +464,106 @@ function NavigationRail() {
         <a
           className={`nav-link ${isActive('/proyectos') || location.pathname === '/' ? 'active' : ''}`}
           onClick={() => navigate('/proyectos')}
+          title={isCollapsed ? t('nav.projects') : undefined}
         >
           <Briefcase className="nav-link-icon" />
-          <span>{t('nav.projects')}</span>
+          {!isCollapsed && <span>{t('nav.projects')}</span>}
         </a>
 
         <a
           className={`nav-link ${(isActive('/dashboard') || isActive('/dashboard-proyectos')) && !isActive('/dashboard-portfolio') ? 'active' : ''}`}
           onClick={() => navigate('/dashboard')}
+          title={isCollapsed ? t('nav.dashboardProjects') : undefined}
         >
           <Activity className="nav-link-icon" />
-          <span>{t('nav.dashboardProjects')}</span>
+          {!isCollapsed && <span>{t('nav.dashboardProjects')}</span>}
         </a>
 
         <a
           className={`nav-link ${isActive('/dashboard-portfolio') || isActive('/governance') ? 'active' : ''}`}
           onClick={() => navigate('/dashboard-portfolio')}
+          title={isCollapsed ? t('nav.dashboardPortfolio') : undefined}
         >
           <PieChart className="nav-link-icon" />
-          <span>{t('nav.dashboardPortfolio')}</span>
+          {!isCollapsed && <span>{t('nav.dashboardPortfolio')}</span>}
         </a>
 
         <a
           className={`nav-link ${isActive('/portfolios/report') ? 'active' : ''}`}
           onClick={() => navigate('/portfolios/report')}
+          title={isCollapsed ? "PIPs" : undefined}
         >
           <Briefcase className="nav-link-icon" />
-          <span>PIPs</span>
+          {!isCollapsed && <span>PIPs</span>}
         </a>
 
         <a
           className={`nav-link ${isActive('/timeline') ? 'active' : ''}`}
           onClick={() => navigate('/timeline')}
+          title={isCollapsed ? "Timeline" : undefined}
         >
           <Calendar className="nav-link-icon" />
-          <span>Timeline</span>
+          {!isCollapsed && <span>Timeline</span>}
         </a>
         <hr />
         <a
           className={`nav-link ${isActive('/proveedores') || isActive('/proveedor/') ? 'active' : ''}`}
           onClick={() => navigate('/proveedores')}
+          title={isCollapsed ? t('nav.vendors') : undefined}
         >
           <Building className="nav-link-icon" />
-          <span>{t('nav.vendors')}</span>
+          {!isCollapsed && <span>{t('nav.vendors')}</span>}
         </a>
 
         <a
           className={`nav-link ${isActive('/lecciones') ? 'active' : ''}`}
           onClick={() => navigate('/lecciones')}
+          title={isCollapsed ? t('nav.lessonsLearned') : undefined}
         >
           <BookOpen className="nav-link-icon" />
-          <span>{t('nav.lessonsLearned')}</span>
+          {!isCollapsed && <span>{t('nav.lessonsLearned')}</span>}
         </a>
 
         {currentPm && currentPm.perfil === 'ADMINISTRADOR' && (
           <a
             className={`nav-link ${isActive('/admin') ? 'active' : ''}`}
             onClick={() => navigate('/admin')}
+            title={isCollapsed ? t('nav.admin') : undefined}
           >
             <Settings className="nav-link-icon" />
-            <span>{t('nav.admin')}</span>
+            {!isCollapsed && <span>{t('nav.admin')}</span>}
           </a>
         )}
       </div>
 
-      {/* User profile card & Logout */}
-      <div className="user-switcher-panel" style={{ marginTop: 'auto', padding: '16px 12px' }}>
-        {currentPm && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: 10,
-              backgroundColor: 'var(--md-sys-color-surface-container-high)',
-              borderRadius: 14,
-              border: '1px solid var(--md-sys-color-outline-variant)'
-            }}>
-              <div style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                backgroundColor: 'var(--md-sys-color-primary-container)',
-                color: 'var(--md-sys-color-on-primary-container)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 'bold',
-                fontSize: '0.85rem',
-                flexShrink: 0
-              }}>
-                {currentPm.nombre[0]}{currentPm.apellidos[0]}
-              </div>
-              <div style={{ overflow: 'hidden' }}>
-                <div style={{ fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {currentPm.nombre} {currentPm.apellidos}
-                </div>
-                <div style={{ fontSize: '0.65rem', color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', fontWeight: 'bold' }}>
-                  {currentPm.perfil}
-                </div>
-              </div>
-            </div>
-
-            <button
-              className="m3-btn m3-btn-tonal"
-              onClick={() => {
-                const nextLang = language === 'es' ? 'en' : language === 'en' ? 'pt' : 'es';
-                changeLanguage(nextLang);
-              }}
-              style={{ padding: '8px 12px', justifyContent: 'space-between', gap: 8, fontSize: '0.8rem', borderRadius: '12px', width: '100%' }}
-              title={t('user.language')}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Globe size={16} />
-                <span>{t('user.language')}</span>
-              </div>
-              <span style={{ fontWeight: 'bold', fontSize: '0.75rem', padding: '2px 6px', borderRadius: '6px', backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>
-                {language.toUpperCase()}
-              </span>
-            </button>
-
-            <button
-              className="m3-btn m3-btn-tonal"
-              onClick={() => setIsChangePasswordOpen(true)}
-              style={{ padding: '8px 12px', justifyContent: 'flex-start', gap: 8, fontSize: '0.8rem', borderRadius: '12px', width: '100%' }}
-            >
-              <Key size={16} />
-              <span>{t('user.changePassword')}</span>
-            </button>
-            <button
-              className="m3-btn m3-btn-tonal"
-              onClick={logout}
-              style={{ padding: '8px 12px', justifyContent: 'flex-start', gap: 8, fontSize: '0.8rem', borderRadius: '12px', width: '100%' }}
-            >
-              <LogOut size={16} />
-              <span>{t('user.logout')}</span>
-            </button>
-          </div>
-        )}
+      {/* User profile sub-menu dropdown */}
+      <div className="user-switcher-panel" style={{ marginTop: 'auto', padding: isCollapsed ? '12px 4px' : '16px 12px' }}>
+        <UserMenuDropdown
+          currentPm={currentPm}
+          logout={logout}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          language={language}
+          changeLanguage={changeLanguage}
+          onChangePasswordClick={() => setIsChangePasswordOpen(true)}
+          isCollapsed={isCollapsed}
+        />
 
         <ChangePasswordModal isOpen={isChangePasswordOpen} onClose={() => setIsChangePasswordOpen(false)} />
 
-        {/* Theme Toggle */}
-        <button
-          className="m3-btn m3-btn-tonal"
-          onClick={toggleTheme}
-          style={{ justifyContent: 'flex-start', padding: '10px 16px', width: '100%', borderRadius: '12px' }}
-        >
-          {theme === 'dark' && <Moon size={18} />}
-          {theme === 'dacsa' && <Building2 size={18} />}
-          <span>{theme === 'dark' ? t('user.themeDark') : t('user.themeDacsa')}</span>
-        </button>
-
         {/* Version / Changelog */}
-        <div style={{ marginTop: 16, textAlign: 'center' }}>
+        <div style={{ marginTop: 12, textAlign: 'center' }}>
           <button
             onClick={() => setIsChangelogOpen(true)}
             style={{
               background: 'none', border: 'none', color: 'var(--md-sys-color-outline)',
-              fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline',
+              fontSize: '0.75rem', cursor: 'pointer', textDecoration: isCollapsed ? 'none' : 'underline',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%'
             }}
+            title="Ver Novedades y Versión"
           >
-            <Info size={12} />
-            v{pkg.version} — {t('user.releaseNotes')}
+            <Info size={isCollapsed ? 18 : 12} />
+            {!isCollapsed && <span>v{pkg.version} — {t('user.releaseNotes')}</span>}
           </button>
         </div>
 

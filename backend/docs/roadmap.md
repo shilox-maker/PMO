@@ -2,7 +2,7 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
-- [] **IDEA-52: En la parte de comunicacion, al enviar un informe, la parte de KPI y salud del proyecto es diferente que cuando generas un informe en el proyecto. Hay que hacer que coincidan en la mayoría de lo posible**
+- [ ] **IDEA-52: En la parte de comunicacion, al enviar un informe, la parte de KPI y salud del proyecto es diferente que cuando generas un informe en el proyecto. Hay que hacer que coincidan en la mayoría de lo posible**
 
 ## 🔍 2. En Análisis / Especificación
 
@@ -15,6 +15,8 @@
 ## 🚀 6. Pendiente de Subir (Listo para Git)
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-55 (IDEA-55): Agrupar perfil de usuario en submenú desplegable M3 y barra lateral colapsable (NavigationRail)** (2026-08-07)
+  - **Descripción:** Rediseño del perfil de usuario en el menú lateral `NavigationRail` agrupando Cambio de Idioma (ES/EN/PT), Cambio de Tema (Oscuro/Dacsa), Cambiar Contraseña y Cerrar Sesión en un submenú desplegable Glassmorphic M3. Incluye soporte para colapsar/expandir el menú lateral izquierdo a `72px` con persistencia en `localStorage` y nombre completo multilínea sin truncar.
 - [x] **FEATURE-54 (IDEA-54): Internacionalización y Localización Integral Multilenguaje (ES / EN / PT)** (2026-08-07)
   - **Descripción:** Implementación total de i18n reactivo multilenguaje en la plataforma con soporte para Español 🇪🇸, Inglés 🇬🇧 y Portugués 🇵🇹. Incluye preferencia guardada por usuario, conmutadores en NavigationRail y pantalla de Login, normalización de catalogos maestros en BBDD con campo `code`, e internacionalización al 100% de Proyectos, Dashboards, PIPs, Timeline, Partners 360, Lecciones Aprendidas y los 6 submódulos del Panel de Administración.
 - [x] **FEATURE-53 (IDEA-53): Servidor MCP (Model Context Protocol) para exponer el API de PMO Control Tower a Agentes de IA** (2026-08-05)
