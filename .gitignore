@@ -34,3 +34,8 @@ obj/
 .git_msg.txt  
 .git_msg.txt  
 .git_msg2.txt  
+
+# Logs
+logs/
+pmo-logs/
+*.log

@@ -18,7 +18,7 @@ export default function PortfolioReport() {
   const [loadingReport, setLoadingReport] = useState(false);
   const [portfoliosLoading, setPortfoliosLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // Collapse state for sections
   const [expandedSections, setExpandedSections] = useState({});
 
@@ -46,7 +46,7 @@ export default function PortfolioReport() {
     if (!selectedPortfolioId) return;
     setLoadingReport(true);
     setError('');
-    
+
     fetch(`${import.meta.env.VITE_API_URL}/portfolios/${selectedPortfolioId}/budget-report`, {
       headers: getAuthHeaders()
     })
@@ -104,13 +104,13 @@ export default function PortfolioReport() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
-      
+
       {/* Top Filter and Info Panel */}
       <div className="m3-card glass-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, padding: '16px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Calendar size={20} style={{ color: 'var(--md-sys-color-primary)' }} />
           <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{t('portfolioReport.selectPortfolio')}</span>
-          <select 
+          <select
             value={selectedPortfolioId}
             onChange={(e) => setSelectedPortfolioId(e.target.value)}
             className="user-select"
@@ -124,7 +124,7 @@ export default function PortfolioReport() {
         </div>
 
         {reportData?.portfolio?.descripcion && (
-          <div style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', maxWidth: '400px', textAlign: 'right' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', maxWidth: '600px', textAlign: 'right' }}>
             {reportData.portfolio.descripcion}
           </div>
         )}
@@ -144,15 +144,15 @@ export default function PortfolioReport() {
       ) : reportData ? (
         <>
           {/* Executive KPI Cards */}
-          <PortfolioReportKpis 
-            resumen={reportData.resumen} 
-            formatCurrency={formatCurrency} 
+          <PortfolioReportKpis
+            resumen={reportData.resumen}
+            formatCurrency={formatCurrency}
           />
 
           {/* Budget distribution chart */}
-          <PortfolioBudgetChart 
-            chartData={chartData} 
-            formatCurrency={formatCurrency} 
+          <PortfolioBudgetChart
+            chartData={chartData}
+            formatCurrency={formatCurrency}
           />
 
           {/* Detailed table and project lists */}
@@ -165,7 +165,7 @@ export default function PortfolioReport() {
               </div>
             ) : (
               reportData.secciones.map(sec => (
-                <PortfolioBudgetSection 
+                <PortfolioBudgetSection
                   key={sec.id_presupuesto}
                   sec={sec}
                   isExpanded={!!expandedSections[sec.id_presupuesto]}

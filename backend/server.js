@@ -5,17 +5,19 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { sequelize } = require('./models/index');
 const umzug = require('./migrate');
+const logger = require('./config/logger');
+const httpLogger = require('./middlewares/httpLogger');
 const { verifyToken } = require('./middlewares/auth');
 const { checkMaintenance } = require('./middlewares/maintenance');
 const { errorHandler } = require('./middlewares/errorHandler');
 
 // Prevent Node process crashes from throwing 502 Bad Gateway on IIS
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('⚠️ [PROCESS WARNING] Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('⚠️ [PROCESS WARNING] Unhandled Rejection at: %o reason: %o', promise, reason);
 });
 
 process.on('uncaughtException', (err) => {
-  console.error('❌ [PROCESS ERROR] Uncaught Exception thrown:', err);
+  logger.error('❌ [PROCESS ERROR] Uncaught Exception thrown: %s', err.stack || err.message || err);
 });
 
 // Import routes
@@ -30,6 +32,9 @@ const searchRoutes = require('./routes/search.routes');
 const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
+
+// HTTP Access Logging (Morgan -> Winston)
+app.use(httpLogger);
 
 const isProdOrPre = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'pre';
 
@@ -100,21 +105,21 @@ app.use(errorHandler);
 if (process.env.NODE_ENV !== 'test') {
   sequelize.authenticate()
     .then(() => {
-      console.log('✅ Connection to database established successfully.');
+      logger.info('✅ Connection to database established successfully. Log directory: %s', logger.logDir);
       return umzug.up();
     })
     .then((migrations) => {
       if (migrations.length > 0) {
-        console.log(`✅ Executed ${migrations.length} migrations`);
+        logger.info(`✅ Executed ${migrations.length} migrations`);
       } else {
-        console.log('✅ Database is up to date');
+        logger.info('✅ Database is up to date');
       }
       app.listen(PORT, '0.0.0.0', () => {
-        console.log(`🚀 Server running on port ${PORT} and listening on 0.0.0.0`);
+        logger.info(`🚀 Server running on port ${PORT} and listening on 0.0.0.0`);
       });
     })
     .catch(err => {
-      console.error('❌ Error during database initialization:', err);
+      logger.error('❌ Error during database initialization: %s', err.stack || err.message || err);
     });
 }
 
