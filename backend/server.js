@@ -108,6 +108,10 @@ app.use(errorHandler);
 
 // Database Initialization and Server Start
 if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`🚀 Server running on port ${PORT} and listening on 0.0.0.0`);
+  });
+
   sequelize.authenticate()
     .then(() => {
       logger.info('✅ Connection to database established successfully. Log directory: %s', logger.logDir);
@@ -119,9 +123,6 @@ if (process.env.NODE_ENV !== 'test') {
       } else {
         logger.info('✅ Database is up to date');
       }
-      app.listen(PORT, '0.0.0.0', () => {
-        logger.info(`🚀 Server running on port ${PORT} and listening on 0.0.0.0`);
-      });
     })
     .catch(err => {
       logger.error('❌ Error during database initialization: %s', err.stack || err.message || err);

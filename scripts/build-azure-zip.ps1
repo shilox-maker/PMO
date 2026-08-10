@@ -51,16 +51,23 @@ Copy-Item -Path "$ROOT_DIR\frontend\dist" -Destination "$STAGING_DIR\frontend\di
 
 Write-Host "  Estructura limpia generada en staging." -ForegroundColor Green
 
-# ------------------------------------------------------------------------------
-# 3. Comprimir a ZIP
-# ------------------------------------------------------------------------------
-Write-Host "`n[3/4] Generando archivo ZIP: pmo-azure-deploy.zip..." -ForegroundColor Yellow
+# Usar .NET ZipArchive para garantizar separadores de ruta POSIX '/' compatibles con Linux
+Add-Type -Assembly "System.IO.Compression.FileSystem"
+Add-Type -Assembly "System.IO.Compression"
 
-Start-Sleep -Milliseconds 500
-Compress-Archive -Path "$STAGING_DIR\*" -DestinationPath $OUTPUT_ZIP -Force
+$zip = [System.IO.Compression.ZipFile]::Open($OUTPUT_ZIP, [System.IO.Compression.ZipArchiveMode]::Create)
+try {
+    $files = Get-ChildItem -Path $STAGING_DIR -Recurse -File
+    foreach ($file in $files) {
+        $relativePath = $file.FullName.Substring($STAGING_DIR.Length + 1).Replace("\", "/")
+        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $file.FullName, $relativePath, [System.IO.Compression.CompressionLevel]::Optimal)
+    }
+} finally {
+    $zip.Dispose()
+}
 
 $zipSize = (Get-Item $OUTPUT_ZIP).Length / 1MB
-Write-Host ("  ZIP creado con exito: {0:N2} MB" -f $zipSize) -ForegroundColor Green
+Write-Host ("  ZIP creado con exito (rutas POSIX Linux): {0:N2} MB" -f $zipSize) -ForegroundColor Green
 
 # ------------------------------------------------------------------------------
 # 4. Limpieza de Staging

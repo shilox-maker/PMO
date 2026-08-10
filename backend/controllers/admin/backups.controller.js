@@ -14,7 +14,7 @@ async function generateBackup(req, res, next) {
       success: true,
       message: 'Backup generado correctamente',
       filename,
-      filepath
+      filePath
     });
   } catch (err) {
     next(err);
@@ -48,9 +48,9 @@ async function getBackupsList(req, res, next) {
       source: 'azure'
     }));
 
-    // Combinar y deduplicar por filename
+    // Combinar y deduplicar por filename (priorizar Azure Blob)
     const map = new Map();
-    [...localList, ...azureList].forEach(item => {
+    [...azureList, ...localList].forEach(item => {
       if (!map.has(item.filename)) {
         map.set(item.filename, item);
       }

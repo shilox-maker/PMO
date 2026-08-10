@@ -77,24 +77,34 @@ if (-not (Test-Path $ZIP_PATH)) {
 Write-Host "`n[Paso 2/3] Conectando con Azure (Autenticacion Interactiva)..." -ForegroundColor Yellow
 Write-Host "  Se abrira tu navegador para iniciar sesion en Azure..." -ForegroundColor DarkGray
 
-# Comprobar si az cli esta instalado
+# Comprobar si az cli esta instalado (o anadirlo al PATH si se acaba de instalar)
 if (-not (Get-Command "az" -ErrorAction SilentlyContinue)) {
-    throw "Error: Azure CLI ('az') no esta instalado. Instalalo con 'winget install Microsoft.AzureCLI' o desde la web oficial de Azure."
+    $defaultAzPath = "$env:ProgramFiles\Microsoft SDKs\Azure\CLI2\wbin"
+    if (Test-Path "$defaultAzPath\az.cmd") {
+        $env:Path += ";$defaultAzPath"
+    } else {
+        throw "Error: Azure CLI ('az') no esta instalado. Instalalo con 'winget install Microsoft.AzureCLI' o desde la web oficial de Azure."
+    }
 }
 
-az login --only-show-errors | Out-Null
-Write-Host "  Autenticación completada con éxito en Azure." -ForegroundColor Green
+# Comprobar si ya existe una sesión previa en Azure CLI
+$accountInfo = az account show 2>$null
+if (-not $accountInfo) {
+    Write-Host "  Iniciando sesión en Azure mediante navegador..." -ForegroundColor Yellow
+    az login
+} else {
+    Write-Host "  Sesión de Azure CLI previa activa detectada." -ForegroundColor Green
+}
 
 # ------------------------------------------------------------------------------
 # 4. Despliegue del ZIP a Azure App Service
 # ------------------------------------------------------------------------------
 Write-Host "`n[Paso 3/3] Desplegando $ZIP_PATH en Azure App Service [$APP_NAME]..." -ForegroundColor Yellow
 
-az webapp deploy `
+az webapp deployment source config-zip `
     --resource-group $RG_NAME `
     --name $APP_NAME `
-    --src-path $ZIP_PATH `
-    --type zip
+    --src $ZIP_PATH
 
 Write-Host "`n==================================================" -ForegroundColor Cyan
 Write-Host " ¡DESPLIEGUE A [$Environment] COMPLETADO CON ÉXITO! " -ForegroundColor Green
