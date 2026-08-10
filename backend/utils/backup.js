@@ -11,7 +11,7 @@ const BACKUP_DIR = path.join(__dirname, '../../backups');
  */
 async function getTableNames() {
   const dialect = process.env.DB_DIALECT || 'sqlite';
-  const schema = process.env.DB_SCHEMA || 'dbo';
+  const schema = process.env.DB_SCHEMA || 'pmo';
 
   if (dialect === 'mssql') {
     const [tables] = await sequelize.query(
@@ -34,7 +34,7 @@ async function getTableNames() {
  * Retorna la ruta del fichero generado.
  */
 async function exportData() {
-  const schema = process.env.DB_SCHEMA || 'dbo';
+  const schema = process.env.DB_SCHEMA || 'pmo';
   const dialect = process.env.DB_DIALECT || 'sqlite';
   const tables = await getTableNames();
   const backup = { timestamp: new Date().toISOString(), schema, tables: {} };
@@ -90,7 +90,7 @@ async function restoreData(backupFile) {
 
   const backup = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   const dialect = process.env.DB_DIALECT || 'sqlite';
-  const schema = process.env.DB_SCHEMA || backup.schema || 'dbo';
+  const schema = process.env.DB_SCHEMA || backup.schema || 'pmo';
   const tableNames = Object.keys(backup.tables);
 
   console.log(`  Restaurando backup del ${backup.timestamp} (${tableNames.length} tablas)`);
