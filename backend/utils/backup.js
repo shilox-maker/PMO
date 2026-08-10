@@ -2,6 +2,7 @@ const { sequelize } = require('../config/db.config');
 const fs = require('fs');
 const path = require('path');
 const { copySqliteDb, rotateBackups } = require('./backup-helpers');
+const { uploadToBlob } = require('./azureBlob');
 
 const BACKUP_DIR = path.join(__dirname, '../../backups');
 
@@ -58,8 +59,14 @@ async function exportData() {
   // Copia fisica directa si la BD es SQLite
   if (dialect === 'sqlite') {
     const dbStorage = sequelize.options?.storage || path.join(__dirname, '../ppm_governance.db');
-    copySqliteDb(BACKUP_DIR, timestamp, dbStorage);
+    const sqliteCopy = copySqliteDb(BACKUP_DIR, timestamp, dbStorage);
+    if (sqliteCopy) {
+      await uploadToBlob(sqliteCopy, path.basename(sqliteCopy));
+    }
   }
+
+  // Subir el archivo JSON a Azure Blob Storage si está configurado
+  await uploadToBlob(filepath, filename);
 
   // Rotacion: mantener un maximo de 30 backups
   rotateBackups(BACKUP_DIR, 30);
@@ -172,27 +179,14 @@ function listBackups() {
   });
 }
 
-// Exportaciones para uso como módulo
-module.exports = {
-  getTableNames,
-  exportData,
-  restoreData,
-  listBackups,
-  BACKUP_DIR
-};
+module.exports = { getTableNames, exportData, restoreData, listBackups, BACKUP_DIR };
 
-// CLI Execution
 if (require.main === module) {
   const [,, action, arg] = process.argv;
-
-  if (action === 'export') {
-    exportData().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
-  } else if (action === 'restore') {
+  if (action === 'export') exportData().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
+  else if (action === 'restore') {
     if (!arg) { console.error('  Uso: node backup.js restore <fichero.json>'); process.exit(1); }
     restoreData(arg).then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
-  } else if (action === 'list') {
-    listBackups();
-  } else {
-    console.log('Uso: node backup.js [export|list|restore <file>]');
-  }
+  } else if (action === 'list') listBackups();
+  else console.log('Uso: node backup.js [export|list|restore <file>]');
 }
