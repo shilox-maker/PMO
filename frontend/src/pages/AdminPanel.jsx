@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { Sliders, Users, Edit2, Briefcase, Receipt, ShieldAlert } from 'lucide-react';
+import { Sliders, Users, Edit2, Briefcase, Receipt, ShieldAlert, Database } from 'lucide-react';
 import StatesAdmin from '../components/admin/StatesAdmin';
 import UsersAdmin from '../components/admin/UsersAdmin';
 import SedesAdmin from '../components/admin/SedesAdmin';
@@ -9,6 +9,7 @@ import PortfoliosAdmin from '../components/admin/PortfoliosAdmin';
 import CapexTypesAdmin from '../components/admin/CapexTypesAdmin';
 import InvoiceTypesAdmin from '../components/admin/InvoiceTypesAdmin';
 import MaintenanceConfigCard from '../components/admin/MaintenanceConfigCard';
+import BackupsAdmin from '../components/admin/BackupsAdmin';
 
 export default function AdminPanel() {
   const { t } = useTranslation();
@@ -47,6 +48,10 @@ export default function AdminPanel() {
           <ShieldAlert size={16} className="tab-icon-inline" />
           {t('adminPanel.maintenance')}
         </button>
+        <button className={`m3-tab ${activeTab === 'backups' ? 'active' : ''}`} onClick={() => setActiveTab('backups')}>
+          <Database size={16} className="tab-icon-inline" />
+          {t('adminPanel.backups')}
+        </button>
       </div>
 
       {activeTab === 'states' && (
@@ -75,6 +80,10 @@ export default function AdminPanel() {
 
       {activeTab === 'maintenance' && (
         <MaintenanceConfigCard getAuthHeaders={getAuthHeaders} onStatusChange={() => checkMaintenanceStatus()} />
+      )}
+
+      {activeTab === 'backups' && (
+        <BackupsAdmin getAuthHeaders={getAuthHeaders} />
       )}
     </div>
   );

@@ -87,7 +87,29 @@
     "portfolios": "Portfolios",
     "capex": "CAPEX Types",
     "invoices": "Invoice Types",
-    "maintenance": "Maintenance Mode"
+    "maintenance": "Maintenance Mode",
+    "backups": "Backups"
+  },
+  "backupsAdmin": {
+    "title": "Database Backups Management",
+    "subtitle": "Generate snapshots and restore data saved locally or in Azure Blob Storage.",
+    "generateBtn": "Generate Backup Now",
+    "uploadBtn": "Upload & Restore JSON",
+    "refreshBtn": "Refresh List",
+    "listTitle": "Available Backups",
+    "filename": "File Name",
+    "size": "Size",
+    "updatedAt": "Date",
+    "source": "Location",
+    "actions": "Actions",
+    "download": "Download",
+    "restore": "Restore",
+    "confirmRestoreTitle": "Confirm Restore",
+    "confirmRestoreMsg": "Are you sure you want to restore this backup? Current data will be replaced by the backup dataset.",
+    "successGenerate": "Backup generated and saved successfully.",
+    "successRestore": "Database restored successfully.",
+    "errorGenerate": "Error generating backup.",
+    "errorRestore": "Error restoring backup."
   },
   "governanceKpis": {
     "compareVariation": "Compare variation:",

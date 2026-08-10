@@ -87,7 +87,29 @@
     "portfolios": "Carteiras",
     "capex": "Tipos CAPEX",
     "invoices": "Tipos de Fatura",
-    "maintenance": "Modo de Manutenção"
+    "maintenance": "Modo de Manutenção",
+    "backups": "Backups"
+  },
+  "backupsAdmin": {
+    "title": "Gestão de Cópias de Segurança (Backups)",
+    "subtitle": "Gere snapshots e restaure dados salvos localmente ou no Azure Blob Storage.",
+    "generateBtn": "Gerar Backup Agora",
+    "uploadBtn": "Carregar e Restaurar JSON",
+    "refreshBtn": "Atualizar Lista",
+    "listTitle": "Backups Disponíveis",
+    "filename": "Nome do Ficheiro",
+    "size": "Tamanho",
+    "updatedAt": "Data",
+    "source": "Localização",
+    "actions": "Ações",
+    "download": "Descarregar",
+    "restore": "Restaurar",
+    "confirmRestoreTitle": "Confirmar Restauração",
+    "confirmRestoreMsg": "Tem certeza de que deseja restaurar este backup? Os dados atuais serão substituídos pelos do backup.",
+    "successGenerate": "Backup gerado e salvo com sucesso.",
+    "successRestore": "Base de dados restaurada com sucesso.",
+    "errorGenerate": "Erro ao gerar o backup.",
+    "errorRestore": "Erro ao restaurar o backup."
   },
   "status": {
     "VERDE": "VERDE",

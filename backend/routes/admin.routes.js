@@ -56,4 +56,12 @@ router.delete('/admin/invoice-types/:id', adminController.deleteTipoFactura);
 router.get('/admin/maintenance', adminController.getMaintenanceStatus);
 router.put('/admin/maintenance', adminController.updateMaintenanceStatus);
 
+// Backups admin
+const backupsController = require('../controllers/admin/backups.controller');
+router.post('/admin/backups/export', backupsController.generateBackup);
+router.get('/admin/backups', backupsController.getBackupsList);
+router.get('/admin/backups/download/:filename', backupsController.downloadBackup);
+router.post('/admin/backups/restore', backupsController.restoreExistingBackup);
+router.post('/admin/backups/upload', backupsController.restoreUploadedBackup);
+
 module.exports = router;
