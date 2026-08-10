@@ -161,6 +161,7 @@
     "allPms": "Todos os PMs",
     "allPartners": "Todos os Parceiros",
     "allRags": "Todos os RAGs",
+    "allStates": "Todos os Estados",
     "isStrategic": "Estratégico?",
     "allTypes": "Todos os Tipos",
     "allPortfolios": "Todas as Carteiras",
@@ -450,5 +451,10 @@
     "action": "Ação",
     "open": "Aberto",
     "closed": "Fechado"
+  },
+  "auth": {
+    "sessionExpiredTitle": "Sessão Expirada",
+    "sessionExpiredMessage": "Sua sessão expirou ou o token de acesso não é mais válido. Por favor, faça login novamente para continuar.",
+    "relogin": "Iniciar Sessão"
   }
 }

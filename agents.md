@@ -22,6 +22,7 @@ Tú eres el encargado de mantener la trazabilidad del proyecto utilizando el arc
 1. **Comando: "Analiza la IDEA-XX"**
    - Ve a `backend/docs/roadmap.md`, busca la idea en la sección "1. Bandeja de Entrada".
    - Analiza el código fuente actual del proyecto para evaluar la viabilidad.
+   - Si tienes alguna duda, preguntas
    - **Acción:** Mueve el bloque de la idea a la sección "2. En Análisis / Especificación". Añade allí tu análisis técnico detallado, los archivos que se verán afectados y el impacto estimado. *No programes nada aún.*
 
 2. **Comando: "Aprobada la FEATURE-XX" o "Da el OK a FEATURE-XX"** (o "IDEA-XX es OK")

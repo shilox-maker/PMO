@@ -16,35 +16,35 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('states');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="layout-col-gap-lg">
       {/* Sub tabs switcher */}
       <div className="m3-tabs-container">
         <button className={`m3-tab ${activeTab === 'states' ? 'active' : ''}`} onClick={() => setActiveTab('states')}>
-          <Sliders size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          <Sliders size={16} className="tab-icon-inline" />
           {t('adminPanel.states')}
         </button>
         <button className={`m3-tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
-          <Users size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          <Users size={16} className="tab-icon-inline" />
           {t('adminPanel.users')}
         </button>
         <button className={`m3-tab ${activeTab === 'sedes' ? 'active' : ''}`} onClick={() => setActiveTab('sedes')}>
-          <Edit2 size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          <Edit2 size={16} className="tab-icon-inline" />
           {t('adminPanel.sedes')}
         </button>
         <button className={`m3-tab ${activeTab === 'portfolios' ? 'active' : ''}`} onClick={() => setActiveTab('portfolios')}>
-          <Briefcase size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          <Briefcase size={16} className="tab-icon-inline" />
           {t('adminPanel.portfolios')}
         </button>
         <button className={`m3-tab ${activeTab === 'capex' ? 'active' : ''}`} onClick={() => setActiveTab('capex')}>
-          <Sliders size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          <Sliders size={16} className="tab-icon-inline" />
           {t('adminPanel.capex')}
         </button>
         <button className={`m3-tab ${activeTab === 'invoices' ? 'active' : ''}`} onClick={() => setActiveTab('invoices')}>
-          <Receipt size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          <Receipt size={16} className="tab-icon-inline" />
           {t('adminPanel.invoices')}
         </button>
         <button className={`m3-tab ${activeTab === 'maintenance' ? 'active' : ''}`} onClick={() => setActiveTab('maintenance')}>
-          <ShieldAlert size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+          <ShieldAlert size={16} className="tab-icon-inline" />
           {t('adminPanel.maintenance')}
         </button>
       </div>

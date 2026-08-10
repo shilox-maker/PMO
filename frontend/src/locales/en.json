@@ -372,6 +372,7 @@
     "allPms": "All PMs",
     "allPartners": "All Partners",
     "allRags": "All RAGs",
+    "allStates": "All States",
     "isStrategic": "Strategic?",
     "allTypes": "All Types",
     "allPortfolios": "All Portfolios",
@@ -451,5 +452,10 @@
     "errorToAvoid": "Lesson / Pitfall to Avoid",
     "description": "Lesson Learned",
     "recommendation": "Recommendation"
+  },
+  "auth": {
+    "sessionExpiredTitle": "Session Expired",
+    "sessionExpiredMessage": "Your session has expired or your access token is no longer valid. Please sign in again to continue.",
+    "relogin": "Sign In"
   }
 }

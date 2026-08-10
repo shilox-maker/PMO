@@ -50,7 +50,7 @@ const allowedOrigins = process.env.FRONTEND_URL ? [...new Set([process.env.FRONT
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'test') {
+    if (!origin || allowedOrigins.includes(origin) || (origin && origin.endsWith('.azurewebsites.net')) || process.env.NODE_ENV === 'test') {
       return callback(null, true);
     }
     return callback(new Error('Acceso restringido por política de seguridad CORS'));
@@ -63,7 +63,12 @@ app.use(express.json());
 
 // Production: serve frontend static files (before auth to skip JWT)
 if (process.env.NODE_ENV === 'production') {
-  const distPath = path.join(__dirname, '../frontend/dist');
+  const fs = require('fs');
+  const possiblePaths = [
+    path.join(__dirname, '../frontend/dist'),
+    path.join(__dirname, 'frontend/dist')
+  ];
+  const distPath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
   app.use(express.static(distPath));
   app.use((req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/mcp')) return next();

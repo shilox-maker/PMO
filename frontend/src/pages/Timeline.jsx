@@ -2,33 +2,17 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import TimelineToolbar from '../components/timeline/TimelineToolbar';
+import { 
+  ProjectTimelineLabel, 
+  ProjectTimelineBar, 
+  parseDate, 
+  diffDays, 
+  generateTimelineColumns, 
+  filterTimelineProjects 
+} from '../components/timeline/ProjectTimelineRow';
 
 const ZOOM_LEVELS = ['trimestral', 'mensual', 'semanal'];
 const MS_PER_DAY = 86400000;
-
-const RAG_COLORS = {
-  VERDE: 'var(--color-rag-green)',
-  AMARILLO: 'var(--color-rag-yellow)',
-  ROJO: 'var(--color-rag-red)'
-};
-
-function parseDate(str) {
-  if (!str) return null;
-  const [y, m, d] = str.split('-').map(Number);
-  return new Date(y, m - 1, d);
-}
-
-function formatMonthYear(date, lang = 'es') {
-  return date.toLocaleDateString(lang, { month: 'short', year: '2-digit' });
-}
-
-function formatWeek(date, lang = 'es') {
-  return date.toLocaleDateString(lang, { day: '2-digit', month: 'short' });
-}
-
-function diffDays(a, b) {
-  return Math.round((b - a) / MS_PER_DAY);
-}
 
 export default function Timeline({ onViewProject, projectId, hideHeader }) {
   const { t } = useTranslation();
@@ -36,20 +20,48 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [zoomIndex, setZoomIndex] = useState(1);
+  const [expandedProjects, setExpandedProjects] = useState(new Set());
+
+  // Master Lists
+  const [pmsList, setPmsList] = useState([]);
+  const [vendorsList, setVendorsList] = useState([]);
+  const [portfoliosList, setPortfoliosList] = useState([]);
+  const [statesList, setStatesList] = useState([]);
+
+  // Filter States
+  const [searchTerm, setSearchTerm] = useState('');
   const [showClosed, setShowClosed] = useState(false);
   const [filterRag, setFilterRag] = useState('');
   const [filterPm, setFilterPm] = useState('');
+  const [filterVendor, setFilterVendor] = useState('');
+  const [filterPortfolio, setFilterPortfolio] = useState('');
+  const [filterEstrategico, setFilterEstrategico] = useState('');
+  const [filterIniciativa, setFilterIniciativa] = useState('');
+  const [filterState, setFilterState] = useState('');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
+
   const [tooltip, setTooltip] = useState(null);
   const scrollRef = useRef(null);
   const todayLineRef = useRef(null);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/timeline`, { headers: getAuthHeaders() })
-      .then(r => r.json())
-      .then(data => { setProjects(data); setLoading(false); })
-      .catch(err => { console.error(err); setLoading(false); });
+    const headers = getAuthHeaders();
+    const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    Promise.all([
+      fetch(`${API}/pms`, { headers }).then(r => r.json()),
+      fetch(`${API}/vendors`, { headers }).then(r => r.json()),
+      fetch(`${API}/portfolios`, { headers }).then(r => r.json()),
+      fetch(`${API}/portfolio/states`, { headers }).then(r => r.json()),
+      fetch(`${API}/timeline`, { headers }).then(r => r.json())
+    ]).then(([pms, vds, pts, sts, tml]) => {
+      setPmsList(Array.isArray(pms) ? pms : []);
+      setVendorsList(Array.isArray(vds) ? vds : []);
+      setPortfoliosList(Array.isArray(pts) ? pts : []);
+      setStatesList(Array.isArray(sts) ? sts : []);
+      setProjects(Array.isArray(tml) ? tml : []);
+      setLoading(false);
+    }).catch(err => { console.error(err); setLoading(false); });
   }, []);
 
   useEffect(() => {
@@ -61,27 +73,25 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
     }
   }, [loading, zoomIndex]);
 
+  const toggleExpandProject = (pId, e) => {
+    if (e) e.stopPropagation();
+    setExpandedProjects(prev => {
+      const next = new Set(prev);
+      if (next.has(pId)) next.delete(pId);
+      else next.add(pId);
+      return next;
+    });
+  };
+
   const zoom = ZOOM_LEVELS[zoomIndex];
 
   const filtered = useMemo(() => {
-    if (projectId) {
-      return projects.filter(p => p.id_proyecto === projectId);
-    }
-    return projects.filter(p => {
-      if (!showClosed && p.proyecto_cerrado) return false;
-      if (filterRag && p.indicador_rag !== filterRag) return false;
-      if (filterPm && p.pm_nombre !== filterPm) return false;
-
-      const pStart = p.fecha_inicio;
-      const pEnd = p.fecha_fin_estimada;
-      if (filterStartDate && pEnd && pEnd < filterStartDate) return false;
-      if (filterEndDate && pStart && pStart > filterEndDate) return false;
-
-      return true;
+    return filterTimelineProjects(projects, {
+      projectId, showClosed, filterRag, filterPm, filterVendor,
+      filterPortfolio, filterState, filterEstrategico, searchTerm,
+      filterStartDate, filterEndDate
     });
-  }, [projects, showClosed, filterRag, filterPm, filterStartDate, filterEndDate, projectId]);
-
-  const pmList = useMemo(() => [...new Set(projects.map(p => p.pm_nombre))].sort(), [projects]);
+  }, [projects, showClosed, filterRag, filterPm, filterVendor, filterPortfolio, filterState, filterEstrategico, searchTerm, filterStartDate, filterEndDate, projectId]);
 
   const { timelineStart, timelineEnd, totalDays } = useMemo(() => {
     if (filtered.length === 0) return { timelineStart: new Date(), timelineEnd: new Date(), totalDays: 365 };
@@ -106,38 +116,8 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
   const chartWidth = totalDays * pxPerDay;
 
   const columns = useMemo(() => {
-    const cols = [];
-    const d = new Date(timelineStart);
-    if (zoom === 'semanal') {
-      const dayOfWeek = d.getDay();
-      d.setDate(d.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-      while (d <= timelineEnd) {
-        const start = new Date(d);
-        const end = new Date(d);
-        end.setDate(end.getDate() + 6);
-        cols.push({ label: formatWeek(start), startOffset: diffDays(timelineStart, start) * pxPerDay, width: 7 * pxPerDay });
-        d.setDate(d.getDate() + 7);
-      }
-    } else if (zoom === 'mensual') {
-      while (d <= timelineEnd) {
-        const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
-        const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-        const daysInMonth = monthEnd.getDate();
-        cols.push({ label: formatMonthYear(monthStart), startOffset: diffDays(timelineStart, monthStart) * pxPerDay, width: daysInMonth * pxPerDay });
-        d.setMonth(d.getMonth() + 1);
-      }
-    } else {
-      while (d <= timelineEnd) {
-        const qStart = new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3, 1);
-        const qEnd = new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3 + 3, 0);
-        const days = diffDays(qStart, qEnd) + 1;
-        const qNum = Math.floor(d.getMonth() / 3) + 1;
-        cols.push({ label: `Q${qNum} ${d.getFullYear()}`, startOffset: diffDays(timelineStart, qStart) * pxPerDay, width: days * pxPerDay });
-        d.setMonth(Math.floor(d.getMonth() / 3) * 3 + 3);
-      }
-    }
-    return cols;
-  }, [timelineStart, timelineEnd, zoom, pxPerDay, totalDays]);
+    return generateTimelineColumns(timelineStart, timelineEnd, zoom, pxPerDay);
+  }, [timelineStart, timelineEnd, zoom, pxPerDay]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -168,13 +148,20 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
     <div className="timeline-page">
       {!hideHeader && (
         <TimelineToolbar
+          searchTerm={searchTerm} setSearchTerm={setSearchTerm}
           filterRag={filterRag} setFilterRag={setFilterRag}
           filterPm={filterPm} setFilterPm={setFilterPm}
+          filterVendor={filterVendor} setFilterVendor={setFilterVendor}
+          filterPortfolio={filterPortfolio} setFilterPortfolio={setFilterPortfolio}
+          filterEstrategico={filterEstrategico} setFilterEstrategico={setFilterEstrategico}
+          filterIniciativa={filterIniciativa} setFilterIniciativa={setFilterIniciativa}
+          filterState={filterState} setFilterState={setFilterState}
           filterStartDate={filterStartDate} setFilterStartDate={setFilterStartDate}
           filterEndDate={filterEndDate} setFilterEndDate={setFilterEndDate}
           showClosed={showClosed} setShowClosed={setShowClosed}
           zoomIndex={zoomIndex} setZoomIndex={setZoomIndex}
-          pmList={pmList} zoom={zoom}
+          pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList} statesList={statesList}
+          zoom={zoom}
         />
       )}
 
@@ -187,18 +174,14 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
           <div className="timeline-labels">
             <div className="timeline-labels-header">{t('timeline.project')}</div>
             {filtered.map((p, i) => (
-              <div
+              <ProjectTimelineLabel
                 key={p.id_proyecto}
-                className={`timeline-label-row ${i % 2 === 0 ? 'even' : 'odd'}`}
-                onClick={() => onViewProject(p.id_proyecto)}
-                title={`Ir a ${p.nombre_proyecto}`}
-              >
-                <div className="timeline-label-rag" style={{ background: RAG_COLORS[p.indicador_rag] }}></div>
-                <div className="timeline-label-info">
-                  <span className="timeline-label-id">{p.id_proyecto}</span>
-                  <span className="timeline-label-name">{p.nombre_proyecto}</span>
-                </div>
-              </div>
+                project={p}
+                index={i}
+                isExpanded={expandedProjects.has(p.id_proyecto)}
+                onToggleExpand={toggleExpandProject}
+                onViewProject={onViewProject}
+              />
             ))}
           </div>
 
@@ -232,48 +215,19 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
                 </div>
               )}
 
-              {filtered.map((p, i) => {
-                const start = parseDate(p.fecha_kickoff || p.fecha_inicio);
-                const end = parseDate(p.fecha_go_live || p.fecha_fin_estimada);
-                if (!start || !end) return null;
-
-                const barLeft = diffDays(timelineStart, start) * pxPerDay;
-                const barWidth = Math.max(diffDays(start, end) * pxPerDay, 8);
-
-                return (
-                  <div key={p.id_proyecto} className={`timeline-bar-row ${i % 2 === 0 ? 'even' : 'odd'}`}>
-                    <div
-                      className="timeline-bar"
-                      style={{
-                        left: barLeft,
-                        width: barWidth,
-                        backgroundColor: RAG_COLORS[p.indicador_rag],
-                      }}
-                      onClick={() => onViewProject(p.id_proyecto)}
-                      title={`${p.nombre_proyecto}\n${p.fecha_kickoff || p.fecha_inicio} → ${p.fecha_go_live || p.fecha_fin_estimada}\nPM: ${p.pm_nombre}`}
-                    >
-                      {barWidth > 80 && (
-                        <span className="timeline-bar-text">{p.nombre_proyecto}</span>
-                      )}
-                    </div>
-
-                    {p.hitos.map(h => {
-                      const hDate = parseDate(h.fecha_limite);
-                      if (!hDate) return null;
-                      const hOffset = diffDays(timelineStart, hDate) * pxPerDay;
-                      return (
-                        <div
-                          key={h.id_tarea}
-                          className={`timeline-milestone ${h.estado === 'COMPLETADA' ? 'completed' : 'pending'}`}
-                          style={{ left: hOffset }}
-                          onMouseEnter={(e) => handleMilestoneHover(e, h, p)}
-                          onMouseLeave={() => setTooltip(null)}
-                        ></div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
+              {filtered.map((p, i) => (
+                <ProjectTimelineBar
+                  key={`bar-group-${p.id_proyecto}`}
+                  project={p}
+                  index={i}
+                  isExpanded={expandedProjects.has(p.id_proyecto)}
+                  timelineStart={timelineStart}
+                  pxPerDay={pxPerDay}
+                  onViewProject={onViewProject}
+                  onMilestoneHover={handleMilestoneHover}
+                  onMilestoneLeave={() => setTooltip(null)}
+                />
+              ))}
             </div>
           </div>
         </div>

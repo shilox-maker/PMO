@@ -18,6 +18,8 @@ import MaintenanceScreen from './components/MaintenanceScreen';
 import AdminMaintenanceBanner from './components/AdminMaintenanceBanner';
 import CommandPaletteModal from './components/modals/CommandPaletteModal';
 import UserMenuDropdown from './components/UserMenuDropdown';
+import ErrorBoundary from './components/ErrorBoundary';
+import SessionExpiredModal from './components/SessionExpiredModal';
 import { useTranslation } from 'react-i18next';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
@@ -718,6 +720,7 @@ function MainAppContent() {
                 <Route path="/portfolios/report" element={<PortfolioReport />} />
 
                 <Route path="/admin" element={<AdminPanel />} />
+                <Route path="*" element={<Navigate to="/proyectos" replace />} />
               </Routes>
             </React.Suspense>
           </div>
@@ -754,15 +757,22 @@ function AppConsumer() {
     return <LoginScreen />;
   }
 
-  return <MainAppContent />;
+  return (
+    <>
+      <SessionExpiredModal />
+      <MainAppContent />
+    </>
+  );
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppConsumer />
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppConsumer />
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

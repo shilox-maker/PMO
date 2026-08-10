@@ -14,6 +14,8 @@ dist/
 build/
 bin/
 obj/
+*.zip
+dist-azure-staging/
 
 # Environments and Secrets
 .env

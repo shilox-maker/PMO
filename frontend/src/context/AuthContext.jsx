@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [activeRequests, setActiveRequests] = useState(0);
   const [isMaintenanceActive, setIsMaintenanceActive] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState('');
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
 
   const checkMaintenanceStatus = async () => {
     try {
@@ -26,10 +27,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Interceptar fetch global para monitorear actividad en segundo plano y respuestas HTTP 503
+  // Interceptar fetch global para monitorear actividad en segundo plano, 503 y 401 (sesión expirada)
   useEffect(() => {
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
+      const url = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
       setActiveRequests(prev => prev + 1);
       try {
         const response = await originalFetch(...args);
@@ -41,6 +43,8 @@ export const AuthProvider = ({ children }) => {
               if (data.error) setMaintenanceMessage(data.error);
             }
           }).catch(() => {});
+        } else if (response.status === 401 && !url.includes('/login') && !url.includes('/auth/verify')) {
+          setIsSessionExpired(true);
         }
         return response;
       } finally {
@@ -193,6 +197,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('pm_user');
     setToken(null);
     setCurrentPm(null);
+    setIsSessionExpired(false);
   };
 
   // Helper to fetch options with Authorization JWT header
@@ -221,7 +226,9 @@ export const AuthProvider = ({ children }) => {
       isMaintenanceActive,
       maintenanceMessage,
       checkMaintenanceStatus,
-      setIsMaintenanceActive
+      setIsMaintenanceActive,
+      isSessionExpired,
+      setIsSessionExpired
     }}>
       {children}
     </AuthContext.Provider>

@@ -372,6 +372,7 @@
     "allPms": "Todos los PM",
     "allPartners": "Todos los Partners",
     "allRags": "Todos los RAG",
+    "allStates": "Todos los Estados",
     "isStrategic": "¿Estratégico?",
     "allTypes": "Todos los Tipos",
     "allPortfolios": "Todos los Portfolios",
@@ -451,5 +452,10 @@
     "errorToAvoid": "Error a Evitar",
     "description": "Lección Aprendida",
     "recommendation": "Recomendación"
+  },
+  "auth": {
+    "sessionExpiredTitle": "Sesión Expirada",
+    "sessionExpiredMessage": "Tu sesión ha caducado o el token de acceso ya no es válido. Por favor, vuelve a iniciar sesión para continuar.",
+    "relogin": "Iniciar Sesión"
   }
 }

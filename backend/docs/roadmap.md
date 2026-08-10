@@ -2,8 +2,8 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
-
-## 🔍 2. En Análisis / Especificación
+- [ ] **REFACTOR-03 (IDEA-61): Limpieza de dependencias y scripts heredados de IIS / Windows Server / Raspberry Pi tras migración a Azure PaaS**
+  - **Descripción:** Eliminación limpia de scripts de despliegue heredados para Windows Server 2022 / IIS (`setup-iis.ps1`, `setup-server.ps1`, `deploy-pre.ps1`, `deploy-pro.ps1`), configuraciones de `iisnode`, `web.config`, certificados `win-acme`, y archivos de entorno Raspberry Pi (`.envRaspberry`), consolidando la infraestructura exclusivamente en desarrollo local y Azure App Service (`build-azure-zip.ps1`).
 - [ ] **FEATURE-56 (IDEA-56): Segregación por Ámbito / Unidad de Negocio (Multi-tenancy con Maestros Compartidos)**
   - **Descripción:** Implementación de arquitectura multi-ámbito/multi-departamento para aislar la gestión de proyectos, presupuestos y portafolios entre diferentes equipos/unidades de negocio, iniciando con el ámbito **"IT Corporate"** y manteniendo compartidos los catálogos globales (**Proveedores**, **Sedes/Sites**, **Tipos de Capex/Subtipos**, **Tipos de Factura** y moneda única en **€**).
   - **Análisis Técnico y Especificación Acordada:**
@@ -22,7 +22,7 @@
        - `Tipos_Factura` y `Estados_Proyecto`.
     5. **Backend Middleware & Control de Permisos en Servidor (`tenantScope`):**
        - Middleware `scopeMiddleware.js`: Valida el Token JWT y comprueba los ámbitos autorizados del usuario en la tabla `Usuario_Ambitos`.
-       - **Anti-Manipulación (Zero-Trust):** Si un cliente o la IA intenta enviar un `X-Ambito-Id` al que no tiene acceso, el servidor rechaza la petición con un `HTTP 403 Forbidden`. La opción `ALL` solo se autoriza si el perfil del JWT es `ADMINISTRADOR` o `DIRECTOR`.
+       - **Anti-Manipulación (Zero-Trust):** Si un cliente o la IA intenta enviar un `X-Ambito-Id` al que no tiene acceso, el servidor rejaza la petición con un `HTTP 403 Forbidden`. La opción `ALL` solo se autoriza si el perfil del JWT es `ADMINISTRADOR` o `DIRECTOR`.
     6. **Frontend UI/UX (Conmutador de Ámbito):**
        - `AuthContext`: Estado `selectedAmbito` con almacenamiento local (`localStorage`).
        - Selector de Ámbito activo en `UserMenuDropdown` / NavigationRail (incluye opción "Todos los Ámbitos (Vista Global)" para Admins/Directores).
@@ -40,15 +40,26 @@
     - Frontend: `frontend/src/context/AuthContext.jsx`, `frontend/src/services/api.js`, `frontend/src/components/UserMenuDropdown.jsx`, `frontend/src/pages/admin/AdminUsuariosPage.jsx`.
   - **Impacto Estimado:** Alto. Requerirá ejecutar `node migrate.js up` y verificar la integridad de las consultas en Backend, el servidor MCP y el selector en Frontend.
 
-## 🟩 3. Listas para Codificar (Tú les has dado el OK)
-
 ## 📦 4. Implementadas
+
 
 ## 🧪 5. En Testeo / Pruebas
 
+
 ## 🚀 6. Pendiente de Subir (Listo para Git)
 
+
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-60 (IDEA-62): Timeline Gantt interactivo desplegable por tareas y sincronización de filtros con Proyectos** (2026-08-10)
+  - **Descripción:** Al hacer clic en una fila/proyecto del Gantt, se expande colapsable mostrando las tareas e hitos individuales del proyecto situados temporalmente en la barra Gantt. Los filtros de la vista Timeline se homologan con los de la pestaña Proyectos (buscador de texto, estado, RAG, PM/Lead, patrocinador, rango de fechas), conservando el selector de zoom temporal (Semanal, Mensual, Trimestral).
+- [x] **BUG-05 (IDEA-57): Control de pérdida de sesión / fallback visual y redirección al expirarse la sesión o error de ruta** (2026-08-10)
+  - **Descripción:** A veces se pierde la sesión o se produce un error de autenticación/ruta y la aplicación se queda en pantalla en blanco, obligando al usuario a refrescar o borrar la ruta manualmente para volver a la raíz. Se requiere implementar un indicador visual claro del problema (p. ej. notificación/modal de sesión expirada, Error Boundary global y fallback de redirección al login/raíz) para que nunca se quede la pantalla en blanco.
+- [x] **FEATURE-59 (IDEA-59): Homogeneización de selectores y filtros en Timeline Portfolio según diseño estándar de Proyectos** (2026-08-10)
+  - **Descripción:** Homogeneización visual de los desplegables de selección, inputs de fecha, checkboxes y caja de zoom en `TimelineToolbar.jsx` adaptándolos a la altura estándar de `38px`, bordes M3 de `12px` y colores de superficie de `index.css`.
+- [x] **REFACTOR-02 (IDEA-60): Auditoría y refactorización de CSS (Migración de estilos inline a index.css)** (2026-08-10)
+  - **Descripción:** Auditoría e inicio de migración de estilos inline (`style={{...}}`) a clases utilitarias centralizadas en `index.css` (`layout-col-gap-lg`, `tab-icon-inline`, etc.), comenzando por el módulo `AdminPanel.jsx` y asegurando la adherencia a la paleta Glassmorphic M3.
+- [x] **FEATURE-58 (IDEA-58): Ocultar Fecha de Inicio y Fecha Fin Base en Dashboard Portfolio** (2026-08-10)
+  - **Descripción:** En la vista de Dashboard Portfolio / Informe PIPs, ocultar por defecto las columnas/campos de Fecha de Inicio (`fecha_inicio`) y Fecha Fin Base (`fecha_fin_inicial`) para simplificar y limpiar la interfaz visual, manteniendo visible por defecto la Fecha Fin Estimada (`fecha_fin_estimada`).
 - [x] **FEATURE-52 (IDEA-52): Homogeneización de KPIs y Salud del Proyecto en Informes (Generador HTML/PDF vs. Envío por Email de Comunicación)** (2026-08-07)
   - **Descripción:** Homogeneización integral de la sección "Resumen General, KPIs y Salud del Proyecto" para sincronizar la presentación de datos entre el informe ejecutivo HTML/PDF (`reportHtmlSections.js`) y el informe enviado por correo desde el Plan de Comunicación (`emailReportBuilder.js`). Incluye Estado (Badge), Salud General (%), Fechas Fin Inicial/Estimada, Días de Retraso, Avance de Tiempo (%), Presupuesto Inicial vs. Gasto Comprometido (€), Alerta de Sobrecosto, Próximo Hito (🎯) y Último Comentario PMO (💬).
 - [x] **FEATURE-55 (IDEA-55): Agrupar perfil de usuario en submenú desplegable M3 y barra lateral colapsable (NavigationRail)** (2026-08-07)
