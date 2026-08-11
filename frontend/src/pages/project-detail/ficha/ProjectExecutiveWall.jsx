@@ -28,7 +28,7 @@ export default function ProjectExecutiveWall({
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'IMPORTANT' | 'DIRECCION'
 
   const filteredComments = useMemo(() => {
-    if (!comments) return [];
+    if (!Array.isArray(comments)) return [];
     if (filterType === 'IMPORTANT') {
       return comments.filter(c => c.es_importante);
     }
@@ -39,7 +39,7 @@ export default function ProjectExecutiveWall({
   }, [comments, filterType, canSeeDireccion]);
 
   const counts = useMemo(() => {
-    if (!comments) return { all: 0, important: 0, direccion: 0 };
+    if (!Array.isArray(comments)) return { all: 0, important: 0, direccion: 0 };
     return {
       all: comments.length,
       important: comments.filter(c => c.es_importante).length,

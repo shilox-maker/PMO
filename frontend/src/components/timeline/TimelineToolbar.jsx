@@ -119,7 +119,7 @@ export default function TimelineToolbar({
           >
             <option key="all-portfolios" value="">{t('projectsTable.allPortfolios')}</option>
             {portfoliosList.map(p => (
-              <option key={p.id_portfolio} value={p.id_portfolio}>{p.nombre_portfolio}</option>
+              <option key={p.id_portfolio} value={p.id_portfolio}>{p.nombre}</option>
             ))}
           </select>
         )}

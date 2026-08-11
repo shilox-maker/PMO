@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db.config');
+const { v7: uuidv7 } = require('uuid');
 
 // 1. Sedes Model
 const Sedes = sequelize.define('Sedes', {
@@ -246,6 +247,11 @@ const Portfolios = sequelize.define('Portfolios', {
     primaryKey: true,
     autoIncrement: true
   },
+  uuid_v7: {
+    type: DataTypes.UUID,
+    defaultValue: () => uuidv7(),
+    allowNull: true
+  },
   nombre: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -383,6 +389,11 @@ const Proyectos = sequelize.define('Proyectos', {
     type: DataTypes.STRING,
     primaryKey: true, // Custom format: PRJ-YYYY-XXX
     allowNull: false
+  },
+  uuid_v7: {
+    type: DataTypes.UUID,
+    defaultValue: () => uuidv7(),
+    allowNull: true
   },
   nombre_proyecto: {
     type: DataTypes.STRING,
@@ -829,6 +840,11 @@ const Riesgos = sequelize.define('Riesgos', {
     primaryKey: true,
     allowNull: false
   },
+  uuid_v7: {
+    type: DataTypes.UUID,
+    defaultValue: () => uuidv7(),
+    allowNull: true
+  },
   id_proyecto: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -899,6 +915,11 @@ const LeccionesAprendidas = sequelize.define('Lecciones_Aprendidas', {
     type: DataTypes.STRING,
     primaryKey: true,
     allowNull: false
+  },
+  uuid_v7: {
+    type: DataTypes.UUID,
+    defaultValue: () => uuidv7(),
+    allowNull: true
   },
   tipo_leccion: {
     type: DataTypes.ENUM('BUENA_PRACTICA', 'ERROR_A_EVITAR'),
@@ -979,6 +1000,11 @@ const Facturas = sequelize.define('Facturas', {
     primaryKey: true,
     allowNull: false
   },
+  uuid_v7: {
+    type: DataTypes.UUID,
+    defaultValue: () => uuidv7(),
+    allowNull: true
+  },
   id_proyecto: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -1057,6 +1083,11 @@ const CambiosAlcance = sequelize.define('Cambios_Alcance', {
     type: DataTypes.STRING, // Format: CR-YYYY-XXX
     primaryKey: true,
     allowNull: false
+  },
+  uuid_v7: {
+    type: DataTypes.UUID,
+    defaultValue: () => uuidv7(),
+    allowNull: true
   },
   id_proyecto: {
     type: DataTypes.STRING,
@@ -1137,11 +1168,7 @@ const CambiosAlcance = sequelize.define('Cambios_Alcance', {
     }
   }
 }, {
-  indexes: [
-    { name: 'idx_cambios_id_proyecto', fields: ['id_proyecto'] },
-    { name: 'idx_cambios_id_solicitante', fields: ['id_solicitante_contacto'] },
-    { name: 'idx_cambios_id_aprobador', fields: ['id_aprobador_contacto'] }
-  ]
+  tableName: 'Cambios_Alcances'
 });
 
 // 12. Tareas Model
@@ -1150,6 +1177,11 @@ const Tareas = sequelize.define('Tareas', {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
+  },
+  uuid_v7: {
+    type: DataTypes.UUID,
+    defaultValue: () => uuidv7(),
+    allowNull: true
   },
   id_proyecto: {
     type: DataTypes.STRING,
@@ -1207,6 +1239,11 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
     primaryKey: true,
     autoIncrement: true
   },
+  uuid_v7: {
+    type: DataTypes.UUID,
+    defaultValue: () => uuidv7(),
+    allowNull: true
+  },
   id_proyecto: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -1261,6 +1298,7 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
     allowNull: true
   }
 }, {
+  tableName: 'Comentarios_Proyectos',
   indexes: [
     { name: 'idx_comentarios_id_proyecto', fields: ['id_proyecto'] },
     { name: 'idx_comentarios_id_usuario', fields: ['id_usuario'] },

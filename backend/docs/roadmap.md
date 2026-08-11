@@ -2,54 +2,30 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
-- [ ] **REFACTOR-03 (IDEA-61): Limpieza de dependencias y scripts heredados de IIS / Windows Server / Raspberry Pi tras migración a Azure PaaS**
-  - **Descripción:** Eliminación limpia de scripts de despliegue heredados para Windows Server 2022 / IIS (`setup-iis.ps1`, `setup-server.ps1`, `deploy-pre.ps1`, `deploy-pro.ps1`), configuraciones de `iisnode`, `web.config`, certificados `win-acme`, y archivos de entorno Raspberry Pi (`.envRaspberry`), consolidando la infraestructura exclusivamente en desarrollo local y Azure App Service (`build-azure-zip.ps1`).
-- [ ] **FEATURE-56 (IDEA-56): Segregación por Ámbito / Unidad de Negocio (Multi-tenancy con Maestros Compartidos)**
-  - **Descripción:** Implementación de arquitectura multi-ámbito/multi-departamento para aislar la gestión de proyectos, presupuestos y portafolios entre diferentes equipos/unidades de negocio, iniciando con el ámbito **"IT Corporate"** y manteniendo compartidos los catálogos globales (**Proveedores**, **Sedes/Sites**, **Tipos de Capex/Subtipos**, **Tipos de Factura** y moneda única en **€**).
-  - **Análisis Técnico y Especificación Acordada:**
-    1. **Nuevos Modelos en Base de Datos (Sequelize):**
-       - `Ambitos`: Modelo maestro (`id_ambito`, `nombre`, `code`, `descripcion`, `activo`).
-       - `Usuario_Ambitos`: Modelo de asociación N:M (`id_usuario`, `id_ambito`, `rol_ambito`).
-    2. **Modelos Segregados (Clave foránea `id_ambito`):**
-       - `Proyectos`: Añadir columna `id_ambito` (FK -> `Ambitos`).
-       - `Portfolios`: Añadir columna `id_ambito` (FK -> `Ambitos`). Cada ámbito gestiona sus propios Portfolios y Presupuestos de Portfolio (`Portfolio_Budgets`).
-    3. **Modelos Heredados (Segregados indirectamente vía `id_proyecto` / `portfolio_id`):**
-       - Facturas, Pedidos, Riesgos, Hitos, Tareas, Lecciones Aprendidas, Solicitudes de Cambio (CR), Planes de Comunicación.
-    4. **Maestros Compartidos Globalmente (Sin `id_ambito`):**
-       - `Proveedores` y `Contactos_Proveedor` (Grupo Dacsa / Externos).
-       - `Sedes` (Sites).
-       - `Tipos_Capex` y `Subtipos_Capex`.
-       - `Tipos_Factura` y `Estados_Proyecto`.
-    5. **Backend Middleware & Control de Permisos en Servidor (`tenantScope`):**
-       - Middleware `scopeMiddleware.js`: Valida el Token JWT y comprueba los ámbitos autorizados del usuario en la tabla `Usuario_Ambitos`.
-       - **Anti-Manipulación (Zero-Trust):** Si un cliente o la IA intenta enviar un `X-Ambito-Id` al que no tiene acceso, el servidor rejaza la petición con un `HTTP 403 Forbidden`. La opción `ALL` solo se autoriza si el perfil del JWT es `ADMINISTRADOR` o `DIRECTOR`.
-    6. **Frontend UI/UX (Conmutador de Ámbito):**
-       - `AuthContext`: Estado `selectedAmbito` con almacenamiento local (`localStorage`).
-       - Selector de Ámbito activo en `UserMenuDropdown` / NavigationRail (incluye opción "Todos los Ámbitos (Vista Global)" para Admins/Directores).
-       - Interceptor en `api.js` para inyectar automáticamente la cabecera `X-Ambito-Id` en cada llamada.
-    7. **Seguridad Inmutable en el Servidor MCP (Model Context Protocol):**
-       - **Mapa de Claves en `.env` (`MCP_KEYS_CONFIG`):** Se admitirá en `.env` un JSON con el mapa de claves API y sus ámbitos autorizados (ej: `[{"key":"key-admin","ambitos":["ALL"],"default":"IT_CORP"},{"key":"key-it","ambitos":["IT_CORP"],"default":"IT_CORP"}]`).
-       - **Fallback Retrocompatible:** Si solo existe `MCP_API_KEY`, el servidor le asigna por defecto el ámbito `IT_CORP`.
-       - **Validación de Cabecera:** Si el cliente MCP envía `X-Ambito-Code`, el middleware verifica si esa API Key en el mapa JSON tiene autorización para dicho ámbito. Si no tiene autorización, rechaza la conexión con `HTTP 403 Forbidden`.
-       - **Seguridad en Tools:** El `id_ambito` **no es un argumento de las herramientas MCP JSON**; se inyecta desde la sesión validada del servidor en Sequelize (`projects.js`, `lessons.js`, `search.js`).
-    8. **Estrategia de Migración Inicial:**
-       - Se crea la migración SQL (`node migrate.js up`) que inserta automáticamente el ámbito inicial **"IT Corporate"** (`code: IT_CORP`).
-       - Se migran todos los proyectos, portfolios y usuarios existentes asignándoles `id_ambito = 1` (IT Corporate).
-  - **Archivos Afectados:**
-    - Backend: `backend/models/index.js`, `backend/migrations/20260807_create_ambitos_and_scope.js`, `backend/middlewares/auth.js`, `backend/middlewares/scopeMiddleware.js`, `backend/controllers/proyectosController.js`, `backend/controllers/portfoliosController.js`, `backend/controllers/dashboardController.js`, `backend/controllers/usuariosController.js`, `backend/mcp/http.js`, `backend/mcp/serverFactory.js`, `backend/mcp/tools/projects.js`, `backend/mcp/tools/lessons.js`, `backend/mcp/tools/search.js`.
-    - Frontend: `frontend/src/context/AuthContext.jsx`, `frontend/src/services/api.js`, `frontend/src/components/UserMenuDropdown.jsx`, `frontend/src/pages/admin/AdminUsuariosPage.jsx`.
-  - **Impacto Estimado:** Alto. Requerirá ejecutar `node migrate.js up` y verificar la integridad de las consultas en Backend, el servidor MCP y el selector en Frontend.
+*(Sin ideas pendientes de análisis)*
+
+## 🔍 2. En Análisis / Especificación
+*(Sin especificaciones en análisis)*
+
+## 📋 3. Listas para Codificar (Tú les has dado el OK)
+*(Sin tareas pendientes de codificación)*
 
 ## 📦 4. Implementadas
+*(Sin tareas recién implementadas)*
 
 
 ## 🧪 5. En Testeo / Pruebas
+- [ ] **REFACTOR-03 (IDEA-61): Limpieza de dependencias y scripts heredados de IIS / Windows Server / Raspberry Pi tras migración a Azure PaaS** (2026-08-11)
+  - **Descripción:** Eliminación limpia de scripts de despliegue heredados para Windows Server 2022 / IIS (`setup-iis.ps1`, `setup-server.ps1`, `deploy-pre.ps1`, `deploy-pro.ps1`), configuraciones de `iisnode`, `web.config`, certificados `win-acme`, y archivos de entorno Raspberry Pi (`.envRaspberry`), consolidando la infraestructura exclusivamente en desarrollo local y Azure App Service (`build-azure-zip.ps1`).
 
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
+*(Sin tareas pendientes de subir)*
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-63 (IDEA-63): Migración global de Claves Primarias y Foráneas de Entidades a UUIDv7 sin pérdida de datos ni relaciones** (2026-08-11)
+  - **Descripción:** Transformación del esquema de la base de datos de claves autoincrementales enteras (`INT`/`INTEGER`) a identificadores únicos universales temporales (**UUIDv7** RFC 9562) en las entidades transaccionales y de negocio (Proyectos, Tareas, Hitos, Riesgos, Portfolios, Facturas, Pedidos, Comentarios, etc.), manteniendo el rendimiento B-Tree e imprevistibilidad de datos. Se conservan como enteros/códigos las tablas maestras de catálogo (`status`, `roles`, etc.).
 - [x] **FEATURE-60 (IDEA-62): Timeline Gantt interactivo desplegable por tareas y sincronización de filtros con Proyectos** (2026-08-10)
   - **Descripción:** Al hacer clic en una fila/proyecto del Gantt, se expande colapsable mostrando las tareas e hitos individuales del proyecto situados temporalmente en la barra Gantt. Los filtros de la vista Timeline se homologan con los de la pestaña Proyectos (buscador de texto, estado, RAG, PM/Lead, patrocinador, rango de fechas), conservando el selector de zoom temporal (Semanal, Mensual, Trimestral).
 - [x] **BUG-05 (IDEA-57): Control de pérdida de sesión / fallback visual y redirección al expirarse la sesión o error de ruta** (2026-08-10)

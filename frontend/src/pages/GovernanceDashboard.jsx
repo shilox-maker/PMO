@@ -190,7 +190,8 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
           fetch(`${import.meta.env.VITE_API_URL}/projects/${p.id_proyecto}/comments`, { headers: getAuthHeaders() })
         ]);
         const detail = await detailRes.json();
-        const comments = await commentsRes.json();
+        const commentsData = await commentsRes.json();
+        const comments = Array.isArray(commentsData) ? commentsData : [];
         const importantComments = comments.filter(c => c.es_importante);
 
         const calc = detail.calculations || {};

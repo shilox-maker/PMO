@@ -25,7 +25,7 @@ Diseñado bajo la filosofía **KISS** (Keep It Simple, Stupid) para maximizar la
 | **Frontend** | React 19 + Vite | UI de alta densidad en CSS Puro con glassmorphic dark mode, Combobox predictivos y editor WYSIWYG. |
 | **Backend** | Node.js + Express | API REST modular, motor de cálculo financiero en tiempo real, sanitización estricta e integraciones JWT. |
 | **Persistencia** | SQLite / Azure SQL | Entorno local ligero (`SQLite`) y entorno empresarial gestionado (`Azure SQL Server`). |
-| **Servidor / Hosting** | Windows Server + IIS | Reverse Proxy IIS, SSL automatizado vía Win-Acme y servicios gestionados mediante **PM2**. |
+| **Servidor / Hosting** | Azure App Service (PaaS) | Servidor gestionado en Azure PaaS con HTTPS automatizado, CI/CD zip deploy y fallback de desarrollo local. |
 
 ---
 
@@ -43,7 +43,7 @@ Diseñado bajo la filosofía **KISS** (Keep It Simple, Stupid) para maximizar la
 ### 3. 🛠️ Administración y Operaciones del Sistema (SysOps)
 - **Modo Mantenimiento Centralizado:** Activación en tiempo real desde la consola de administración con paso transparente para Administradores.
 - **Backups y Rotación Desatendida:** Generación automática de snapshots JSON y volcados físicos SQLite con retención de hasta 30 días.
-- **Despliegues Idempotentes:** Scripts en PowerShell para actualización segura de entornos PRE y PRO.
+- **Despliegues Idempotentes:** Scripts PowerShell y Zip Deploy para actualización segura en Azure App Service.
 
 ---
 
@@ -55,10 +55,10 @@ La infraestructura incluye un conjunto de automatizaciones para tareas de despli
 | :--- | :--- | :--- |
 | `backupDB.ps1` | **Backups** | Ejecución desatendida programable en el *Programador de Tareas de Windows*. |
 | `restoreDB.ps1` | **Mantenimiento** | Menú CLI interactivo para listar y restaurar snapshots de base de datos. |
-| `deploy-pre.ps1` | **DevOps** | Despliegue automatizado en entorno PRE (Backup + Pull + Migración + Recompilación). |
-| `deploy-pro.ps1` | **DevOps** | Despliegue controlado a entorno PRO previa validación de commits y autorización explícita. |
-| `health-check.ps1` | **Monitoreo** | Diagnóstico del estado del motor Node (PM2), endpoints API y dist web. |
-| `setup-iis.ps1` | **Infraestructura** | Configuración automática de URL Rewrite, sitios IIS y certificados SSL. |
+| `build-azure-zip.ps1` | **DevOps** | Empaquetado optimizado del artefacto para despliegue en Azure App Service. |
+| `deploy-azure.ps1` | **DevOps** | Despliegue automatizado vía Kudu / Azure CLI en Azure App Service (PaaS). |
+| `health-check.ps1` | **Monitoreo** | Diagnóstico del estado del motor Node, endpoints API (`/api/health`) y dist web. |
+| `check-line-limits.js` | **Calidad** | Verificación del límite de líneas por fichero (KISS/SRP audit). |
 
 ---
 

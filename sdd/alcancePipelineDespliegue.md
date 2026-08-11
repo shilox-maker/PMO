@@ -1,5 +1,8 @@
 # Alcance: Automatización de Despliegue y Orquestación (Raspberry Pi)
 
+> [!NOTE]
+> **DOCUMENTO HEREDADO (OBSOLETO):** El script `deploy.sh` y la infraestructura en Raspberry Pi han sido sustituidos por la arquitectura PaaS en **Azure App Service** (`scripts/build-azure-zip.ps1` y `scripts/deploy-azure.ps1`). Este documento se conserva exclusivamente por motivos de registro histórico de diseño.
+
 ## 1. Objetivo
 Crear un script de Bash (`deploy.sh`) en la raíz del monorepositorio que orqueste la actualización completa de la plataforma. Este script debe descargar la última versión del código desde la rama `main` de Azure DevOps, actualizar la base de datos de forma segura, compilar el frontend y reiniciar los servicios (incluyendo la compatibilidad con los túneles Cloudflared de PM2).
 
