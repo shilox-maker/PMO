@@ -15,8 +15,7 @@
 
 
 ## 🧪 5. En Testeo / Pruebas
-- [ ] **REFACTOR-03 (IDEA-61): Limpieza de dependencias y scripts heredados de IIS / Windows Server / Raspberry Pi tras migración a Azure PaaS** (2026-08-11)
-  - **Descripción:** Eliminación limpia de scripts de despliegue heredados para Windows Server 2022 / IIS (`setup-iis.ps1`, `setup-server.ps1`, `deploy-pre.ps1`, `deploy-pro.ps1`), configuraciones de `iisnode`, `web.config`, certificados `win-acme`, y archivos de entorno Raspberry Pi (`.envRaspberry`), consolidando la infraestructura exclusivamente en desarrollo local y Azure App Service (`build-azure-zip.ps1`).
+*(Sin pruebas pendientes)*
 
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
@@ -24,6 +23,8 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **REFACTOR-03 (IDEA-61): Limpieza de dependencias y scripts heredados de IIS / Windows Server / Raspberry Pi tras migración a Azure PaaS** (2026-08-11)
+  - **Descripción:** Eliminación limpia de scripts de despliegue heredados para Windows Server 2022 / IIS (`setup-iis.ps1`, `setup-server.ps1`, `deploy-pre.ps1`, `deploy-pro.ps1`), configuraciones de `iisnode`, `web.config`, certificados `win-acme`, y archivos de entorno Raspberry Pi (`.envRaspberry`), consolidando la infraestructura exclusivamente en desarrollo local y Azure App Service (`build-azure-zip.ps1`).
 - [x] **FEATURE-63 (IDEA-63): Migración global de Claves Primarias y Foráneas de Entidades a UUIDv7 sin pérdida de datos ni relaciones** (2026-08-11)
   - **Descripción:** Transformación del esquema de la base de datos de claves autoincrementales enteras (`INT`/`INTEGER`) a identificadores únicos universales temporales (**UUIDv7** RFC 9562) en las entidades transaccionales y de negocio (Proyectos, Tareas, Hitos, Riesgos, Portfolios, Facturas, Pedidos, Comentarios, etc.), manteniendo el rendimiento B-Tree e imprevistibilidad de datos. Se conservan como enteros/códigos las tablas maestras de catálogo (`status`, `roles`, etc.).
 - [x] **FEATURE-60 (IDEA-62): Timeline Gantt interactivo desplegable por tareas y sincronización de filtros con Proyectos** (2026-08-10)
