@@ -479,5 +479,39 @@
     "sessionExpiredTitle": "Session Expired",
     "sessionExpiredMessage": "Your session has expired or your access token is no longer valid. Please sign in again to continue.",
     "relogin": "Sign In"
+  },
+  "ambitos": {
+    "selectTitle": "Select Work Scope",
+    "selectDescription": "Select the department or operational scope you wish to work on in this session.",
+    "allAmbitos": "All Scopes (Global View)",
+    "allDescription": "Access to the consolidated portfolio of all departments.",
+    "currentScope": "Active Scope",
+    "switchScope": "Switch Scope",
+    "ambitosAdmin": "Scopes & Units Management",
+    "name": "Scope Name",
+    "code": "Code",
+    "description": "Description",
+    "active": "Active",
+    "newAmbito": "New Scope",
+    "editAmbito": "Edit Scope",
+    "assignUserAmbitos": "Assign Scopes to User"
+  },
+  "assistant": {
+    "title": "Pending Assistant",
+    "tooltip": "Pending tasks and communications",
+    "days7": "7 days",
+    "days15": "15 days",
+    "days30": "30 days",
+    "tasksHeader": "Project Tasks",
+    "commPlansHeader": "Communication Plans",
+    "overdue": "Overdue",
+    "dueToday": "Due today",
+    "dueInDays": "Due in {{days}} days",
+    "noPending": "All caught up! No pending items in this period.",
+    "markComplete": "Mark as completed",
+    "openReport": "Create report",
+    "taskCompleted": "Task completed",
+    "loading": "Loading pending items...",
+    "error": "Error loading pending items"
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Edit2, Trash2, RefreshCw, XCircle, CheckCircle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Edit2, Trash2, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { getSortedData } from '../../utils/sorting';
 import { validatePassword } from '../../utils/passwordValidation';
 import UserFormAdmin from './UserFormAdmin';
@@ -8,9 +8,10 @@ import UserFormAdmin from './UserFormAdmin';
 export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
   const { t } = useTranslation();
   const [users, setUsers] = useState([]);
+  const [availableAmbitos, setAvailableAmbitos] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersSort, setUsersSort] = useState({ key: 'nombre', direction: 'asc' });
-  const [userForm, setUserForm] = useState({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true, metodo_acceso: 'PASSWORD' });
+  const [userForm, setUserForm] = useState({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true, metodo_acceso: 'PASSWORD', ambitos: [1] });
   const [editingUserId, setEditingUserId] = useState(null);
   const [userError, setUserError] = useState('');
   const [userSuccess, setUserSuccess] = useState('');
@@ -39,8 +40,18 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
       });
   };
 
+  const fetchAmbitosList = () => {
+    fetch(`${import.meta.env.VITE_API_URL}/ambitos/admin`, {
+      headers: getAuthHeaders()
+    })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setAvailableAmbitos(data))
+      .catch(() => {});
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchAmbitosList();
   }, []);
 
   const handleUsersSort = (key) => {
@@ -100,7 +111,8 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
       correo: userForm.correo,
       perfil: userForm.perfil,
       activo: userForm.activo,
-      metodo_acceso: accessMethod
+      metodo_acceso: accessMethod,
+      ambitos: userForm.ambitos || [1]
     };
 
     if (accessMethod === 'PASSWORD' && userForm.password && userForm.password.trim() !== '') {
@@ -124,7 +136,7 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
       })
       .then(() => {
         setUserSuccess(isEdit ? 'Usuario actualizado correctamente.' : 'Usuario creado correctamente.');
-        setUserForm({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true, metodo_acceso: 'PASSWORD' });
+        setUserForm({ id_usuario: '', nombre: '', apellidos: '', correo: '', password: '', perfil: 'PM', activo: true, metodo_acceso: 'PASSWORD', ambitos: [1] });
         setEditingUserId(null);
         fetchUsers();
         refreshUsers();
@@ -141,7 +153,8 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
       password: '',
       perfil: usr.perfil,
       activo: usr.activo,
-      metodo_acceso: usr.metodo_acceso || 'PASSWORD'
+      metodo_acceso: usr.metodo_acceso || 'PASSWORD',
+      ambitos: usr.Ambitos ? usr.Ambitos.map(a => a.id_ambito) : [1]
     });
     setEditingUserId(usr.id_usuario);
     setUserError('');
@@ -170,6 +183,8 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
       .catch(err => setUserError(err.message));
   };
 
+  const sortedUsers = getSortedData(users, usersSort.key, usersSort.direction);
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 32, alignItems: 'flex-start' }}>
       <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -187,48 +202,49 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
             <table className="m3-table">
               <thead>
                 <tr>
-                  {renderSortHeader(t('usersAdmin.nameAndSurname'), 'nombre', usersSort, handleUsersSort)}
+                  {renderSortHeader(t('usersAdmin.name'), 'nombre', usersSort, handleUsersSort)}
                   {renderSortHeader(t('usersAdmin.email'), 'correo', usersSort, handleUsersSort)}
-                  {renderSortHeader(t('usersAdmin.profile'), 'perfil', usersSort, handleUsersSort)}
-                  {renderSortHeader(t('usersAdmin.method'), 'metodo_acceso', usersSort, handleUsersSort)}
-                  {renderSortHeader(t('usersAdmin.status'), 'activo', usersSort, handleUsersSort, { width: '100px', textAlign: 'center' })}
+                  {renderSortHeader(t('usersAdmin.role'), 'perfil', usersSort, handleUsersSort, { textAlign: 'center' })}
+                  <th style={{ textAlign: 'center' }}>Ámbitos</th>
+                  {renderSortHeader(t('usersAdmin.status'), 'activo', usersSort, handleUsersSort, { textAlign: 'center', width: '80px' })}
                   <th style={{ width: '90px' }}>{t('usersAdmin.action')}</th>
                 </tr>
               </thead>
               <tbody>
-                {getSortedData(users, usersSort).map(usr => (
-                  <tr key={usr.id_usuario} style={{ backgroundColor: editingUserId === usr.id_usuario ? 'var(--md-sys-color-primary-container)' : 'transparent' }}>
-                    <td style={{ fontWeight: 600 }}>{usr.nombre} {usr.apellidos}</td>
-                    <td style={{ fontSize: '0.85rem' }}>{usr.correo}</td>
-                    <td>
-                      <span className="badge badge-blue" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>
-                        {usr.perfil}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="badge" style={{ 
-                        fontSize: '0.75rem', 
-                        fontWeight: 'bold', 
-                        backgroundColor: usr.metodo_acceso === 'ENTRA_ID' ? 'rgba(52, 199, 89, 0.15)' : 'rgba(0, 122, 255, 0.15)',
-                        color: usr.metodo_acceso === 'ENTRA_ID' ? 'var(--color-rag-green, #34c759)' : 'var(--md-sys-color-primary, #007aff)'
-                      }}>
-                        {usr.metodo_acceso === 'ENTRA_ID' ? 'Entra ID' : 'Password'}
+                {sortedUsers.map(u => (
+                  <tr key={u.id_usuario} style={{ opacity: u.activo ? 1 : 0.6 }}>
+                    <td style={{ fontWeight: 500 }}>{u.nombre} {u.apellidos}</td>
+                    <td style={{ fontSize: '0.85rem' }}>{u.correo}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`m3-badge ${u.perfil === 'ADMINISTRADOR' ? 'badge-primary' : (u.perfil === 'DIRECTOR' ? 'badge-amber' : 'badge-secondary')}`}>
+                        {u.perfil}
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      {usr.activo ? (
-                        <CheckCircle size={18} style={{ color: 'var(--color-rag-green)' }} title="Active" />
-                      ) : (
-                        <XCircle size={18} style={{ color: 'var(--color-rag-red)' }} title="Inactive" />
-                      )}
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
+                        {(u.Ambitos && u.Ambitos.length > 0) ? (
+                          u.Ambitos.map(a => (
+                            <span key={a.id_ambito} style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, background: 'rgba(0,200,83,0.15)', color: '#00c853', fontWeight: 600 }}>
+                              {a.code || a.nombre}
+                            </span>
+                          ))
+                        ) : (
+                          <span style={{ fontSize: '0.7rem', color: '#888' }}>—</span>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`m3-badge ${u.activo ? 'badge-green' : 'badge-red'}`}>
+                        {u.activo ? t('usersAdmin.active') : t('usersAdmin.inactive')}
+                      </span>
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button className="icon-btn" onClick={() => handleEditUserClick(usr)} style={{ color: 'var(--md-sys-color-primary)' }} title={t('common.edit')}>
-                          <Edit2 size={15} />
+                        <button className="icon-btn" onClick={() => handleEditUserClick(u)} title={t('common.edit')}>
+                          <Edit2 size={16} />
                         </button>
-                        <button className="icon-btn" onClick={() => handleDeleteUserClick(usr.id_usuario)} style={{ color: 'var(--color-rag-red)' }} title={t('common.delete')}>
-                          <Trash2 size={15} />
+                        <button className="icon-btn danger" onClick={() => handleDeleteUserClick(u.id_usuario)} title={t('common.delete')}>
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -250,6 +266,7 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
         onSubmit={handleUserSubmit}
         isUserSubmitDisabled={isUserSubmitDisabled}
         pwdErrors={pwdErrors}
+        availableAmbitos={availableAmbitos}
       />
     </div>
   );

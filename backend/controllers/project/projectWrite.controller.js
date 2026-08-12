@@ -28,6 +28,13 @@ const createProject = asyncHandler(async (req, res) => {
   data.modifiedBy = req.currentPmId;
 
   sanitizeRichTextFields(data);
+  if (data.id_ambito) {
+    data.id_ambito = Number(data.id_ambito);
+  } else if (req.currentAmbitoId && req.currentAmbitoId !== 'ALL') {
+    data.id_ambito = req.currentAmbitoId;
+  } else {
+    data.id_ambito = 1;
+  }
   if (!(await validateCapexFields(data, res))) return;
   if (!validateDateFields(data, res)) return;
 

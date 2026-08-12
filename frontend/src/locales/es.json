@@ -479,5 +479,39 @@
     "sessionExpiredTitle": "Sesión Expirada",
     "sessionExpiredMessage": "Tu sesión ha caducado o el token de acceso ya no es válido. Por favor, vuelve a iniciar sesión para continuar.",
     "relogin": "Iniciar Sesión"
+  },
+  "ambitos": {
+    "selectTitle": "Seleccionar Ámbito de Trabajo",
+    "selectDescription": "Selecciona el departamento o ámbito operacional sobre el que deseas trabajar en esta sesión.",
+    "allAmbitos": "Todos los Ámbitos (Vista Global)",
+    "allDescription": "Acceso a la cartera consolidada de todos los departamentos.",
+    "currentScope": "Ámbito Activo",
+    "switchScope": "Cambiar Ámbito",
+    "ambitosAdmin": "Gestión de Ámbitos / Unidades",
+    "name": "Nombre del Ámbito",
+    "code": "Código",
+    "description": "Descripción",
+    "active": "Activo",
+    "newAmbito": "Nuevo Ámbito",
+    "editAmbito": "Editar Ámbito",
+    "assignUserAmbitos": "Asignar Ámbitos a Usuario"
+  },
+  "assistant": {
+    "title": "Asistente de Pendientes",
+    "tooltip": "Tareas y comunicaciones pendientes",
+    "days7": "7 días",
+    "days15": "15 días",
+    "days30": "30 días",
+    "tasksHeader": "Tareas del Proyecto",
+    "commPlansHeader": "Planes de Comunicación",
+    "overdue": "Vencida",
+    "dueToday": "Vence hoy",
+    "dueInDays": "Vence en {{days}} días",
+    "noPending": "¡Todo al día! No hay pendientes en este período.",
+    "markComplete": "Marcar como completada",
+    "openReport": "Crear informe",
+    "taskCompleted": "Tarea completada",
+    "loading": "Cargando pendientes...",
+    "error": "Error al cargar pendientes"
   }
 }

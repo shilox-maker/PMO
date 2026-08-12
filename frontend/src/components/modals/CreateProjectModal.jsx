@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context/AuthContext';
 import CapexFieldsGroup from './CapexFieldsGroup';
 
 export default function CreateProjectModal({
@@ -16,6 +17,7 @@ export default function CreateProjectModal({
   capexTypes
 }) {
   const { t } = useTranslation();
+  const { selectedAmbito, availableAmbitos } = useAuth();
   const [newProject, setNewProject] = useState({
     id_proyecto: '',
     nombre_proyecto: '',
@@ -26,6 +28,7 @@ export default function CreateProjectModal({
     id_sede_distribuir: '',
     id_sponsor: '',
     portfolio_id: '',
+    id_ambito: selectedAmbito !== 'ALL' ? selectedAmbito : '',
     estado_proyecto: 'Kickoff',
     indicador_rag: 'VERDE',
     fecha_inicio: '',

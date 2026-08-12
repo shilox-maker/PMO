@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db.config');
 const { v7: uuidv7 } = require('uuid');
+const { Ambitos, UsuarioAmbitos } = require('./ambitos');
 
 // 1. Sedes Model
 const Sedes = sequelize.define('Sedes', {
@@ -252,6 +253,14 @@ const Portfolios = sequelize.define('Portfolios', {
     defaultValue: () => uuidv7(),
     allowNull: true
   },
+  id_ambito: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Ambitos,
+      key: 'id_ambito'
+    }
+  },
   nombre: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -419,6 +428,14 @@ const Proyectos = sequelize.define('Proyectos', {
       key: 'id_proveedor'
     },
     onDelete: 'NO ACTION'
+  },
+  id_ambito: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Ambitos,
+      key: 'id_ambito'
+    }
   },
   id_sede: {
     type: DataTypes.INTEGER,
@@ -1440,6 +1457,16 @@ const EncuestasCalidad = sequelize.define('Encuestas_Calidad', {
 });
 
 // Set up Associations
+// Ambitos Associations
+Ambitos.hasMany(Proyectos, { foreignKey: 'id_ambito', as: 'Proyectos' });
+Proyectos.belongsTo(Ambitos, { foreignKey: 'id_ambito', as: 'Ambito' });
+
+Ambitos.hasMany(Portfolios, { foreignKey: 'id_ambito', as: 'Portfolios' });
+Portfolios.belongsTo(Ambitos, { foreignKey: 'id_ambito', as: 'Ambito' });
+
+Usuarios.belongsToMany(Ambitos, { through: UsuarioAmbitos, foreignKey: 'id_usuario', otherKey: 'id_ambito', as: 'Ambitos' });
+Ambitos.belongsToMany(Usuarios, { through: UsuarioAmbitos, foreignKey: 'id_ambito', otherKey: 'id_usuario', as: 'Usuarios' });
+
 // Proveedor has many Contacts
 Proveedores.hasMany(ContactosProveedor, { foreignKey: 'id_proveedor', onDelete: 'CASCADE' });
 ContactosProveedor.belongsTo(Proveedores, { foreignKey: 'id_proveedor' });
@@ -1678,7 +1705,9 @@ module.exports = {
   PortfolioBudgets,
   TiposFactura,
   SystemConfig,
-  KpiSnapshots
+  KpiSnapshots,
+  Ambitos,
+  UsuarioAmbitos
 };
 
 

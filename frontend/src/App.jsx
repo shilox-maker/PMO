@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams, Navigate } from 'react-router-dom';
-import { createPortal } from 'react-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { getMsalInstance } from './config/msal';
 // Lazy-loaded pages — solo se descargan al navegar a cada ruta
@@ -20,11 +19,15 @@ import CommandPaletteModal from './components/modals/CommandPaletteModal';
 import UserMenuDropdown from './components/UserMenuDropdown';
 import ErrorBoundary from './components/ErrorBoundary';
 import SessionExpiredModal from './components/SessionExpiredModal';
+import AmbitoSelectionModal from './components/modals/AmbitoSelectionModal';
+import PendingAssistantDrawer from './components/assistant/PendingAssistantDrawer';
+import EmailReportModal from './components/modals/EmailReportModal';
+import { API_URL } from './config/api';
 import { useTranslation } from 'react-i18next';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
   Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info, PieChart, Search, Globe,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Bell
 } from 'lucide-react';
 import pkg from '../package.json';
 
@@ -591,10 +594,56 @@ function Vendor360Wrapper({ onBack }) {
 
 function MainAppContent() {
   const { t } = useTranslation();
-  const { currentPm, isMaintenanceActive } = useAuth();
+  const { currentPm, isMaintenanceActive, getAuthHeaders } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  const [isAssistantOpen, setIsAssistantOpen] = useState(() => {
+    return localStorage.getItem('pendingAssistant_isOpen') === 'true';
+  });
+  const [assistantDaysFilter, setAssistantDaysFilter] = useState(() => {
+    const saved = localStorage.getItem('pendingAssistant_daysFilter');
+    return saved ? parseInt(saved, 10) : 7;
+  });
+  const [totalPendingCount, setTotalPendingCount] = useState(0);
+  const [reportModalState, setReportModalState] = useState({ isOpen: false, project: null, plan: null });
+
+  useEffect(() => {
+    localStorage.setItem('pendingAssistant_isOpen', isAssistantOpen);
+  }, [isAssistantOpen]);
+
+  useEffect(() => {
+    localStorage.setItem('pendingAssistant_daysFilter', assistantDaysFilter);
+  }, [assistantDaysFilter]);
+
+  const fetchBadgeCount = async () => {
+    try {
+      const res = await fetch(`${API_URL}/assistant/pending?days=${assistantDaysFilter}`, {
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setTotalPendingCount(json.totalPendingCount || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching badge count:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (currentPm) {
+      fetchBadgeCount();
+    }
+  }, [currentPm, assistantDaysFilter]);
+
+  const handleOpenReportModal = (proj, plan) => {
+    setReportModalState({
+      isOpen: true,
+      project: { id_proyecto: proj.id_proyecto, nombre_proyecto: proj.nombre_proyecto },
+      plan
+    });
+  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -665,6 +714,52 @@ function MainAppContent() {
                   fontWeight: 600
                 }}>Ctrl K</kbd>
               </button>
+
+              {/* Assistant Toggle Button */}
+              <button
+                id="btn-pending-assistant-trigger"
+                onClick={() => setIsAssistantOpen(prev => !prev)}
+                title={t('assistant.tooltip', 'Tareas y comunicaciones pendientes')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 12px',
+                  borderRadius: 20,
+                  fontSize: '0.82rem',
+                  backgroundColor: isAssistantOpen
+                    ? 'var(--md-sys-color-primary-container)'
+                    : 'var(--md-sys-color-surface-container-high)',
+                  border: isAssistantOpen
+                    ? '1px solid var(--md-sys-color-primary)'
+                    : '1px solid var(--md-sys-color-outline-variant)',
+                  color: isAssistantOpen
+                    ? 'var(--md-sys-color-on-primary-container)'
+                    : 'var(--md-sys-color-on-surface)',
+                  cursor: 'pointer',
+                  position: 'relative'
+                }}
+              >
+                <Bell size={14} style={{ color: isAssistantOpen ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-primary)' }} />
+                <span>{t('assistant.title', 'Pendientes')}</span>
+                {totalPendingCount > 0 && (
+                  <span style={{
+                    background: 'var(--md-sys-color-error)',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    minWidth: 18,
+                    height: 18,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 4px'
+                  }}>
+                    {totalPendingCount > 99 ? '99+' : totalPendingCount}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
 
@@ -725,13 +820,39 @@ function MainAppContent() {
             </React.Suspense>
           </div>
         </div>
+
+        {/* Assistant Sidebar Rail - right side, same behavior as nav-rail */}
+        <PendingAssistantDrawer
+          isOpen={isAssistantOpen}
+          onClose={() => setIsAssistantOpen(false)}
+          daysFilter={assistantDaysFilter}
+          setDaysFilter={setAssistantDaysFilter}
+          t={t}
+          getAuthHeaders={getAuthHeaders}
+          onOpenReportModal={handleOpenReportModal}
+          onDataChanged={fetchBadgeCount}
+        />
       </div>
+
+      {/* Email Report Modal from Assistant */}
+      {reportModalState.isOpen && (
+        <EmailReportModal
+          isOpen={reportModalState.isOpen}
+          onClose={() => setReportModalState({ isOpen: false, project: null, plan: null })}
+          project={reportModalState.project}
+          committeeTitle={reportModalState.plan?.titulo || 'Plan de Comunicación'}
+          contacts={reportModalState.plan?.Contactos || []}
+          planId={reportModalState.plan?.id}
+          getAuthHeaders={getAuthHeaders}
+          onLogSent={fetchBadgeCount}
+        />
+      )}
     </div>
   );
 }
 
 function AppConsumer() {
-  const { currentPm, loading, isMaintenanceActive, maintenanceMessage, checkMaintenanceStatus, logout } = useAuth();
+  const { currentPm, loading, isMaintenanceActive, maintenanceMessage, checkMaintenanceStatus, logout, isFirstLoginSelection, setIsFirstLoginSelection } = useAuth();
 
   if (loading) {
     return (
@@ -760,10 +881,15 @@ function AppConsumer() {
   return (
     <>
       <SessionExpiredModal />
+      <AmbitoSelectionModal
+        isOpen={isFirstLoginSelection}
+        onClose={() => setIsFirstLoginSelection(false)}
+      />
       <MainAppContent />
     </>
   );
 }
+
 
 export default function App() {
   return (

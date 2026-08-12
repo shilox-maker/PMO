@@ -6,7 +6,7 @@ const taskCreateSchema = Joi.object({
   titulo_tarea: Joi.string().max(255).required(),
   descripcion: Joi.string().allow('', null).optional(),
   es_hito: Joi.boolean().default(false),
-  estado: Joi.string().valid('PENDIENTE', 'COMPLETADA').default('PENDIENTE'),
+  estado: Joi.string().uppercase().valid('PENDIENTE', 'COMPLETADA').default('PENDIENTE'),
   fecha_limite: Joi.string().isoDate().optional().when('es_hito', {
     is: false,
     then: Joi.required(),
@@ -22,7 +22,7 @@ const taskUpdateSchema = Joi.object({
   titulo_tarea: Joi.string().max(255).optional(),
   descripcion: Joi.string().allow('', null).optional(),
   es_hito: Joi.boolean().optional(),
-  estado: Joi.string().valid('PENDIENTE', 'COMPLETADA').optional(),
+  estado: Joi.string().uppercase().valid('PENDIENTE', 'COMPLETADA').optional(),
   fecha_limite: Joi.string().isoDate().optional(),
   fecha_original_cierre: Joi.string().isoDate().allow(null, '').optional(),
   fecha_actual_cierre: Joi.string().isoDate().allow(null, '').optional(),

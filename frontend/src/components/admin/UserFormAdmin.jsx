@@ -10,7 +10,8 @@ export default function UserFormAdmin({
   userSuccess,
   onSubmit,
   isUserSubmitDisabled,
-  pwdErrors
+  pwdErrors,
+  availableAmbitos = []
 }) {
   const { t } = useTranslation();
   return (
@@ -117,6 +118,49 @@ export default function UserFormAdmin({
             <option value="ADMINISTRADOR">ADMINISTRADOR (Acceso Total)</option>
           </select>
         </div>
+
+        {availableAmbitos && availableAmbitos.length > 0 && (
+          <div className="form-group">
+            <label className="form-label">{t('ambitos.ambitosTitle', 'Ámbitos Autorizados')}</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+              {availableAmbitos.map(a => {
+                const selectedList = userForm.ambitos || [1];
+                const isChecked = selectedList.includes(a.id_ambito);
+                return (
+                  <label 
+                    key={a.id_ambito} 
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      padding: '5px 10px',
+                      borderRadius: 8,
+                      background: isChecked ? 'rgba(0, 200, 83, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                      border: isChecked ? '1px solid #00c853' : '1px solid rgba(255, 255, 255, 0.1)',
+                      color: isChecked ? '#00c853' : 'var(--md-sys-color-on-surface)'
+                    }}
+                  >
+                    <input 
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        const current = userForm.ambitos || [1];
+                        const updated = e.target.checked
+                          ? [...current, a.id_ambito]
+                          : current.filter(id => id !== a.id_ambito);
+                        setUserForm(prev => ({ ...prev, ambitos: updated }));
+                      }}
+                      style={{ accentColor: '#00c853' }}
+                    />
+                    <span>{a.nombre}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="form-group">
           <label className="m3-checkbox-label">

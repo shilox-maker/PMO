@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
 import {
   Globe, Moon, Building2, Key, LogOut, ChevronUp, ChevronDown, Check, User
 } from 'lucide-react';
@@ -15,6 +16,7 @@ export default function UserMenuDropdown({
   isCollapsed = false
 }) {
   const { t } = useTranslation();
+  const { selectedAmbito, changeAmbito, availableAmbitos, canSelectAll } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -80,6 +82,31 @@ export default function UserMenuDropdown({
                 PT {language === 'pt' && <Check size={12} />}
               </button>
             </div>
+          </div>
+
+          <div className="user-menu-divider" />
+
+          {/* Submenu Item: Ámbito Activo */}
+          <div className="user-menu-section">
+            <div className="user-menu-section-title">
+              <Building2 size={14} />
+              <span>{t('ambitos.currentScope', 'Ámbito Activo')}</span>
+            </div>
+            <select
+              className="form-select form-select-sm mt-1 border-0 glass-input text-white bg-dark"
+              value={selectedAmbito}
+              onChange={(e) => changeAmbito(e.target.value)}
+              style={{ fontSize: '0.8rem', padding: '4px 8px', borderRadius: '6px' }}
+            >
+              {canSelectAll && (
+                <option value="ALL">🌐 {t('ambitos.allAmbitos', 'Todos los Ámbitos')}</option>
+              )}
+              {availableAmbitos.map(amb => (
+                <option key={amb.id_ambito} value={amb.id_ambito}>
+                  🏛️ {amb.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="user-menu-divider" />

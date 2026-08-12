@@ -1,16 +1,19 @@
 const crypto = require('crypto');
-const { Usuarios, Proyectos } = require('../../models/index');
+const { Usuarios, Proyectos, Ambitos, UsuarioAmbitos } = require('../../models/index');
 const { hashPassword } = require('../../utils/helpers');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
 // --- USUARIOS ---
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await Usuarios.findAll({ order: [['nombre', 'ASC']] });
+  const users = await Usuarios.findAll({
+    include: [{ model: Ambitos, as: 'Ambitos', through: { attributes: ['rol_ambito'] } }],
+    order: [['nombre', 'ASC']]
+  });
   res.json(users);
 });
 
 const createUser = asyncHandler(async (req, res) => {
-  const { nombre, apellidos, correo, password, perfil, activo, metodo_acceso } = req.body;
+  const { nombre, apellidos, correo, password, perfil, activo, metodo_acceso, ambitos } = req.body;
   const accessMethod = metodo_acceso || 'PASSWORD';
 
   if (!nombre || !apellidos || !correo || !perfil) {
@@ -27,7 +30,6 @@ const createUser = asyncHandler(async (req, res) => {
       return res.status(400).json({ error: 'La contraseña no cumple con la política de seguridad requerida' });
     }
   } else if (accessMethod === 'ENTRA_ID') {
-    // Autogenerar una contraseña aleatoria robusta e inutilizable
     finalPassword = crypto.randomBytes(16).toString('hex') + 'aA1!';
   } else {
     return res.status(400).json({ error: 'Método de acceso no válido.' });
@@ -43,12 +45,22 @@ const createUser = asyncHandler(async (req, res) => {
     activo: activo !== undefined ? activo : true,
     metodo_acceso: accessMethod
   });
+
+  // Asignación de Ámbitos
+  const ambitosIds = Array.isArray(ambitos) ? ambitos : [1];
+  const associations = ambitosIds.map(id_ambito => ({
+    id_usuario: user.id_usuario,
+    id_ambito,
+    rol_ambito: 'MEMBER'
+  }));
+  await UsuarioAmbitos.bulkCreate(associations);
+
   res.status(201).json(user);
 });
 
 const updateUser = asyncHandler(async (req, res) => {
   const { id_usuario } = req.params;
-  const { nombre, apellidos, correo, password, perfil, activo, metodo_acceso } = req.body;
+  const { nombre, apellidos, correo, password, perfil, activo, metodo_acceso, ambitos } = req.body;
   const user = await Usuarios.findByPk(id_usuario);
   if (!user) {
     return res.status(404).json({ error: 'Usuario no encontrado.' });
@@ -79,6 +91,19 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 
   await user.update(updates);
+
+  if (Array.isArray(ambitos)) {
+    await UsuarioAmbitos.destroy({ where: { id_usuario } });
+    const newAssociations = ambitos.map(id_ambito => ({
+      id_usuario: Number(id_usuario),
+      id_ambito: Number(id_ambito),
+      rol_ambito: 'MEMBER'
+    }));
+    if (newAssociations.length > 0) {
+      await UsuarioAmbitos.bulkCreate(newAssociations);
+    }
+  }
+
   res.json(user);
 });
 

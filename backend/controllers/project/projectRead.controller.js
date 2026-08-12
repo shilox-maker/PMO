@@ -14,6 +14,9 @@ const getProjects = asyncHandler(async (req, res) => {
   const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
   
   const where = {};
+  if (req.currentAmbitoId && req.currentAmbitoId !== 'ALL') {
+    where.id_ambito = req.currentAmbitoId;
+  }
   if (pm) where.id_pm = pm;
   if (vendor) where.id_proveedor = vendor;
   if (rag) where.indicador_rag = rag;

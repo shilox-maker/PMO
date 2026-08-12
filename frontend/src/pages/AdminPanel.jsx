@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { Sliders, Users, Edit2, Briefcase, Receipt, ShieldAlert, Database } from 'lucide-react';
+import { Sliders, Users, Edit2, Briefcase, Receipt, ShieldAlert, Database, Building2 } from 'lucide-react';
 import StatesAdmin from '../components/admin/StatesAdmin';
 import UsersAdmin from '../components/admin/UsersAdmin';
 import SedesAdmin from '../components/admin/SedesAdmin';
@@ -10,6 +10,7 @@ import CapexTypesAdmin from '../components/admin/CapexTypesAdmin';
 import InvoiceTypesAdmin from '../components/admin/InvoiceTypesAdmin';
 import MaintenanceConfigCard from '../components/admin/MaintenanceConfigCard';
 import BackupsAdmin from '../components/admin/BackupsAdmin';
+import AmbitosAdmin from '../components/admin/AmbitosAdmin';
 
 export default function AdminPanel() {
   const { t } = useTranslation();
@@ -23,6 +24,10 @@ export default function AdminPanel() {
         <button className={`m3-tab ${activeTab === 'states' ? 'active' : ''}`} onClick={() => setActiveTab('states')}>
           <Sliders size={16} className="tab-icon-inline" />
           {t('adminPanel.states')}
+        </button>
+        <button className={`m3-tab ${activeTab === 'ambitos' ? 'active' : ''}`} onClick={() => setActiveTab('ambitos')}>
+          <Building2 size={16} className="tab-icon-inline" />
+          {t('ambitos.ambitosAdmin', 'Ámbitos')}
         </button>
         <button className={`m3-tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
           <Users size={16} className="tab-icon-inline" />
@@ -56,6 +61,10 @@ export default function AdminPanel() {
 
       {activeTab === 'states' && (
         <StatesAdmin getAuthHeaders={getAuthHeaders} />
+      )}
+
+      {activeTab === 'ambitos' && (
+        <AmbitosAdmin />
       )}
 
       {activeTab === 'users' && (

@@ -11,9 +11,11 @@ const createPortfolio = asyncHandler(async (req, res) => {
   if (existing) {
     return res.status(400).json({ error: 'Ya existe un portfolio con ese nombre.' });
   }
+  const targetAmbitoId = req.body.id_ambito ? Number(req.body.id_ambito) : (req.currentAmbitoId && req.currentAmbitoId !== 'ALL' ? req.currentAmbitoId : 1);
   const portfolio = await Portfolios.create({
     nombre: nombre.trim(),
-    descripcion: descripcion ? descripcion.trim() : null
+    descripcion: descripcion ? descripcion.trim() : null,
+    id_ambito: targetAmbitoId
   });
   res.json(portfolio);
 });

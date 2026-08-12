@@ -478,5 +478,39 @@
     "sessionExpiredTitle": "Sessão Expirada",
     "sessionExpiredMessage": "Sua sessão expirou ou o token de acesso não é mais válido. Por favor, faça login novamente para continuar.",
     "relogin": "Iniciar Sessão"
+  },
+  "ambitos": {
+    "selectTitle": "Selecionar Âmbito de Trabalho",
+    "selectDescription": "Selecione o departamento ou âmbito operacional com o qual deseja trabalhar nesta sessão.",
+    "allAmbitos": "Todos os Âmbitos (Vista Global)",
+    "allDescription": "Acesso à carteira consolidada de todos os departamentos.",
+    "currentScope": "Âmbito Ativo",
+    "switchScope": "Alternar Âmbito",
+    "ambitosAdmin": "Gestão de Âmbitos / Unidades",
+    "name": "Nome do Âmbito",
+    "code": "Código",
+    "description": "Descrição",
+    "active": "Ativo",
+    "newAmbito": "Novo Âmbito",
+    "editAmbito": "Editar Âmbito",
+    "assignUserAmbitos": "Atribuir Âmbitos ao Utilizador"
+  },
+  "assistant": {
+    "title": "Assistente de Pendências",
+    "tooltip": "Tarefas e comunicações pendentes",
+    "days7": "7 dias",
+    "days15": "15 dias",
+    "days30": "30 dias",
+    "tasksHeader": "Tarefas do Projeto",
+    "commPlansHeader": "Planos de Comunicação",
+    "overdue": "Atrasado",
+    "dueToday": "Vence hoje",
+    "dueInDays": "Vence em {{days}} dias",
+    "noPending": "Tudo em dia! Sem pendências neste período.",
+    "markComplete": "Marcar como concluída",
+    "openReport": "Criar relatório",
+    "taskCompleted": "Tarefa concluída",
+    "loading": "Carregando pendências...",
+    "error": "Erro ao carregar pendências"
   }
 }

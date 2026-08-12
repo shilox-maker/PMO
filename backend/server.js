@@ -9,6 +9,7 @@ const logger = require('./config/logger');
 const httpLogger = require('./middlewares/httpLogger');
 const { verifyToken } = require('./middlewares/auth');
 const { checkMaintenance } = require('./middlewares/maintenance');
+const { scopeMiddleware } = require('./middlewares/scopeMiddleware');
 const { errorHandler } = require('./middlewares/errorHandler');
 
 // Prevent Node process crashes from throwing 502 Bad Gateway on IIS
@@ -28,6 +29,8 @@ const metaRoutes = require('./routes/meta.routes');
 const itemRoutes = require('./routes/item.routes');
 const adminRoutes = require('./routes/admin.routes');
 const searchRoutes = require('./routes/search.routes');
+const ambitosRoutes = require('./routes/ambitos.routes');
+const assistantRoutes = require('./routes/assistant.routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -56,7 +59,7 @@ app.use(cors({
     return callback(new Error('Acceso restringido por política de seguridad CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Ambito-Id', 'X-Ambito-Code']
 }));
 app.use(express.json());
 
@@ -86,6 +89,9 @@ app.use(verifyToken);
 // Apply Maintenance Mode Middleware
 app.use(checkMaintenance);
 
+// Apply Scope/Tenant Middleware
+app.use(scopeMiddleware);
+
 // Register API Routes
 app.use('/api', authRoutes);
 app.use('/api', projectRoutes);
@@ -93,6 +99,8 @@ app.use('/api', vendorRoutes);
 app.use('/api', metaRoutes);
 app.use('/api', itemRoutes);
 app.use('/api', adminRoutes);
+app.use('/api', ambitosRoutes);
+app.use('/api', assistantRoutes);
 app.use('/api/search', searchRoutes);
 
 // API 404 JSON Handler

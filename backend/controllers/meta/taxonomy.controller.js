@@ -44,7 +44,11 @@ const getPortfolioStates = asyncHandler(async (req, res) => {
 
 
 const getPortfolios = asyncHandler(async (req, res) => {
-  const portfolios = await Portfolios.findAll({ order: [['nombre', 'ASC']] });
+  const where = {};
+  if (req.currentAmbitoId && req.currentAmbitoId !== 'ALL') {
+    where.id_ambito = req.currentAmbitoId;
+  }
+  const portfolios = await Portfolios.findAll({ where, order: [['nombre', 'ASC']] });
   res.json(portfolios);
 });
 
