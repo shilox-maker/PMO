@@ -19,48 +19,14 @@
 
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
-- [ ] **FEATURE-56 (IDEA-56): SegregaciÃ³n por Ãmbito / Unidad de Negocio (Multi-tenancy con Maestros Compartidos)**
-  - **DescripciÃ³n:** ImplementaciÃ³n de arquitectura multi-Ã¡mbito/multi-departamento para aislar la gestiÃ³n de proyectos, presupuestos y portafolios entre diferentes equipos/unidades de negocio, iniciando con el Ã¡mbito **"IT Corporate"** y manteniendo compartidos los catÃ¡logos globales (**Proveedores**, **Sedes/Sites**, **Tipos de Capex/Subtipos**, **Tipos de Factura** y moneda Ãºnica en **â‚¬**).
-  - **AnÃ¡lisis TÃ©cnico y EspecificaciÃ³n Acordada:**
-    1. **Nuevos Modelos en Base de Datos (Sequelize):**
-       - `Ambitos`: Modelo maestro (`id_ambito`, `nombre`, `code`, `descripcion`, `activo`).
-       - `Usuario_Ambitos`: Modelo de asociaciÃ³n N:M (`id_usuario`, `id_ambito`, `rol_ambito`).
-    2. **Modelos Segregados (Clave forÃ¡nea `id_ambito`):**
-       - `Proyectos`: AÃ±adir columna `id_ambito` (FK -> `Ambitos`).
-       - `Portfolios`: AÃ±adir columna `id_ambito` (FK -> `Ambitos`). Cada Ã¡mbito gestiona sus propios Portfolios y Presupuestos de Portfolio (`Portfolio_Budgets`).
-    3. **Modelos Heredados (Segregados indirectamente vÃ­a `id_proyecto` / `portfolio_id`):**
-       - Facturas, Pedidos, Riesgos, Hitos, Tareas, Lecciones Aprendidas, Solicitudes de Cambio (CR), Planes de ComunicaciÃ³n.
-    4. **Maestros Compartidos Globalmente (Sin `id_ambito`):**
-       - `Proveedores` y `Contactos_Proveedor` (Grupo Dacsa / Externos).
-       - `Sedes` (Sites).
-       - `Tipos_Capex` y `Subtipos_Capex`.
-       - `Tipos_Factura` y `Estados_Proyecto`.
-    5. **Backend Middleware & Control de Permisos en Servidor (`tenantScope`):**
-       - Middleware `scopeMiddleware.js`: Valida el Token JWT y comprueba los Ã¡mbitos autorizados del usuario en la tabla `Usuario_Ambitos`.
-       - **Anti-ManipulaciÃ³n (Zero-Trust):** Si un cliente o la IA intenta enviar un `X-Ambito-Id` al que no tiene acceso, el servidor rechaza la peticiÃ³n con un `HTTP 403 Forbidden`. La opciÃ³n `ALL` solo se autoriza si el perfil del JWT es `ADMINISTRADOR` o `DIRECTOR`.
-    6. **Frontend UI/UX (Conmutador y Flujo de Login):**
-       - `AuthContext`: Estado `selectedAmbito` con almacenamiento local (`localStorage`).
-       - **Flujo de Login:** En la primera sesiÃ³n (o sin Ã¡mbito en memoria), se presenta una modal/sugerencia inicial para elegir Ãmbito. En accesos posteriores, se restaura automÃ¡ticamente el Ã¡mbito guardado de la memoria.
-       - Selector de Ãmbito activo en `UserMenuDropdown` / NavigationRail (incluye opciÃ³n "Todos los Ãmbitos (Vista Global)" para Admins/Directores).
-       - **CreaciÃ³n en Vista Global:** Al estar en vista "Todos los Ãmbitos", los formularios de alta (Proyecto/Portfolio) requieren obligatoriamente seleccionar el Ã¡mbito destino; en vista de Ã¡mbito especÃ­fico, se auto-asigna el activo.
-       - Interceptor en `api.js` para inyectar automÃ¡ticamente la cabecera `X-Ambito-Id` en cada llamada.
-    7. **Seguridad Inmutable en el Servidor MCP (Model Context Protocol):**
-       - **Mapa de Claves en `.env` (`MCP_KEYS_CONFIG`):** Se admitirÃ¡ en `.env` un JSON con el mapa de claves API y sus Ã¡mbitos autorizados (ej: `[{"key":"key-admin","ambitos":["ALL"],"default":"IT_CORP"},{"key":"key-it","ambitos":["IT_CORP"],"default":"IT_CORP"}]`).
-       - **Fallback Retrocompatible:** Si solo existe `MCP_API_KEY`, el servidor le asigna por defecto el Ã¡mbito `IT_CORP`.
-       - **ValidaciÃ³n de Cabecera:** Si el cliente MCP envÃ­a `X-Ambito-Code`, el middleware verifica si esa API Key en el mapa JSON tiene autorizaciÃ³n para dicho Ã¡mbito. Si no tiene autorizaciÃ³n, rechaza la conexiÃ³n con `HTTP 403 Forbidden`.
-       - **Seguridad en Tools:** El `id_ambito` **no es un argumento de las herramientas MCP JSON**; se inyecta desde la sesiÃ³n validada del servidor en Sequelize (`projects.js`, `lessons.js`, `search.js`).
-    8. **Estrategia de MigraciÃ³n Inicial:**
-       - Se crea la migraciÃ³n SQL (`node migrate.js up`) que inserta automÃ¡ticamente el Ã¡mbito inicial **"IT Corporate"** (`code: IT_CORP`).
-       - Se migran todos los proyectos, portfolios y usuarios existentes asignÃ¡ndoles `id_ambito = 1` (IT Corporate).
-  - **Archivos Afectados:**
-    - Backend: `backend/models/index.js`, `backend/migrations/17_create_ambitos_and_scope.js`, `backend/middlewares/auth.js`, `backend/middlewares/scopeMiddleware.js`, `backend/controllers/ambitosController.js`, `backend/controllers/project/projectRead.controller.js`, `backend/controllers/project/projectWrite.controller.js`, `backend/controllers/meta/taxonomy.controller.js`, `backend/controllers/admin/portfolio.controller.js`.
-    - Frontend: `frontend/src/context/AuthContext.jsx`, `frontend/src/components/UserMenuDropdown.jsx`, `frontend/src/components/modals/AmbitoSelectionModal.jsx`, `frontend/src/components/modals/CreateProjectModal.jsx`, `frontend/src/locales/es.json`, `frontend/src/locales/en.json`, `frontend/src/locales/pt.json`.
-  - **Impacto Estimado:** Alto. RequerirÃ¡ ejecutar `node migrate.js up` y verificar la integridad de las consultas en Backend, el servidor MCP y el selector en Frontend.
+*(Sin tareas pendientes de subir)*
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-56 (IDEA-56): Segregación por Ámbito / Unidad de Negocio (Multi-tenancy con Maestros Compartidos)** (2026-08-12)
+  - **Descripción:** Implementación de arquitectura multi-ámbito/multi-departamento para aislar la gestión de proyectos, presupuestos y portafolios entre diferentes equipos/unidades de negocio, iniciando con el ámbito **"IT Corporate"** y manteniendo compartidos los catálogos globales (**Proveedores**, **Sedes/Sites**, **Tipos de Capex/Subtipos**, **Tipos de Factura** y moneda única en **€**).
 - [x] **FEATURE-64 (IDEA-64): Panel Lateral Colapsable de Asistente de Pendientes (Tareas y Comunicaciones)** (2026-08-12)
-  - **Descripción**: Asistente lateral tipo sidebar a la derecha (sticky) que recuerda al Project Manager sus tareas pendientes y planes de comunicación a ejecutar en ventanas configurables (7d, 15d, 30d), filtrado estrictamente por proyectos donde el usuario es el PM asignado (`id_pm`). Integración fluida con `EmailReportModal` cargando contactos participantes.
+  - **Descripción**: Asistente lateral tipo sidebar a la derecha (sticky) que recuerda al Project Manager sus tareas pendientes y planes de comunicación a ejecutar en ventanas configurables (7d, 15d, 30d), filtrado strictly por proyectos donde el usuario es el PM asignado (`id_pm`). Integración fluida con `EmailReportModal` cargando contactos participantes.
 - [x] **REFACTOR-03 (IDEA-61): Limpieza de dependencias y scripts heredados de IIS / Windows Server / Raspberry Pi tras migraciÃ³n a Azure PaaS** (2026-08-11)
   - **DescripciÃ³n:** EliminaciÃ³n limpia de scripts de despliegue heredados para Windows Server 2022 / IIS (`setup-iis.ps1`, `setup-server.ps1`, `deploy-pre.ps1`, `deploy-pro.ps1`), configuraciones de `iisnode`, `web.config`, certificados `win-acme`, y archivos de entorno Raspberry Pi (`.envRaspberry`), consolidando la infraestructura exclusivamente en desarrollo local y Azure App Service (`build-azure-zip.ps1`).
 - [x] **FEATURE-63 (IDEA-63): MigraciÃ³n global de Claves Primarias y ForÃ¡neas de Entidades a UUIDv7 sin pÃ©rdida de datos ni relaciones** (2026-08-11)
