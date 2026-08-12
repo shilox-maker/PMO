@@ -19,11 +19,7 @@
 
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
-- [x] **FEATURE-64 (IDEA-64): Panel Lateral Colapsable de Asistente de Pendientes (Tareas y Comunicaciones)** (2026-08-12)
-  - **Descripción**: Asistente lateral tipo sidebar a la derecha (sticky) que recuerda al Project Manager sus tareas pendientes y planes de comunicación a ejecutar en ventanas configurables (7d, 15d, 30d), filtrado estrictamente por proyectos donde el usuario es el PM asignado (`id_pm`). Integración fluida con `EmailReportModal` cargando contactos participantes.
-
-
-- [ ] **FEATURE-56 (IDEA-56): SegregaciÃ³n por Ã�mbito / Unidad de Negocio (Multi-tenancy con Maestros Compartidos)**
+- [ ] **FEATURE-56 (IDEA-56): SegregaciÃ³n por Ãmbito / Unidad de Negocio (Multi-tenancy con Maestros Compartidos)**
   - **DescripciÃ³n:** ImplementaciÃ³n de arquitectura multi-Ã¡mbito/multi-departamento para aislar la gestiÃ³n de proyectos, presupuestos y portafolios entre diferentes equipos/unidades de negocio, iniciando con el Ã¡mbito **"IT Corporate"** y manteniendo compartidos los catÃ¡logos globales (**Proveedores**, **Sedes/Sites**, **Tipos de Capex/Subtipos**, **Tipos de Factura** y moneda Ãºnica en **â‚¬**).
   - **AnÃ¡lisis TÃ©cnico y EspecificaciÃ³n Acordada:**
     1. **Nuevos Modelos en Base de Datos (Sequelize):**
@@ -44,9 +40,9 @@
        - **Anti-ManipulaciÃ³n (Zero-Trust):** Si un cliente o la IA intenta enviar un `X-Ambito-Id` al que no tiene acceso, el servidor rechaza la peticiÃ³n con un `HTTP 403 Forbidden`. La opciÃ³n `ALL` solo se autoriza si el perfil del JWT es `ADMINISTRADOR` o `DIRECTOR`.
     6. **Frontend UI/UX (Conmutador y Flujo de Login):**
        - `AuthContext`: Estado `selectedAmbito` con almacenamiento local (`localStorage`).
-       - **Flujo de Login:** En la primera sesiÃ³n (o sin Ã¡mbito en memoria), se presenta una modal/sugerencia inicial para elegir Ã�mbito. En accesos posteriores, se restaura automÃ¡ticamente el Ã¡mbito guardado de la memoria.
-       - Selector de Ã�mbito activo en `UserMenuDropdown` / NavigationRail (incluye opciÃ³n "Todos los Ã�mbitos (Vista Global)" para Admins/Directores).
-       - **CreaciÃ³n en Vista Global:** Al estar en vista "Todos los Ã�mbitos", los formularios de alta (Proyecto/Portfolio) requieren obligatoriamente seleccionar el Ã�mbito destino; en vista de Ã�mbito especÃ­fico, se auto-asigna el activo.
+       - **Flujo de Login:** En la primera sesiÃ³n (o sin Ã¡mbito en memoria), se presenta una modal/sugerencia inicial para elegir Ãmbito. En accesos posteriores, se restaura automÃ¡ticamente el Ã¡mbito guardado de la memoria.
+       - Selector de Ãmbito activo en `UserMenuDropdown` / NavigationRail (incluye opciÃ³n "Todos los Ãmbitos (Vista Global)" para Admins/Directores).
+       - **CreaciÃ³n en Vista Global:** Al estar en vista "Todos los Ãmbitos", los formularios de alta (Proyecto/Portfolio) requieren obligatoriamente seleccionar el Ã¡mbito destino; en vista de Ã¡mbito especÃ­fico, se auto-asigna el activo.
        - Interceptor en `api.js` para inyectar automÃ¡ticamente la cabecera `X-Ambito-Id` en cada llamada.
     7. **Seguridad Inmutable en el Servidor MCP (Model Context Protocol):**
        - **Mapa de Claves en `.env` (`MCP_KEYS_CONFIG`):** Se admitirÃ¡ en `.env` un JSON con el mapa de claves API y sus Ã¡mbitos autorizados (ej: `[{"key":"key-admin","ambitos":["ALL"],"default":"IT_CORP"},{"key":"key-it","ambitos":["IT_CORP"],"default":"IT_CORP"}]`).
@@ -61,11 +57,10 @@
     - Frontend: `frontend/src/context/AuthContext.jsx`, `frontend/src/components/UserMenuDropdown.jsx`, `frontend/src/components/modals/AmbitoSelectionModal.jsx`, `frontend/src/components/modals/CreateProjectModal.jsx`, `frontend/src/locales/es.json`, `frontend/src/locales/en.json`, `frontend/src/locales/pt.json`.
   - **Impacto Estimado:** Alto. RequerirÃ¡ ejecutar `node migrate.js up` y verificar la integridad de las consultas en Backend, el servidor MCP y el selector en Frontend.
 
-## ðŸš€ 6. Pendiente de Subir (Listo para Git)
-*(Sin tareas pendientes de subir)*
 
-
-## ðŸ“¦ 7. Completado e Integrado (Historial)
+## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-64 (IDEA-64): Panel Lateral Colapsable de Asistente de Pendientes (Tareas y Comunicaciones)** (2026-08-12)
+  - **Descripción**: Asistente lateral tipo sidebar a la derecha (sticky) que recuerda al Project Manager sus tareas pendientes y planes de comunicación a ejecutar en ventanas configurables (7d, 15d, 30d), filtrado estrictamente por proyectos donde el usuario es el PM asignado (`id_pm`). Integración fluida con `EmailReportModal` cargando contactos participantes.
 - [x] **REFACTOR-03 (IDEA-61): Limpieza de dependencias y scripts heredados de IIS / Windows Server / Raspberry Pi tras migraciÃ³n a Azure PaaS** (2026-08-11)
   - **DescripciÃ³n:** EliminaciÃ³n limpia de scripts de despliegue heredados para Windows Server 2022 / IIS (`setup-iis.ps1`, `setup-server.ps1`, `deploy-pre.ps1`, `deploy-pro.ps1`), configuraciones de `iisnode`, `web.config`, certificados `win-acme`, y archivos de entorno Raspberry Pi (`.envRaspberry`), consolidando la infraestructura exclusivamente en desarrollo local y Azure App Service (`build-azure-zip.ps1`).
 - [x] **FEATURE-63 (IDEA-63): MigraciÃ³n global de Claves Primarias y ForÃ¡neas de Entidades a UUIDv7 sin pÃ©rdida de datos ni relaciones** (2026-08-11)
