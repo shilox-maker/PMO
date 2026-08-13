@@ -25,7 +25,7 @@ const DEFAULT_DASHBOARD_COLUMNS = [
 
 export default function DashboardProyectos({ onViewProject, onViewVendor }) {
   const { t } = useTranslation();
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, selectedAmbito } = useAuth();
 
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +65,7 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(Array.isArray(data) ? data : [])).catch(() => {});
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(Array.isArray(data) ? data : [])).catch(() => {});
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(Array.isArray(data) ? data : [])).catch(() => {});
-  }, []);
+  }, [selectedAmbito]);
 
   const fetchDashboardData = () => {
     setLoading(true);
@@ -104,7 +104,7 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm, timeframe]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm, timeframe, selectedAmbito]);
 
   useEffect(() => {
     if (customDate) {

@@ -38,7 +38,8 @@ export const getDashboardStyles = () => `
   .print-btn { position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; z-index: 100; }
 `;
 
-export const renderProjectCard = (project, comments, reportOptions, highlightDate) => {
+export const renderProjectCard = (project, comments, reportOptions, highlightDate, t) => {
+  const tr = t || ((key, opts) => key);
   const calc = project.calculations || {};
   const budgetInitial = parseFloat(project.budget_inicial) || 0;
   const gastoTotal = calc.gasto_comprometido || 0;
@@ -61,49 +62,49 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
 
   const kpisHtml = reportOptions.resumen ? `
     <div class="kpi-grid">
-      <div class="kpi-box"><div class="label">Fecha Fin Inicial</div><div class="value">${formatDate(fechaFinInicial)}</div></div>
-      <div class="kpi-box"><div class="label">Fecha Fin Estimada</div><div class="value ${hasDelay ? 'alert-red' : ''}">${formatDate(fechaFinEstimada)} ${hasDelay ? `<span style="font-size:11px;font-weight:500;">(+${diasRetraso} días)</span>` : ''}</div></div>
-      <div class="kpi-box"><div class="label">Presupuesto Inicial</div><div class="value">${formatCurrency(budgetInitial)}</div></div>
-      <div class="kpi-box"><div class="label">Gasto Comprometido (${budgetPercent}%)</div><div class="value ${budgetOverrun ? 'alert-red' : 'alert-green'}">${formatCurrency(gastoTotal)} ${budgetOverrun ? '<span style="font-size:11px;">⚠️ SOBRECOSTO</span>' : ''}</div></div>
+      <div class="kpi-box"><div class="label">${tr('reportExport.initialEndDate')}</div><div class="value">${formatDate(fechaFinInicial)}</div></div>
+      <div class="kpi-box"><div class="label">${tr('reportExport.estimatedEndDate')}</div><div class="value ${hasDelay ? 'alert-red' : ''}">${formatDate(fechaFinEstimada)} ${hasDelay ? `<span style="font-size:11px;font-weight:500;">(+${diasRetraso} d)</span>` : ''}</div></div>
+      <div class="kpi-box"><div class="label">${tr('reportExport.initialBudget')}</div><div class="value">${formatCurrency(budgetInitial)}</div></div>
+      <div class="kpi-box"><div class="label">${tr('reportExport.committedSpend', { percent: budgetPercent })}</div><div class="value ${budgetOverrun ? 'alert-red' : 'alert-green'}">${formatCurrency(gastoTotal)} ${budgetOverrun ? `<span style="font-size:11px;">${tr('reportExport.overcostAlert')}</span>` : ''}</div></div>
     </div>` : '';
 
   const alcanceHtml = reportOptions.alcance ? `
     <div class="sub-section">
-      <h3>🎯 Alcance del Proyecto</h3>
+      <h3>${tr('reportExport.scopeTitle')}</h3>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px;">
-        <div style="padding:10px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:6px;"><strong>¿Por qué?</strong><div style="margin-top:4px; font-size:11px;">${project.alcance_por_que || 'No definido'}</div></div>
-        <div style="padding:10px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:6px;"><strong>Objetivo principal</strong><div style="margin-top:4px; font-size:11px;">${project.alcance_objetivo || 'No definido'}</div></div>
+        <div style="padding:10px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:6px;"><strong>${tr('reportExport.why')}</strong><div style="margin-top:4px; font-size:11px;">${project.alcance_por_que || tr('reportExport.noDefined')}</div></div>
+        <div style="padding:10px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:6px;"><strong>${tr('reportExport.mainObjective')}</strong><div style="margin-top:4px; font-size:11px;">${project.alcance_objetivo || tr('reportExport.noDefined')}</div></div>
       </div>
     </div>` : '';
 
   const cierreHtml = reportOptions.cierre ? `
     <div class="sub-section">
-      <h3>🏆 Criterios de Cierre</h3>
+      <h3>${tr('reportExport.closureTitle')}</h3>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px;">
-        <div style="padding:10px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:6px;"><strong>Criterios de aceptación</strong><div style="margin-top:4px; font-size:11px;">${project.cierre_aceptacion || 'No definido'}</div></div>
-        <div style="padding:10px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:6px;"><strong>Criterios de éxito</strong><div style="margin-top:4px; font-size:11px;">${project.cierre_exito || 'No definido'}</div></div>
+        <div style="padding:10px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:6px;"><strong>${tr('reportExport.acceptanceCriteria')}</strong><div style="margin-top:4px; font-size:11px;">${project.cierre_aceptacion || tr('reportExport.noDefined')}</div></div>
+        <div style="padding:10px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:6px;"><strong>${tr('reportExport.successCriteria')}</strong><div style="margin-top:4px; font-size:11px;">${project.cierre_exito || tr('reportExport.noDefined')}</div></div>
       </div>
     </div>` : '';
 
   const hitosHtml = reportOptions.hitos ? `
     <div class="sub-section">
-      <h3>🏁 Hitos del Proyecto</h3>
+      <h3>${tr('reportExport.milestonesTitle')}</h3>
       <table>
-        <thead><tr><th>Hito</th><th>Fecha</th><th>Estado</th></tr></thead>
+        <thead><tr><th>${tr('reportExport.milestoneHeader')}</th><th>${tr('reportExport.dateHeader')}</th><th>${tr('reportExport.statusHeader')}</th></tr></thead>
         <tbody>
-          ${completed.length === 0 && pending.length === 0 ? '<tr><td colspan="3" style="text-align:center;color:#999;padding:8px;">Sin hitos</td></tr>' : ''}
+          ${completed.length === 0 && pending.length === 0 ? `<tr><td colspan="3" style="text-align:center;color:#999;padding:8px;">${tr('reportExport.noMilestones')}</td></tr>` : ''}
           ${completed.map(m => `
             <tr>
               <td>${m.titulo_tarea}</td>
               <td>${formatDate(m.fecha_limite)}</td>
-              <td><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;background:#e8f5e9;color:#2e7d32;">✅ Completado</span></td>
+              <td><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;background:#e8f5e9;color:#2e7d32;">${tr('reportExport.completedBadge')}</span></td>
             </tr>
           `).join('')}
           ${pending.map(m => `
             <tr>
               <td>${m.titulo_tarea}</td>
               <td>${formatDate(m.fecha_limite)}</td>
-              <td><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;background:#fff3e0;color:#e65100;">⏳ Pendiente</span></td>
+              <td><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;background:#fff3e0;color:#e65100;">${tr('reportExport.pendingBadge')}</span></td>
             </tr>
           `).join('')}
         </tbody>
@@ -112,14 +113,14 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
 
   const timelineHtml = reportOptions.timeline ? `
     <div class="sub-section">
-      <h3>📅 Cronología del Proyecto (Timeline)</h3>
-      ${allTasks.length === 0 ? '<p style="color:#999;font-size:11px;font-style:italic;">Sin cronograma.</p>' : `
+      <h3>${tr('reportExport.timelineTitle')}</h3>
+      ${allTasks.length === 0 ? `<p style="color:#999;font-size:11px;font-style:italic;">${tr('reportExport.noTimeline')}</p>` : `
       <div style="position:relative; padding-left: 15px; border-left: 2px solid #1a1a2e; margin: 12px 0 12px 5px;">
         ${allTasks.sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite)).slice(0, 8).map(event => `
           <div style="position:relative; margin-bottom: 12px;">
             <div style="position:absolute; left:-21px; top:3px; width:10px; height:10px; border-radius:50%; background:${event.es_hito ? '#e65100' : '#1a1a2e'}; border: 2px solid #fff; box-shadow: 0 0 0 1.5px ${event.es_hito ? '#e65100' : '#1a1a2e'};"></div>
-            <div style="font-weight: 600; font-size: 11.5px;">${event.titulo_tarea} ${event.es_hito ? '<span style="font-size:8.5px; background:#ffe0b2; color:#e65100; padding:1px 4px; border-radius:8px; margin-left:4px; font-weight:700;">HITO</span>' : ''}</div>
-            <div style="font-size:10px; color:#666;">F. Límite: ${formatDate(event.fecha_limite)} · Estado: ${event.estado}</div>
+            <div style="font-weight: 600; font-size: 11.5px;">${event.titulo_tarea} ${event.es_hito ? `<span style="font-size:8.5px; background:#ffe0b2; color:#e65100; padding:1px 4px; border-radius:8px; margin-left:4px; font-weight:700;">${tr('reportExport.milestoneBadge')}</span>` : ''}</div>
+            <div style="font-size:10px; color:#666;">${tr('reportExport.deadlineLimit')} ${formatDate(event.fecha_limite)} · ${tr('reportExport.statusHeader')}: ${event.estado}</div>
           </div>
         `).join('')}
       </div>`}
@@ -128,9 +129,9 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
   const risksList = project.Riesgos || [];
   const risksHtml = (reportOptions.riesgos && risksList.length > 0) ? `
     <div class="sub-section">
-      <h3>⚠️ Riesgos</h3>
+      <h3>${tr('reportExport.risksTitle')}</h3>
       <table>
-        <thead><tr><th>Código</th><th>Riesgo</th><th>P / I</th><th>Mitigación</th><th>Estado</th></tr></thead>
+        <thead><tr><th>${tr('reportExport.code')}</th><th>Riesgo</th><th>${tr('reportExport.probImpact')}</th><th>${tr('reportExport.mitigation')}</th><th>${tr('reportExport.statusHeader')}</th></tr></thead>
         <tbody>
           ${risksList.map(r => `
             <tr>
@@ -148,9 +149,9 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
   const incidentsList = project.Incidencias || [];
   const incidentsHtml = (reportOptions.incidencias && incidentsList.length > 0) ? `
     <div class="sub-section">
-      <h3>🛑 Incidencias</h3>
+      <h3>${tr('reportExport.incidentsTitle')}</h3>
       <table>
-        <thead><tr><th>Código</th><th>Incidencia</th><th>Tipo</th><th>Criticidad</th><th>Estado</th></tr></thead>
+        <thead><tr><th>${tr('reportExport.code')}</th><th>Incidencia</th><th>Tipo</th><th>Criticidad</th><th>${tr('reportExport.statusHeader')}</th></tr></thead>
         <tbody>
           ${incidentsList.map(i => `
             <tr>
@@ -168,9 +169,9 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
   const crList = project.CambiosAlcance || [];
   const crHtml = (reportOptions.cambios && crList.length > 0) ? `
     <div class="sub-section">
-      <h3>📈 Cambios de Alcance (CR)</h3>
+      <h3>${tr('reportExport.crTitle')}</h3>
       <table>
-        <thead><tr><th>Código</th><th>Descripción / Motivo</th><th>Importe</th><th>Tiempo</th><th>Estado</th></tr></thead>
+        <thead><tr><th>${tr('reportExport.crCode')}</th><th>${tr('reportExport.description')}</th><th>${tr('reportExport.costImpact')}</th><th>${tr('reportExport.timeImpact')}</th><th>${tr('reportExport.statusHeader')}</th></tr></thead>
         <tbody>
           ${crList.map(c => `
             <tr>
@@ -188,9 +189,9 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
   const lessonsList = project.LeccionesAprendidas || [];
   const lessonsHtml = (reportOptions.lecciones && lessonsList.length > 0) ? `
     <div class="sub-section">
-      <h3>⭐ Lecciones Aprendidas</h3>
+      <h3>${tr('reportExport.lessonsTitle')}</h3>
       <table>
-        <thead><tr><th>Código</th><th>Tipo</th><th>Título</th><th>Recomendación</th></tr></thead>
+        <thead><tr><th>${tr('reportExport.code')}</th><th>${tr('reportExport.category')}</th><th>${tr('reportExport.lesson')}</th><th>${tr('reportExport.recommendation')}</th></tr></thead>
         <tbody>
           ${lessonsList.map(l => `
             <tr>
@@ -206,7 +207,7 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
 
   const commentsHtml = reportOptions.resumen ? `
     <div class="sub-section">
-      <h3>💬 Muro Ejecutivo</h3>
+      <h3>💬 ${tr('reportExport.executiveWall')}</h3>
       ${importantComments.length === 0 ? '<p style="color:#999;font-style:italic;">No hay comentarios importantes.</p>' : importantComments.map(c => {
         const isDireccion = c.para_direccion;
         const commentDate = new Date(c.fecha_registro).toISOString().split('T')[0];
@@ -238,7 +239,7 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
         <h2>${project.Estado?.icono || ''} ${project.nombre_proyecto}</h2>
         <span class="project-id-badge">${project.id_proyecto}</span>
       </div>
-      <p style="margin-bottom:12px; color:#555; font-size:12px;"><strong>PM:</strong> ${project.PM?.nombre || ''} ${project.PM?.apellidos || ''} | <strong>Partner:</strong> ${project.Proveedor?.nombre_razon_social || '—'}</p>
+      <p style="margin-bottom:12px; color:#555; font-size:12px;"><strong>${tr('reportExport.pm')}:</strong> ${project.PM?.nombre || ''} ${project.PM?.apellidos || ''} | <strong>${tr('reportExport.partner')}:</strong> ${project.Proveedor?.nombre_razon_social || '—'}</p>
       ${kpisHtml}
       ${alcanceHtml}
       ${cierreHtml}

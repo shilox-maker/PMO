@@ -4,9 +4,11 @@ import SearchableContactSelect from '../SearchableContactSelect';
 
 export default function ProjectEditModal({
   isOpen, onClose, project, getAuthHeaders, onSuccess,
-  sedes, vendors, contactosList, pms, workflowStates, portfolios = [], capexTypes = []
+  sedes, vendors, contactosList, pms, workflowStates, portfolios = [], portfoliosList = [], capexTypes = []
 }) {
   const { t } = useTranslation();
+  const portfoliosData = portfolios.length > 0 ? portfolios : portfoliosList;
+
   const [form, setForm] = useState({
     nombre_proyecto: '',
     descripcion: '',
@@ -241,7 +243,7 @@ export default function ProjectEditModal({
                 className="user-select"
               >
                 <option value="">Sin asignar</option>
-                {portfolios.map(p => (
+                {portfoliosData.map(p => (
                   <option key={p.id} value={p.id}>{p.nombre}</option>
                 ))}
               </select>

@@ -47,10 +47,25 @@ const createUser = asyncHandler(async (req, res) => {
   });
 
   // Asignación de Ámbitos
-  const ambitosIds = Array.isArray(ambitos) ? ambitos : [1];
+  let ambitosIds = Array.isArray(ambitos) && ambitos.length > 0 ? ambitos : [1];
+  if (perfil !== 'ADMINISTRADOR' && Array.isArray(ambitos) && ambitos.length === 0) {
+    return res.status(400).json({ error: 'Un usuario no administrador debe tener al menos un ámbito asociado.' });
+  }
+
+  const user = await Usuarios.create({
+    nombre,
+    apellidos,
+    correo,
+    password: await hashPassword(finalPassword),
+    password_salt: null,
+    perfil,
+    activo: activo !== undefined ? activo : true,
+    metodo_acceso: accessMethod
+  });
+
   const associations = ambitosIds.map(id_ambito => ({
     id_usuario: user.id_usuario,
-    id_ambito,
+    id_ambito: Number(id_ambito),
     rol_ambito: 'MEMBER'
   }));
   await UsuarioAmbitos.bulkCreate(associations);
@@ -67,6 +82,11 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 
   const targetMethod = metodo_acceso !== undefined ? metodo_acceso : user.metodo_acceso;
+  const targetPerfil = perfil !== undefined ? perfil : user.perfil;
+
+  if (targetPerfil !== 'ADMINISTRADOR' && Array.isArray(ambitos) && ambitos.length === 0) {
+    return res.status(400).json({ error: 'Un usuario no administrador debe tener al menos un ámbito asociado.' });
+  }
 
   if (targetMethod === 'PASSWORD' && user.metodo_acceso === 'ENTRA_ID' && (!password || password.trim() === '')) {
     return res.status(400).json({ error: 'Debe especificar una contraseña al cambiar el método de acceso a Contraseña.' });

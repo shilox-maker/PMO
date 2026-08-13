@@ -570,6 +570,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           contactosList={contactosList}
           pms={pms}
           workflowStates={workflowStates}
+          portfolios={portfoliosList}
           portfoliosList={portfoliosList}
           capexTypes={capexTypes}
           getAuthHeaders={getAuthHeaders}

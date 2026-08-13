@@ -7,15 +7,38 @@
 ## 🔍 2. En Análisis / Especificación
 *(Sin especificaciones en análisis)*
 
-
 ## 📋 3. Listas para Codificar (Tú les has dado el OK)
-*(Sin tareas pendientes de codificación)*
+*(Sin especificaciones en listas para codificar)*
 
 ## 📦 4. Implementadas
-*(Sin tareas recién implementadas)*
+- [x] **BUG-11: Al editar un proyecto (en la Ficha de Proyecto), la lista/desplegable de Portfolios aparece vacía** (2026-08-13)
+  - **Análisis Técnico:** Discrepancia de nombres en el paso de propiedades (props) entre la vista de detalle y el modal de edición. En `ProjectDetail.jsx` (línea 573) se le pasaba al componente `<ProjectEditModal />` la prop `portfoliosList={portfoliosList}`, mientras que en `ProjectEditModal.jsx` (línea 7) la firma desestructuraba la propiedad como `portfolios = []`. Se resolvió pasando ambas props (`portfolios={portfoliosList}` y `portfoliosList={portfoliosList}`) y añadiendo fallback tolerante en el modal `portfoliosData = portfolios.length > 0 ? portfolios : portfoliosList`.
+  - **Archivos Afectados:** `frontend/src/pages/ProjectDetail.jsx`, `frontend/src/components/modals/ProjectEditModal.jsx`.
+- [x] **BUG-12: Corrección del comportamiento de ámbitos: asignación obligatoria en usuarios no ADMIN, modal de selección al loguearse sin carga previa de datos y filtrado estricto por ámbito activo** (2026-08-13)
+  - **Análisis Técnico:** Se obligó a tener al menos 1 ámbito asignado para usuarios no-administradores en `user.controller.js` y `ambitosController.js`. Se actualizó `AuthContext.jsx` y `App.jsx` para que al iniciar sesión `selectedAmbito` comience vacío e `isFirstLoginSelection` se active en `true`, bloqueando el renderizado de `MainAppContent` y peticiones secundarias hasta que el usuario elija y confirme su ámbito en `AmbitoSelectionModal.jsx`. Se añadieron filtros por `req.currentAmbitoId` en `dashboard.controller.js`, `dashboardTimeline.controller.js`, `searchController.js` y `vendorController.js`. Se añadió fallback en `UserMenuDropdown.jsx` a `currentPm.Ambitos` para asegurar que el desplegable "ÁMBITO ACTIVO" en la ficha del usuario nunca se muestre vacío.
+  - **Archivos Afectados:** `backend/controllers/admin/user.controller.js`, `backend/controllers/ambitosController.js`, `backend/controllers/meta/dashboard.controller.js`, `backend/controllers/meta/dashboardTimeline.controller.js`, `backend/controllers/searchController.js`, `backend/controllers/vendorController.js`, `frontend/src/context/AuthContext.jsx`, `frontend/src/App.jsx`, `frontend/src/components/modals/AmbitoSelectionModal.jsx`, `frontend/src/components/UserMenuDropdown.jsx`.
+- [x] **BUG-09: Desplegable de selección de Ámbito Activo sugiere "Todos los Ámbitos (Vista Global)" a usuarios con rol PM que pertenecen a 1 solo ámbito** (2026-08-13)
+  - **Análisis Técnico:** En `ambitosController.js`, `canSelectAll` devuelve `true` solo para `ADMINISTRADOR` y `DIRECTOR`. Además se añade un fallback por defecto al Ámbito 1 (`IT Corporate`) si un usuario PM no-Admin no tuviera asociaciones explícitas en `usuario_ambitos`, evitando que la lista de ámbitos retorne vacía. En frontend (`AuthContext.jsx`, `UserMenuDropdown.jsx` y `AmbitoSelectionModal.jsx`) se evalúa `activePm` con fallback al almacenamiento local y se restringe la Vista Global ("ALL") a Admin/Director.
+  - **Archivos Afectados:** `backend/controllers/ambitosController.js`, `frontend/src/context/AuthContext.jsx`, `frontend/src/components/UserMenuDropdown.jsx`, `frontend/src/components/modals/AmbitoSelectionModal.jsx`.
+- [x] **BUG-07: Clave i18n sin traducir (`usersAdmin.active` / `usersAdmin.inactive`) en la columna Estado del Mantenimiento de Usuarios** (2026-08-13)
+  - **Análisis Técnico:** En `UsersAdmin.jsx` (línea 238) se renderiza `{u.activo ? t('usersAdmin.active') : t('usersAdmin.inactive')}`. En los archivos de i18n (`es.json`, `en.json`, `pt.json`), la clave definida bajo `usersAdmin` es `"activeUser"` en lugar de `"active"` e `"inactive"`. Se añadirá la pareja `"active"` y `"inactive"` a los 3 diccionarios.
+  - **Archivos Afectados:** `frontend/src/locales/es.json`, `frontend/src/locales/en.json`, `frontend/src/locales/pt.json`, `frontend/src/components/admin/UsersAdmin.jsx`.
+- [x] **FEATURE-65: Visualización y traducción de columna "Ámbitos" en el Mantenimiento de Usuarios del Panel de Administración** (2026-08-13)
+  - **Análisis Técnico:** Se tradujo el título de la columna mediante `{t('usersAdmin.ambitosColumn')}` en `UsersAdmin.jsx` y las claves correspondientes en `es.json` ("Ámbitos"), `en.json` ("Scopes") y `pt.json` ("Âmbitos"). Los chips mantienen el código del ámbito (`a.code || a.nombre`) sin traducir.
+  - **Archivos Afectados:** `frontend/src/components/admin/UsersAdmin.jsx`, `frontend/src/locales/es.json`, `frontend/src/locales/en.json`, `frontend/src/locales/pt.json`.
+- [x] **BUG-10: Usuario no puede acceder ni cargar su sesión en PRE al no recibir/asociar adecuadamente sus Ámbitos en la verificación o inicio de sesión** (2026-08-13)
+  - **Análisis Técnico:** Se incluyó `Ambitos` en `azure.controller.js` (`loginAzure`) y se reforzó `scopeMiddleware.js` con fallback y bypass permisivo para `/api/ambitos`, permitiendo que `AuthContext.jsx` sincronice correctamente los ámbitos permitidos del usuario sin bloquear el acceso con error HTTP 403.
+  - **Archivos Afectados:** `backend/controllers/auth/azure.controller.js`, `backend/controllers/auth/local.controller.js`, `backend/middlewares/scopeMiddleware.js`, `frontend/src/context/AuthContext.jsx`.
+- [x] **BUG-08: Expresión regular de validación de contraseñas requiere un carácter extra por el punto `.` descolocado en la clase de caracteres especiales** (2026-08-13)
+  - **Análisis Técnico:** Se consolidó y verificó la expresión regular `/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]).{10,}$/` en `frontend/src/utils/passwordValidation.js`, `frontend/src/App.jsx`, `backend/controllers/admin/user.controller.js` y `backend/controllers/auth/local.controller.js`, garantizando la aceptación exacta de contraseñas con caracteres especiales al final sin requerir caracteres adicionales.
+  - **Archivos Afectados:** `frontend/src/utils/passwordValidation.js`, `frontend/src/App.jsx`, `backend/controllers/admin/user.controller.js`, `backend/controllers/auth/local.controller.js`.
+- [x] **BUG-06: Internacionalización de la Pantalla y la Generación del Informe Consolidado de Cartera / Proyecto** (2026-08-12)
+  - **Descripción:** Cuando la interfaz está configurada en idioma Portugués (o Inglés), tanto el modal de selección de secciones (`DashboardReportModal.jsx`) como los documentos HTML/PDF generados (`dashboardReportGenerator.js`, `dashboardReportHtmlComponents.js`, `reportGenerator.js`, `reportHtmlSections.js`) muestran títulos, etiquetas, secciones y textos fijos en español.
+  - **Impacto estimado y archivos:** `DashboardReportModal.jsx`, `dashboardReportGenerator.js`, `dashboardReportHtmlComponents.js`, `reportGenerator.js`, `reportHtmlSections.js`, `reportHtmlComponents.js`, `es.json`, `en.json`, `pt.json`.
+
 
 ## 🧪 5. En Testeo / Pruebas
-*(Sin pruebas pendientes)*
+*(Sin elementos en testeo)*
 
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
@@ -23,6 +46,14 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **BUG-11: Al editar un proyecto (en la Ficha de Proyecto), la lista/desplegable de Portfolios aparece vacía** (2026-08-13)
+- [x] **BUG-12: Corrección del comportamiento de ámbitos: asignación obligatoria en usuarios no ADMIN, modal de selección al loguearse sin carga previa de datos y filtrado estricto por ámbito activo** (2026-08-13)
+- [x] **BUG-09: Desplegable de selección de Ámbito Activo sugiere "Todos los Ámbitos (Vista Global)" a usuarios con rol PM que pertenecen a 1 solo ámbito** (2026-08-13)
+- [x] **BUG-07: Clave i18n sin traducir (`usersAdmin.active` / `usersAdmin.inactive`) en la columna Estado del Mantenimiento de Usuarios** (2026-08-13)
+- [x] **FEATURE-65: Visualización y traducción de columna "Ámbitos" en el Mantenimiento de Usuarios del Panel de Administración** (2026-08-13)
+- [x] **BUG-10: Usuario no puede acceder ni cargar su sesión en PRE al no recibir/asociar adecuadamente sus Ámbitos en la verificación o inicio de sesión** (2026-08-13)
+- [x] **BUG-08: Expresión regular de validación de contraseñas requiere un carácter extra por el punto `.` descolocado en la clase de caracteres especiales** (2026-08-13)
+
 - [x] **FEATURE-56 (IDEA-56): Segregación por Ámbito / Unidad de Negocio (Multi-tenancy con Maestros Compartidos)** (2026-08-12)
   - **Descripción:** Implementación de arquitectura multi-ámbito/multi-departamento para aislar la gestión de proyectos, presupuestos y portafolios entre diferentes equipos/unidades de negocio, iniciando con el ámbito **"IT Corporate"** y manteniendo compartidos los catálogos globales (**Proveedores**, **Sedes/Sites**, **Tipos de Capex/Subtipos**, **Tipos de Factura** y moneda única en **€**).
 - [x] **FEATURE-64 (IDEA-64): Panel Lateral Colapsable de Asistente de Pendientes (Tareas y Comunicaciones)** (2026-08-12)

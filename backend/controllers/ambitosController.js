@@ -5,6 +5,9 @@ const { handleErr } = require('../utils/helpers');
 const getAmbitosUsuario = async (req, res) => {
   try {
     const user = req.currentUser;
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado.' });
+    }
     const isAdminOrDirector = ['ADMINISTRADOR', 'DIRECTOR'].includes(user.perfil);
 
     let ambitos = [];
@@ -14,7 +17,14 @@ const getAmbitosUsuario = async (req, res) => {
         order: [['id_ambito', 'ASC']]
       });
     } else {
-      ambitos = user.Ambitos ? user.Ambitos.filter(a => a.activo) : [];
+      let userAmbitos = user.Ambitos;
+      if (!userAmbitos) {
+        const fullUser = await Usuarios.findByPk(user.id_usuario, {
+          include: [{ model: Ambitos, as: 'Ambitos' }]
+        });
+        userAmbitos = fullUser ? fullUser.Ambitos : [];
+      }
+      ambitos = userAmbitos ? userAmbitos.filter(a => a.activo) : [];
     }
 
     res.json({
@@ -110,6 +120,10 @@ const updateUserAmbitos = async (req, res) => {
     const usuario = await Usuarios.findByPk(id_usuario);
     if (!usuario) {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    if (usuario.perfil !== 'ADMINISTRADOR' && ambitosIds.length === 0) {
+      return res.status(400).json({ error: 'Un usuario no administrador debe tener al menos un ámbito asociado.' });
     }
 
     await UsuarioAmbitos.destroy({ where: { id_usuario } });

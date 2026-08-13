@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { generateProjectReport } from '../../utils/reportGenerator';
 
 export default function ReportModal({ isOpen, onClose, project, comments }) {
+  const { t, i18n } = useTranslation();
   const [reportOptions, setReportOptions] = useState({
     resumen: true,
     hitos: true,
@@ -17,7 +19,7 @@ export default function ReportModal({ isOpen, onClose, project, comments }) {
   if (!isOpen) return null;
 
   const handleGenerate = () => {
-    generateProjectReport(project, comments, reportOptions);
+    generateProjectReport(project, comments, reportOptions, t, i18n.language);
     onClose();
   };
 
@@ -25,26 +27,26 @@ export default function ReportModal({ isOpen, onClose, project, comments }) {
     <div className="modal-overlay">
       <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
         <div className="modal-header">
-          <h3 className="modal-title">Generar Informe de Proyecto</h3>
+          <h3 className="modal-title">{t('reportModal.title')}</h3>
           <button className="icon-btn" onClick={onClose}>✕</button>
         </div>
 
         <div style={{ padding: '16px 0' }}>
           <p style={{ marginBottom: 16, color: 'var(--md-sys-color-on-surface-variant)' }}>
-            Selecciona qué secciones deseas incluir en el informe ejecutivo a generar:
+            {t('reportModal.subtitle')}
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { id: 'resumen', label: 'Resumen y KPIs de Control' },
-              { id: 'alcance', label: 'Alcance del Proyecto' },
-              { id: 'cierre', label: 'Criterios de Cierre' },
-              { id: 'hitos', label: 'Hitos de Proyecto' },
-              { id: 'timeline', label: 'Cronología del Proyecto (Timeline)' },
-              { id: 'riesgos', label: 'Matriz de Riesgos' },
-              { id: 'incidencias', label: 'Incidencias Técnicas o de Plazos' },
-              { id: 'cambios', label: 'Cambios de Alcance (CR)' },
-              { id: 'lecciones', label: 'Lecciones Aprendidas' }
+              { id: 'resumen', label: t('reportModal.optResumen') },
+              { id: 'alcance', label: t('reportModal.optAlcance') },
+              { id: 'cierre', label: t('reportModal.optCierre') },
+              { id: 'hitos', label: t('reportModal.optHitos') },
+              { id: 'timeline', label: t('reportModal.optTimeline') },
+              { id: 'riesgos', label: t('reportModal.optRiesgos') },
+              { id: 'incidencias', label: t('reportModal.optIncidencias') },
+              { id: 'cambios', label: t('reportModal.optCambios') },
+              { id: 'lecciones', label: t('reportModal.optLecciones') }
             ].map((opt) => (
               <label 
                 key={opt.id} 
@@ -65,10 +67,10 @@ export default function ReportModal({ isOpen, onClose, project, comments }) {
 
         <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
           <button type="button" className="m3-btn m3-btn-outline" onClick={onClose}>
-            Cancelar
+            {t('reportModal.cancel')}
           </button>
           <button type="button" className="m3-btn m3-btn-primary" onClick={handleGenerate}>
-            Generar Informe
+            {t('reportModal.generate')}
           </button>
         </div>
       </div>

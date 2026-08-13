@@ -16,7 +16,7 @@ const MS_PER_DAY = 86400000;
 
 export default function Timeline({ onViewProject, projectId, hideHeader }) {
   const { t } = useTranslation();
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, selectedAmbito } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [zoomIndex, setZoomIndex] = useState(1);
@@ -46,6 +46,7 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
   const todayLineRef = useRef(null);
 
   useEffect(() => {
+    setLoading(true);
     const headers = getAuthHeaders();
     const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
     Promise.all([
@@ -62,7 +63,7 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
       setProjects(Array.isArray(tml) ? tml : []);
       setLoading(false);
     }).catch(err => { console.error(err); setLoading(false); });
-  }, []);
+  }, [selectedAmbito]);
 
   useEffect(() => {
     if (!loading && todayLineRef.current && scrollRef.current) {

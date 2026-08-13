@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { JWT_SECRET } = require('../../config/jwt');
-const { Usuarios } = require('../../models/index');
+const { Usuarios, Ambitos } = require('../../models/index');
 const { hashPassword } = require('../../utils/helpers');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
@@ -12,7 +12,10 @@ const login = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'El correo y la contraseña son obligatorios.' });
   }
 
-  const user = await Usuarios.scope('withPassword').findOne({ where: { correo } });
+  const user = await Usuarios.scope('withPassword').findOne({
+    where: { correo },
+    include: [{ model: Ambitos, as: 'Ambitos', through: { attributes: [] } }]
+  });
   if (!user) {
     return res.status(401).json({ error: 'Usuario no registrado o credenciales incorrectas.' });
   }
@@ -63,7 +66,8 @@ const login = asyncHandler(async (req, res) => {
       correo: user.correo,
       perfil: user.perfil,
       activo: user.activo,
-      idioma: user.idioma || 'es'
+      idioma: user.idioma || 'es',
+      Ambitos: user.Ambitos || []
     }
   });
 });
@@ -74,7 +78,9 @@ const verify = asyncHandler(async (req, res) => {
     return res.status(401).json({ error: 'Token inválido o expirado.' });
   }
 
-  const user = await Usuarios.findByPk(pmId);
+  const user = await Usuarios.findByPk(pmId, {
+    include: [{ model: Ambitos, as: 'Ambitos', through: { attributes: [] } }]
+  });
   if (!user || !user.activo) {
     return res.status(401).json({ error: 'Usuario inactivo o no encontrado.' });
   }
@@ -87,7 +93,8 @@ const verify = asyncHandler(async (req, res) => {
       correo: user.correo,
       perfil: user.perfil,
       activo: user.activo,
-      idioma: user.idioma || 'es'
+      idioma: user.idioma || 'es',
+      Ambitos: user.Ambitos || []
     }
   });
 });

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import i18n from '../i18n';
+import { API_URL } from '../config/api';
 
 const AuthContext = createContext();
 
@@ -14,22 +15,35 @@ export const AuthProvider = ({ children }) => {
   const [isSessionExpired, setIsSessionExpired] = useState(false);
 
   // Ámbitos / Multi-tenancy
-  const [selectedAmbito, setSelectedAmbitoState] = useState(() => localStorage.getItem('pmo_selected_ambito_id') || '1');
+  const [selectedAmbito, setSelectedAmbitoState] = useState(() => localStorage.getItem('pmo_selected_ambito_id') || '');
   const [availableAmbitos, setAvailableAmbitos] = useState([]);
   const [canSelectAll, setCanSelectAll] = useState(false);
   const [isFirstLoginSelection, setIsFirstLoginSelection] = useState(false);
 
   const changeAmbito = (newAmbitoId) => {
-    const strVal = String(newAmbitoId);
+    const strVal = String(newAmbitoId || '');
     setSelectedAmbitoState(strVal);
-    localStorage.setItem('pmo_selected_ambito_id', strVal);
+    if (strVal) {
+      localStorage.setItem('pmo_selected_ambito_id', strVal);
+    } else {
+      localStorage.removeItem('pmo_selected_ambito_id');
+    }
   };
 
-  const fetchUserAmbitos = async () => {
-    const savedToken = token || localStorage.getItem('pm_token');
+  const fetchUserAmbitos = async (userObj, tokenOverride, isFreshLogin = false) => {
+    const savedToken = tokenOverride || token || localStorage.getItem('pm_token');
     if (!savedToken) return;
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/ambitos`, {
+      const storedPmStr = localStorage.getItem('pm_user');
+      const storedPm = storedPmStr ? JSON.parse(storedPmStr) : null;
+      const activePm = userObj || currentPm || storedPm;
+      const isUserAdminOrDirector = activePm && ['ADMINISTRADOR', 'DIRECTOR'].includes(activePm.perfil);
+
+      if (activePm?.Ambitos && activePm.Ambitos.length > 0) {
+        setAvailableAmbitos(activePm.Ambitos);
+      }
+
+      const res = await fetch(`${API_URL}/ambitos`, {
         headers: {
           'Authorization': `Bearer ${savedToken}`,
           'X-Ambito-Id': localStorage.getItem('pmo_selected_ambito_id') || '1'
@@ -37,8 +51,24 @@ export const AuthProvider = ({ children }) => {
       });
       if (res.ok) {
         const data = await res.json();
-        setAvailableAmbitos(data.ambitos || []);
-        setCanSelectAll(!!data.canSelectAll);
+        const userAmbitosList = (data.ambitos && data.ambitos.length > 0)
+          ? data.ambitos
+          : (activePm?.Ambitos || []);
+        const allowAll = Boolean(isUserAdminOrDirector && data.canSelectAll);
+
+        setAvailableAmbitos(userAmbitosList);
+        setCanSelectAll(allowAll);
+
+        const storedAmbito = localStorage.getItem('pmo_selected_ambito_id');
+
+        if (isFreshLogin || !storedAmbito) {
+          setIsFirstLoginSelection(true);
+        } else if (storedAmbito) {
+          const isValidStored = allowAll || storedAmbito === 'ALL' || userAmbitosList.some(a => String(a.id_ambito) === String(storedAmbito));
+          if (!isValidStored && userAmbitosList.length > 0) {
+            changeAmbito(String(userAmbitosList[0].id_ambito));
+          }
+        }
       }
     } catch (err) {
       console.error('Error cargando ámbitos:', err);
@@ -47,7 +77,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkMaintenanceStatus = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/maintenance/status`);
+      const res = await fetch(`${API_URL}/maintenance/status`);
       if (res.ok) {
         const data = await res.json();
         setIsMaintenanceActive(!!data.maintenance_mode);
@@ -109,7 +139,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchActiveUsers = () => {
     const savedToken = token || localStorage.getItem('pm_token');
-    fetch(`${import.meta.env.VITE_API_URL}/pms`, {
+    fetch(`${API_URL}/pms`, {
       headers: savedToken ? { 'Authorization': `Bearer ${savedToken}` } : {}
     })
       .then(res => res.json())
@@ -120,7 +150,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const savedToken = localStorage.getItem('pm_token');
     if (savedToken) {
-      fetch(`${import.meta.env.VITE_API_URL}/auth/verify`, {
+      fetch(`${API_URL}/auth/verify`, {
         headers: { 'Authorization': `Bearer ${savedToken}` }
       })
       .then(res => {
@@ -145,22 +175,27 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (currentPm) {
       fetchActiveUsers();
-      fetchUserAmbitos();
-      if (!localStorage.getItem('pmo_selected_ambito_id')) setIsFirstLoginSelection(true);
+      fetchUserAmbitos(currentPm);
     }
   }, [currentPm]);
 
-  const handleLoginResponse = (data) => {
+  const handleLoginResponse = async (data) => {
+    localStorage.removeItem('pmo_selected_ambito_id');
+    setSelectedAmbitoState('');
+    setIsFirstLoginSelection(true);
+    if (data.user?.Ambitos && data.user.Ambitos.length > 0) {
+      setAvailableAmbitos(data.user.Ambitos);
+    }
     localStorage.setItem('pm_token', data.token);
     localStorage.setItem('pm_user', JSON.stringify(data.user));
     setToken(data.token);
     setCurrentPm(data.user);
-    if (!localStorage.getItem('pmo_selected_ambito_id')) setIsFirstLoginSelection(true);
+    await fetchUserAmbitos(data.user, data.token, true);
     return data;
   };
 
   const login = async (correo, password) => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
+    const res = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ correo, password })
@@ -171,7 +206,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginAzure = async (azureToken) => {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/login/azure`, {
+    const res = await fetch(`${API_URL}/login/azure`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: azureToken })
@@ -195,7 +230,7 @@ export const AuthProvider = ({ children }) => {
       setCurrentPm(prev => (prev ? { ...prev, idioma: newLang } : null));
       try {
         const savedToken = token || localStorage.getItem('pm_token');
-        await fetch(`${import.meta.env.VITE_API_URL}/users/me/language`, {
+        await fetch(`${API_URL}/users/me/language`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -212,9 +247,14 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('pm_token');
     localStorage.removeItem('pm_user');
+    localStorage.removeItem('pmo_selected_ambito_id');
     setToken(null);
     setCurrentPm(null);
+    setSelectedAmbitoState('');
     setIsSessionExpired(false);
+    setAvailableAmbitos([]);
+    setCanSelectAll(false);
+    setIsFirstLoginSelection(false);
   };
 
   const getAuthHeaders = () => ({

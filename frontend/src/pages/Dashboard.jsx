@@ -7,7 +7,7 @@ import DashboardSummaryTable from '../components/dashboard/DashboardSummaryTable
 import SkeletonLoader from '../components/SkeletonLoader';
 
 export default function Dashboard({ onViewProject, onViewVendor }) {
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, selectedAmbito } = useAuth();
   
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +101,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
     fetch(`${import.meta.env.VITE_API_URL}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(data));
-  }, []);
+  }, [selectedAmbito]);
 
   const [trends, setTrends] = useState({});
   const [timeframe, setTimeframe] = useState(7);
@@ -145,7 +145,7 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [filters, timeframe]);
+  }, [filters, timeframe, selectedAmbito]);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));

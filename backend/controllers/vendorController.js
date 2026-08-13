@@ -24,8 +24,13 @@ const getVendorDetail = asyncHandler(async (req, res) => {
       return res.status(404).json({ error: 'Proveedor no encontrado' });
     }
 
+    const projectWhere = { id_proveedor };
+    if (req.currentAmbitoId && req.currentAmbitoId !== 'ALL') {
+      projectWhere.id_ambito = req.currentAmbitoId;
+    }
+
     const projects = await Proyectos.findAll({
-      where: { id_proveedor },
+      where: projectWhere,
       include: [
         { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos'] },
         { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },

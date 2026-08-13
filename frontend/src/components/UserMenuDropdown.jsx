@@ -92,21 +92,36 @@ export default function UserMenuDropdown({
               <Building2 size={14} />
               <span>{t('ambitos.currentScope', 'Ámbito Activo')}</span>
             </div>
-            <select
-              className="form-select form-select-sm mt-1 border-0 glass-input text-white bg-dark"
-              value={selectedAmbito}
-              onChange={(e) => changeAmbito(e.target.value)}
-              style={{ fontSize: '0.8rem', padding: '4px 8px', borderRadius: '6px' }}
-            >
-              {canSelectAll && (
-                <option value="ALL">🌐 {t('ambitos.allAmbitos', 'Todos los Ámbitos')}</option>
-              )}
-              {availableAmbitos.map(amb => (
-                <option key={amb.id_ambito} value={amb.id_ambito}>
-                  🏛️ {amb.nombre}
-                </option>
-              ))}
-            </select>
+            {(() => {
+              const ambitosList = (availableAmbitos && availableAmbitos.length > 0)
+                ? availableAmbitos
+                : (currentPm?.Ambitos || []);
+              return (
+                <select
+                  className="form-select form-select-sm mt-1 text-dark bg-white border"
+                  value={String(selectedAmbito || '')}
+                  onChange={(e) => changeAmbito(e.target.value)}
+                  style={{
+                    fontSize: '0.85rem',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    backgroundColor: '#ffffff',
+                    color: '#1e293b',
+                    fontWeight: '600',
+                    border: '1px solid #cbd5e1'
+                  }}
+                >
+                  {canSelectAll && ['ADMINISTRADOR', 'DIRECTOR'].includes(currentPm?.perfil) && (
+                    <option value="ALL" style={{ color: '#1e293b', backgroundColor: '#ffffff', fontWeight: '600' }}>🌐 {t('ambitos.allAmbitos', 'Todos los Ámbitos')}</option>
+                  )}
+                  {ambitosList.map(amb => (
+                    <option key={amb.id_ambito} value={String(amb.id_ambito)} style={{ color: '#1e293b', backgroundColor: '#ffffff', fontWeight: '600' }}>
+                      🏛️ {amb.nombre}
+                    </option>
+                  ))}
+                </select>
+              );
+            })()}
           </div>
 
           <div className="user-menu-divider" />

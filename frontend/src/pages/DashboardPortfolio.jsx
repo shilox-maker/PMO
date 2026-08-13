@@ -25,7 +25,7 @@ const DEFAULT_GOV_COLUMNS = [
 
 export default function DashboardPortfolio({ onViewProject }) {
   const { t } = useTranslation();
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, selectedAmbito } = useAuth();
 
   const [rawProjects, setRawProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +63,7 @@ export default function DashboardPortfolio({ onViewProject }) {
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(Array.isArray(data) ? data : [])).catch(() => {});
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(Array.isArray(data) ? data : [])).catch(() => {});
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(Array.isArray(data) ? data : [])).catch(() => {});
-  }, []);
+  }, [selectedAmbito]);
 
   const fetchDashboardData = () => {
     setLoading(true);
@@ -102,7 +102,7 @@ export default function DashboardPortfolio({ onViewProject }) {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm, timeframe]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm, timeframe, selectedAmbito]);
 
   // Cuando cambia la fecha personalizada, convertir a días y disparar fetch
   useEffect(() => {

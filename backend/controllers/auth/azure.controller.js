@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const https = require('https');
 const { JWT_SECRET } = require('../../config/jwt');
-const { Usuarios } = require('../../models/index');
+const { Usuarios, Ambitos } = require('../../models/index');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
 function getMicrosoftKeys() {
@@ -97,7 +97,10 @@ const loginAzure = asyncHandler(async (req, res) => {
   }
 
   // Buscar el usuario en la BD local
-  const user = await Usuarios.findOne({ where: { correo } });
+  const user = await Usuarios.findOne({
+    where: { correo },
+    include: [{ model: Ambitos, as: 'Ambitos', through: { attributes: [] } }]
+  });
   if (!user) {
     return res.status(401).json({ error: `El usuario ${correo} no está registrado en PMO Control Tower. Contacta a un administrador.` });
   }
@@ -126,7 +129,8 @@ const loginAzure = asyncHandler(async (req, res) => {
       correo: user.correo,
       perfil: user.perfil,
       activo: user.activo,
-      idioma: user.idioma || 'es'
+      idioma: user.idioma || 'es',
+      Ambitos: user.Ambitos || []
     }
   });
 });

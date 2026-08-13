@@ -57,20 +57,23 @@ export const getReportStyles = () => `
   .print-btn:hover { background: #2d2d4e; }
 `;
 
-export const getHeaderHtml = (project) => `
+export const getHeaderHtml = (project, t) => {
+  const tr = t || ((key, opts) => key);
+  return `
   <div class="report-header">
     <div>
       <h1>${project.Estado?.icono || ''} ${project.nombre_proyecto}</h1>
       <p style="font-size:13px;color:#666;margin-top:4px;">${project.id_proyecto} · ${project.Estado?.nombre_estado || 'Sin Estado'}</p>
     </div>
     <div class="meta">
-      <p><strong>PM:</strong> ${project.PM?.nombre || ''} ${project.PM?.apellidos || ''}</p>
-      <p><strong>Partner:</strong> ${project.Proveedor?.nombre_razon_social || '—'}</p>
+      <p><strong>${tr('reportExport.pm')}:</strong> ${project.PM?.nombre || ''} ${project.PM?.apellidos || ''}</p>
+      <p><strong>${tr('reportExport.partner')}:</strong> ${project.Proveedor?.nombre_razon_social || '—'}</p>
       <p><strong>Sede:</strong> ${project.Sede?.nombre_sede || '—'}</p>
-      <p><strong>Generado:</strong> ${formatDate(new Date().toISOString())}</p>
+      <p><strong>${tr('reportExport.dateLabel')}</strong> ${formatDate(new Date().toISOString())}</p>
     </div>
   </div>
 `;
+};
 
 export {
   getKpisHtml,

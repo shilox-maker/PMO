@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { generateDashboardReport } from '../../utils/dashboardReportGenerator';
 
 export default function DashboardReportModal({ isOpen, onClose, projects, getAuthHeaders }) {
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [highlightDate, setHighlightDate] = useState('');
   const [reportOptions, setReportOptions] = useState({
@@ -42,11 +44,11 @@ export default function DashboardReportModal({ isOpen, onClose, projects, getAut
         })
       );
 
-      generateDashboardReport(detailedProjects, reportOptions, highlightDate || null);
+      generateDashboardReport(detailedProjects, reportOptions, highlightDate || null, t, i18n.language);
       onClose();
     } catch (err) {
       console.error('Error generating consolidated report:', err);
-      alert('Error al generar el informe consolidado: ' + err.message);
+      alert(t('reportModal.error') + err.message);
     } finally {
       setLoading(false);
     }
@@ -56,7 +58,7 @@ export default function DashboardReportModal({ isOpen, onClose, projects, getAut
     <div className="modal-overlay">
       <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
         <div className="modal-header">
-          <h3 className="modal-title">Generar Informe de Cartera</h3>
+          <h3 className="modal-title">{t('reportModal.title')}</h3>
           <button className="icon-btn" onClick={onClose} disabled={loading}>✕</button>
         </div>
 
@@ -65,26 +67,26 @@ export default function DashboardReportModal({ isOpen, onClose, projects, getAut
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '180px', gap: 16 }}>
               <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--md-sys-color-primary)' }} />
               <span style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-outline)' }}>
-                Recuperando información de {projects.length} proyectos...
+                {t('reportModal.fetchingInfo', { count: projects.length })}
               </span>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={{ color: 'var(--md-sys-color-on-surface-variant)', fontSize: '0.85rem' }}>
-                Selecciona las secciones a incluir en el informe consolidado de los proyectos filtrados:
+                {t('reportModal.subtitle')}
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {[
-                  { id: 'resumen', label: 'Resumen y KPIs de Control / Muro de Comentarios' },
-                  { id: 'alcance', label: 'Alcance del Proyecto' },
-                  { id: 'cierre', label: 'Criterios de Cierre' },
-                  { id: 'hitos', label: 'Hitos del Proyecto' },
-                  { id: 'timeline', label: 'Cronología del Proyecto (Timeline)' },
-                  { id: 'riesgos', label: 'Matriz de Riesgos' },
-                  { id: 'incidencias', label: 'Incidencias Técnicas o de Plazos' },
-                  { id: 'cambios', label: 'Cambios de Alcance (CR)' },
-                  { id: 'lecciones', label: 'Lecciones Aprendidas' }
+                  { id: 'resumen', label: t('reportModal.optResumen') },
+                  { id: 'alcance', label: t('reportModal.optAlcance') },
+                  { id: 'cierre', label: t('reportModal.optCierre') },
+                  { id: 'hitos', label: t('reportModal.optHitos') },
+                  { id: 'timeline', label: t('reportModal.optTimeline') },
+                  { id: 'riesgos', label: t('reportModal.optRiesgos') },
+                  { id: 'incidencias', label: t('reportModal.optIncidencias') },
+                  { id: 'cambios', label: t('reportModal.optCambios') },
+                  { id: 'lecciones', label: t('reportModal.optLecciones') }
                 ].map((opt) => (
                   <label 
                     key={opt.id} 
@@ -104,7 +106,7 @@ export default function DashboardReportModal({ isOpen, onClose, projects, getAut
 
               <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 16, marginTop: 8 }}>
                 <label className="form-label" style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: 6, display: 'block' }}>
-                  Remarcar a partir de:
+                  {t('reportModal.highlightFrom')}
                 </label>
                 <input 
                   type="date" 
@@ -114,7 +116,7 @@ export default function DashboardReportModal({ isOpen, onClose, projects, getAut
                   style={{ height: '40px' }}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', marginTop: 4, display: 'block' }}>
-                  Los comentarios publicados desde esta fecha se marcarán con la etiqueta roja "A REVISAR".
+                  {t('reportModal.highlightNote')}
                 </span>
               </div>
             </div>
@@ -128,7 +130,7 @@ export default function DashboardReportModal({ isOpen, onClose, projects, getAut
             onClick={onClose} 
             disabled={loading}
           >
-            Cancelar
+            {t('reportModal.cancel')}
           </button>
           <button 
             type="button" 
@@ -138,7 +140,7 @@ export default function DashboardReportModal({ isOpen, onClose, projects, getAut
             style={{ display: 'flex', alignItems: 'center', gap: 8 }}
           >
             {loading && <RefreshCw className="animate-spin" size={16} />}
-            {loading ? 'Procesando...' : 'Generar Informe'}
+            {loading ? t('reportModal.processing') : t('reportModal.generate')}
           </button>
         </div>
       </div>

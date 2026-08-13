@@ -5,7 +5,13 @@ const { getProjectCalculations } = require('../../models/automations');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
 const getTimeline = asyncHandler(async (req, res) => {
+  const where = {};
+  if (req.currentAmbitoId && req.currentAmbitoId !== 'ALL') {
+    where.id_ambito = req.currentAmbitoId;
+  }
+
   const projects = await Proyectos.findAll({
+    where,
     include: [
       { model: Usuarios, as: 'PM', attributes: ['id_usuario', 'nombre', 'apellidos'] },
       { model: ContactosProveedor, as: 'Sponsor', attributes: ['id_contacto', 'nombre', 'apellidos'] },

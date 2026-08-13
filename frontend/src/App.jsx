@@ -23,6 +23,7 @@ import AmbitoSelectionModal from './components/modals/AmbitoSelectionModal';
 import PendingAssistantDrawer from './components/assistant/PendingAssistantDrawer';
 import EmailReportModal from './components/modals/EmailReportModal';
 import { API_URL } from './config/api';
+import { validatePassword } from './utils/passwordValidation';
 import { useTranslation } from 'react-i18next';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
@@ -41,17 +42,6 @@ function ChangePasswordModal({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
-
-  const validatePassword = (pwd) => {
-    if (!pwd) return [];
-    const errors = [];
-    if (pwd.length < 10) errors.push('Mínimo 10 caracteres');
-    if (!/[A-Z]/.test(pwd)) errors.push('Al menos una mayúscula');
-    if (!/[a-z]/.test(pwd)) errors.push('Al menos una minúscula');
-    if (!/\d/.test(pwd)) errors.push('Al menos un número');
-    if (!/[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]/.test(pwd)) errors.push('Al menos un carácter especial');
-    return errors;
-  };
 
   const pwdErrors = validatePassword(newPassword);
   const passwordsMatch = newPassword === confirmPassword;
@@ -852,7 +842,7 @@ function MainAppContent() {
 }
 
 function AppConsumer() {
-  const { currentPm, loading, isMaintenanceActive, maintenanceMessage, checkMaintenanceStatus, logout, isFirstLoginSelection, setIsFirstLoginSelection } = useAuth();
+  const { currentPm, loading, isMaintenanceActive, maintenanceMessage, checkMaintenanceStatus, logout, isFirstLoginSelection, setIsFirstLoginSelection, selectedAmbito } = useAuth();
 
   if (loading) {
     return (
@@ -878,11 +868,23 @@ function AppConsumer() {
     return <LoginScreen />;
   }
 
+  if (isFirstLoginSelection || !selectedAmbito) {
+    return (
+      <>
+        <SessionExpiredModal />
+        <AmbitoSelectionModal
+          isOpen={true}
+          onClose={() => setIsFirstLoginSelection(false)}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <SessionExpiredModal />
       <AmbitoSelectionModal
-        isOpen={isFirstLoginSelection}
+        isOpen={false}
         onClose={() => setIsFirstLoginSelection(false)}
       />
       <MainAppContent />

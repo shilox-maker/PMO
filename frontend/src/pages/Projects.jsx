@@ -28,7 +28,7 @@ const DEFAULT_PROJECT_COLUMNS = [
 
 export default function Projects({ onViewProject, onViewVendor }) {
   const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
-  const { getAuthHeaders, currentPm } = useAuth();
+  const { getAuthHeaders, currentPm, selectedAmbito } = useAuth();
   const canSeeDireccion = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR');
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -143,11 +143,11 @@ export default function Projects({ onViewProject, onViewVendor }) {
 
   useEffect(() => {
     fetchProjects();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm, selectedAmbito]);
 
   useEffect(() => {
     fetchMetadata();
-  }, []);
+  }, [selectedAmbito]);
 
   return (
     <div>

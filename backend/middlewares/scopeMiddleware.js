@@ -24,16 +24,19 @@ const scopeMiddleware = async (req, res, next) => {
     const userAmbitos = user.Ambitos || [];
     const userAmbitoIds = userAmbitos.map(a => Number(a.id_ambito));
     const isAdminOrDirector = ['ADMINISTRADOR', 'DIRECTOR'].includes(user.perfil);
+    const effectiveUserAmbitoIds = (!isAdminOrDirector && userAmbitoIds.length === 0) ? [1] : userAmbitoIds;
 
     const rawHeader = req.headers['x-ambito-id'] || req.headers['x-ambito-code'];
 
     // 1. Si solicita Vista Global ('ALL')
     if (rawHeader && String(rawHeader).toUpperCase() === 'ALL') {
-      if (!isAdminOrDirector) {
-        return res.status(403).json({ error: 'Acceso denegado: Solo administradores y directores pueden acceder a la vista global.' });
+      if (isAdminOrDirector) {
+        req.currentAmbitoId = 'ALL';
+        req.userAmbitoIds = 'ALL';
+      } else {
+        req.currentAmbitoId = effectiveUserAmbitoIds[0] || 1;
+        req.userAmbitoIds = effectiveUserAmbitoIds;
       }
-      req.currentAmbitoId = 'ALL';
-      req.userAmbitoIds = 'ALL';
       return next();
     }
 
@@ -47,24 +50,28 @@ const scopeMiddleware = async (req, res, next) => {
       }
 
       if (!targetAmbito || !targetAmbito.activo) {
-        return res.status(404).json({ error: 'El ámbito especificado no existe o no está activo.' });
+        req.currentAmbitoId = effectiveUserAmbitoIds[0] || 1;
+        req.userAmbitoIds = isAdminOrDirector ? 'ALL' : effectiveUserAmbitoIds;
+        return next();
       }
 
-      const isAuthorized = isAdminOrDirector || userAmbitoIds.includes(targetAmbito.id_ambito);
+      const isAuthorized = isAdminOrDirector || effectiveUserAmbitoIds.includes(targetAmbito.id_ambito);
       if (!isAuthorized) {
-        return res.status(403).json({ error: 'Acceso denegado: No tiene permisos para acceder al ámbito especificado.' });
+        req.currentAmbitoId = effectiveUserAmbitoIds[0] || 1;
+        req.userAmbitoIds = isAdminOrDirector ? 'ALL' : effectiveUserAmbitoIds;
+        return next();
       }
 
       req.currentAmbitoId = targetAmbito.id_ambito;
       req.currentAmbitoCode = targetAmbito.code;
-      req.userAmbitoIds = isAdminOrDirector ? 'ALL' : userAmbitoIds;
+      req.userAmbitoIds = isAdminOrDirector ? 'ALL' : effectiveUserAmbitoIds;
       return next();
     }
 
     // 3. Fallback: Sin cabecera explícita
-    if (userAmbitoIds.length > 0) {
-      req.currentAmbitoId = userAmbitoIds[0];
-      req.userAmbitoIds = isAdminOrDirector ? 'ALL' : userAmbitoIds;
+    if (effectiveUserAmbitoIds.length > 0) {
+      req.currentAmbitoId = effectiveUserAmbitoIds[0];
+      req.userAmbitoIds = isAdminOrDirector ? 'ALL' : effectiveUserAmbitoIds;
     } else if (isAdminOrDirector) {
       req.currentAmbitoId = 'ALL';
       req.userAmbitoIds = 'ALL';

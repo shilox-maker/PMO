@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context/AuthContext';
 import { Edit2, Trash2, RefreshCw, Coins } from 'lucide-react';
 import PortfolioBudgetsAdmin from './PortfolioBudgetsAdmin';
 
 export default function PortfoliosAdmin({ getAuthHeaders }) {
   const { t } = useTranslation();
+  const { selectedAmbito } = useAuth();
   // Portfolios state
   const [portfolios, setPortfolios] = useState([]);
   const [portfoliosLoading, setPortfoliosLoading] = useState(false);
@@ -37,7 +39,7 @@ export default function PortfoliosAdmin({ getAuthHeaders }) {
 
   useEffect(() => {
     fetchPortfolios();
-  }, []);
+  }, [selectedAmbito]);
 
   const handleOpenBudgets = (portfolio) => {
     setSelectedPortfolioForBudgets(portfolio);

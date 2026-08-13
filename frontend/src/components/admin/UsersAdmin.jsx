@@ -205,7 +205,7 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
                   {renderSortHeader(t('usersAdmin.name'), 'nombre', usersSort, handleUsersSort)}
                   {renderSortHeader(t('usersAdmin.email'), 'correo', usersSort, handleUsersSort)}
                   {renderSortHeader(t('usersAdmin.role'), 'perfil', usersSort, handleUsersSort, { textAlign: 'center' })}
-                  <th style={{ textAlign: 'center' }}>Ámbitos</th>
+                  <th style={{ textAlign: 'center' }}>{t('usersAdmin.ambitosColumn')}</th>
                   {renderSortHeader(t('usersAdmin.status'), 'activo', usersSort, handleUsersSort, { textAlign: 'center', width: '80px' })}
                   <th style={{ width: '90px' }}>{t('usersAdmin.action')}</th>
                 </tr>

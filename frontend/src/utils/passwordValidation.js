@@ -5,6 +5,6 @@ export const validatePassword = (pwd) => {
   if (!/[A-Z]/.test(pwd)) errors.push('Al menos una mayúscula');
   if (!/[a-z]/.test(pwd)) errors.push('Al menos una minúscula');
   if (!/\d/.test(pwd)) errors.push('Al menos un número');
-  if (!/[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]./.test(pwd)) errors.push('Al menos un carácter especial');
+  if (!/[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]/.test(pwd)) errors.push('Al menos un carácter especial');
   return errors;
 };

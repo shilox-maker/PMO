@@ -6,12 +6,31 @@ import { Building2, Globe, Check, ArrowRight } from 'lucide-react';
 
 export const AmbitoSelectionModal = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
-  const { availableAmbitos, selectedAmbito, changeAmbito, canSelectAll } = useAuth();
+  const { currentPm, availableAmbitos, selectedAmbito, changeAmbito, canSelectAll } = useAuth();
+  const allowAllOption = canSelectAll && currentPm && ['ADMINISTRADOR', 'DIRECTOR'].includes(currentPm.perfil);
+
+  const ambitosList = (availableAmbitos && availableAmbitos.length > 0)
+    ? availableAmbitos
+    : (currentPm?.Ambitos || []);
 
   if (!isOpen) return null;
 
   const handleSelect = (ambitoId) => {
     changeAmbito(ambitoId);
+  };
+
+  const handleConfirm = () => {
+    let targetId = selectedAmbito;
+    if (!targetId || targetId === '') {
+      if (allowAllOption) {
+        targetId = 'ALL';
+      } else if (ambitosList.length > 0) {
+        targetId = String(ambitosList[0].id_ambito);
+      }
+    }
+    if (targetId) {
+      changeAmbito(targetId);
+    }
     if (onClose) onClose();
   };
 
@@ -57,7 +76,12 @@ export const AmbitoSelectionModal = ({ isOpen, onClose }) => {
 
         {/* Lista de Ámbitos Opciones */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
-          {canSelectAll && (
+          {ambitosList.length === 0 && !allowAllOption && (
+            <div style={{ padding: '20px 0', textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.9rem' }}>
+              {t('ambitos.loadingAmbitos', 'Cargando ámbitos disponibles...')}
+            </div>
+          )}
+          {allowAllOption && (
             <button
               type="button"
               onClick={() => handleSelect('ALL')}
@@ -107,7 +131,7 @@ export const AmbitoSelectionModal = ({ isOpen, onClose }) => {
             </button>
           )}
 
-          {availableAmbitos.map((amb) => {
+          {ambitosList.map((amb) => {
             const isSelected = String(selectedAmbito) === String(amb.id_ambito);
             return (
               <button
@@ -169,7 +193,7 @@ export const AmbitoSelectionModal = ({ isOpen, onClose }) => {
           <button
             type="button"
             className="m3-btn m3-btn-primary"
-            onClick={onClose}
+            onClick={handleConfirm}
             style={{
               padding: '10px 24px',
               display: 'flex',

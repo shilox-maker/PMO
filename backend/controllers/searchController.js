@@ -17,17 +17,21 @@ const globalSearch = async (req, res) => {
     }
 
     const searchPattern = `%${query}%`;
+    const projectWhere = {
+      [Op.or]: [
+        { codigo_proyecto: { [Op.like]: searchPattern } },
+        { nombre_proyecto: { [Op.like]: searchPattern } },
+        { cliente: { [Op.like]: searchPattern } },
+        { pm_nombre: { [Op.like]: searchPattern } }
+      ]
+    };
+    if (req.currentAmbitoId && req.currentAmbitoId !== 'ALL') {
+      projectWhere.id_ambito = req.currentAmbitoId;
+    }
 
     // 1. Search Proyectos
     const projects = await Proyectos.findAll({
-      where: {
-        [Op.or]: [
-          { codigo_proyecto: { [Op.like]: searchPattern } },
-          { nombre_proyecto: { [Op.like]: searchPattern } },
-          { cliente: { [Op.like]: searchPattern } },
-          { pm_nombre: { [Op.like]: searchPattern } }
-        ]
-      },
+      where: projectWhere,
       attributes: ['id_proyecto', 'codigo_proyecto', 'nombre_proyecto', 'cliente', 'pm_nombre'],
       limit: 5
     });
