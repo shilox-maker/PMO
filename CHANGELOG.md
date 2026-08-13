@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## [4.0.0] - 2026-08-13
+### Added / Changed
+- **Segregación y Gestión Estricta por Ámbito / Multi-tenancy (FEATURE-56 / BUG-12 / BUG-09 / BUG-10)**:
+  - Selección obligatoria de Ámbito al iniciar sesión mediante modal bloqueante (`AmbitoSelectionModal`).
+  - Restricción de la opción "Todos los Ámbitos (Vista Global)" en selectores exclusivamente a perfiles Administrador y Director.
+  - Filtrado estricto por `id_ambito` activo en endpoints de Dashboard, Timeline, Proyectos, Búsqueda global y Proveedores.
+  - Columna "Ámbitos" traducida e integrada en la tabla de Mantenimiento de Usuarios del Panel de Administración.
+  - Asignación obligatoria de al menos un Ámbito para usuarios no Administradores.
+- **Identificadores Únicos Universales UUIDv7 (FEATURE-63)**:
+  - Migración del esquema relacional a UUIDv7 en entidades transaccionales y de negocio.
+
+### Fixed
+- **Desplegable de Portfolios Vacío en Edición (BUG-11)**:
+  - Corrección del paso de propiedades (`portfolios` / `portfoliosList`) en `ProjectDetail.jsx` y `ProjectEditModal.jsx`, asegurando la carga completa del catálogo de portfolios.
+- **Validación de Contraseñas (BUG-08)**:
+  - Ajuste de expresión regular para soportar de forma precisa caracteres especiales al final de contraseñas.
+- **Traducciones e i18n de Usuarios (BUG-07 / FEATURE-65)**:
+  - Añadidas las claves de traducción `usersAdmin.active` e `inactive` en los diccionarios de Español, Inglés y Portugués.
+
 ## [3.0.0] - 2026-08-07
 ### Added
 - **Internacionalización y Localización Integral Multilenguaje (FEATURE-54 / IDEA-54)**:
