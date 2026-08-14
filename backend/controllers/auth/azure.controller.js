@@ -77,13 +77,21 @@ const loginAzure = asyncHandler(async (req, res) => {
       });
       const pem = publicKey.export({ type: 'spki', format: 'pem' });
 
+      const tokenTid = decodedToken.payload?.tid;
+      const validIssuers = [
+        `https://login.microsoftonline.com/${tenantId}/v2.0`,
+        `https://sts.windows.net/${tenantId}/`,
+        'https://login.microsoftonline.com/common/v2.0'
+      ];
+      if (tokenTid) {
+        validIssuers.push(`https://login.microsoftonline.com/${tokenTid}/v2.0`);
+        validIssuers.push(`https://sts.windows.net/${tokenTid}/`);
+      }
+
       // Verificar token
       const decoded = jwt.verify(token, pem, {
         audience: clientId,
-        issuer: [
-          `https://login.microsoftonline.com/${tenantId}/v2.0`,
-          `https://sts.windows.net/${tenantId}/`
-        ]
+        issuer: validIssuers
       });
 
       correo = decoded.preferred_username || decoded.email || decoded.unique_name;
@@ -96,11 +104,18 @@ const loginAzure = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'No se pudo obtener el correo electrónico del token de Azure AD.' });
   }
 
-  // Buscar el usuario en la BD local
-  const user = await Usuarios.findOne({
+  // Buscar el usuario en la BD local (con fallback insensible a mayúsculas/minúsculas)
+  let user = await Usuarios.findOne({
     where: { correo },
     include: [{ model: Ambitos, as: 'Ambitos', through: { attributes: [] } }]
   });
+
+  if (!user && correo) {
+    user = await Usuarios.findOne({
+      where: { correo: correo.toLowerCase() },
+      include: [{ model: Ambitos, as: 'Ambitos', through: { attributes: [] } }]
+    });
+  }
   if (!user) {
     return res.status(401).json({ error: `El usuario ${correo} no está registrado en PMO Control Tower. Contacta a un administrador.` });
   }

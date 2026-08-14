@@ -26,10 +26,24 @@ const DEFAULT_PROJECT_COLUMNS = [
   { id: 'cambios_alcance_count', label: 'Cambios Alcance', fixed: false, visible: true }, { id: 'accion', label: 'Acción', fixed: true, visible: true }
 ];
 
-export default function ProjectTable({ projects, onViewProject, onViewVendor, showHeaderSelector = true }) {
+export default function ProjectTable({ projects, onViewProject, onViewVendor, showHeaderSelector = true, density: propDensity, onDensityChange }) {
   const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
-  const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
+  const [density, setDensity] = useState(() => propDensity || localStorage.getItem('pmo_table_density') || 'standard');
+  const activeDensity = propDensity !== undefined ? propDensity : density;
+
+  React.useEffect(() => {
+    if (propDensity && propDensity !== density) {
+      setDensity(propDensity);
+    }
+  }, [propDensity]);
+
+  const handleDensityChange = (newDensity) => {
+    setDensity(newDensity);
+    localStorage.setItem('pmo_table_density', newDensity);
+    if (onDensityChange) onDensityChange(newDensity);
+  };
+
   const { columns: tableCols, visibleColumnsMap, columnWidths, updateColumnWidth, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -89,11 +103,11 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
             <FileDown size={18} />
             <span>Exportar Excel</span>
           </button>
-          <DensitySelector density={density} onChange={setDensity} />
+          <DensitySelector density={activeDensity} onChange={handleDensityChange} />
           <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
         </div>
       )}
-      <div className="m3-table-wrapper glass-panel" data-density={density}>
+      <div className="m3-table-wrapper glass-panel" data-density={activeDensity}>
         <table className="m3-table">
           <thead>
             <tr>

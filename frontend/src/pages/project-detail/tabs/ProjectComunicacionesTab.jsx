@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MessageSquare, Users, Edit2, Mail, Plus, Trash2, Calendar, Clock, CheckCircle } from 'lucide-react';
 import EmailReportModal from '../../../components/modals/EmailReportModal';
 import CommunicationPlanModal from './CommunicationPlanModal';
 import CommunicationAuditHistory from './CommunicationAuditHistory';
 
 export default function ProjectComunicacionesTab({ project, getAuthHeaders, handleUpdateProject }) {
+  const { t, i18n } = useTranslation();
   const [plans, setPlans] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -81,7 +83,7 @@ export default function ProjectComunicacionesTab({ project, getAuthHeaders, hand
   };
 
   const handleDeletePlan = async (planId) => {
-    if (!window.confirm('¿Deseas eliminar este plan de comunicación?')) return;
+    if (!window.confirm(t('projectDetail.communicationTab.deleteConfirm', '¿Deseas eliminar este plan de comunicación?'))) return;
     try {
       const authHeaders = getAuthHeaders ? getAuthHeaders() : {};
       const res = await fetch(`${API_URL}/projects/${project.id_proyecto}/planes-comunicacion/${planId}`, {
@@ -114,10 +116,10 @@ export default function ProjectComunicacionesTab({ project, getAuthHeaders, hand
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h3 style={{ fontWeight: 600, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <MessageSquare size={20} color="var(--md-sys-color-primary)" /> Gobernanza y Planes de Comunicación
+            <MessageSquare size={20} color="var(--md-sys-color-primary)" /> {t('projectDetail.communicationTab.title', 'Gobernanza y Planes de Comunicación')}
           </h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginTop: 4 }}>
-            Planes dinámicos configurados para reportes de avance y seguimiento relacional con contactos RACI.
+            {t('projectDetail.communicationTab.subtitle', 'Planes dinámicos configurados para reportes de avance y seguimiento relacional con contactos RACI.')}
           </p>
         </div>
         <button
@@ -125,20 +127,21 @@ export default function ProjectComunicacionesTab({ project, getAuthHeaders, hand
           onClick={handleOpenCreateModal}
           style={{ display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          <Plus size={16} /> Nuevo Plan de Comunicación
+          <Plus size={16} /> {t('projectDetail.communicationTab.newPlan', 'Nuevo Plan de Comunicación')}
         </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
         {plans.map((p) => {
           const lastLog = getLastSendLog(p.id);
+          const localeCode = i18n.language === 'en' ? 'en-US' : i18n.language === 'pt' ? 'pt-PT' : 'es-ES';
           const lastSendDate = lastLog?.fecha_envio
-            ? new Date(lastLog.fecha_envio).toLocaleDateString('es-ES')
+            ? new Date(lastLog.fecha_envio).toLocaleDateString(localeCode)
             : null;
 
           const freqLabel = p.periodicidad === 'SEMANAL'
-            ? `Semanal (cada ${p.intervalo} sem)`
-            : `Mensual (cada ${p.intervalo} mes)`;
+            ? t('projectDetail.communicationTab.weekly', { interval: p.intervalo, defaultValue: `Semanal (cada ${p.intervalo} sem)` })
+            : t('projectDetail.communicationTab.monthly', { interval: p.intervalo, defaultValue: `Mensual (cada ${p.intervalo} mes)` });
 
           return (
             <div
@@ -159,10 +162,10 @@ export default function ProjectComunicacionesTab({ project, getAuthHeaders, hand
                     <span className={`badge ${p.activo ? 'badge-green' : 'badge-red'}`}>
                       {p.activo ? 'ACTIVO' : 'INACTIVO'}
                     </span>
-                    <button className="icon-btn" onClick={() => handleOpenEditModal(p)} title="Editar Plan" style={{ padding: 4 }}>
+                    <button className="icon-btn" onClick={() => handleOpenEditModal(p)} title={t('common.edit', 'Editar Plan')} style={{ padding: 4 }}>
                       <Edit2 size={14} />
                     </button>
-                    <button className="icon-btn" onClick={() => handleDeletePlan(p.id)} title="Eliminar Plan" style={{ padding: 4, color: 'var(--color-rag-red)' }}>
+                    <button className="icon-btn" onClick={() => handleDeletePlan(p.id)} title={t('common.delete', 'Eliminar Plan')} style={{ padding: 4, color: 'var(--color-rag-red)' }}>
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -173,16 +176,16 @@ export default function ProjectComunicacionesTab({ project, getAuthHeaders, hand
                 </div>
 
                 <p style={{ fontSize: '0.83rem', color: 'var(--md-sys-color-on-surface-variant)', marginBottom: 14, minHeight: '36px' }}>
-                  {p.finalidad || 'Sin finalidad especificada.'}
+                  {p.finalidad || t('projectDetail.communicationTab.noPurpose', 'Sin finalidad especificada.')}
                 </p>
 
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Users size={13} /> Participantes ({p.Contactos?.length || 0})
+                    <Users size={13} /> {t('projectDetail.communicationTab.participants', { count: p.Contactos?.length || 0, defaultValue: `Participantes (${p.Contactos?.length || 0})` })}
                   </div>
                   {(!p.Contactos || p.Contactos.length === 0) ? (
                     <span style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-outline)', fontStyle: 'italic' }}>
-                      Sin participantes asignados.
+                      {t('projectDetail.communicationTab.noParticipants', 'Sin participantes asignados.')}
                     </span>
                   ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -199,7 +202,7 @@ export default function ProjectComunicacionesTab({ project, getAuthHeaders, hand
               <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 12, marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Calendar size={12} />
-                  {lastSendDate ? `Último envío: ${lastSendDate}` : 'Sin envíos registrados'}
+                  {lastSendDate ? t('projectDetail.communicationTab.lastSend', { date: lastSendDate, defaultValue: `Último envío: ${lastSendDate}` }) : t('projectDetail.communicationTab.noSends', 'Sin envíos registrados')}
                 </div>
                 <button
                   className="m3-btn m3-btn-outline"
@@ -207,7 +210,7 @@ export default function ProjectComunicacionesTab({ project, getAuthHeaders, hand
                   disabled={!p.activo}
                   style={{ fontSize: '0.78rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
                 >
-                  <Mail size={13} /> Enviar Informe
+                  <Mail size={13} /> {t('projectDetail.communicationTab.sendReport', 'Enviar Informe')}
                 </button>
               </div>
             </div>

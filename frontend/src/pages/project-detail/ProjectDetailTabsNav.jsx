@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   FileText, Target, DollarSign, TrendingUp, ShieldAlert, MessageSquare, CheckSquare, BookOpen, Award, ChevronDown 
 } from 'lucide-react';
 
 export default function ProjectDetailTabsNav({ activeTab, setActiveTab, project }) {
+  const { t } = useTranslation();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreRef = useRef(null);
 
@@ -18,23 +20,23 @@ export default function ProjectDetailTabsNav({ activeTab, setActiveTab, project 
   }, []);
 
   const mainTabs = [
-    { id: 'ficha', label: 'Ficha', icon: FileText },
-    { id: 'alcance', label: 'Alcance', icon: Target },
-    !project.es_iniciativa_ligera && { id: 'finanzas', label: 'Facturas', icon: DollarSign, badge: project.Facturas?.length },
-    { id: 'checklist', label: 'Tareas', icon: CheckSquare, badge: project.Tareas?.length },
-    { id: 'riesgos', label: 'Riesgos e incidencias', icon: ShieldAlert, badge: (project.Riesgos?.length || 0) + (project.Incidencias?.length || 0) }
+    { id: 'ficha', label: t('projectDetail.tabs.ficha', 'Ficha'), icon: FileText },
+    { id: 'alcance', label: t('projectDetail.tabs.alcance', 'Alcance'), icon: Target },
+    !project.es_iniciativa_ligera && { id: 'finanzas', label: t('projectDetail.tabs.finanzas', 'Facturas'), icon: DollarSign, badge: project.Facturas?.length },
+    { id: 'checklist', label: t('projectDetail.tabs.checklist', 'Tareas'), icon: CheckSquare, badge: project.Tareas?.length },
+    { id: 'riesgos', label: t('projectDetail.tabs.riesgos', 'Riesgos e incidencias'), icon: ShieldAlert, badge: (project.Riesgos?.length || 0) + (project.Incidencias?.length || 0) }
   ].filter(Boolean);
 
   const moreTabs = [
-    { id: 'cambios', label: 'Cambios', icon: TrendingUp, badge: project.CambiosAlcance?.length },
-    { id: 'comunicaciones', label: 'Comunicación', icon: MessageSquare, badge: project.PlanesComunicacion?.length },
-    { id: 'encuestas', label: 'Encuestas', icon: Award, badge: project.Encuestas?.length },
-    { id: 'lecciones', label: 'Lecciones aprendidas', icon: BookOpen, badge: project.LeccionesAprendidas?.length }
+    { id: 'cambios', label: t('projectDetail.tabs.cambios', 'Cambios'), icon: TrendingUp, badge: project.CambiosAlcance?.length },
+    { id: 'comunicaciones', label: t('projectDetail.tabs.comunicaciones', 'Comunicación'), icon: MessageSquare, badge: project.PlanesComunicacion?.length },
+    { id: 'encuestas', label: t('projectDetail.tabs.encuestas', 'Encuestas'), icon: Award, badge: project.Encuestas?.length },
+    { id: 'lecciones', label: t('projectDetail.tabs.lecciones', 'Lecciones aprendidas'), icon: BookOpen, badge: project.LeccionesAprendidas?.length }
   ].filter(Boolean);
 
   const isMoreActive = moreTabs.some(t => t.id === activeTab);
   const activeMoreTab = moreTabs.find(t => t.id === activeTab);
-  const moreBadgeTotal = moreTabs.reduce((sum, t) => sum + (t.badge || 0), 0);
+  const moreBadgeTotal = moreTabs.reduce((sum, tab) => sum + (tab.badge || 0), 0);
   return (
     <div className="m3-tabs-container" style={{ marginBottom: 24, borderBottom: '1px solid var(--md-sys-color-outline-variant)', overflow: 'visible', position: 'relative', zIndex: 30 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', paddingBottom: 2, overflow: 'visible' }}>
@@ -106,7 +108,7 @@ export default function ProjectDetailTabsNav({ activeTab, setActiveTab, project 
               transition: 'var(--transition-smooth)'
             }}
           >
-            <span>{isMoreActive && activeMoreTab ? `Más (${activeMoreTab.label})` : 'Más'}</span>
+            <span>{isMoreActive && activeMoreTab ? t('projectDetail.moreWithTab', { tab: activeMoreTab.label, defaultValue: `Más (${activeMoreTab.label})` }) : t('projectDetail.more', 'Más')}</span>
             {moreBadgeTotal > 0 && (
               <span 
                 className="badge" 

@@ -4,19 +4,24 @@ const { CallToolRequestSchema, ListToolsRequestSchema } = require('@modelcontext
 const { listProjectsTool, getProjectDetailTool } = require('./tools/projects');
 const { getLessonsLearnedTool } = require('./tools/lessons');
 const { searchPmoTool } = require('./tools/search');
+const { listAmbitosTool } = require('./tools/ambitos');
+const { getPmoSummaryTool, getProjectSummaryTool } = require('./tools/summary');
 
 const tools = [
+  listAmbitosTool,
   listProjectsTool,
   getProjectDetailTool,
+  getPmoSummaryTool,
+  getProjectSummaryTool,
   getLessonsLearnedTool,
   searchPmoTool
 ];
 
-function createMcpServer() {
+function createMcpServer(mcpScope = { isGlobal: true }) {
   const server = new Server(
     {
       name: 'pmo-control-tower-mcp',
-      version: '1.0.0'
+      version: '1.1.0'
     },
     {
       capabilities: {
@@ -45,7 +50,7 @@ function createMcpServer() {
     }
 
     try {
-      return await tool.handler(toolArgs);
+      return await tool.handler(toolArgs, mcpScope);
     } catch (error) {
       return {
         content: [{ type: 'text', text: `Error al ejecutar ${toolName}: ${error.message}` }],

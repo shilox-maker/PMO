@@ -14,7 +14,7 @@
     "db:restore-menu": "node utils/restore-interactive.js",
     "db:backups": "node utils/backup.js list",
     "mcp": "node mcp/index.js",
-    "test": "cross-env NODE_ENV=test jest --detectOpenHandles"
+    "test": "cross-env NODE_ENV=test jest --detectOpenHandles --runInBand"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.33.0",

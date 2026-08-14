@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Star, Plus, Edit2, Trash2, Calendar, User, MessageSquare, Award } from 'lucide-react';
 import SurveyModal from '../../../components/modals/SurveyModal';
 
 export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
+  const { t } = useTranslation();
   const [surveys, setSurveys] = useState([]);
   const [averageScore, setAverageScore] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -57,7 +59,7 @@ export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
   };
 
   const handleDeleteSurvey = async (surveyId) => {
-    if (!window.confirm('¿Deseas eliminar esta encuesta cualitativa?')) return;
+    if (!window.confirm(t('projectDetail.surveysTab.deleteConfirm', '¿Deseas eliminar esta encuesta cualitativa?'))) return;
     try {
       const authHeaders = getAuthHeaders ? getAuthHeaders() : {};
       const res = await fetch(`${API_URL}/projects/${project.id_proyecto}/surveys/${surveyId}`, {
@@ -84,10 +86,10 @@ export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h3 style={{ fontWeight: 600, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Award size={20} color="var(--md-sys-color-primary)" /> Percepción Cualitativa y Encuestas de Satisfacción
+            <Award size={20} color="var(--md-sys-color-primary)" /> {t('projectDetail.surveysTab.title', 'Percepción Cualitativa y Encuestas de Satisfacción')}
           </h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginTop: 4 }}>
-            Evaluaciones registradas por el cliente, patrocinadores y comités de seguimiento.
+            {t('projectDetail.surveysTab.subtitle', 'Evaluaciones registradas por el cliente, patrocinadores y comités de seguimiento.')}
           </p>
         </div>
         <button
@@ -95,7 +97,7 @@ export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
           onClick={() => { setSelectedSurvey(null); setIsModalOpen(true); }}
           style={{ display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          <Plus size={16} /> Nueva Encuesta
+          <Plus size={16} /> {t('projectDetail.surveysTab.newSurvey', 'Nueva Encuesta')}
         </button>
       </div>
 
@@ -107,25 +109,25 @@ export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
           </div>
           <div>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase' }}>
-              Nota Media de Satisfacción
+              {t('projectDetail.surveysTab.avgScore', 'Nota Media de Satisfacción')}
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--md-sys-color-on-surface)', lineHeight: 1.1 }}>
-              {averageScore !== null ? `${averageScore} / 10` : 'Sin encuestas'}
+              {averageScore !== null ? `${averageScore} / 10` : t('projectDetail.surveysTab.noSurveys', 'Sin encuestas')}
             </div>
           </div>
         </div>
         <div style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
-          Total evaluaciones registradas: <strong>{surveys.length}</strong>
+          {t('projectDetail.surveysTab.totalSurveys', { count: surveys.length, defaultValue: `Total evaluaciones registradas: ${surveys.length}` })}
         </div>
       </div>
 
       {/* Survey List / Cards */}
       {loading ? (
-        <div style={{ padding: 24, textAlign: 'center', opacity: 0.7 }}>Cargando encuestas cualitativas...</div>
+        <div style={{ padding: 24, textAlign: 'center', opacity: 0.7 }}>{t('projectDetail.surveysTab.loading', 'Cargando encuestas cualitativas...')}</div>
       ) : surveys.length === 0 ? (
         <div className="m3-card glass-panel" style={{ padding: 32, textAlign: 'center', opacity: 0.7 }}>
           <Star size={28} style={{ marginBottom: 8 }} color="var(--md-sys-color-outline)" />
-          <p style={{ fontSize: '0.9rem', margin: 0 }}>No hay encuestas cualitativas registradas para este proyecto.</p>
+          <p style={{ fontSize: '0.9rem', margin: 0 }}>{t('projectDetail.surveysTab.noSurveysEmpty', 'No hay encuestas cualitativas registradas para este proyecto.')}</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
@@ -147,7 +149,7 @@ export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
                     </span>
                     {s.evaluador && (
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <User size={12} /> Evaluador: {s.evaluador}
+                        <User size={12} /> {t('projectDetail.surveysTab.evaluator', { name: s.evaluador, defaultValue: `Evaluador: ${s.evaluador}` })}
                       </span>
                     )}
                   </div>
@@ -163,7 +165,7 @@ export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
                   <button
                     className="icon-btn"
                     onClick={() => { setSelectedSurvey(s); setIsModalOpen(true); }}
-                    title="Editar Encuesta"
+                    title={t('common.edit', 'Editar Encuesta')}
                     style={{ padding: 4 }}
                   >
                     <Edit2 size={14} />
@@ -171,7 +173,7 @@ export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
                   <button
                     className="icon-btn"
                     onClick={() => handleDeleteSurvey(s.id)}
-                    title="Eliminar Encuesta"
+                    title={t('common.delete', 'Eliminar Encuesta')}
                     style={{ padding: 4, color: 'var(--color-rag-red)' }}
                   >
                     <Trash2 size={14} />

@@ -245,9 +245,24 @@ export default function CreateProjectModal({
               />
             </div>
 
+            {/* Descripción */}
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">Descripción del Proyecto *</label>
+              <textarea 
+                name="descripcion"
+                value={newProject.descripcion}
+                onChange={handleInputChange}
+                placeholder="Detalles sobre el alcance, objetivos..."
+                required
+                rows={3}
+                className="m3-input"
+                style={{ resize: 'vertical' }}
+              />
+            </div>
+
             {/* Sede y A Distribuir */}
-            <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
+            <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
                 <label className="form-label">Sede de Operación *</label>
                 <select 
                   name="id_sede" 
@@ -264,7 +279,7 @@ export default function CreateProjectModal({
                   })}
                 </select>
               </div>
-              <div>
+              <div className="form-group">
                 <label className="form-label">A distribuir</label>
                 <select 
                   name="id_sede_distribuir" 
@@ -375,8 +390,8 @@ export default function CreateProjectModal({
 
             {/* Presupuesto Inicial + Notas - Solo Proyectos Estándar */}
             {!newProject.es_iniciativa_ligera && (
-              <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
+              <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="form-group">
                   <label className="form-label">Presupuesto Inicial (€) *</label>
                   <input 
                     type="number" 
@@ -389,7 +404,7 @@ export default function CreateProjectModal({
                     className="m3-input"
                   />
                 </div>
-                <div>
+                <div className="form-group">
                   <label className="form-label">Notas sobre el presupuesto</label>
                   <input
                     type="text"
@@ -428,21 +443,6 @@ export default function CreateProjectModal({
               />
             )}
 
-          </div>
-
-          {/* Descripción */}
-          <div className="form-group" style={{ marginTop: 12 }}>
-            <label className="form-label">Descripción del Proyecto *</label>
-            <textarea 
-              name="descripcion"
-              value={newProject.descripcion}
-              onChange={handleInputChange}
-              placeholder="Detalles sobre el alcance, objetivos..."
-              required
-              rows={3}
-              className="m3-input"
-              style={{ resize: 'vertical' }}
-            />
           </div>
 
           <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>

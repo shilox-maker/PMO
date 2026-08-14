@@ -1,36 +1,46 @@
 import { PublicClientApplication } from '@azure/msal-browser';
 
+const getRedirectUri = () => {
+  if (import.meta.env.VITE_AZURE_REDIRECT_URI) {
+    return import.meta.env.VITE_AZURE_REDIRECT_URI;
+  }
+  return `${window.location.origin}/auth-callback.html`;
+};
+
 const msalConfig = {
   auth: {
     clientId: import.meta.env.VITE_AZURE_CLIENT_ID || 'dummy-client-id',
     authority: `https://login.microsoftonline.com/${import.meta.env.VITE_AZURE_TENANT_ID || 'common'}`,
-    redirectUri: import.meta.env.VITE_AZURE_REDIRECT_URI || window.location.origin,
+    redirectUri: getRedirectUri(),
     postLogoutRedirectUri: window.location.origin,
+    navigateToLoginRequestUrl: false,
   },
   cache: {
-    cacheLocation: 'sessionStorage',
-    storeAuthStateInCookie: false,
+    cacheLocation: 'localStorage',
+    storeAuthStateInCookie: true,
   }
 };
 
-// Instancia lazy: solo se crea cuando se llama por primera vez (al hacer click en "Login Azure")
-let _msalInstance = null;
+let _msalPromise = null;
 
 export function getMsalInstance() {
-  if (_msalInstance) return _msalInstance;
+  if (_msalPromise) return _msalPromise;
 
-  try {
-    if (window.isSecureContext || (window.crypto && window.crypto.subtle)) {
-      _msalInstance = new PublicClientApplication(msalConfig);
-    } else {
-      console.warn('Web Crypto API no disponible. Azure AD login deshabilitado.');
+  _msalPromise = (async () => {
+    try {
+      if (!(window.isSecureContext || (window.crypto && window.crypto.subtle))) {
+        console.warn('Web Crypto API no disponible. Azure AD login deshabilitado.');
+        return null;
+      }
+      const instance = new PublicClientApplication(msalConfig);
+      await instance.initialize();
+      return instance;
+    } catch (error) {
+      console.error('[MSAL] Initialization failed:', error);
+      _msalPromise = null;
+      return null;
     }
-  } catch (error) {
-    console.error('Failed to initialize MSAL:', error);
-  }
+  })();
 
-  return _msalInstance;
+  return _msalPromise;
 }
-
-// Mantener compatibilidad con código existente que usa msalInstance directamente
-export { _msalInstance as msalInstance };

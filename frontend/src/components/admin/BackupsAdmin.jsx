@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Database, Upload, RefreshCw, AlertTriangle, Cloud, CheckCircle2, Clock, FileText } from 'lucide-react';
+import { API_URL } from '../../config/api';
 import BackupsListTable from './backups/BackupsListTable';
 import RestoreConfirmModal from './backups/RestoreConfirmModal';
 
@@ -16,7 +17,7 @@ export default function BackupsAdmin({ getAuthHeaders }) {
   const fetchBackups = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/backups', { headers: getAuthHeaders() });
+      const res = await fetch(`${API_URL}/admin/backups`, { headers: getAuthHeaders() });
       if (res.ok) {
         const data = await res.json();
         setBackups(data.data || []);
@@ -35,10 +36,10 @@ export default function BackupsAdmin({ getAuthHeaders }) {
   const handleGenerateBackup = async () => {
     setActionLoading(true); setMessage(null);
     try {
-      const res = await fetch('/api/admin/backups/export', { method: 'POST', headers: getAuthHeaders() });
+      const res = await fetch(`${API_URL}/admin/backups/export`, { method: 'POST', headers: getAuthHeaders() });
       const data = await res.json();
       if (res.ok) { setMessage({ type: 'success', text: t('backupsAdmin.successGenerate') }); fetchBackups(); }
-      else setMessage({ type: 'error', text: data.message || t('backupsAdmin.errorGenerate') });
+      else setMessage({ type: 'error', text: data.error || data.message || t('backupsAdmin.errorGenerate') });
     } catch (err) { setMessage({ type: 'error', text: t('backupsAdmin.errorGenerate') }); }
     finally { setActionLoading(false); }
   };
@@ -46,14 +47,14 @@ export default function BackupsAdmin({ getAuthHeaders }) {
   const handleRestoreBackup = async (filename) => {
     setActionLoading(true); setMessage(null);
     try {
-      const res = await fetch('/api/admin/backups/restore', {
+      const res = await fetch(`${API_URL}/admin/backups/restore`, {
         method: 'POST',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename })
       });
       const data = await res.json();
       if (res.ok) { setMessage({ type: 'success', text: t('backupsAdmin.successRestore') }); setRestoreConfirmFile(null); }
-      else setMessage({ type: 'error', text: data.message || t('backupsAdmin.errorRestore') });
+      else setMessage({ type: 'error', text: data.error || data.message || t('backupsAdmin.errorRestore') });
     } catch (err) { setMessage({ type: 'error', text: t('backupsAdmin.errorRestore') }); }
     finally { setActionLoading(false); }
   };
@@ -68,7 +69,7 @@ export default function BackupsAdmin({ getAuthHeaders }) {
       const text = await file.text();
       const backupJson = JSON.parse(text);
 
-      const res = await fetch('/api/admin/backups/upload', {
+      const res = await fetch(`${API_URL}/admin/backups/upload`, {
         method: 'POST',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify(backupJson)
@@ -79,7 +80,7 @@ export default function BackupsAdmin({ getAuthHeaders }) {
         setMessage({ type: 'success', text: t('backupsAdmin.successRestore') });
         fetchBackups();
       } else {
-        setMessage({ type: 'error', text: data.message || t('backupsAdmin.errorRestore') });
+        setMessage({ type: 'error', text: data.error || data.message || t('backupsAdmin.errorRestore') });
       }
     } catch (err) {
       setMessage({ type: 'error', text: t('backupsAdmin.errorRestore') });
@@ -91,7 +92,7 @@ export default function BackupsAdmin({ getAuthHeaders }) {
 
   const handleDownload = (filename) => {
     const link = document.createElement('a');
-    link.href = `/api/admin/backups/download/${encodeURIComponent(filename)}`;
+    link.href = `${API_URL}/admin/backups/download/${encodeURIComponent(filename)}`;
     link.download = filename;
     document.body.appendChild(link);
     link.click();

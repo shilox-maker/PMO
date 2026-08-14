@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Edit2, Printer, Trash2 } from 'lucide-react';
 
 export default function ProjectDetailHeader({
@@ -11,13 +12,14 @@ export default function ProjectDetailHeader({
   handleUpdateProject,
   currentPm
 }) {
+  const { t } = useTranslation();
   const canDelete = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR' || project?.id_pm === currentPm.id_usuario);
 
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 24, marginBottom: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         {onBack && (
-          <button className="icon-btn" onClick={onBack} title="Volver">
+          <button className="icon-btn" onClick={onBack} title={t('projectDetail.back', 'Volver')}>
             <ArrowLeft size={22} />
           </button>
         )}
@@ -26,7 +28,7 @@ export default function ProjectDetailHeader({
             <span className="project-id-badge">{project.id_proyecto}</span>
             {project.es_iniciativa_ligera ? (
               <span className="badge" style={{ backgroundColor: '#e0a025', color: '#fff', fontWeight: 600 }}>
-                ⚡ Iniciativa Ligera
+                ⚡ {t('projectDetail.lightInitiative', 'Iniciativa Ligera')}
               </span>
             ) : project.es_capex ? (
               <span className="badge badge-blue">
@@ -59,15 +61,15 @@ export default function ProjectDetailHeader({
             alignItems: 'center',
             gap: 8
           }}
-          title="Generar informe ejecutivo del proyecto"
+          title={t('projectDetail.report', 'Informe')}
         >
           <Printer size={16} />
-          <span>Informe</span>
+          <span>{t('projectDetail.report', 'Informe')}</span>
         </button>
 
         <button className="m3-btn m3-btn-primary" onClick={() => setShowEditProjectModal(true)}>
           <Edit2 size={16} />
-          <span>Editar Proyecto</span>
+          <span>{t('projectDetail.editProject', 'Editar Proyecto')}</span>
         </button>
 
         {canDelete && (
@@ -83,10 +85,10 @@ export default function ProjectDetailHeader({
               alignItems: 'center',
               gap: 8
             }}
-            title="Eliminar Proyecto permanentemente"
+            title={t('projectDetail.deleteProject', 'Eliminar Proyecto')}
           >
             <Trash2 size={16} />
-            <span>Eliminar Proyecto</span>
+            <span>{t('projectDetail.deleteProject', 'Eliminar Proyecto')}</span>
           </button>
         )}
 
@@ -108,7 +110,7 @@ export default function ProjectDetailHeader({
         {/* Estado Workflow */}
         {workflowStates && workflowStates.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--md-sys-color-outline)' }}>Fase:</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--md-sys-color-outline)' }}>{t('projectDetail.phase', 'Fase:')}</span>
             <select 
               value={project.id_estado || ''}
               onChange={(e) => handleUpdateProject({ id_estado: parseInt(e.target.value, 10) })}

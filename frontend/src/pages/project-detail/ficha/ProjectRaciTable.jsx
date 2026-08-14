@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Edit2, Trash2 } from 'lucide-react';
 import SearchableContactSelect from '../../../components/SearchableContactSelect';
 
@@ -9,12 +10,14 @@ export default function ProjectRaciTable({
   handleOpenEditRaci,
   handleDeleteParticipant
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="m3-card glass-panel" style={{ overflow: 'visible', zIndex: 5 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div>
-          <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Participantes (RACI)</h3>
-          <p style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Gestión de responsabilidades internas y externas del proyecto</p>
+          <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>{t('projectDetail.raci.title', 'Participantes (RACI)')}</h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>{t('projectDetail.raci.subtitle', 'Gestión de responsabilidades internas y externas del proyecto')}</p>
         </div>
         <div style={{ display: 'flex', gap: 8, width: '280px', position: 'relative' }}>
           <SearchableContactSelect 
@@ -25,24 +28,24 @@ export default function ProjectRaciTable({
                 handleOpenAddRaci(val);
               }
             }}
-            placeholder="+ Añadir Participante"
+            placeholder={t('projectDetail.raci.addPlaceholder', '+ Añadir Participante')}
           />
         </div>
       </div>
 
       {(!sortedInvolvedContacts || sortedInvolvedContacts.length === 0) ? (
         <p style={{ color: 'var(--md-sys-color-outline)', fontStyle: 'italic', textAlign: 'center', padding: '24px 0' }}>
-          No hay participantes RACI asignados a este proyecto.
+          {t('projectDetail.raci.noParticipants', 'No hay participantes RACI asignados a este proyecto.')}
         </p>
       ) : (
         <div className="m3-table-wrapper" style={{ border: '1px solid var(--md-sys-color-outline-variant)', borderRadius: 12 }}>
           <table className="m3-table">
             <thead>
               <tr>
-                <th>Nombre</th>
-                <th>Rol en Proyecto</th>
-                <th>RACI</th>
-                <th>Acciones</th>
+                <th>{t('projectDetail.raci.name', 'Nombre')}</th>
+                <th>{t('projectDetail.raci.role', 'Rol en Proyecto')}</th>
+                <th>{t('projectDetail.raci.raci', 'RACI')}</th>
+                <th>{t('projectDetail.raci.actions', 'Acciones')}</th>
               </tr>
             </thead>
             <tbody>
@@ -87,10 +90,10 @@ export default function ProjectRaciTable({
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="icon-btn" onClick={() => handleOpenEditRaci(ku)} title="Editar rol RACI">
+                      <button className="icon-btn" onClick={() => handleOpenEditRaci(ku)} title={t('projectDetail.raci.editRole', 'Editar rol RACI')}>
                         <Edit2 size={14} />
                       </button>
-                      <button className="icon-btn" onClick={() => handleDeleteParticipant(ku.id_contacto)} title="Eliminar del proyecto" style={{ color: 'var(--color-rag-red)' }}>
+                      <button className="icon-btn" onClick={() => handleDeleteParticipant(ku.id_contacto)} title={t('projectDetail.raci.deleteTitle', 'Eliminar del proyecto')} style={{ color: 'var(--color-rag-red)' }}>
                         <Trash2 size={14} />
                       </button>
                     </div>

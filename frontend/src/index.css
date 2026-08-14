@@ -990,17 +990,22 @@ button, input, select, textarea {
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 6px;
+  margin-bottom: 16px;
 }
 
 .form-label {
+  display: block;
+  width: 100%;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--md-sys-color-outline);
+  margin-bottom: 6px;
 }
 
 .m3-input, .user-select {
+  width: 100%;
+  box-sizing: border-box;
   padding: 8px 12px;
   background-color: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface);
@@ -1120,6 +1125,7 @@ button, input, select, textarea {
 .badge-orange { background-color: rgba(255, 159, 10, 0.2); color: #ff9f0a; }
 .badge-red { background-color: rgba(255, 69, 58, 0.2); color: #ff453a; }
 .badge-blue { background-color: rgba(10, 132, 255, 0.2); color: #0a84ff; }
+.badge-gray { background-color: rgba(140, 140, 140, 0.2); color: var(--md-sys-color-on-surface-variant); }
 
 /* Filter Panel */
 .filter-panel {
@@ -1675,25 +1681,38 @@ button, input, select, textarea {
 /* Table Density Controls (Comfortable, Standard, Compact) */
 [data-density="comfortable"] .m3-table th,
 [data-density="comfortable"] .m3-table td {
-  padding: 14px 16px;
-  font-size: 0.88rem;
+  padding: 16px 20px !important;
+  font-size: 0.92rem !important;
+  line-height: 1.5 !important;
 }
 
 [data-density="standard"] .m3-table th,
 [data-density="standard"] .m3-table td {
-  padding: 10px 12px;
-  font-size: 0.84rem;
+  padding: 10px 14px !important;
+  font-size: 0.84rem !important;
+  line-height: 1.35 !important;
 }
 
 [data-density="compact"] .m3-table th,
 [data-density="compact"] .m3-table td {
-  padding: 5px 8px;
-  font-size: 0.78rem;
+  padding: 4px 8px !important;
+  font-size: 0.75rem !important;
+  line-height: 1.2 !important;
 }
 
 [data-density="compact"] .badge {
-  padding: 2px 6px;
-  font-size: 0.7rem;
+  padding: 2px 5px !important;
+  font-size: 0.68rem !important;
+}
+
+[data-density="comfortable"] .badge {
+  padding: 4px 10px !important;
+  font-size: 0.82rem !important;
+}
+
+[data-density="compact"] .m3-btn {
+  padding: 2px 6px !important;
+  font-size: 0.72rem !important;
 }
 
 /* Common Layout Utilities to replace inline styles */

@@ -22,6 +22,7 @@ import SessionExpiredModal from './components/SessionExpiredModal';
 import AmbitoSelectionModal from './components/modals/AmbitoSelectionModal';
 import PendingAssistantDrawer from './components/assistant/PendingAssistantDrawer';
 import EmailReportModal from './components/modals/EmailReportModal';
+import TaskModal from './components/modals/TaskModal';
 import { API_URL } from './config/api';
 import { validatePassword } from './utils/passwordValidation';
 import { useTranslation } from 'react-i18next';
@@ -127,8 +128,11 @@ function LoginScreen() {
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading] = useState(() => {
+    // Si la URL viene de la redirección de Microsoft (code= o error=), iniciar con loading=true para evitar parpadeos
+    const url = window.location.search + window.location.hash;
+    return url.includes('code=') || url.includes('error=');
+  });
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
@@ -140,9 +144,60 @@ function LoginScreen() {
       });
   };
 
-  const handleAzureLogin = () => {
+  useEffect(() => {
+    // Procesar retorno de autenticación de Microsoft Entra ID al cargar la página
+    const checkAzureSession = async () => {
+      if (import.meta.env.VITE_AZURE_MOCK === 'true') return;
+      if (localStorage.getItem('pm_token')) return; // Ya está autenticado en PMO
+      if (localStorage.getItem('pmo_logged_out') === 'true') return; // Usuario cerró sesión explícitamente
+
+      const urlParams = window.location.search + window.location.hash;
+      const hasCode = urlParams.includes('code=') || urlParams.includes('error=');
+
+      try {
+        const msalInstance = await getMsalInstance();
+        if (!msalInstance) return;
+
+        const accounts = msalInstance.getAllAccounts();
+        if (hasCode || (accounts && accounts.length > 0)) {
+          setLoading(true); // Activar spinner inmediatamente para evitar parpadeo de la pantalla de login
+        }
+
+        // 1. Verificar si hay respuesta de redirección pendiente
+        let response = await msalInstance.handleRedirectPromise().catch(() => null);
+
+        // 2. Si MSAL ya procesó el token en la redirección, buscar cuenta en la caché local
+        if (!response && accounts && accounts.length > 0) {
+          response = await msalInstance.acquireTokenSilent({
+            scopes: ['user.read'],
+            account: accounts[0]
+          }).catch(() => null);
+        }
+
+        // 3. Con el token de Microsoft, autenticar en el backend de PMO
+        if (response && response.idToken) {
+          console.log('[App] Token de Microsoft listo. Autenticando usuario:', response.account?.username);
+          await loginAzure(response.idToken);
+        }
+      } catch (err) {
+        console.error('[App] Error al verificar sesión de Azure AD:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkAzureSession();
+  }, []);
+
+  const handleAzureLogin = async () => {
     setError('');
     setLoading(true);
+    // Limpiar cualquier bloqueo de interacción pendiente previo y el flag de logout explícito
+    try {
+      localStorage.removeItem('pmo_logged_out');
+      localStorage.removeItem('msal.interaction.status');
+      sessionStorage.removeItem('msal.interaction.status');
+    } catch (_) {}
+
     if (import.meta.env.VITE_AZURE_MOCK === 'true') {
       loginAzure('mock-token-rmoreno')
         .catch(err => {
@@ -150,22 +205,21 @@ function LoginScreen() {
           setLoading(false);
         });
     } else {
-      const msalInstance = getMsalInstance();
-      if (!msalInstance) {
-        setError('La autenticación con Azure AD requiere una conexión segura (HTTPS). Por favor, accede mediante HTTPS o utiliza el acceso por contraseña.');
+      try {
+        const msalInstance = await getMsalInstance();
+        if (!msalInstance) {
+          setError('La autenticación con Azure AD requiere una conexión segura (HTTPS).');
+          setLoading(false);
+          return;
+        }
+        console.log('[App] Redirigiendo a Microsoft Entra ID...');
+        await msalInstance.loginRedirect({ scopes: ['user.read'] });
+      } catch (err) {
+        console.error('[App] Fallo la redireccion a Azure AD:', err);
+        const msg = err?.message || err?.errorMessage || JSON.stringify(err) || 'Error al redirigir a Azure AD.';
+        setError(msg);
         setLoading(false);
-        return;
       }
-      msalInstance.loginPopup({
-        scopes: ['user.read']
-      })
-      .then(response => {
-        return loginAzure(response.idToken);
-      })
-      .catch(err => {
-        setError(err.message || 'Error en la autenticación de Azure AD.');
-        setLoading(false);
-      });
     }
   };
 
@@ -359,7 +413,7 @@ function LoginScreen() {
               border: '1px solid #cad1d7'
             }}
           >
-            {t('loginScreen.theme')}: {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Dacsa'}
+            {t('loginScreen.theme')}: {t(`loginScreen.themeOptions.${theme}`, theme === 'dark' ? 'Oscuro' : 'Dacsa')}
           </button>
         </div>
       </div>
@@ -598,6 +652,8 @@ function MainAppContent() {
   });
   const [totalPendingCount, setTotalPendingCount] = useState(0);
   const [reportModalState, setReportModalState] = useState({ isOpen: false, project: null, plan: null });
+  const [taskModalState, setTaskModalState] = useState({ isOpen: false, task: null, projectId: null });
+  const [assistantRefreshTrigger, setAssistantRefreshTrigger] = useState(0);
 
   useEffect(() => {
     localStorage.setItem('pendingAssistant_isOpen', isAssistantOpen);
@@ -608,6 +664,8 @@ function MainAppContent() {
   }, [assistantDaysFilter]);
 
   const fetchBadgeCount = async () => {
+    const savedToken = localStorage.getItem('pm_token');
+    if (!currentPm || !savedToken) return;
     try {
       const res = await fetch(`${API_URL}/assistant/pending?days=${assistantDaysFilter}`, {
         headers: getAuthHeaders()
@@ -633,6 +691,19 @@ function MainAppContent() {
       project: { id_proyecto: proj.id_proyecto, nombre_proyecto: proj.nombre_proyecto },
       plan
     });
+  };
+
+  const handleEditTask = (task, proj) => {
+    setTaskModalState({
+      isOpen: true,
+      task,
+      projectId: task.id_proyecto || proj?.id_proyecto
+    });
+  };
+
+  const handleTaskSaved = () => {
+    setAssistantRefreshTrigger(prev => prev + 1);
+    fetchBadgeCount();
   };
 
   useEffect(() => {
@@ -820,6 +891,8 @@ function MainAppContent() {
           t={t}
           getAuthHeaders={getAuthHeaders}
           onOpenReportModal={handleOpenReportModal}
+          onEditTask={handleEditTask}
+          refreshTrigger={assistantRefreshTrigger}
           onDataChanged={fetchBadgeCount}
         />
       </div>
@@ -835,6 +908,18 @@ function MainAppContent() {
           planId={reportModalState.plan?.id}
           getAuthHeaders={getAuthHeaders}
           onLogSent={fetchBadgeCount}
+        />
+      )}
+
+      {/* Task Modal from Assistant */}
+      {taskModalState.isOpen && (
+        <TaskModal
+          isOpen={taskModalState.isOpen}
+          onClose={() => setTaskModalState({ isOpen: false, task: null, projectId: null })}
+          projectId={taskModalState.projectId}
+          task={taskModalState.task}
+          getAuthHeaders={getAuthHeaders}
+          onSuccess={handleTaskSaved}
         />
       )}
     </div>

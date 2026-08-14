@@ -10,7 +10,7 @@ export default function TaskModal({
     titulo_tarea: '',
     descripcion: '',
     es_hito: false,
-    estado: 'PENDIENTE',
+    estado: 'SIN INICIAR',
     fecha_limite: '',
     fecha_original_cierre: '',
     fecha_actual_cierre: '',
@@ -25,7 +25,7 @@ export default function TaskModal({
         titulo_tarea: editingTask.titulo_tarea || '',
         descripcion: editingTask.descripcion || '',
         es_hito: !!editingTask.es_hito,
-        estado: editingTask.estado || 'PENDIENTE',
+        estado: editingTask.estado || 'SIN INICIAR',
         fecha_limite: editingTask.fecha_limite || '',
         fecha_original_cierre: editingTask.fecha_original_cierre || '',
         fecha_actual_cierre: editingTask.fecha_actual_cierre || '',
@@ -38,7 +38,7 @@ export default function TaskModal({
         titulo_tarea: '',
         descripcion: '',
         es_hito: false,
-        estado: 'PENDIENTE',
+        estado: 'SIN INICIAR',
         fecha_limite: today,
         fecha_original_cierre: today,
         fecha_actual_cierre: today,
@@ -140,12 +140,13 @@ export default function TaskModal({
 
           <div className="form-group">
             <label className="form-label">Descripción</label>
-            <input 
-              type="text" 
+            <textarea 
+              rows={6}
               value={form.descripcion}
               onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
               className="m3-input"
               placeholder="Detalles opcionales..."
+              style={{ resize: 'vertical', width: '100%', minHeight: '120px' }}
             />
           </div>
 
@@ -234,7 +235,8 @@ export default function TaskModal({
               className="m3-input"
               style={{ width: '100%' }}
             >
-              <option value="PENDIENTE">PENDIENTE 🟡</option>
+              <option value="SIN INICIAR">SIN INICIAR ⚪</option>
+              <option value="EN CURSO">EN CURSO 🟡</option>
               <option value="COMPLETADA">COMPLETADA 🟢</option>
             </select>
           </div>

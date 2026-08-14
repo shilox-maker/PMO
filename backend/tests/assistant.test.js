@@ -52,7 +52,7 @@ describe('Assistant Controller API', () => {
     await Tareas.create({
       id_proyecto: testProject.id_proyecto,
       titulo_tarea: 'Tarea Asistente Pendiente',
-      estado: 'PENDIENTE',
+      estado: 'SIN INICIAR',
       fecha_limite: tomorrow
     });
 

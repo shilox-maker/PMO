@@ -124,7 +124,7 @@ describe('API Endpoints', () => {
         es_hito: true,
         fecha_original_cierre: '2026-06-30',
         fecha_actual_cierre: '2026-07-15',
-        estado: 'PENDIENTE'
+        estado: 'SIN INICIAR'
       });
     
     expect(res.statusCode).toEqual(201);
@@ -145,7 +145,7 @@ describe('API Endpoints', () => {
         es_hito: true,
         fecha_original_cierre: '2026-06-30',
         fecha_actual_cierre: '2026-06-30',
-        estado: 'PENDIENTE'
+        estado: 'SIN INICIAR'
       });
 
     const taskId = createRes.body.id_tarea;
@@ -163,16 +163,16 @@ describe('API Endpoints', () => {
     expect(updateRes.body.fecha_real_cierre).not.toBeNull();
     expect(updateRes.body.fecha_real_cierre).toBe(new Date().toISOString().split('T')[0]);
 
-    // 3. Revert to PENDIENTE
+    // 3. Revert to SIN INICIAR
     const revertRes = await request(app)
       .put(`/api/tasks/${taskId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({
-        estado: 'PENDIENTE'
+        estado: 'SIN INICIAR'
       });
 
     expect(revertRes.statusCode).toEqual(200);
-    expect(revertRes.body.estado).toBe('PENDIENTE');
+    expect(revertRes.body.estado).toBe('SIN INICIAR');
     expect(revertRes.body.fecha_real_cierre).toBeNull();
   });
 
@@ -186,7 +186,7 @@ describe('API Endpoints', () => {
         es_hito: true,
         fecha_original_cierre: 'invalid-date',
         fecha_actual_cierre: '2026-06-30',
-        estado: 'PENDIENTE'
+        estado: 'SIN INICIAR'
       });
 
     expect(res.statusCode).toEqual(400);

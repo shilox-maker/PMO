@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { Filter, Activity } from 'lucide-react';
+import { Filter, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTableColumns } from '../hooks/useTableColumns';
 import ProjectsFilterPanel from '../components/projects/ProjectsFilterPanel';
 import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid';
@@ -58,6 +58,14 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
   const [trends, setTrends] = useState({});
   const [timeframe, setTimeframe] = useState(7);
   const [customDate, setCustomDate] = useState(null);
+  const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
+  const [isChartsCollapsed, setIsChartsCollapsed] = useState(() => localStorage.getItem('pmo_dashboard_charts_collapsed') === 'true');
+
+  const toggleChartsCollapsed = () => {
+    const nextState = !isChartsCollapsed;
+    setIsChartsCollapsed(nextState);
+    localStorage.setItem('pmo_dashboard_charts_collapsed', String(nextState));
+  };
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(Array.isArray(data) ? data : [])).catch(() => {});
@@ -187,6 +195,7 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
         pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList} tagsList={tagsList} statesList={statesList}
         projects={projects}
         tableCols={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns}
+        density={density} onDensityChange={setDensity}
         onOpenReport={() => setIsReportModalOpen(true)}
       />
 
@@ -208,15 +217,45 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
 
       {/* Charts Section */}
       <div className="m3-card glass-panel" style={{ marginBottom: 20, padding: '12px 16px' }}>
-        <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 12 }}>
-          {t('dashboards.operationalDistribution')}
-        </h3>
-        <DashboardChartsSection
-          projects={projects}
-          statesList={statesList}
-          selectedChartFilter={selectedChartFilter}
-          setSelectedChartFilter={setSelectedChartFilter}
-        />
+        <div
+          onClick={toggleChartsCollapsed}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'space-between',
+            cursor: 'pointer',
+            userSelect: 'none'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>
+              {t('dashboards.operationalDistribution')}
+            </h3>
+            {isChartsCollapsed && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', fontWeight: 500, backgroundColor: 'var(--md-sys-color-surface-container-high)', padding: '2px 8px', borderRadius: 6 }}>
+                (Colapsado)
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            className="m3-btn m3-btn-icon"
+            style={{ padding: 4, height: 'auto', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--md-sys-color-outline)' }}
+            aria-label="Toggle Charts"
+          >
+            {isChartsCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+          </button>
+        </div>
+        {!isChartsCollapsed && (
+          <div style={{ marginTop: 12 }}>
+            <DashboardChartsSection
+              projects={projects}
+              statesList={statesList}
+              selectedChartFilter={selectedChartFilter}
+              setSelectedChartFilter={setSelectedChartFilter}
+            />
+          </div>
+        )}
       </div>
 
       {/* KPI Drill-down Active Banner */}
@@ -254,6 +293,7 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
         projects={filteredProjects}
         onViewProject={onViewProject}
         onViewVendor={onViewVendor}
+        density={density}
       />
 
       <DashboardReportModal

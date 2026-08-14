@@ -56,6 +56,7 @@ export default function DashboardPortfolio({ onViewProject }) {
   const [trends, setTrends] = useState({});
   const [timeframe, setTimeframe] = useState(7);
   const [customDate, setCustomDate] = useState(null);
+  const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(Array.isArray(data) ? data : [])).catch(() => {});
@@ -244,6 +245,7 @@ export default function DashboardPortfolio({ onViewProject }) {
         pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList} tagsList={tagsList} statesList={statesList}
         projects={rawProjects}
         tableCols={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns}
+        density={density} onDensityChange={setDensity}
       />
 
       {/* KPI Cards Header */}
@@ -303,8 +305,8 @@ export default function DashboardPortfolio({ onViewProject }) {
         {loading ? (
           <div style={{ padding: 20, textAlign: 'center', opacity: 0.7 }}>{t('common.loading')}</div>
         ) : (
-          <div className="table-responsive" style={{ overflowX: 'auto' }}>
-            <table className="m3-table" style={{ width: '100%', fontSize: '0.85rem' }}>
+          <div className="m3-table-wrapper table-responsive" data-density={density} style={{ overflowX: 'auto' }}>
+            <table className="m3-table" style={{ width: '100%' }}>
               <thead>
                 <tr>
                   {visibleColumnsMap.id_proyecto && renderTH(t('projectsTable.code'), 'id_proyecto')}

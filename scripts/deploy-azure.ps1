@@ -96,17 +96,41 @@ if (-not $accountInfo) {
     Write-Host "  Sesión de Azure CLI previa activa detectada." -ForegroundColor Green
 }
 
-# ------------------------------------------------------------------------------
-# 4. Despliegue del ZIP a Azure App Service
-# ------------------------------------------------------------------------------
 Write-Host "`n[Paso 3/3] Desplegando $ZIP_PATH en Azure App Service [$APP_NAME]..." -ForegroundColor Yellow
 
-az webapp deployment source config-zip `
+az webapp deploy `
     --resource-group $RG_NAME `
     --name $APP_NAME `
-    --src $ZIP_PATH
+    --src-path $ZIP_PATH `
+    --type zip `
+    --async true
+
+Write-Host "`n  Despliegue enviado. Esperando a que el sitio arranque..." -ForegroundColor Yellow
+
+$maxWait  = 120   # segundos máximo de espera
+$interval = 10    # segundos entre comprobaciones
+$elapsed  = 0
+$url      = "https://$APP_NAME.azurewebsites.net"
+
+while ($elapsed -lt $maxWait) {
+    Start-Sleep -Seconds $interval
+    $elapsed += $interval
+    try {
+        $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
+        if ($response.StatusCode -lt 500) {
+            Write-Host "  ✅ Sitio respondiendo (HTTP $($response.StatusCode)) tras ${elapsed}s." -ForegroundColor Green
+            break
+        }
+    } catch {
+        Write-Host "  ⏳ Esperando arranque... ($($elapsed)s / $($maxWait)s)" -ForegroundColor DarkGray
+    }
+}
+
+if ($elapsed -ge $maxWait) {
+    Write-Host "  ⚠️  El sitio tardó más de $maxWait s en responder. Verifica en KUDU." -ForegroundColor Yellow
+}
 
 Write-Host "`n==================================================" -ForegroundColor Cyan
 Write-Host " ¡DESPLIEGUE A [$Environment] COMPLETADO CON ÉXITO! " -ForegroundColor Green
-Write-Host " App URL: https://$APP_NAME.azurewebsites.net     " -ForegroundColor White
+Write-Host " App URL: $url     " -ForegroundColor White
 Write-Host "==================================================" -ForegroundColor Cyan

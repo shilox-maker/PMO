@@ -133,7 +133,19 @@ const getPendingAssistant = asyncHandler(async (req, res) => {
   filteredTasks.forEach(t => {
     const effDateStr = t.fecha_actual_cierre || t.fecha_original_cierre || t.fecha_limite;
     const isOverdue = new Date(effDateStr) < startDate;
-    const item = { id_tarea: t.id_tarea, titulo_tarea: t.titulo_tarea, descripcion: t.descripcion, fecha_limite: effDateStr, es_hito: t.es_hito, estado: t.estado, isOverdue };
+    const item = {
+      id_tarea: t.id_tarea,
+      id_proyecto: t.id_proyecto,
+      titulo_tarea: t.titulo_tarea,
+      descripcion: t.descripcion,
+      fecha_limite: t.fecha_limite || effDateStr,
+      fecha_original_cierre: t.fecha_original_cierre,
+      fecha_actual_cierre: t.fecha_actual_cierre,
+      fecha_real_cierre: t.fecha_real_cierre,
+      es_hito: t.es_hito,
+      estado: t.estado,
+      isOverdue
+    };
     if (projectMap[t.id_proyecto]) { projectMap[t.id_proyecto].tareas.push(item); totalPendingCount++; }
   });
 

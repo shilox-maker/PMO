@@ -1,11 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { resolve } from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        authCallback: resolve(__dirname, 'auth-callback.html')
+      },
       output: {
         manualChunks: (id) => {
           // Librerías Azure MSAL — separadas para cacheo independiente

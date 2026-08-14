@@ -252,35 +252,35 @@ async function seed() {
       // Context specific tasks
       if (name.includes('SALESFORCE')) {
         tasksData.push(
-          { id_proyecto: p.id_proyecto, titulo_tarea: 'Migración y limpieza de base de datos de leads legados', es_hito: false, estado: 'PENDIENTE', fecha_limite: '2026-07-31' },
-          { id_proyecto: p.id_proyecto, titulo_tarea: 'Certificación e Integración final con pasarela de marketing', es_hito: true, estado: 'PENDIENTE', fecha_limite: '2026-09-15' },
-          { id_proyecto: p.id_proyecto, titulo_tarea: 'UAT formal con equipo de ventas nacional', es_hito: true, estado: 'PENDIENTE', fecha_limite: '2026-11-01' }
+          { id_proyecto: p.id_proyecto, titulo_tarea: 'Migración y limpieza de base de datos de leads legados', es_hito: false, estado: 'EN CURSO', fecha_limite: '2026-07-31' },
+          { id_proyecto: p.id_proyecto, titulo_tarea: 'Certificación e Integración final con pasarela de marketing', es_hito: true, estado: 'SIN INICIAR', fecha_limite: '2026-09-15' },
+          { id_proyecto: p.id_proyecto, titulo_tarea: 'UAT formal con equipo de ventas nacional', es_hito: true, estado: 'SIN INICIAR', fecha_limite: '2026-11-01' }
         );
       } else if (name.includes('Firewall') || name.includes('switches')) {
         tasksData.push(
           { id_proyecto: p.id_proyecto, titulo_tarea: 'Recepción física del equipamiento de red en almacén', es_hito: false, estado: 'COMPLETADA', fecha_limite: '2026-03-10' },
           { id_proyecto: p.id_proyecto, titulo_tarea: 'Configuración y pruebas en maqueta de red (Staging)', es_hito: false, estado: 'COMPLETADA', fecha_limite: '2026-04-20' },
-          { id_proyecto: p.id_proyecto, titulo_tarea: 'Ventana de migración nocturna e instalación física en CPD', es_hito: true, estado: 'PENDIENTE', fecha_limite: '2026-08-15' }
+          { id_proyecto: p.id_proyecto, titulo_tarea: 'Ventana de migración nocturna e instalación física en CPD', es_hito: true, estado: 'EN CURSO', fecha_limite: '2026-08-15' }
         );
       } else if (name.includes('OLANET')) {
         tasksData.push(
-          { id_proyecto: p.id_proyecto, titulo_tarea: 'Mapeo y cableado de variables PLC a terminales de planta', es_hito: false, estado: 'PENDIENTE', fecha_limite: '2026-08-30' },
-          { id_proyecto: p.id_proyecto, titulo_tarea: 'Validación de OEE en inyectoras piloto', es_hito: true, estado: 'PENDIENTE', fecha_limite: '2026-10-15' }
+          { id_proyecto: p.id_proyecto, titulo_tarea: 'Mapeo y cableado de variables PLC a terminales de planta', es_hito: false, estado: 'EN CURSO', fecha_limite: '2026-08-30' },
+          { id_proyecto: p.id_proyecto, titulo_tarea: 'Validación de OEE en inyectoras piloto', es_hito: true, estado: 'SIN INICIAR', fecha_limite: '2026-10-15' }
         );
       } else if (name.includes('MECALUX') || name.includes('TESI')) {
         tasksData.push(
-          { id_proyecto: p.id_proyecto, titulo_tarea: 'Diseño e integración de flujos WMS con ERP corporativo', es_hito: true, estado: 'PENDIENTE', fecha_limite: '2026-08-10' },
-          { id_proyecto: p.id_proyecto, titulo_tarea: 'Pase a producción del layout de almacén virtual', es_hito: true, estado: 'PENDIENTE', fecha_limite: '2026-11-30' }
+          { id_proyecto: p.id_proyecto, titulo_tarea: 'Diseño e integración de flujos WMS con ERP corporativo', es_hito: true, estado: 'EN CURSO', fecha_limite: '2026-08-10' },
+          { id_proyecto: p.id_proyecto, titulo_tarea: 'Pase a producción del layout de almacén virtual', es_hito: true, estado: 'SIN INICIAR', fecha_limite: '2026-11-30' }
         );
       } else if (name.includes('Portatiles') || name.includes('MDM')) {
         tasksData.push(
           { id_proyecto: p.id_proyecto, titulo_tarea: 'Aprobación del lote y pedido de compra homologado (Lenovo/HP)', es_hito: true, estado: 'COMPLETADA', fecha_limite: '2026-02-28' },
           { id_proyecto: p.id_proyecto, titulo_tarea: 'Maquetación de la imagen del sistema operativo corporativo', es_hito: false, estado: 'COMPLETADA', fecha_limite: '2026-04-15' },
-          { id_proyecto: p.id_proyecto, titulo_tarea: 'Logística de envío y reparto físico a los usuarios finales', es_hito: false, estado: 'PENDIENTE', fecha_limite: '2026-09-30' }
+          { id_proyecto: p.id_proyecto, titulo_tarea: 'Logística de envío y reparto físico a los usuarios finales', es_hito: false, estado: 'SIN INICIAR', fecha_limite: '2026-09-30' }
         );
       } else {
         tasksData.push(
-          { id_proyecto: p.id_proyecto, titulo_tarea: 'Entrega de documentación final y pase a soporte', es_hito: true, estado: 'PENDIENTE', fecha_limite: '2026-12-15' }
+          { id_proyecto: p.id_proyecto, titulo_tarea: 'Entrega de documentación final y pase a soporte', es_hito: true, estado: 'SIN INICIAR', fecha_limite: '2026-12-15' }
         );
       }
     });

@@ -32,7 +32,8 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserAmbitos = async (userObj, tokenOverride, isFreshLogin = false) => {
     const savedToken = tokenOverride || token || localStorage.getItem('pm_token');
-    if (!savedToken) return;
+    const activePm = userObj || currentPm;
+    if (!savedToken || !activePm) return;
     try {
       const storedPmStr = localStorage.getItem('pm_user');
       const storedPm = storedPmStr ? JSON.parse(storedPmStr) : null;
@@ -128,14 +129,25 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => { checkMaintenanceStatus(); }, []);
 
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(() => {
+    const userSelected = localStorage.getItem('theme_user_selected');
+    if (userSelected === 'true') {
+      const stored = localStorage.getItem('theme');
+      if (stored === 'dark' || stored === 'dacsa') return stored;
+    }
+    return 'dacsa';
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme(prev => (prev === 'dark' ? 'dacsa' : 'dark'));
+  const toggleTheme = () => setTheme(prev => {
+    const next = prev === 'dark' ? 'dacsa' : 'dark';
+    localStorage.setItem('theme_user_selected', 'true');
+    return next;
+  });
 
   const fetchActiveUsers = () => {
     const savedToken = token || localStorage.getItem('pm_token');
@@ -248,6 +260,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('pm_token');
     localStorage.removeItem('pm_user');
     localStorage.removeItem('pmo_selected_ambito_id');
+    localStorage.setItem('pmo_logged_out', 'true');
+    try {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('msal.')) {
+          localStorage.removeItem(key);
+        }
+      });
+      sessionStorage.clear();
+    } catch (_) {}
     setToken(null);
     setCurrentPm(null);
     setSelectedAmbitoState('');

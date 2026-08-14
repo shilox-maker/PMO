@@ -1223,9 +1223,9 @@ const Tareas = sequelize.define('Tareas', {
     defaultValue: false
   },
   estado: {
-    type: DataTypes.ENUM('PENDIENTE', 'COMPLETADA'),
+    type: DataTypes.ENUM('SIN INICIAR', 'EN CURSO', 'COMPLETADA'),
     allowNull: false,
-    defaultValue: 'PENDIENTE'
+    defaultValue: 'SIN INICIAR'
   },
   fecha_limite: {
     type: DataTypes.DATEONLY,

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MessageSquare, Star, Edit2, Trash2, Filter } from 'lucide-react';
 import RichTextEditor from '../../../components/RichTextEditor';
 
@@ -25,6 +26,7 @@ export default function ProjectExecutiveWall({
   canSeeDireccion,
   formatDateTime
 }) {
+  const { t } = useTranslation();
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'IMPORTANT' | 'DIRECCION'
 
   const filteredComments = useMemo(() => {
@@ -47,13 +49,19 @@ export default function ProjectExecutiveWall({
     };
   }, [comments]);
 
+  const handleDeleteWithConfirm = (commentId) => {
+    if (window.confirm(t('projectDetail.executiveWall.deleteConfirm', '¿Seguro que deseas eliminar este comentario?'))) {
+      handleDeleteComment(commentId);
+    }
+  };
+
   return (
     <div className="m3-card glass-panel" style={{ marginTop: 12 }}>
       <h3 style={{ fontWeight: 600, fontSize: '1.25rem', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <MessageSquare size={20} /> Muro Ejecutivo (Minutas / Hitos clave)
+        <MessageSquare size={20} /> {t('projectDetail.executiveWall.title', 'Muro Ejecutivo (Minutas / Hitos clave)')}
       </h3>
       <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginBottom: 20 }}>
-        Registro cronológico de comentarios importantes de gobernanza y acuerdos de comités.
+        {t('projectDetail.executiveWall.subtitle', 'Registro cronológico de comentarios importantes de gobernanza y acuerdos de comités.')}
       </p>
 
       {/* Input area */}
@@ -61,7 +69,7 @@ export default function ProjectExecutiveWall({
         <RichTextEditor 
           value={newCommentText}
           onChange={setNewCommentText}
-          placeholder="Añada un comentario o acuerdo ejecutivo aquí..."
+          placeholder={t('projectDetail.executiveWall.placeholder', 'Añada un comentario o acuerdo ejecutivo aquí...')}
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', gap: 20 }}>
@@ -73,7 +81,7 @@ export default function ProjectExecutiveWall({
                 className="m3-checkbox"
               />
               <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--priority-alta)', fontWeight: 600 }}>
-                <Star size={14} fill={newCommentImportant ? 'var(--priority-alta)' : 'none'} /> Marcar como importante / ejecutivo (PDF)
+                <Star size={14} fill={newCommentImportant ? 'var(--priority-alta)' : 'none'} /> {t('projectDetail.executiveWall.markImportant', 'Marcar como importante / ejecutivo (PDF)')}
               </span>
             </label>
             {canSeeDireccion && (
@@ -85,13 +93,13 @@ export default function ProjectExecutiveWall({
                   className="m3-checkbox"
                 />
                 <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
-                  📢 Para dirección
+                  {t('projectDetail.executiveWall.forManagement', '📢 Para dirección')}
                 </span>
               </label>
             )}
           </div>
           <button className="m3-btn m3-btn-primary" onClick={handleAddComment} style={{ height: '36px' }}>
-            Publicar Comentario
+            {t('projectDetail.executiveWall.publishBtn', 'Publicar Comentario')}
           </button>
         </div>
       </div>
@@ -100,7 +108,7 @@ export default function ProjectExecutiveWall({
       {comments && comments.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap', paddingBottom: 12, borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--md-sys-color-on-surface-variant)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Filter size={15} /> Filtrar muro:
+            <Filter size={15} /> {t('projectDetail.executiveWall.filterLabel', 'Filtrar muro:')}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
@@ -109,7 +117,7 @@ export default function ProjectExecutiveWall({
               onClick={() => setFilterType('ALL')}
               style={{ height: '30px', fontSize: '0.78rem', padding: '0 12px' }}
             >
-              Todos ({counts.all})
+              {t('projectDetail.executiveWall.filterAll', { count: counts.all, defaultValue: `Todos (${counts.all})` })}
             </button>
             <button
               type="button"
@@ -123,7 +131,7 @@ export default function ProjectExecutiveWall({
                 color: filterType === 'IMPORTANT' ? undefined : '#d97706'
               }}
             >
-              ⭐ Importantes ({counts.important})
+              {t('projectDetail.executiveWall.filterImportant', { count: counts.important, defaultValue: `⭐ Importantes (${counts.important})` })}
             </button>
             {canSeeDireccion && (
               <button
@@ -138,7 +146,7 @@ export default function ProjectExecutiveWall({
                   color: filterType === 'DIRECCION' ? undefined : '#007aff'
                 }}
               >
-                📢 Dirección ({counts.direccion})
+                {t('projectDetail.executiveWall.filterManagement', { count: counts.direccion, defaultValue: `📢 Dirección (${counts.direccion})` })}
               </button>
             )}
           </div>
@@ -147,14 +155,14 @@ export default function ProjectExecutiveWall({
 
       {/* Comments List */}
       {commentsLoading ? (
-        <span>Cargando comentarios...</span>
+        <span>{t('projectDetail.executiveWall.loading', 'Cargando comentarios...')}</span>
       ) : comments.length === 0 ? (
         <p style={{ textAlign: 'center', color: 'var(--md-sys-color-outline)', padding: '24px 0', fontStyle: 'italic' }}>
-          No hay comentarios registrados en este proyecto.
+          {t('projectDetail.executiveWall.noComments', 'No hay comentarios registrados en este proyecto.')}
         </p>
       ) : filteredComments.length === 0 ? (
         <p style={{ textAlign: 'center', color: 'var(--md-sys-color-outline)', padding: '24px 0', fontStyle: 'italic' }}>
-          No hay comentarios que coincidan con el filtro seleccionado.
+          {t('projectDetail.executiveWall.noFilterComments', 'No hay comentarios que coincidan con el filtro seleccionado.')}
         </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -191,7 +199,7 @@ export default function ProjectExecutiveWall({
                             onChange={(e) => setEditingCommentImportant(e.target.checked)}
                             className="m3-checkbox"
                           />
-                          <span style={{ color: '#f59e0b', fontWeight: 600 }}>Importante</span>
+                          <span style={{ color: '#f59e0b', fontWeight: 600 }}>{t('common.important', 'Importante')}</span>
                         </label>
                         {canSeeDireccion && (
                           <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
@@ -201,16 +209,16 @@ export default function ProjectExecutiveWall({
                               onChange={(e) => setEditingCommentDireccion(e.target.checked)}
                               className="m3-checkbox"
                             />
-                            <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>Para dirección</span>
+                            <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>{t('projectDetail.executiveWall.forManagement', 'Para dirección')}</span>
                           </label>
                         )}
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button className="m3-btn m3-btn-outline" onClick={() => setEditingCommentId(null)} style={{ height: '32px', fontSize: '0.8rem' }}>
-                          Cancelar
+                          {t('common.cancel', 'Cancelar')}
                         </button>
                         <button className="m3-btn m3-btn-primary" onClick={() => handleUpdateComment(c.id_comentario)} style={{ height: '32px', fontSize: '0.8rem' }}>
-                          Guardar
+                          {t('common.save', 'Guardar')}
                         </button>
                       </div>
                     </div>
@@ -222,12 +230,12 @@ export default function ProjectExecutiveWall({
                         <strong style={{ fontSize: '0.9rem' }}>{c.Autor?.nombre} {c.Autor?.apellidos}</strong>
                         {c.es_importante && (
                           <span style={{ fontSize: '0.7rem', backgroundColor: '#ffe0b2', color: '#e65100', padding: '2px 8px', borderRadius: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Star size={10} fill="#e65100" /> IMPORTANTE
+                            <Star size={10} fill="#e65100" /> {t('projectDetail.executiveWall.importantBadge', 'IMPORTANTE')}
                           </span>
                         )}
                         {c.para_direccion && (
                           <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)', padding: '2px 8px', borderRadius: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Star size={10} fill="var(--md-sys-color-primary)" /> DIRECCIÓN
+                            <Star size={10} fill="var(--md-sys-color-primary)" /> {t('projectDetail.executiveWall.managementBadge', 'DIRECCIÓN')}
                           </span>
                         )}
                       </div>
@@ -240,7 +248,11 @@ export default function ProjectExecutiveWall({
 
                     {c.editado && (
                       <div style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)', marginTop: 8, fontStyle: 'italic' }}>
-                        Editado por {c.Editor?.nombre} {c.Editor?.apellidos} el {formatDateTime(c.fecha_modificacion)}
+                        {t('projectDetail.executiveWall.editedBy', {
+                          name: `${c.Editor?.nombre || ''} ${c.Editor?.apellidos || ''}`,
+                          date: formatDateTime(c.fecha_modificacion),
+                          defaultValue: `Editado por ${c.Editor?.nombre} ${c.Editor?.apellidos} el ${formatDateTime(c.fecha_modificacion)}`
+                        })}
                       </div>
                     )}
 
@@ -253,17 +265,17 @@ export default function ProjectExecutiveWall({
                           setEditingCommentImportant(c.es_importante);
                           setEditingCommentDireccion(c.para_direccion || false);
                         }}
-                        title="Editar comentario"
+                        title={t('common.edit', 'Editar comentario')}
                       >
-                        <Edit2 size={12} /> <span style={{ fontSize: '0.75rem', marginLeft: 4 }}>Editar</span>
+                        <Edit2 size={12} /> <span style={{ fontSize: '0.75rem', marginLeft: 4 }}>{t('common.edit', 'Editar')}</span>
                       </button>
                       <button 
                         className="icon-btn" 
-                        onClick={() => handleDeleteComment(c.id_comentario)}
-                        title="Eliminar comentario"
+                        onClick={() => handleDeleteWithConfirm(c.id_comentario)}
+                        title={t('common.delete', 'Eliminar comentario')}
                         style={{ color: 'var(--color-rag-red)' }}
                       >
-                        <Trash2 size={12} /> <span style={{ fontSize: '0.75rem', marginLeft: 4 }}>Eliminar</span>
+                        <Trash2 size={12} /> <span style={{ fontSize: '0.75rem', marginLeft: 4 }}>{t('common.delete', 'Eliminar')}</span>
                       </button>
                     </div>
                   </div>

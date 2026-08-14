@@ -35,17 +35,6 @@ const createUser = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Método de acceso no válido.' });
   }
 
-  const user = await Usuarios.create({
-    nombre,
-    apellidos,
-    correo,
-    password: await hashPassword(finalPassword),
-    password_salt: null,
-    perfil,
-    activo: activo !== undefined ? activo : true,
-    metodo_acceso: accessMethod
-  });
-
   // Asignación de Ámbitos
   let ambitosIds = Array.isArray(ambitos) && ambitos.length > 0 ? ambitos : [1];
   if (perfil !== 'ADMINISTRADOR' && Array.isArray(ambitos) && ambitos.length === 0) {

@@ -150,7 +150,7 @@ const applyStateTasks = asyncHandler(async (req, res) => {
     titulo_tarea: t.nombre_tarea || t.titulo_tarea,
     descripcion: t.descripcion || null,
     es_hito: !!t.es_hito,
-    estado: 'PENDIENTE',
+    estado: 'SIN INICIAR',
     fecha_limite: t.fecha_limite || today
   }));
 

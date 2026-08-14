@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import SearchableContactSelect from '../SearchableContactSelect';
+import CapexFieldsGroup from './CapexFieldsGroup';
 
 export default function ProjectEditModal({
   isOpen, onClose, project, getAuthHeaders, onSuccess,
@@ -153,7 +154,7 @@ export default function ProjectEditModal({
 
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div className="form-group">
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
               <label className="form-label">Nombre del Proyecto *</label>
               <input 
                 type="text" 
@@ -165,9 +166,22 @@ export default function ProjectEditModal({
               />
             </div>
 
+            {/* Descripción Detallada */}
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">Descripción Detallada *</label>
+              <textarea 
+                name="descripcion"
+                value={form.descripcion}
+                onChange={handleInputChange}
+                required
+                rows={3}
+                className="m3-input"
+              />
+            </div>
+
             {/* Sede y A Distribuir */}
-            <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
+            <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
                 <label className="form-label">Sede *</label>
                 <select 
                   name="id_sede"
@@ -184,7 +198,7 @@ export default function ProjectEditModal({
                   })}
                 </select>
               </div>
-              <div>
+              <div className="form-group">
                 <label className="form-label">A distribuir</label>
                 <select 
                   name="id_sede_distribuir"
@@ -274,8 +288,8 @@ export default function ProjectEditModal({
             </div>
 
             {/* Presupuesto Inicial + Notas — fila completa */}
-            <div className="form-group" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
+            <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
                 <label className="form-label">Presupuesto Inicial (€) *</label>
                 <input 
                   type="number" 
@@ -287,7 +301,7 @@ export default function ProjectEditModal({
                   className="m3-input"
                 />
               </div>
-              <div>
+              <div className="form-group">
                 <label className="form-label">Notas sobre el presupuesto</label>
                 <input
                   type="text"
@@ -299,106 +313,15 @@ export default function ProjectEditModal({
                 />
               </div>
             </div>
-          </div>
 
-          {/* Solo CAPEX switch + código */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, margin: '16px 0' }}>
-            <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input 
-                type="checkbox" 
-                name="es_capex"
-                checked={form.es_capex}
-                onChange={handleInputChange}
-                className="m3-checkbox"
-              />
-              <span>¿Es CAPEX?</span>
-            </label>
-
-            {form.es_capex && (
-              <div className="form-group" style={{ margin: 0 }}>
-                <input 
-                  type="text" 
-                  name="codigo_capex"
-                  value={form.codigo_capex}
-                  onChange={handleInputChange}
-                  placeholder="Código CAPEX *"
-                  required={form.es_capex}
-                  className="m3-input"
-                />
-              </div>
-            )}
-          </div>
-
-          {form.es_capex && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, margin: '0 0 16px' }}>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Tipo CAPEX *</label>
-                <select
-                  name="id_tipo_capex"
-                  value={form.id_tipo_capex}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setForm(prev => ({ ...prev, id_tipo_capex: val, id_subtipo_capex: '' }));
-                  }}
-                  required
-                  className="user-select"
-                >
-                  <option value="">Seleccionar tipo...</option>
-                  {capexTypes.map(t => (
-                    <option key={t.id} value={t.id}>{t.nombre}</option>
-                  ))}
-                </select>
-              </div>
-              {(() => {
-                const sel = capexTypes.find(t => t.id === parseInt(form.id_tipo_capex, 10));
-                return sel?.Subtipos?.length > 0 ? (
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label">Subtipo CAPEX *</label>
-                    <select
-                      name="id_subtipo_capex"
-                      value={form.id_subtipo_capex}
-                      onChange={handleInputChange}
-                      required
-                      className="user-select"
-                    >
-                      <option value="">Seleccionar subtipo...</option>
-                      {sel.Subtipos.map(s => (
-                        <option key={s.id} value={s.id}>{s.nombre}</option>
-                      ))}
-                    </select>
-                  </div>
-                ) : null;
-              })()}
-            </div>
-          )}
-
-          {/* Proyecto Estratégico — debajo de Tipo CAPEX */}
-          <div className="form-group" style={{ margin: '0 0 16px' }}>
-            <label className="m3-checkbox-label" style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
-              <input 
-                type="checkbox" 
-                name="es_estrategico"
-                checked={form.es_estrategico}
-                onChange={handleInputChange}
-                className="m3-checkbox"
-              />
-              <span>¿Es Proyecto Estratégico?</span>
-            </label>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Descripción Detallada *</label>
-            <textarea 
-              name="descripcion"
-              value={form.descripcion}
-              onChange={handleInputChange}
-              required
-              rows={3}
-              className="m3-input"
+            {/* Grupo CAPEX & Proyecto Estratégico */}
+            <CapexFieldsGroup
+              form={form}
+              setForm={setForm}
+              handleInputChange={handleInputChange}
+              capexTypes={capexTypes}
             />
           </div>
-
-
 
           <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
             <button type="button" className="m3-btn m3-btn-outline" onClick={onClose}>

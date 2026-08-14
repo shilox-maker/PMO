@@ -2,7 +2,11 @@
 
 ## 🎈 0. Ideas Felices
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
-*(Sin ideas pendientes de análisis)*
+- **BUG-13: Fallos de seguridad en la gestión de ámbitos (scope middleware fail-open, bypass de ámbito en escritura, delete sin check de ámbito, asignación de IDs inexistentes)**
+  - **(a)** El `scopeMiddleware.js` opera en modo **fail-open**: cuando un usuario no autorizado solicita un ámbito al que no tiene acceso, no devuelve 403 sino que silenciosamente redirige al primer ámbito del usuario sin logging.
+  - **(b)** `createProject` y `updateProject` en `projectWrite.controller.js` aceptan `id_ambito` directamente del body sin validar que el usuario tenga acceso a ese ámbito, permitiendo crear/mover proyectos a ámbitos no autorizados.
+  - **(c)** `deleteProject` no valida que el proyecto pertenezca a un ámbito accesible por el usuario que lo elimina.
+  - **(d)** `updateUserAmbitos` y `createUser`/`updateUser` no validan que los `ambitosIds` enviados correspondan a registros reales en la tabla `Ambitos`, permitiendo asignar ámbitos fantasma.
 
 ## 🔍 2. En Análisis / Especificación
 *(Sin especificaciones en análisis)*
@@ -11,6 +15,20 @@
 *(Sin especificaciones en listas para codificar)*
 
 ## 📦 4. Implementadas
+- [x] **FEATURE-68 (IDEA-68): Actualización de los estados de tareas de proyecto a: 'SIN INICIAR', 'EN CURSO' y 'COMPLETADA' con selector dropdown interactivo** (2026-08-14)
+  - **Análisis Técnico:** Se actualizaron los estados de las tareas de proyecto (`Tareas`) para reemplazar el estado `PENDIENTE` por `SIN INICIAR`, añadir el estado intermedio `EN CURSO` y mantener `COMPLETADA`. Se implementó la migración `18_update_task_status_enum.js` para migrar datos legados de `PENDIENTE` a `SIN INICIAR`. Se ajustaron los esquemas Joi (`task.validation.js`), los controladores (`taskLesson.controller.js`, `assistantController.js`, `projectActions.controller.js`) y las suites de test (`validation.test.js`, `api.test.js`, `assistant.test.js`). En el frontend, se reemplazó el checkbox por un selector `<select>` tipo dropdown con estilos contextuales de badge (`.badge-gray`, `.badge-orange`, `.badge-green`) en la tabla de checklist de proyecto (`ProjectChecklistTab.jsx`), se integró el dropdown en el modal de tareas (`TaskModal.jsx`), se sincronizó el asistente de pendientes (`PendingAssistantDrawer.jsx`) para mostrar el estado actual y se ajustó la condición de atrasos en la cronología (`ProjectUnifiedTimeline.jsx`).
+  - **Archivos Afectados:** `backend/migrations/18_update_task_status_enum.js`, `backend/models/index.js`, `backend/middlewares/validations/task.validation.js`, `backend/controllers/project/projectActions.controller.js`, `backend/controllers/assistantController.js`, `backend/tests/api.test.js`, `backend/tests/assistant.test.js`, `backend/seed.js`, `frontend/src/components/modals/TaskModal.jsx`, `frontend/src/pages/project-detail/tabs/ProjectChecklistTab.jsx`, `frontend/src/pages/project-detail/ficha/ProjectUnifiedTimeline.jsx`, `frontend/src/components/assistant/PendingAssistantDrawer.jsx`, `frontend/src/index.css`.
+
+- [x] **FEATURE-66 (IDEA-66): Evolución del Servidor MCP: Aislamiento estricto por Ámbitos mediante API Keys dedicadas, catálogo `list_ambitos`, resumen global de PMO (`get_pmo_summary`) y resumen de proyecto (`get_project_summary`)** (2026-08-13)
+  - **Análisis Técnico:** Se actualizaron todas las herramientas del servidor MCP (`list_projects`, `get_project_detail`, `get_lessons_learned`, `search_pmo`) para aceptar y forzar el filtrado por ámbito (`mcpScope`). Se crearon las herramientas MCP `list_ambitos` (catálogo de ámbitos permitidos), `get_pmo_summary` (resumen ejecutivo de cartera con conteo de estados, distribución RAG, totales presupuestarios y nivel de riesgo) y `get_project_summary` (ficha condensada de proyecto con salud de fechas, días de retraso, presupuesto, próximo hito y comentarios). Se implementó en `http.js` la verificación de API Keys dedicadas por ámbito (`MCP_SCOPED_KEYS`) con bloqueo de acceso si una clave intenta consultar proyectos fuera de su ámbito autorizado.
+  - **Archivos Afectados:** `backend/mcp/http.js`, `backend/mcp/serverFactory.js`, `backend/mcp/tools/projects.js`, `backend/mcp/tools/summary.js`, `backend/mcp/tools/lessons.js`, `backend/mcp/tools/search.js`, `backend/mcp/tools/ambitos.js`, `backend/tests/mcp.test.js`.
+
+- [x] **IDEA-67: Revisar el diseño de la edición de proyecto. Todos los campos del formulario deben tener arriba la etiqueta y abajo el campo, menos los checkbox.** (2026-08-13)
+  - **Análisis Técnico:** Se refactorizó y unificó la sección de campos CAPEX y Proyectos Estratégicos mediante la reutilización del componente `CapexFieldsGroup.jsx` adaptado para ambos contextos (`CreateProjectModal.jsx` y `ProjectEditModal.jsx`). Se garantizó que la totalidad de los campos de entrada de texto, selección, números, URLs y áreas de texto muestren su etiqueta (`label.form-label`) posicionada por encima del control, incluyendo `codigo_capex`, mientras que las casillas de verificación (`¿Es CAPEX?` y `¿Es Proyecto Estratégico?`) mantienen la disposición inline (`.m3-checkbox-label`).
+  - **Archivos Afectados:** `frontend/src/components/modals/ProjectEditModal.jsx`, `frontend/src/components/modals/CapexFieldsGroup.jsx`.
+- [x] **IDEA-70: En el login, por defecto, el tema debe ser el Dacsa (con soporte exclusivo de temas Dacsa y Oscuro)** (2026-08-14)
+  - **Análisis Técnico:** Se cambió el tema por defecto en el login y fallback de `AuthContext.jsx` a `'dacsa'`. Se eliminó la opción del tema Claro (`light`), restringiendo la conmutación exclusivamente entre Tema Dacsa y Tema Oscuro tanto en la pantalla de login (`App.jsx`) como en el menú de usuario (`UserMenuDropdown.jsx`).
+  - **Archivos Afectados:** `frontend/src/context/AuthContext.jsx`, `frontend/src/App.jsx`, `frontend/src/components/UserMenuDropdown.jsx`, `frontend/src/locales/es.json`, `frontend/src/locales/en.json`, `frontend/src/locales/pt.json`.
 - [x] **BUG-11: Al editar un proyecto (en la Ficha de Proyecto), la lista/desplegable de Portfolios aparece vacía** (2026-08-13)
   - **Análisis Técnico:** Discrepancia de nombres en el paso de propiedades (props) entre la vista de detalle y el modal de edición. En `ProjectDetail.jsx` (línea 573) se le pasaba al componente `<ProjectEditModal />` la prop `portfoliosList={portfoliosList}`, mientras que en `ProjectEditModal.jsx` (línea 7) la firma desestructuraba la propiedad como `portfolios = []`. Se resolvió pasando ambas props (`portfolios={portfoliosList}` y `portfoliosList={portfoliosList}`) y añadiendo fallback tolerante en el modal `portfoliosData = portfolios.length > 0 ? portfolios : portfoliosList`.
   - **Archivos Afectados:** `frontend/src/pages/ProjectDetail.jsx`, `frontend/src/components/modals/ProjectEditModal.jsx`.
@@ -46,6 +64,8 @@
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **IDEA-67: Revisar el diseño de la edición de proyecto. Todos los campos del formulario deben tener arriba la etiqueta y abajo el campo, menos los checkbox.** (2026-08-13)
+- [x] **IDEA-70: En el login, por defecto, el tema debe ser el Dacsa (con soporte exclusivo de temas Dacsa y Oscuro)** (2026-08-14)
 - [x] **BUG-11: Al editar un proyecto (en la Ficha de Proyecto), la lista/desplegable de Portfolios aparece vacía** (2026-08-13)
 - [x] **BUG-12: Corrección del comportamiento de ámbitos: asignación obligatoria en usuarios no ADMIN, modal de selección al loguearse sin carga previa de datos y filtrado estricto por ámbito activo** (2026-08-13)
 - [x] **BUG-09: Desplegable de selección de Ámbito Activo sugiere "Todos los Ámbitos (Vista Global)" a usuarios con rol PM que pertenecen a 1 solo ámbito** (2026-08-13)

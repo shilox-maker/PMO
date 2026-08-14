@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, Circle, Mail, Calendar, AlertTriangle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { X, CheckCircle2, Circle, Mail, Calendar, AlertTriangle, ChevronDown, ChevronUp, RefreshCw, Edit2 } from 'lucide-react';
 import { API_URL } from '../../config/api';
 
 export default function PendingAssistantDrawer({ 
@@ -10,6 +10,8 @@ export default function PendingAssistantDrawer({
   t, 
   getAuthHeaders,
   onOpenReportModal,
+  onEditTask,
+  refreshTrigger,
   onDataChanged
 }) {
   const [loading, setLoading] = useState(false);
@@ -41,7 +43,7 @@ export default function PendingAssistantDrawer({
     if (isOpen) {
       fetchPendingData();
     }
-  }, [isOpen, daysFilter]);
+  }, [isOpen, daysFilter, refreshTrigger]);
 
   const toggleProjectExpand = (id_proyecto) => {
     setExpandedProjects(prev => ({ ...prev, [id_proyecto]: !prev[id_proyecto] }));
@@ -183,7 +185,7 @@ export default function PendingAssistantDrawer({
                               onClick={() => handleMarkTaskComplete(task)}
                               disabled={completingTaskId === task.id_tarea}
                               className="assistant-close-btn"
-                              style={{ padding: 0, flexShrink: 0 }}
+                              style={{ padding: 0, flexShrink: 0, marginTop: 2 }}
                               title={t('assistant.markComplete', 'Marcar como completada')}
                             >
                               {completingTaskId === task.id_tarea ? (
@@ -192,8 +194,16 @@ export default function PendingAssistantDrawer({
                                 <Circle size={16} />
                               )}
                             </button>
-                            <div style={{ flex: 1 }}>
-                              <div className="assistant-item-title">{task.titulo_tarea}</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                                <div className="assistant-item-title">{task.titulo_tarea}</div>
+                                <span 
+                                  className={`badge ${task.estado === 'EN CURSO' ? 'badge-orange' : 'badge-gray'}`}
+                                  style={{ fontSize: '0.65rem', padding: '1px 6px', flexShrink: 0 }}
+                                >
+                                  {task.estado === 'EN CURSO' ? '🟡 EN CURSO' : '⚪ SIN INICIAR'}
+                                </span>
+                              </div>
                               <div className={`assistant-item-meta ${task.isOverdue ? 'overdue' : ''}`}>
                                 {task.isOverdue && <AlertTriangle size={12} />}
                                 <span>
@@ -201,6 +211,14 @@ export default function PendingAssistantDrawer({
                                 </span>
                               </div>
                             </div>
+                            <button
+                              onClick={() => onEditTask && onEditTask(task, proj)}
+                              className="assistant-close-btn"
+                              style={{ padding: 4, flexShrink: 0, alignSelf: 'center', color: 'var(--md-sys-color-primary)' }}
+                              title={t('assistant.editTask', 'Editar tarea')}
+                            >
+                              <Edit2 size={14} />
+                            </button>
                           </div>
                         ))}
                       </div>

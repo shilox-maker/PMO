@@ -113,13 +113,13 @@ export default function StateTasksModal({ state, onClose, onStateUpdated, getAut
             </label>
           </div>
 
-          <input 
-            type="text" 
+          <textarea 
+            rows={6}
             placeholder="Descripción opcional..."
             value={taskDescription}
             onChange={(e) => setTaskDescription(e.target.value)}
             className="m3-input"
-            style={{ fontSize: '0.85rem' }}
+            style={{ fontSize: '0.85rem', resize: 'vertical', width: '100%', minHeight: '120px' }}
           />
 
           <button 

@@ -1,15 +1,18 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Edit2, Check } from 'lucide-react';
 
 export default function ProjectUnifiedTimeline({ project, handleOpenEditLifecycle, formatDate }) {
+  const { t } = useTranslation();
+
   const lifecycleList = [
-    { label: 'Hito: Petición', val: project.fecha_peticion, icon: '📩', key: 'fecha_peticion' },
-    { label: 'Hito: Alcance Definido', val: project.fecha_alcance_definido, icon: '📐', key: 'fecha_alcance_definido' },
-    { label: 'Hito: Aprobación', val: project.fecha_aprobacion, icon: '⏳', key: 'fecha_aprobacion' },
-    { label: 'Hito: Planificación', val: project.fecha_planificacion, icon: '📅', key: 'fecha_planificacion' },
-    { label: 'Hito: Kickoff', val: project.fecha_kickoff, icon: '🚀', key: 'fecha_kickoff' },
-    { label: 'Hito: Go-Live', val: project.fecha_go_live, icon: '📦', key: 'fecha_go_live' },
-    { label: 'Hito: Cierre', val: project.fecha_cierre, icon: '🏁', key: 'fecha_cierre' }
+    { label: t('projectDetail.timeline.milestonePetition', 'Petición'), val: project.fecha_peticion, icon: '📩', key: 'fecha_peticion' },
+    { label: t('projectDetail.timeline.milestoneScope', 'Alcance Definido'), val: project.fecha_alcance_definido, icon: '📐', key: 'fecha_alcance_definido' },
+    { label: t('projectDetail.timeline.milestoneApproval', 'Aprobación'), val: project.fecha_aprobacion, icon: '⏳', key: 'fecha_aprobacion' },
+    { label: t('projectDetail.timeline.milestonePlanning', 'Planificación'), val: project.fecha_planificacion, icon: '📅', key: 'fecha_planificacion' },
+    { label: t('projectDetail.timeline.milestoneKickoff', 'Kickoff'), val: project.fecha_kickoff, icon: '🚀', key: 'fecha_kickoff' },
+    { label: t('projectDetail.timeline.milestoneGoLive', 'Go-Live'), val: project.fecha_go_live, icon: '📦', key: 'fecha_go_live' },
+    { label: t('projectDetail.timeline.milestoneClose', 'Cierre'), val: project.fecha_cierre, icon: '🏁', key: 'fecha_cierre' }
   ];
 
   const datedEvents = [];
@@ -26,16 +29,16 @@ export default function ProjectUnifiedTimeline({ project, handleOpenEditLifecycl
     }
   });
 
-  (project.Tareas || []).forEach(t => {
-    if (t.fecha_limite) {
-      const isOverdue = t.estado === 'PENDIENTE' && new Date(t.fecha_limite) < new Date();
+  (project.Tareas || []).forEach(tItem => {
+    if (tItem.fecha_limite) {
+      const isOverdue = tItem.estado !== 'COMPLETADA' && new Date(tItem.fecha_limite) < new Date();
       datedEvents.push({
-        title: t.titulo_tarea,
-        desc: t.descripcion,
-        date: t.fecha_limite,
+        title: tItem.titulo_tarea,
+        desc: tItem.descripcion,
+        date: tItem.fecha_limite,
         type: 'checklist',
-        icon: t.es_hito ? '🏁' : '📋',
-        completed: t.estado === 'COMPLETADA',
+        icon: tItem.es_hito ? '🏁' : '📋',
+        completed: tItem.estado === 'COMPLETADA',
         isOverdue
       });
     }
@@ -47,19 +50,19 @@ export default function ProjectUnifiedTimeline({ project, handleOpenEditLifecycl
   return (
     <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>Línea de Tiempo del Proyecto</h3>
+        <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>{t('projectDetail.timeline.title', 'Línea de Tiempo del Proyecto')}</h3>
         <button 
           className="m3-btn m3-btn-outline" 
           onClick={handleOpenEditLifecycle} 
           style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          <Edit2 size={14} /> Hitos
+          <Edit2 size={14} /> {t('projectDetail.timeline.milestonesBtn', 'Hitos')}
         </button>
       </div>
 
       {datedEvents.length === 0 && pendingLifecycle.length === 0 ? (
         <p style={{ color: 'var(--md-sys-color-outline)', fontStyle: 'italic', fontSize: '0.85rem' }}>
-          Sin hitos ni tareas planificadas.
+          {t('projectDetail.timeline.noEvents', 'Sin hitos ni tareas planificadas.')}
         </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -89,14 +92,14 @@ export default function ProjectUnifiedTimeline({ project, handleOpenEditLifecycl
                       {ev.icon} {ev.title}
                     </span>
                     <span className="badge" style={{ fontSize: '0.7rem', padding: '2px 6px', backgroundColor: ev.type === 'lifecycle' ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-highest)', color: ev.type === 'lifecycle' ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface-variant)' }}>
-                      {ev.type === 'lifecycle' ? 'Ciclo' : 'Tareas'}
+                      {ev.type === 'lifecycle' ? t('projectDetail.timeline.typeLifecycle', 'Ciclo') : t('projectDetail.timeline.typeTasks', 'Tareas')}
                     </span>
                   </div>
 
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
                     <span>{formatDate(ev.date)}</span>
                     {ev.isOverdue && (
-                      <span className="badge badge-red" style={{ fontSize: '0.65rem', padding: '1px 4px' }}>RETRASADA</span>
+                      <span className="badge badge-red" style={{ fontSize: '0.65rem', padding: '1px 4px' }}>{t('projectDetail.timeline.overdue', 'RETRASADA')}</span>
                     )}
                   </div>
 
@@ -113,7 +116,7 @@ export default function ProjectUnifiedTimeline({ project, handleOpenEditLifecycl
           {pendingLifecycle.length > 0 && (
             <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 16 }}>
               <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--md-sys-color-outline)', textTransform: 'uppercase', marginBottom: 12 }}>
-                Hitos del Ciclo Pendientes
+                {t('projectDetail.timeline.pendingLifecycleTitle', 'Hitos del Ciclo Pendientes')}
               </h4>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {pendingLifecycle.map((item, idx) => (
@@ -132,7 +135,7 @@ export default function ProjectUnifiedTimeline({ project, handleOpenEditLifecycl
                     title="Hito sin planificar / fecha sin asignar"
                   >
                     <span>{item.icon}</span>
-                    <span>{item.label.replace('Hito: ', '')}</span>
+                    <span>{item.label}</span>
                   </span>
                 ))}
               </div>
