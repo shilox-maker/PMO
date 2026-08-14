@@ -114,6 +114,8 @@ app.use('/api/*', (req, res) => {
 app.use(errorHandler);
 
 
+const { ensureSchemaConsistency } = require('./autoSchema');
+
 // Database Initialization and Server Start
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, '0.0.0.0', () => {
@@ -131,6 +133,7 @@ if (process.env.NODE_ENV !== 'test') {
       } else {
         logger.info('✅ Database is up to date');
       }
+      return ensureSchemaConsistency(sequelize);
     })
     .catch(err => {
       logger.error('❌ Error during database initialization: %s', err.stack || err.message || err);
