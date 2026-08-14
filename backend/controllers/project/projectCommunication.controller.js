@@ -39,14 +39,20 @@ const createCommunicationPlan = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'El título del plan de comunicación es obligatorio.' });
   }
 
+  const cleanNumber = (val) => {
+    if (val === null || val === undefined || val === '') return null;
+    const parsed = parseInt(val, 10);
+    return isNaN(parsed) ? null : parsed;
+  };
+
   const plan = await PlanesComunicacion.create({
     id_proyecto,
-    titulo,
+    titulo: titulo.trim(),
     finalidad: finalidad || null,
     periodicidad: periodicidad || 'SEMANAL',
-    intervalo: intervalo ? parseInt(intervalo, 10) : 1,
-    dia_semana: dia_semana !== undefined && dia_semana !== '' ? parseInt(dia_semana, 10) : null,
-    dia_mes: dia_mes !== undefined && dia_mes !== '' ? parseInt(dia_mes, 10) : null,
+    intervalo: cleanNumber(intervalo) || 1,
+    dia_semana: cleanNumber(dia_semana),
+    dia_mes: cleanNumber(dia_mes),
     activo: activo !== undefined ? !!activo : true
   });
 
@@ -71,12 +77,18 @@ const updateCommunicationPlan = asyncHandler(async (req, res) => {
     return res.status(404).json({ error: 'Plan de comunicación no encontrado.' });
   }
 
-  if (titulo !== undefined) plan.titulo = titulo;
+  const cleanNumber = (val) => {
+    if (val === null || val === undefined || val === '') return null;
+    const parsed = parseInt(val, 10);
+    return isNaN(parsed) ? null : parsed;
+  };
+
+  if (titulo !== undefined) plan.titulo = titulo.trim();
   if (finalidad !== undefined) plan.finalidad = finalidad;
   if (periodicidad !== undefined) plan.periodicidad = periodicidad;
-  if (intervalo !== undefined) plan.intervalo = parseInt(intervalo, 10);
-  if (dia_semana !== undefined) plan.dia_semana = dia_semana !== null && dia_semana !== '' ? parseInt(dia_semana, 10) : null;
-  if (dia_mes !== undefined) plan.dia_mes = dia_mes !== null && dia_mes !== '' ? parseInt(dia_mes, 10) : null;
+  if (intervalo !== undefined) plan.intervalo = cleanNumber(intervalo) || 1;
+  if (dia_semana !== undefined) plan.dia_semana = cleanNumber(dia_semana);
+  if (dia_mes !== undefined) plan.dia_mes = cleanNumber(dia_mes);
   if (activo !== undefined) plan.activo = !!activo;
 
   await plan.save();
