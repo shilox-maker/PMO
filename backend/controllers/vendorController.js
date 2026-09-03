@@ -116,6 +116,16 @@ const createContact = asyncHandler(async (req, res) => {
     res.status(201).json(contact);
 });
 
+const updateContact = asyncHandler(async (req, res) => {
+    const { id_contacto } = req.params;
+    const contact = await ContactosProveedor.findByPk(id_contacto);
+    if (!contact) {
+      return res.status(404).json({ error: 'Contacto no encontrado' });
+    }
+    await contact.update(req.body);
+    res.json(contact);
+});
+
 const deleteContact = asyncHandler(async (req, res) => {
     const { id_contacto } = req.params;
     const contact = await ContactosProveedor.findByPk(id_contacto);
@@ -133,5 +143,7 @@ module.exports = {
   updateVendor,
   deleteVendor,
   createContact,
+  updateContact,
   deleteContact
 };
+

@@ -14,24 +14,28 @@ export const getKpisHtml = (project, calc, reportOptions, t) => {
   const hasDelay = diasRetraso > 0;
 
   const estadoStr = project.Estado?.nombre_estado || project.estado || 'En Ejecución';
-  const saludStr = project.salud_proyecto !== null && project.salud_proyecto !== undefined ? `${project.salud_proyecto}%` : 'N/A';
-  const tiempoPct = calc.tiempoTranscurridoPorcentaje ?? 0;
+  const rag = (project.indicador_rag || 'VERDE').toUpperCase();
+  const ragIcon = rag === 'ROJO' ? '🔴' : (rag === 'AMARILLO' ? '🟡' : '🟢');
+  const ragColor = rag === 'ROJO' ? '#dc2626' : (rag === 'AMARILLO' ? '#d97706' : '#16a34a');
+  const avancePct = project.avance_porcentaje !== null && project.avance_porcentaje !== undefined 
+    ? project.avance_porcentaje 
+    : (calc.avance_porcentaje ?? 0);
 
   return `
     <div class="section">
       <h2>📊 Resumen General y KPIs de Control</h2>
       <div class="kpi-grid">
         <div class="kpi-box">
-          <div class="label">Estado y Salud General</div>
+          <div class="label">Estado y Semáforo RAG</div>
           <div class="value" style="display:flex; align-items:center; justify-content:space-between; font-size:15px; margin-top:4px;">
-            <span>🟢 ${estadoStr}</span>
-            <span style="color:#2563eb; font-size:16px;">${saludStr}</span>
+            <span>${estadoStr}</span>
+            <span style="color:${ragColor}; font-size:13px; font-weight:700; background:rgba(0,0,0,0.04); padding:2px 8px; border-radius:12px;">${ragIcon} ${rag}</span>
           </div>
         </div>
         <div class="kpi-box">
-          <div class="label">Avance de Tiempo</div>
-          <div class="value">${tiempoPct}%</div>
-          <div style="font-size:11px; color:#666; margin-top:2px;">Inicio a Fin Estimado</div>
+          <div class="label">Avance del Proyecto</div>
+          <div class="value">${avancePct}%</div>
+          <div style="font-size:11px; color:#666; margin-top:2px;">Progreso Global Estimado</div>
         </div>
         <div class="kpi-box">
           <div class="label">${tr('reportExport.initialEndDate')} / ${tr('reportExport.estimatedEndDate')}</div>

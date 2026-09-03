@@ -13,6 +13,7 @@ router.get('/contactos', metaController.getContactos);
 router.get('/pms', metaController.getPms);
 router.get('/changelog', metaController.getChangelog);
 router.get('/portfolio/states', metaController.getPortfolioStates);
+router.get('/portfolio/workflows', metaController.getPortfolioWorkflows);
 router.get('/portfolio/dashboard', metaController.getPortfolioDashboard);
 router.get('/timeline', metaController.getTimeline);
 router.get('/portfolios', metaController.getPortfolios);

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Filter, PieChart } from 'lucide-react';
 import { useTableColumns } from '../hooks/useTableColumns';
+import usePersistentFilters from '../hooks/usePersistentFilters';
 import ProjectsFilterPanel from '../components/projects/ProjectsFilterPanel';
 import GovernanceKpiHeader from '../components/governance/GovernanceKpiHeader';
 import ProjectTableHeader from '../components/ProjectTableHeader';
@@ -23,6 +24,23 @@ const DEFAULT_GOV_COLUMNS = [
   { id: 'accion', labelKey: 'projectsTable.actions', label: 'Ficha', fixed: true, visible: true }
 ];
 
+const DEFAULT_PORTFOLIO_FILTERS = {
+  filterPm: '',
+  filterVendor: '',
+  filterRag: '',
+  filterEstrategico: '',
+  filterIniciativa: '',
+  filterPortfolio: '',
+  filterWorkflow: '',
+  filterTag: '',
+  filterStates: [],
+  searchTerm: '',
+  isStatesOpen: false,
+  sortConfig: { key: 'id_proyecto', direction: 'asc' },
+  timeframe: 7,
+  customDate: null
+};
+
 export default function DashboardPortfolio({ onViewProject }) {
   const { t } = useTranslation();
   const { getAuthHeaders, selectedAmbito } = useAuth();
@@ -30,32 +48,69 @@ export default function DashboardPortfolio({ onViewProject }) {
   const [rawProjects, setRawProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Filter States
-  const [filterPm, setFilterPm] = useState('');
-  const [filterVendor, setFilterVendor] = useState('');
-  const [filterRag, setFilterRag] = useState('');
-  const [filterEstrategico, setFilterEstrategico] = useState('');
-  const [filterIniciativa, setFilterIniciativa] = useState('');
-  const [filterPortfolio, setFilterPortfolio] = useState('');
-  const [filterTag, setFilterTag] = useState('');
-  const [filterStates, setFilterStates] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isStatesOpen, setIsStatesOpen] = useState(false);
+  // Persistent filters & controls
+  const {
+    filters,
+    setFilters,
+    updateFilter,
+    resetFilters,
+    activeFiltersCount
+  } = usePersistentFilters('dashboard_portfolio', DEFAULT_PORTFOLIO_FILTERS);
+
+  const {
+    filterPm,
+    filterVendor,
+    filterRag,
+    filterEstrategico,
+    filterIniciativa,
+    filterPortfolio,
+    filterWorkflow,
+    filterTag,
+    filterStates,
+    searchTerm,
+    isStatesOpen,
+    sortConfig,
+    timeframe,
+    customDate
+  } = filters;
+
+  const setFilterPm = (val) => updateFilter('filterPm', val);
+  const setFilterVendor = (val) => updateFilter('filterVendor', val);
+  const setFilterRag = (val) => updateFilter('filterRag', val);
+  const setFilterEstrategico = (val) => updateFilter('filterEstrategico', val);
+  const setFilterIniciativa = (val) => updateFilter('filterIniciativa', val);
+  const setFilterPortfolio = (val) => updateFilter('filterPortfolio', val);
+  const setFilterWorkflow = (val) => updateFilter('filterWorkflow', val);
+  const setFilterTag = (val) => updateFilter('filterTag', val);
+  const setFilterStates = (updater) => {
+    setFilters(prev => ({
+      ...prev,
+      filterStates: typeof updater === 'function' ? updater(prev.filterStates || []) : updater
+    }));
+  };
+  const setSearchTerm = (val) => updateFilter('searchTerm', val);
+  const setIsStatesOpen = (val) => updateFilter('isStatesOpen', typeof val === 'function' ? val(isStatesOpen) : val);
+  const setTimeframe = (val) => updateFilter('timeframe', val);
+  const setCustomDate = (val) => updateFilter('customDate', val);
+  const setSortConfig = (updater) => {
+    setFilters(prev => ({
+      ...prev,
+      sortConfig: typeof updater === 'function' ? updater(prev.sortConfig || { key: 'id_proyecto', direction: 'asc' }) : updater
+    }));
+  };
 
   // Master Lists
   const [pmsList, setPmsList] = useState([]);
   const [vendorsList, setVendorsList] = useState([]);
   const [portfoliosList, setPortfoliosList] = useState([]);
+  const [workflowsList, setWorkflowsList] = useState([]);
   const [tagsList, setTagsList] = useState([]);
   const [statesList, setStatesList] = useState([]);
 
   // Column visibility & Sorting
   const { columns: tableCols, visibleColumnsMap, columnWidths, updateColumnWidth, toggleColumn, resetColumns } = useTableColumns('ppm-portfolio-columns', DEFAULT_GOV_COLUMNS);
-  const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
   const [selectedKpi, setSelectedKpi] = useState(null);
   const [trends, setTrends] = useState({});
-  const [timeframe, setTimeframe] = useState(7);
-  const [customDate, setCustomDate] = useState(null);
   const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
 
   useEffect(() => {
@@ -64,6 +119,7 @@ export default function DashboardPortfolio({ onViewProject }) {
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(Array.isArray(data) ? data : [])).catch(() => {});
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(Array.isArray(data) ? data : [])).catch(() => {});
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(Array.isArray(data) ? data : [])).catch(() => {});
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/portfolio/workflows`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowsList(Array.isArray(data) ? data : [])).catch(() => {});
   }, [selectedAmbito]);
 
   const fetchDashboardData = () => {
@@ -77,6 +133,7 @@ export default function DashboardPortfolio({ onViewProject }) {
     if (filterEstrategico) params.append('estrategico', filterEstrategico);
     if (filterIniciativa) params.append('iniciativa_ligera', filterIniciativa);
     if (filterPortfolio) params.append('portfolio', filterPortfolio);
+    if (filterWorkflow) params.append('workflow', filterWorkflow);
     if (filterTag) params.append('tag', filterTag);
     if (searchTerm) params.append('search', searchTerm);
     if (filterStates && filterStates.length > 0) params.append('states', filterStates.join(','));
@@ -103,7 +160,7 @@ export default function DashboardPortfolio({ onViewProject }) {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm, timeframe, selectedAmbito]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterWorkflow, filterTag, filterStates, searchTerm, timeframe, selectedAmbito]);
 
   // Cuando cambia la fecha personalizada, convertir a días y disparar fetch
   useEffect(() => {
@@ -125,8 +182,11 @@ export default function DashboardPortfolio({ onViewProject }) {
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Metric Computations
-  const overrunCount = baseProjects.filter(p => p.gasto_total_facturas > p.budget_inicial).length;
-  const overrunExtendedCount = baseProjects.filter(p => p.gasto_total_facturas > (p.calculations?.budget_actualizado || p.budget_inicial)).length;
+  const overrunCount = baseProjects.filter(p => p.budget_inicial !== null && p.budget_inicial > 0 && p.gasto_total_facturas > p.budget_inicial).length;
+  const overrunExtendedCount = baseProjects.filter(p => {
+    const budgetRef = p.calculations?.budget_actualizado ?? p.budget_inicial;
+    return budgetRef !== null && budgetRef > 0 && p.gasto_total_facturas > budgetRef;
+  }).length;
 
   const delayedBaseCount = baseProjects.filter(p => {
     const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes((p.estado_proyecto || '').toUpperCase());
@@ -154,9 +214,12 @@ export default function DashboardPortfolio({ onViewProject }) {
     if (selectedKpi === 'scope_volatility') {
       filteredProjects = filteredProjects.filter(p => (p.calculations?.tasa_volatilidad_pct || 0) > 0 || (p.calculations?.total_cr_importe || 0) > 0);
     } else if (selectedKpi === 'overrun') {
-      filteredProjects = filteredProjects.filter(p => p.gasto_total_facturas > p.budget_inicial);
+      filteredProjects = filteredProjects.filter(p => p.budget_inicial !== null && p.budget_inicial > 0 && p.gasto_total_facturas > p.budget_inicial);
     } else if (selectedKpi === 'overrun_extended') {
-      filteredProjects = filteredProjects.filter(p => p.gasto_total_facturas > (p.calculations?.budget_actualizado || p.budget_inicial));
+      filteredProjects = filteredProjects.filter(p => {
+        const budgetRef = p.calculations?.budget_actualizado ?? p.budget_inicial;
+        return budgetRef !== null && budgetRef > 0 && p.gasto_total_facturas > budgetRef;
+      });
     } else if (selectedKpi === 'delayed_base') {
       filteredProjects = filteredProjects.filter(p => {
         const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes((p.estado_proyecto || '').toUpperCase());
@@ -238,14 +301,17 @@ export default function DashboardPortfolio({ onViewProject }) {
         filterEstrategico={filterEstrategico} setFilterEstrategico={setFilterEstrategico}
         filterIniciativa={filterIniciativa} setFilterIniciativa={setFilterIniciativa}
         filterPortfolio={filterPortfolio} setFilterPortfolio={setFilterPortfolio}
+        filterWorkflow={filterWorkflow} setFilterWorkflow={setFilterWorkflow}
         filterTag={filterTag} setFilterTag={setFilterTag}
         filterStates={filterStates} setFilterStates={setFilterStates}
         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
         isStatesOpen={isStatesOpen} setIsStatesOpen={setIsStatesOpen}
-        pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList} tagsList={tagsList} statesList={statesList}
+        pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList} workflowsList={workflowsList} tagsList={tagsList} statesList={statesList}
         projects={rawProjects}
         tableCols={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns}
         density={density} onDensityChange={setDensity}
+        activeFiltersCount={activeFiltersCount}
+        onResetFilters={resetFilters}
       />
 
       {/* KPI Cards Header */}

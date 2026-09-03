@@ -22,7 +22,7 @@ const STATIC_ROUTES = [
 export default function CommandPaletteModal({ isOpen, onClose }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { getAuthHeaders } = useAuth();
+  const { currentPm, getAuthHeaders } = useAuth();
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState({ projects: [], risks: [], incidencias: [] });
@@ -66,8 +66,21 @@ export default function CommandPaletteModal({ isOpen, onClose }) {
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Compute all flat navigable items for keyboard arrow navigation
-  const filteredStatic = STATIC_ROUTES.filter(r => 
+  // Compute all flat navigable items for keyboard arrow navigation filtered by role
+  const isDirectorOrAdmin = currentPm && ['ADMINISTRADOR', 'DIRECTOR'].includes(currentPm.perfil);
+  const isAdmin = currentPm && currentPm.perfil === 'ADMINISTRADOR';
+
+  const visibleStaticRoutes = STATIC_ROUTES.filter(r => {
+    if (['/dashboard-proyectos', '/dashboard-portfolio', '/portfolios/report', '/timeline'].includes(r.path)) {
+      return isDirectorOrAdmin;
+    }
+    if (r.path === '/admin') {
+      return isAdmin;
+    }
+    return true;
+  });
+
+  const filteredStatic = visibleStaticRoutes.filter(r => 
     r.title.toLowerCase().includes(query.toLowerCase())
   );
 

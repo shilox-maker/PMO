@@ -1,5 +1,5 @@
 const { 
-  Proyectos, Usuarios, Proveedores, ContactosProveedor, EstadosProyecto, Tareas 
+  Proyectos, Usuarios, Proveedores, ContactosProveedor, EstadosProyecto, Tareas, Workflows, Tags 
 } = require('../../models/index');
 const { getProjectCalculations } = require('../../models/automations');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -17,6 +17,8 @@ const getTimeline = asyncHandler(async (req, res) => {
       { model: ContactosProveedor, as: 'Sponsor', attributes: ['id_contacto', 'nombre', 'apellidos'] },
       { model: Proveedores, as: 'Proveedor', attributes: ['id_proveedor', 'nombre_razon_social'] },
       { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'proyecto_cerrado', 'pasos'] },
+      { model: Workflows, as: 'Workflow', attributes: ['id', 'nombre', 'code'] },
+      { model: Tags, as: 'Tags', attributes: ['id', 'nombre'], through: { attributes: [] } },
       { model: Tareas, required: false, attributes: ['id_tarea', 'titulo_tarea', 'fecha_limite', 'fecha_original_cierre', 'estado', 'es_hito'] }
     ],
     order: [['fecha_inicio', 'ASC']]
@@ -53,10 +55,13 @@ const getTimeline = asyncHandler(async (req, res) => {
         indicador_rag: p.indicador_rag,
         id_estado: p.Estado ? p.Estado.id_estado : null,
         estado_proyecto: p.Estado ? p.Estado.nombre_estado : 'Sin Estado',
+        id_workflow: p.id_workflow,
+        workflow_nombre: p.Workflow ? p.Workflow.nombre : null,
         proyecto_cerrado: p.Estado ? p.Estado.proyecto_cerrado : false,
         es_estrategico: p.es_estrategico,
         es_iniciativa_ligera: p.es_iniciativa_ligera,
         portfolio_id: p.portfolio_id,
+        Tags: p.Tags || [],
         fecha_inicio: p.fecha_inicio,
         fecha_fin_estimada: calc.fecha_fin_estimada,
         fecha_kickoff: p.fecha_kickoff,

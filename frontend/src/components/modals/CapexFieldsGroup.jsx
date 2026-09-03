@@ -31,14 +31,13 @@ export default function CapexFieldsGroup({
       {/* CAPEX Code */}
       {data.es_capex && (
         <div className="form-group" style={{ gridColumn: 'span 2' }}>
-          <label className="form-label">Código CAPEX *</label>
+          <label className="form-label">Código CAPEX</label>
           <input 
             type="text" 
             name="codigo_capex"
             value={data.codigo_capex || ''}
             onChange={handleInputChange}
-            placeholder="CPX-XXXXXX"
-            required={data.es_capex}
+            placeholder="CPX-XXXXXX (Opcional)"
             className="m3-input"
           />
         </div>
@@ -48,7 +47,7 @@ export default function CapexFieldsGroup({
       {data.es_capex && (
         <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div className="form-group">
-            <label className="form-label">Tipo CAPEX *</label>
+            <label className="form-label">Tipo CAPEX</label>
             <select
               name="id_tipo_capex"
               value={data.id_tipo_capex || ''}
@@ -56,10 +55,9 @@ export default function CapexFieldsGroup({
                 const val = e.target.value;
                 setProjectData(prev => ({ ...prev, id_tipo_capex: val, id_subtipo_capex: '' }));
               }}
-              required
               className="user-select"
             >
-              <option value="">Seleccionar tipo...</option>
+              <option value="">Sin especificar / Pendiente</option>
               {capexTypes.map(t => (
                 <option key={t.id} value={t.id}>{t.nombre}</option>
               ))}
@@ -69,15 +67,14 @@ export default function CapexFieldsGroup({
             const sel = capexTypes.find(t => t.id === parseInt(data.id_tipo_capex, 10));
             return sel?.Subtipos?.length > 0 ? (
               <div className="form-group">
-                <label className="form-label">Subtipo CAPEX *</label>
+                <label className="form-label">Subtipo CAPEX</label>
                 <select
                   name="id_subtipo_capex"
                   value={data.id_subtipo_capex || ''}
                   onChange={handleInputChange}
-                  required
                   className="user-select"
                 >
-                  <option value="">Seleccionar subtipo...</option>
+                  <option value="">Sin especificar / Pendiente</option>
                   {sel.Subtipos.map(s => (
                     <option key={s.id} value={s.id}>{s.nombre}</option>
                   ))}

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Filter, Search, ChevronDown, ChevronUp, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Filter, Search, ChevronDown, ChevronUp, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown, RotateCcw } from 'lucide-react';
 import { useTableColumns } from '../hooks/useTableColumns';
+import usePersistentFilters from '../hooks/usePersistentFilters';
 import ColumnSelector from '../components/ColumnSelector';
 import GovernanceKpiHeader from '../components/governance/GovernanceKpiHeader';
 import GovernanceCommitteesSection from '../components/governance/GovernanceCommitteesSection';
@@ -23,6 +24,18 @@ const DEFAULT_GOV_COLUMNS = [
   { id: 'accion', label: 'Ficha', fixed: true, visible: true }
 ];
 
+const DEFAULT_GOVERNANCE_FILTERS = {
+  pm: '',
+  vendor: '',
+  rag: '',
+  workflow: '',
+  search: '',
+  fechaDesde: '2026-01-01',
+  fechaHasta: '2026-12-31',
+  states: [],
+  sortConfig: { key: 'id_proyecto', direction: 'asc' }
+};
+
 export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   const { getAuthHeaders } = useAuth();
   
@@ -32,13 +45,24 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   // Column visibility
   const { columns: tableCols, visibleColumnsMap, toggleColumn, resetColumns } = useTableColumns('ppm-governance-columns', DEFAULT_GOV_COLUMNS);
 
-  // Sorting state
-  const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
+  // Persistent Filters
+  const {
+    filters,
+    setFilters,
+    updateFilter,
+    resetFilters,
+    activeFiltersCount
+  } = usePersistentFilters('governance', DEFAULT_GOVERNANCE_FILTERS);
+
+  const sortConfig = filters.sortConfig || { key: 'id_proyecto', direction: 'asc' };
 
   const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    setFilters(prev => ({
+      ...prev,
+      sortConfig: {
+        key,
+        direction: prev.sortConfig?.key === key && prev.sortConfig?.direction === 'asc' ? 'desc' : 'asc'
+      }
     }));
   };
 
@@ -64,18 +88,8 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   const [exportingExcel, setExportingExcel] = useState(false);
   const [generatingReport, setGeneratingReport] = useState(false);
 
-  const [filters, setFilters] = useState({
-    pm: '',
-    vendor: '',
-    rag: '',
-    search: '',
-    fechaDesde: '2026-01-01',
-    fechaHasta: '2026-12-31',
-    states: []
-  });
-
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    updateFilter(key, value);
   };
 
   const [isStatesOpen, setIsStatesOpen] = useState(false);
@@ -85,11 +99,13 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   const [pmsList, setPmsList] = useState([]);
   const [vendorsList, setVendorsList] = useState([]);
   const [statesList, setStatesList] = useState([]);
+  const [workflowsList, setWorkflowsList] = useState([]);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(data));
     fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/workflows`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowsList(Array.isArray(data) ? data : [])).catch(() => {});
   }, []);
 
   const fetchDashboardData = () => {
@@ -98,6 +114,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
     if (filters.pm) params.append('pm', filters.pm);
     if (filters.vendor) params.append('vendor', filters.vendor);
     if (filters.rag) params.append('rag', filters.rag);
+    if (filters.workflow) params.append('workflow', filters.workflow);
     if (filters.search) params.append('search', filters.search);
     if (filters.fechaDesde) params.append('fecha_desde', filters.fechaDesde);
     if (filters.fechaHasta) params.append('fecha_hasta', filters.fechaHasta);
@@ -333,8 +350,8 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   };
 
   // Metrics
-  const overrunCount = projects.filter(p => p.gasto_total_facturas > p.budget_inicial).length;
-  const capexWarnCount = projects.filter(p => p.es_capex && p.gasto_total_facturas >= (p.budget_inicial * 0.90)).length;
+  const overrunCount = projects.filter(p => p.budget_inicial !== null && p.budget_inicial > 0 && p.gasto_total_facturas > p.budget_inicial).length;
+  const capexWarnCount = projects.filter(p => p.es_capex && p.budget_inicial !== null && p.budget_inicial > 0 && p.gasto_total_facturas >= (p.budget_inicial * 0.90)).length;
   const coveredCount = projects.filter(p => p.com_semanal_activo || p.com_mensual_activo || p.com_steerco_activo).length;
   const coveragePercent = projects.length > 0 ? Math.round((coveredCount / projects.length) * 100) : 0;
   
@@ -347,10 +364,10 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
 
   const filteredGridData = projects.filter(p => {
     if (activeKpiFilter === 'overrun') {
-      if (p.gasto_total_facturas <= p.budget_inicial) return false;
+      if (!p.budget_inicial || p.budget_inicial <= 0 || p.gasto_total_facturas <= p.budget_inicial) return false;
     }
     if (activeKpiFilter === 'capex_warn') {
-      if (!p.es_capex || p.gasto_total_facturas < (p.budget_inicial * 0.90)) return false;
+      if (!p.es_capex || !p.budget_inicial || p.budget_inicial <= 0 || p.gasto_total_facturas < (p.budget_inicial * 0.90)) return false;
     }
     if (activeKpiFilter === 'inactive') {
       const hasPlan = p.com_semanal_activo || p.com_mensual_activo || p.com_steerco_activo;
@@ -369,7 +386,44 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--md-sys-color-outline)' }}>
             <Filter size={18} />
             <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Filtros de Gobernanza:</span>
+            {activeFiltersCount > 0 && (
+              <span 
+                className="badge badge-blue"
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  backgroundColor: 'var(--md-sys-color-primary-container)',
+                  color: 'var(--md-sys-color-on-primary-container)',
+                  border: '1px solid var(--md-sys-color-primary)'
+                }}
+              >
+                {activeFiltersCount}
+              </span>
+            )}
           </div>
+
+          {activeFiltersCount > 0 && (
+            <button 
+              type="button" 
+              onClick={resetFilters} 
+              className="m3-btn m3-btn-tonal"
+              style={{ 
+                height: '38px', 
+                padding: '0 12px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 6, 
+                fontSize: '0.8rem',
+                color: 'var(--md-sys-color-error)',
+                backgroundColor: 'var(--md-sys-color-error-container)'
+              }}
+            >
+              <RotateCcw size={14} />
+              <span>Limpiar filtros</span>
+            </button>
+          )}
 
           <div style={{ position: 'relative', flexGrow: 1, minWidth: '180px' }}>
             <input 
@@ -410,6 +464,22 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
               ))}
             </select>
           </div>
+
+          {workflowsList.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <select 
+                value={filters.workflow} 
+                onChange={(e) => handleFilterChange('workflow', e.target.value)}
+                className="user-select"
+                style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+              >
+                <option value="">Todos los Flujos</option>
+                {workflowsList.map(w => (
+                  <option key={w.id} value={w.id}>{w.nombre}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto' }}>
             <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />

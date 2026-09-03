@@ -2,7 +2,7 @@ const { prepareProjectsData } = require('../../services/projectDataPrepService')
 const { generateProjectsExcel } = require('../../services/projectExcelService');
 const { Op } = require('sequelize');
 const { 
-  Proyectos, Usuarios, Proveedores, Sedes, EstadosProyecto, ProyectoContactos, Tareas
+  Proyectos, Usuarios, Proveedores, Sedes, EstadosProyecto, ProyectoContactos, Tareas, Tags
 } = require('../../models/index');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
@@ -21,7 +21,21 @@ const exportProjects = asyncHandler(async (req, res) => {
       where.es_estrategico = estrategico === 'true';
     }
     if (search) {
-      where.nombre_proyecto = { [Op.like]: `%${search}%` };
+      const pTags = await Proyectos.findAll({
+        attributes: ['id_proyecto'],
+        include: [{ model: Tags, as: 'Tags', where: { nombre: { [Op.like]: `%${search}%` } }, attributes: [] }],
+        raw: true
+      });
+      const tagProjIds = pTags.map(p => p.id_proyecto);
+      const searchConditions = [
+        { nombre_proyecto: { [Op.like]: `%${search}%` } },
+        { id_proyecto: { [Op.like]: `%${search}%` } },
+        { codigo_capex: { [Op.like]: `%${search}%` } }
+      ];
+      if (tagProjIds.length > 0) {
+        searchConditions.push({ id_proyecto: { [Op.in]: tagProjIds } });
+      }
+      where[Op.or] = searchConditions;
     }
     if (state) {
       where['$Estado.nombre_estado$'] = { [Op.in]: state.split(',') };

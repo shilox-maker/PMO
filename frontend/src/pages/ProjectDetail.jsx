@@ -13,6 +13,7 @@ import TaskModal from '../components/modals/TaskModal';
 import LessonModal from '../components/modals/LessonModal';
 import ReportModal from '../components/modals/ReportModal';
 import RaciModal from '../components/modals/RaciModal';
+import ProjectLifecycleModal from '../components/modals/ProjectLifecycleModal';
 import ConfirmAddStateTasksModal from '../components/projects/ConfirmAddStateTasksModal';
 
 // Import Header & Nav
@@ -52,6 +53,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [contactosList, setContactosList] = useState([]);
   const [pms, setPms] = useState([]);
   const [workflowStates, setWorkflowStates] = useState([]);
+  const [workflowsList, setWorkflowsList] = useState([]);
   const [portfoliosList, setPortfoliosList] = useState([]);
   const [capexTypes, setCapexTypes] = useState([]);
 
@@ -95,10 +97,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
 
   // Lifecycle Dates Editing State
   const [isEditingLifecycle, setIsEditingLifecycle] = useState(false);
-  const [lifecycleForm, setLifecycleForm] = useState({
-    fecha_peticion: '', fecha_alcance_definido: '', fecha_aprobacion: '',
-    fecha_planificacion: '', fecha_kickoff: '', fecha_go_live: '', fecha_cierre: ''
-  });
 
   const renderSortHeader = (label, key, sortConfig, setSortConfig, extraStyle = {}) => {
     const isSorted = sortConfig.key === key;
@@ -160,6 +158,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data)).catch(() => {});
     fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPms(data)).catch(() => {});
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowStates(data)).catch(() => {});
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/workflows`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowsList(Array.isArray(data) ? data : [])).catch(() => {});
     fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data)).catch(() => {});
     fetch(`${import.meta.env.VITE_API_URL}/capex-types`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setCapexTypes(data)).catch(() => {});
   };
@@ -191,9 +190,14 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       });
   };
 
+  const projectWorkflowStates = (project?.Workflow?.Estados && project.Workflow.Estados.length > 0)
+    ? project.Workflow.Estados
+    : workflowStates;
+
   const handleUpdateProject = (fieldsToUpdate) => {
     if (fieldsToUpdate.id_estado && Number(fieldsToUpdate.id_estado) !== Number(project?.id_estado)) {
-      const targetState = workflowStates.find(s => Number(s.id_estado) === Number(fieldsToUpdate.id_estado));
+      const targetState = projectWorkflowStates.find(s => Number(s.id_estado) === Number(fieldsToUpdate.id_estado))
+        || workflowStates.find(s => Number(s.id_estado) === Number(fieldsToUpdate.id_estado));
       if (targetState && targetState.TareasPlantilla && targetState.TareasPlantilla.length > 0) {
         setPendingStateUpdate({ targetState, fieldsToUpdate });
         return;
@@ -296,15 +300,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   };
 
   const handleOpenEditLifecycle = () => {
-    setLifecycleForm({
-      fecha_peticion: project.fecha_peticion || '',
-      fecha_alcance_definido: project.fecha_alcance_definido || '',
-      fecha_aprobacion: project.fecha_aprobacion || '',
-      fecha_planificacion: project.fecha_planificacion || '',
-      fecha_kickoff: project.fecha_kickoff || '',
-      fecha_go_live: project.fecha_go_live || '',
-      fecha_cierre: project.fecha_cierre || ''
-    });
     setIsEditingLifecycle(true);
   };
 
@@ -384,7 +379,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
         setShowEditProjectModal={setShowEditProjectModal}
         setShowReportModal={setShowReportModal}
         handleDeleteProject={handleDeleteProject}
-        workflowStates={workflowStates}
+        workflowStates={projectWorkflowStates}
         handleUpdateProject={handleUpdateProject}
         currentPm={currentPm}
         calc={calc}
@@ -426,7 +421,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
             editingCommentDireccion={editingCommentDireccion}
             setEditingCommentDireccion={setEditingCommentDireccion}
             handleUpdateComment={handleUpdateComment}
-            isEditingLifecycle={isEditingLifecycle}
             handleOpenEditLifecycle={handleOpenEditLifecycle}
             handleDeleteParticipant={handleDeleteParticipant}
             handleOpenAddRaci={handleOpenAddRaci}
@@ -569,7 +563,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           vendors={vendors}
           contactosList={contactosList}
           pms={pms}
-          workflowStates={workflowStates}
+          workflowStates={projectWorkflowStates}
+          workflowsList={workflowsList}
           portfolios={portfoliosList}
           portfoliosList={portfoliosList}
           capexTypes={capexTypes}
@@ -673,6 +668,16 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           project={project}
           comments={comments}
           getAuthHeaders={getAuthHeaders}
+        />
+      )}
+
+      {isEditingLifecycle && (
+        <ProjectLifecycleModal 
+          isOpen={isEditingLifecycle}
+          onClose={() => setIsEditingLifecycle(false)}
+          project={project}
+          getAuthHeaders={getAuthHeaders}
+          onSuccess={fetchProjectData}
         />
       )}
 

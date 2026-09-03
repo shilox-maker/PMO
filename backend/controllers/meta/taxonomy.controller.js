@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
+const { Op } = require('sequelize');
 const { 
   Sedes, ContactosProveedor, Proveedores, Usuarios, EstadosProyecto, EstadoTareasPlantilla,
-  Portfolios, Tags, TiposCapex, SubtiposCapex, PortfolioBudgets, TiposFactura
+  Portfolios, Tags, TiposCapex, SubtiposCapex, PortfolioBudgets, TiposFactura,
+  Workflows, WorkflowEstados, Ambitos
 } = require('../../models/index');
 
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -40,6 +42,47 @@ const getPortfolioStates = asyncHandler(async (req, res) => {
     order: [['orden', 'ASC']]
   });
   res.json(states);
+});
+
+const getPortfolioWorkflows = asyncHandler(async (req, res) => {
+  const where = { activo: true };
+  if (req.currentAmbitoId && req.currentAmbitoId !== 'ALL') {
+    where[Op.or] = [
+      { id_ambito: null },
+      { id_ambito: req.currentAmbitoId }
+    ];
+  }
+
+  const workflows = await Workflows.findAll({
+    where,
+    include: [
+      {
+        model: EstadosProyecto,
+        as: 'Estados',
+        include: [{ model: EstadoTareasPlantilla, as: 'TareasPlantilla' }],
+        through: { attributes: ['orden', 'id'] }
+      },
+      {
+        model: Ambitos,
+        as: 'Ambito',
+        attributes: ['id_ambito', 'nombre', 'code']
+      }
+    ],
+    order: [
+      ['is_default', 'DESC'],
+      ['nombre', 'ASC']
+    ]
+  });
+
+  const formatted = workflows.map(wf => {
+    const json = wf.toJSON();
+    if (json.Estados && Array.isArray(json.Estados)) {
+      json.Estados.sort((a, b) => (a.Workflow_Estados?.orden ?? 0) - (b.Workflow_Estados?.orden ?? 0));
+    }
+    return json;
+  });
+
+  res.json(formatted);
 });
 
 
@@ -133,6 +176,7 @@ module.exports = {
   getPms,
   getChangelog,
   getPortfolioStates,
+  getPortfolioWorkflows,
   getPortfolios,
   getTags,
   createTag,

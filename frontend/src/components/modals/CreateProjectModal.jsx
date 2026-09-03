@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import CapexFieldsGroup from './CapexFieldsGroup';
+import ConfirmAddStateTasksModal from '../projects/ConfirmAddStateTasksModal';
 
 export default function CreateProjectModal({
   isOpen,
@@ -18,6 +19,20 @@ export default function CreateProjectModal({
 }) {
   const { t } = useTranslation();
   const { selectedAmbito, availableAmbitos } = useAuth();
+  const ambitosList = (availableAmbitos && availableAmbitos.length > 0)
+    ? availableAmbitos
+    : (currentPm?.Ambitos || []);
+
+  const getDefaultAmbito = () => {
+    if (selectedAmbito && selectedAmbito !== 'ALL') return String(selectedAmbito);
+    if (ambitosList.length > 0) return String(ambitosList[0].id_ambito);
+    return '';
+  };
+
+  const [workflowsList, setWorkflowsList] = useState([]);
+  const [pendingStateTasksModal, setPendingStateTasksModal] = useState(null);
+  const [isSubmittingTasks, setIsSubmittingTasks] = useState(false);
+
   const [newProject, setNewProject] = useState({
     id_proyecto: '',
     nombre_proyecto: '',
@@ -28,7 +43,9 @@ export default function CreateProjectModal({
     id_sede_distribuir: '',
     id_sponsor: '',
     portfolio_id: '',
-    id_ambito: selectedAmbito !== 'ALL' ? selectedAmbito : '',
+    id_ambito: getDefaultAmbito(),
+    id_workflow: '',
+    id_estado: '',
     estado_proyecto: 'Kickoff',
     indicador_rag: 'VERDE',
     fecha_inicio: '',
@@ -53,39 +70,57 @@ export default function CreateProjectModal({
 
   useEffect(() => {
     if (isOpen) {
-      setNewProject({
-        id_proyecto: '',
-        nombre_proyecto: '',
-        descripcion: '',
-        id_pm: currentPm ? currentPm.id_usuario.toString() : '',
-        id_proveedor: '',
-        id_sede: '',
-        id_sede_distribuir: '',
-        id_sponsor: '',
-        portfolio_id: '',
-        estado_proyecto: 'Kickoff',
-        indicador_rag: 'VERDE',
-        fecha_inicio: '',
-        fecha_fin_inicial: '',
-        es_iniciativa_ligera: false,
-        es_capex: false,
-        codigo_capex: '',
-        id_tipo_capex: '',
-        id_subtipo_capex: '',
-        es_estrategico: false,
-        budget_inicial: '',
-        budget_notas: '',
-        com_semanal_activo: false,
-        com_semanal_finalidad: '',
-        com_mensual_activo: false,
-        com_mensual_finalidad: '',
-        com_steerco_activo: false,
-        com_steerco_finalidad: '',
-        url_sharepoint: ''
-      });
+      fetch(`${import.meta.env.VITE_API_URL}/portfolio/workflows`, {
+        headers: getAuthHeaders()
+      })
+        .then(res => res.json())
+        .then(data => {
+          const wfs = Array.isArray(data) ? data : [];
+          setWorkflowsList(wfs);
+          const defaultWf = wfs.find(w => w.is_default) || wfs[0];
+          const defaultWfId = defaultWf ? String(defaultWf.id) : '';
+          const defaultStateId = defaultWf?.Estados?.[0] ? String(defaultWf.Estados[0].id_estado) : '';
+
+          setNewProject(prev => ({
+            ...prev,
+            id_proyecto: '',
+            nombre_proyecto: '',
+            descripcion: '',
+            id_pm: currentPm ? currentPm.id_usuario.toString() : '',
+            id_proveedor: '',
+            id_sede: '',
+            id_sede_distribuir: '',
+            id_sponsor: '',
+            portfolio_id: '',
+            id_ambito: getDefaultAmbito(),
+            id_workflow: defaultWfId,
+            id_estado: defaultStateId,
+            indicador_rag: 'VERDE',
+            fecha_inicio: '',
+            fecha_fin_inicial: '',
+            es_iniciativa_ligera: false,
+            es_capex: false,
+            codigo_capex: '',
+            id_tipo_capex: '',
+            id_subtipo_capex: '',
+            es_estrategico: false,
+            budget_inicial: '',
+            budget_notas: '',
+            com_semanal_activo: false,
+            com_semanal_finalidad: '',
+            com_mensual_activo: false,
+            com_mensual_finalidad: '',
+            com_steerco_activo: false,
+            com_steerco_finalidad: '',
+            url_sharepoint: ''
+          }));
+        })
+        .catch(() => {});
       setFormError('');
+      setPendingStateTasksModal(null);
+      setIsSubmittingTasks(false);
     }
-  }, [isOpen, currentPm]);
+  }, [isOpen, currentPm, selectedAmbito, availableAmbitos]);
 
   if (!isOpen) return null;
 
@@ -101,8 +136,59 @@ export default function CreateProjectModal({
         updated.id_tipo_capex = '';
         updated.id_subtipo_capex = '';
       }
+      if (name === 'id_workflow') {
+        const wf = workflowsList.find(w => String(w.id) === String(value));
+        if (wf?.Estados?.length > 0) {
+          updated.id_estado = String(wf.Estados[0].id_estado);
+        } else {
+          updated.id_estado = '';
+        }
+      }
       return updated;
     });
+  };
+
+  const executeCreateProject = async (payload, selectedTasks = []) => {
+    setIsSubmittingTasks(true);
+    setFormError('');
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/projects`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+      const createdProject = await res.json();
+      if (!res.ok) throw new Error(createdProject.error || 'Error al guardar el proyecto');
+
+      if (selectedTasks && selectedTasks.length > 0) {
+        const today = new Date().toISOString().split('T')[0];
+        const initialDate = payload.fecha_inicio || today;
+        const tasksPayload = selectedTasks.map(t_task => ({
+          nombre_tarea: t_task.nombre_tarea,
+          descripcion: t_task.descripcion,
+          es_hito: t_task.es_hito,
+          fecha_limite: initialDate
+        }));
+
+        const tasksRes = await fetch(`${import.meta.env.VITE_API_URL}/projects/${createdProject.id_proyecto}/apply-state-tasks`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ tareas: tasksPayload })
+        });
+        const tasksData = await tasksRes.json();
+        if (!tasksRes.ok) throw new Error(tasksData.error || 'Error al asociar las tareas del estado inicial');
+      }
+
+      setIsSubmittingTasks(false);
+      setPendingStateTasksModal(null);
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setIsSubmittingTasks(false);
+      setFormError(err.message);
+      setPendingStateTasksModal(null);
+    }
   };
 
   const handleCreateProject = (e) => {
@@ -117,43 +203,31 @@ export default function CreateProjectModal({
       }
     }
 
-    if (!newProject.es_iniciativa_ligera) {
-      if (newProject.es_capex && (!newProject.codigo_capex || newProject.codigo_capex.trim() === '')) {
-        setFormError('El código CAPEX es obligatorio para proyectos CAPEX.');
-        return;
-      }
-      if (newProject.es_capex && !newProject.id_tipo_capex) {
-        setFormError('El tipo de CAPEX es obligatorio para proyectos CAPEX.');
-        return;
-      }
-      const selectedTipo = capexTypes.find(t => t.id === parseInt(newProject.id_tipo_capex, 10));
-      if (newProject.es_capex && selectedTipo?.Subtipos?.length > 0 && !newProject.id_subtipo_capex) {
-        setFormError('El subtipo de CAPEX es obligatorio para el tipo seleccionado.');
-        return;
-      }
-      if (!newProject.id_proveedor || !newProject.budget_inicial) {
-        setFormError('Por favor, rellene el socio tecnológico y el presupuesto inicial para proyectos estándar.');
-        return;
-      }
-    }
-
-    if (!newProject.nombre_proyecto || !newProject.id_pm || !newProject.id_sede) {
+    if (!newProject.nombre_proyecto || !newProject.id_pm || !newProject.id_sede || !newProject.id_ambito) {
       setFormError('Por favor, rellene todos los campos obligatorios.');
       return;
     }
 
     const payload = {
       ...newProject,
+      id_ambito: parseInt(newProject.id_ambito, 10),
+      id_workflow: newProject.id_workflow ? parseInt(newProject.id_workflow, 10) : null,
+      id_estado: newProject.id_estado ? parseInt(newProject.id_estado, 10) : undefined,
       es_iniciativa_ligera: !!newProject.es_iniciativa_ligera,
-      budget_inicial: newProject.es_iniciativa_ligera ? 0 : parseFloat(newProject.budget_inicial),
+      budget_inicial: newProject.es_iniciativa_ligera 
+        ? 0 
+        : (newProject.budget_inicial !== '' && newProject.budget_inicial !== null && newProject.budget_inicial !== undefined && !isNaN(Number(newProject.budget_inicial)) 
+            ? parseFloat(newProject.budget_inicial) 
+            : null),
+      budget_notas: newProject.es_iniciativa_ligera || !newProject.budget_notas?.trim() ? null : newProject.budget_notas.trim(),
       id_pm: parseInt(newProject.id_pm, 10),
       id_proveedor: !newProject.es_iniciativa_ligera && newProject.id_proveedor ? parseInt(newProject.id_proveedor, 10) : null,
       id_sede: parseInt(newProject.id_sede, 10),
       id_sede_distribuir: newProject.id_sede_distribuir ? parseInt(newProject.id_sede_distribuir, 10) : null,
       id_sponsor: newProject.id_sponsor ? parseInt(newProject.id_sponsor, 10) : null,
       portfolio_id: newProject.portfolio_id ? parseInt(newProject.portfolio_id, 10) : null,
-      es_capex: newProject.es_iniciativa_ligera ? false : newProject.es_capex,
-      codigo_capex: newProject.es_iniciativa_ligera ? null : newProject.codigo_capex,
+      es_capex: newProject.es_iniciativa_ligera ? false : !!newProject.es_capex,
+      codigo_capex: newProject.es_iniciativa_ligera || !newProject.es_capex || !newProject.codigo_capex?.trim() ? null : newProject.codigo_capex.trim(),
       id_tipo_capex: !newProject.es_iniciativa_ligera && newProject.es_capex && newProject.id_tipo_capex ? parseInt(newProject.id_tipo_capex, 10) : null,
       id_subtipo_capex: !newProject.es_iniciativa_ligera && newProject.es_capex && newProject.id_subtipo_capex ? parseInt(newProject.id_subtipo_capex, 10) : null
     };
@@ -162,21 +236,16 @@ export default function CreateProjectModal({
       delete payload.id_proyecto;
     }
 
-    fetch(`${import.meta.env.VITE_API_URL}/projects`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(payload)
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al guardar el proyecto');
-        return data;
-      })
-      .then(() => {
-        onSuccess();
-        onClose();
-      })
-      .catch(err => setFormError(err.message));
+    const currentWf = workflowsList.find(w => String(w.id) === String(payload.id_workflow));
+    const availableStates = currentWf?.Estados || [];
+    const targetState = availableStates.find(st => Number(st.id_estado) === Number(payload.id_estado));
+
+    if (targetState && targetState.TareasPlantilla && targetState.TareasPlantilla.length > 0) {
+      setPendingStateTasksModal({ targetState, payload });
+      return;
+    }
+
+    executeCreateProject(payload, []);
   };
 
   return (
@@ -316,6 +385,68 @@ export default function CreateProjectModal({
               </div>
             )}
 
+            {/* Ámbito de Trabajo */}
+            <div className="form-group">
+              <label className="form-label">{t('ambitos.scopeLabel', 'Ámbito *')}</label>
+              <select 
+                name="id_ambito" 
+                value={newProject.id_ambito || ''} 
+                onChange={handleInputChange}
+                required
+                className="user-select"
+              >
+                <option value="">{t('ambitos.selectScope', 'Seleccione Ámbito')}</option>
+                {ambitosList.map(a => (
+                  <option key={a.id_ambito} value={String(a.id_ambito)}>
+                    {a.nombre} {a.code ? `(${a.code})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Flujo de Trabajo (Workflow) */}
+            <div className="form-group">
+              <label className="form-label">{t('adminPanel.workflows', 'Flujo de Trabajo *')}</label>
+              <select 
+                name="id_workflow" 
+                value={newProject.id_workflow || ''} 
+                onChange={handleInputChange}
+                required
+                className="user-select"
+              >
+                <option value="">{t('workflowsAdmin.selectWorkflow', 'Seleccione Flujo de Trabajo')}</option>
+                {workflowsList.map(w => (
+                  <option key={w.id} value={String(w.id)}>
+                    {w.is_default ? '⭐ ' : ''}{w.nombre} {w.Ambito ? `(${w.Ambito.nombre})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Estado Inicial */}
+            {(() => {
+              const currentWf = workflowsList.find(w => String(w.id) === String(newProject.id_workflow));
+              const availableStates = currentWf?.Estados || [];
+              return (
+                <div className="form-group">
+                  <label className="form-label">{t('workflowsAdmin.initialState', 'Fase / Estado Inicial *')}</label>
+                  <select 
+                    name="id_estado" 
+                    value={newProject.id_estado || ''} 
+                    onChange={handleInputChange}
+                    required
+                    className="user-select"
+                  >
+                    {availableStates.map(st => (
+                      <option key={st.id_estado} value={String(st.id_estado)}>
+                        {st.icono || '•'} {st.nombre_estado}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })()}
+
             {/* Gestor PM */}
             <div className="form-group">
               <label className="form-label">PM Asignado *</label>
@@ -392,15 +523,14 @@ export default function CreateProjectModal({
             {!newProject.es_iniciativa_ligera && (
               <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div className="form-group">
-                  <label className="form-label">Presupuesto Inicial (€) *</label>
+                  <label className="form-label">Presupuesto Inicial (€)</label>
                   <input 
                     type="number" 
                     step="0.01"
                     name="budget_inicial"
                     value={newProject.budget_inicial}
                     onChange={handleInputChange}
-                    placeholder="150000.00"
-                    required={!newProject.es_iniciativa_ligera}
+                    placeholder="150000.00 (Opcional)"
                     className="m3-input"
                   />
                 </div>
@@ -455,6 +585,17 @@ export default function CreateProjectModal({
           </div>
         </form>
       </div>
+
+      {pendingStateTasksModal && (
+        <ConfirmAddStateTasksModal
+          targetState={pendingStateTasksModal.targetState}
+          isCreationMode={true}
+          loading={isSubmittingTasks}
+          onConfirm={(selectedTasks) => executeCreateProject(pendingStateTasksModal.payload, selectedTasks)}
+          onSkip={() => executeCreateProject(pendingStateTasksModal.payload, [])}
+          onCancel={() => setPendingStateTasksModal(null)}
+        />
+      )}
     </div>
   );
 }

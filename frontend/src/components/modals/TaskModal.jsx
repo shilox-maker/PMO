@@ -235,9 +235,9 @@ export default function TaskModal({
               className="m3-input"
               style={{ width: '100%' }}
             >
-              <option value="SIN INICIAR">SIN INICIAR ⚪</option>
-              <option value="EN CURSO">EN CURSO 🟡</option>
-              <option value="COMPLETADA">COMPLETADA 🟢</option>
+              <option value="SIN INICIAR">⚪ SIN INICIAR</option>
+              <option value="EN CURSO">🟡 EN CURSO</option>
+              <option value="COMPLETADA">🟢 COMPLETADA</option>
             </select>
           </div>
 

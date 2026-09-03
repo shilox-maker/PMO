@@ -46,7 +46,7 @@ export default function ProjectFinanzasTab({
             <Euro size={24} />
           </div>
           <div className="metric-info" style={{ display: 'flex', flexDirection: 'column' }}>
-            <span className="metric-value">{formatCurrency(parseFloat(project.budget_inicial))}</span>
+            <span className="metric-value">{formatCurrency(parseFloat(project.budget_inicial || 0))}</span>
             <span className="metric-label">{t('financeTab.initialBudget', 'Presupuesto Inicial')}</span>
             {project.budget_notas && (
               <span
@@ -64,7 +64,7 @@ export default function ProjectFinanzasTab({
             <Euro size={24} />
           </div>
           <div className="metric-info">
-            <span className="metric-value" style={{ color: calc.budget_actualizado > project.budget_inicial ? 'var(--color-rag-yellow)' : 'inherit' }}>
+            <span className="metric-value" style={{ color: calc.budget_actualizado > (project.budget_inicial || 0) ? 'var(--color-rag-yellow)' : 'inherit' }}>
               {formatCurrency(calc.budget_actualizado)}
             </span>
             <span className="metric-label">{t('financeTab.updatedBudget', 'Budget Actualizado')}</span>

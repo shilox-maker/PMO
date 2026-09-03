@@ -2,7 +2,40 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import i18n from '../i18n';
 import { API_URL } from '../config/api';
 
-const AuthContext = createContext();
+const defaultAuthValue = {
+  pms: [],
+  currentPm: null,
+  loading: true,
+  getAuthHeaders: () => ({
+    'Content-Type': 'application/json',
+    'Authorization': localStorage.getItem('pm_token') ? `Bearer ${localStorage.getItem('pm_token')}` : '',
+    'X-Ambito-Id': localStorage.getItem('pmo_selected_ambito_id') || '1'
+  }),
+  theme: 'dacsa',
+  toggleTheme: () => {},
+  language: 'es',
+  changeLanguage: () => {},
+  login: async () => {},
+  loginAzure: async () => {},
+  logout: () => {},
+  refreshUsers: () => {},
+  isGlobalWorking: false,
+  isMaintenanceActive: false,
+  maintenanceMessage: '',
+  checkMaintenanceStatus: async () => {},
+  setIsMaintenanceActive: () => {},
+  isSessionExpired: false,
+  setIsSessionExpired: () => {},
+  selectedAmbito: localStorage.getItem('pmo_selected_ambito_id') || '',
+  changeAmbito: () => {},
+  availableAmbitos: [],
+  canSelectAll: false,
+  isFirstLoginSelection: false,
+  setIsFirstLoginSelection: () => {},
+  refreshAmbitos: async () => {}
+};
+
+const AuthContext = createContext(defaultAuthValue);
 
 export const AuthProvider = ({ children }) => {
   const [pms, setPms] = useState([]);
@@ -318,4 +351,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext) || defaultAuthValue;

@@ -59,10 +59,10 @@ describe('Payload Validation Schemas (Joi)', () => {
       expect(error.details[0].message).toContain('El ID del proyecto debe tener el formato PRJ-YYYY-XXX');
     });
 
-    it('debería requerir codigo_capex si es_capex es true', () => {
+    it('debería permitir crear proyecto CAPEX sin codigo_capex ni presupuesto', () => {
       const capexProjectWithoutCode = {
         id_proyecto: 'PRJ-2026-002',
-        nombre_proyecto: 'Proyecto CAPEX sin codigo',
+        nombre_proyecto: 'Proyecto CAPEX sin codigo ni presupuesto',
         descripcion: 'Capex test',
         id_pm: 1,
         id_sede: 2,
@@ -71,11 +71,51 @@ describe('Payload Validation Schemas (Joi)', () => {
       };
       
       const { error } = projectCreateSchema.validate(capexProjectWithoutCode);
-      expect(error).toBeDefined();
-      expect(error.details[0].message).toContain('El código CAPEX es obligatorio cuando el proyecto es CAPEX.');
+      expect(error).toBeUndefined();
     });
 
-    it('debería pasar la validación de CAPEX si se incluye codigo_capex', () => {
+    it('debería permitir budget_inicial como null, cadena vacía "", 0 o undefined', () => {
+      const baseProject = {
+        id_proyecto: 'PRJ-2026-003',
+        nombre_proyecto: 'Proyecto Sin Presupuesto',
+        descripcion: 'Test sin budget',
+        id_pm: 1,
+        id_sede: 2,
+        fecha_inicio: '2026-07-06'
+      };
+
+      // Sin campo
+      expect(projectCreateSchema.validate(baseProject).error).toBeUndefined();
+
+      // Con null
+      expect(projectCreateSchema.validate({ ...baseProject, budget_inicial: null }).error).toBeUndefined();
+
+      // Con cadena vacía ''
+      expect(projectCreateSchema.validate({ ...baseProject, budget_inicial: '' }).error).toBeUndefined();
+
+      // Con 0
+      expect(projectCreateSchema.validate({ ...baseProject, budget_inicial: 0 }).error).toBeUndefined();
+
+      // Con budget_notas
+      expect(projectCreateSchema.validate({ ...baseProject, budget_inicial: '', budget_notas: 'Notas preliminares' }).error).toBeUndefined();
+    });
+
+    it('debería fallar si budget_inicial es un número negativo', () => {
+      const negativeBudgetProject = {
+        id_proyecto: 'PRJ-2026-004',
+        nombre_proyecto: 'Proyecto Presupuesto Negativo',
+        descripcion: 'Test budget negativo',
+        id_pm: 1,
+        id_sede: 2,
+        fecha_inicio: '2026-07-06',
+        budget_inicial: -500
+      };
+
+      const { error } = projectCreateSchema.validate(negativeBudgetProject);
+      expect(error).toBeDefined();
+    });
+
+    it('debería pasar la validación de CAPEX si se incluye codigo_capex y presupuesto', () => {
       const capexProjectWithCode = {
         id_proyecto: 'PRJ-2026-002',
         nombre_proyecto: 'Proyecto CAPEX con codigo',
@@ -84,7 +124,8 @@ describe('Payload Validation Schemas (Joi)', () => {
         id_sede: 2,
         fecha_inicio: '2026-07-06',
         es_capex: true,
-        codigo_capex: 'CPX-999-AZ'
+        codigo_capex: 'CPX-999-AZ',
+        budget_inicial: 50000
       };
       
       const { error } = projectCreateSchema.validate(capexProjectWithCode);

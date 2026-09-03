@@ -196,7 +196,7 @@ export default function IssueModal({
               >
                 <option value="ABIERTA">ABIERTA</option>
                 <option value="EN_PROCESO">EN PROCESO</option>
-                <option value="RESUELTA">RESUELTA 🟢</option>
+                <option value="RESUELTA">🟢 RESUELTA</option>
                 <option value="CANCELADA">CANCELADA</option>
               </select>
             </div>

@@ -20,6 +20,15 @@ router.delete('/admin/states/:id_estado', adminController.deleteState);
 router.post('/admin/states/:id_estado/tasks', adminController.createStateTask);
 router.delete('/admin/state-tasks/:id_task', adminController.deleteStateTask);
 
+// Workflows admin
+router.get('/admin/workflows', adminController.getWorkflows);
+router.post('/admin/workflows', adminController.createWorkflow);
+router.put('/admin/workflows/:id', adminController.updateWorkflow);
+router.delete('/admin/workflows/:id', adminController.deleteWorkflow);
+router.put('/admin/workflows/:id/states', adminController.setWorkflowStates);
+router.post('/admin/workflows/:id/states', adminController.addStateToWorkflow);
+router.delete('/admin/workflows/:id/states/:id_estado', adminController.removeStateFromWorkflow);
+
 
 // Users admin
 router.get('/admin/users', adminController.getUsers);

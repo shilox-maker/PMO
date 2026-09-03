@@ -11,6 +11,8 @@
     "filter": "Filter",
     "filters": "Filters:",
     "cleanFilters": "Clear filters",
+    "cleanAllFilters": "Clear all filters",
+    "activeFiltersCount": "{{count}} active",
     "confirm": "Confirm",
     "back": "Back",
     "close": "Close",
@@ -85,6 +87,7 @@
   },
   "adminPanel": {
     "title": "Administration Module",
+    "workflows": "Workflows",
     "states": "States",
     "users": "User",
     "sedes": "Sites",
@@ -93,6 +96,41 @@
     "invoices": "Invoice Types",
     "maintenance": "Maintenance Mode",
     "backups": "Backups"
+  },
+  "workflowsAdmin": {
+    "title": "Workflows",
+    "subtitle": "Define lifecycle workflows available for projects and valid states in each workflow.",
+    "newWorkflow": "New Workflow",
+    "editWorkflow": "Edit Workflow",
+    "noWorkflows": "No workflows configured.",
+    "name": "Workflow Name *",
+    "code": "Identifier Code",
+    "globalScope": "Global (Available for all Scopes)",
+    "statesInWorkflow": "States and Sequence",
+    "statesInWorkflowDesc": "Configure valid states for projects in this workflow and define their chronological sequence.",
+    "projectCount": "Projects",
+    "isActive": "Active Workflow",
+    "isDefault": "Default Workflow",
+    "isDefaultHint": "will be automatically assigned to new projects",
+    "saveWorkflow": "Save Configuration",
+    "statesSaved": "Workflow states and ordering successfully updated.",
+    "saveFirstToManageStates": "Save the workflow first to manage its states and sequence.",
+    "allStatesAdded": "All master states have already been added",
+    "selectStateToAdd": "Select state to add to workflow...",
+    "addState": "Add State",
+    "emptyWorkflowStates": "This workflow has no assigned states yet. Select states from above to add them.",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "removeState": "Remove from workflow",
+    "nameRequired": "Workflow name is required.",
+    "updatedSuccess": "Workflow successfully updated.",
+    "createdSuccess": "Workflow successfully created.",
+    "confirmDelete": "Are you sure you want to delete this workflow?",
+    "deleteSuccess": "Workflow successfully deleted.",
+    "selectWorkflow": "Select Workflow",
+    "initialState": "Initial Phase / State *",
+    "stateInWorkflow": "Phase / State *",
+    "noStatesAssigned": "No states"
   },
   "backupsAdmin": {
     "title": "Database Backups Management",
@@ -217,7 +255,22 @@
     "noLessons": "No lessons learned documented for this vendor yet.",
     "context": "Context:",
     "futureRec": "Future recommendation:",
-    "originatedIn": "Originated in:"
+    "originatedIn": "Originated in:",
+    "editGeneralInfo": "Edit General Information",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "belongsDacsa": "Belongs to Dacsa Group",
+    "companyName": "Company Name / Partner Name",
+    "nameRequired": "Company name is required.",
+    "editContact": "Edit Partner Contact",
+    "addContact": "Add Partner Contact",
+    "deleteContactConfirm": "Are you sure you want to delete this technical contact?",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "position": "Role / Position",
+    "technicalPhone": "Technical Phone",
+    "officialEmail": "Official Email",
+    "allFieldsRequired": "All fields are required."
   },
   "vendorDirectory": {
     "techPartners": "Tech Partners:",
@@ -232,7 +285,9 @@
     "email": "Email:",
     "notRegistered": "Not registered",
     "contactsCount": "Contacts ({{count}})",
-    "noContacts": "No technical liaison contacts added."
+    "noContacts": "No technical liaison contacts added.",
+    "viewEditFicha": "View / Edit File",
+    "deletePartnerConfirm": "Are you sure you want to delete the tech partner \"{{name}}\"?"
   },
   "generalLessons": {
     "type": "Type:",
@@ -397,7 +452,7 @@
     "noProjects": "No projects found.",
     "newProject": "Create Project",
     "generateReport": "Generate Report",
-    "searchPlaceholder": "Search by name...",
+    "searchPlaceholder": "Search by name, code or tags...",
     "allPms": "All PMs",
     "allPartners": "All Partners",
     "allRags": "All RAGs",
@@ -405,6 +460,7 @@
     "isStrategic": "Strategic?",
     "allTypes": "All Types",
     "allPortfolios": "All Portfolios",
+    "allWorkflows": "All Workflows",
     "allTags": "All Tags",
     "filterByStatus": "FILTER BY PROJECT STATUS",
     "viewDetail": "View Project Details",
@@ -548,7 +604,9 @@
     "active": "Active",
     "newAmbito": "New",
     "editAmbito": "Edit",
-    "assignUserAmbitos": "Assign Scopes to User"
+    "assignUserAmbitos": "Assign Scopes to User",
+    "scopeLabel": "Scope *",
+    "selectScope": "Select Scope"
   },
   "assistant": {
     "title": "Pending Assistant",
@@ -722,7 +780,10 @@
       "milestonePlanning": "Planning",
       "milestoneKickoff": "Kickoff",
       "milestoneGoLive": "Go-Live",
-      "milestoneClose": "Closure"
+      "milestoneClose": "Closure",
+      "modalTitle": "Edit Lifecycle Milestones",
+      "modalSubtitle": "Set the estimated or actual dates for each project phase.",
+      "clearDate": "Clear date"
     },
     "executiveWall": {
       "title": "Executive Wall (Minutes / Key Milestones)",
@@ -803,5 +864,24 @@
       "evaluator": "Evaluator: {{name}}",
       "deleteConfirm": "Do you want to delete this qualitative survey?"
     }
+  },
+  "stateTasksModal": {
+    "titleChangeState": "Add State Tasks ({{state}})",
+    "titleCreateProject": "Add Initial State Tasks ({{state}})",
+    "descChangeState": "The new state has preconfigured template tasks in administration. Select the ones you want to add to the project's task list:",
+    "descCreateProject": "The initial state has preconfigured template tasks in administration. Select the ones you want to add to the new project's task list:",
+    "type": "Type",
+    "taskOrMilestone": "Task / Milestone",
+    "description": "Description",
+    "milestone": "Milestone",
+    "task": "Task",
+    "selectAll": "Select all",
+    "unselectAll": "Unselect all",
+    "skipChangeState": "Change state without adding tasks",
+    "skipCreateProject": "Create project without adding tasks",
+    "cancel": "Cancel",
+    "addTasksBtn": "Add Tasks ({{count}})",
+    "addingTasks": "Adding...",
+    "creatingAndAdding": "Creating project and adding tasks..."
   }
 }

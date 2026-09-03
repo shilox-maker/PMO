@@ -37,10 +37,13 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     if (selectedKpi) {
       switch(selectedKpi) {
         case 'overrun': 
-          res = res.filter(p => p.gasto_total_facturas > p.budget_inicial);
+          res = res.filter(p => p.budget_inicial !== null && p.budget_inicial > 0 && p.gasto_total_facturas > p.budget_inicial);
           break;
         case 'overrun_extended': 
-          res = res.filter(p => p.gasto_total_facturas > (p.calculations?.budget_actualizado || p.budget_inicial));
+          res = res.filter(p => {
+            const budgetRef = p.calculations?.budget_actualizado ?? p.budget_inicial;
+            return budgetRef !== null && budgetRef > 0 && p.gasto_total_facturas > budgetRef;
+          });
           break;
         case 'delayed_partial': 
           res = res.filter(p => p.has_hito_vencido);
@@ -57,14 +60,11 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
             return !isClosed && p.fecha_fin_estimada && p.fecha_fin_estimada < todayStr;
           });
           break;
-        case 'governance': 
+        case 'non_governed': 
           res = res.filter(p => !p.com_semanal_activo && !p.com_mensual_activo && !p.com_steerco_activo);
           break;
         case 'inactive': 
-          res = res.filter(p => {
-            const diffMs = Date.now() - new Date(p.ultima_actualizacion).getTime();
-            return (diffMs / (1000 * 60 * 60 * 24)) > 30;
-          });
+          res = res.filter(p => (Date.now() - new Date(p.ultima_actualizacion).getTime()) / (1000 * 60 * 60 * 24) > 14);
           break;
         case 'rag_verde': 
           res = res.filter(p => p.indicador_rag === 'VERDE');
@@ -152,8 +152,11 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
   };
 
   // Metric Computations
-  const overrunCount = projects.filter(p => p.gasto_total_facturas > p.budget_inicial).length;
-  const overrunExtendedCount = projects.filter(p => p.gasto_total_facturas > (p.calculations?.budget_actualizado || p.budget_inicial)).length;
+  const overrunCount = projects.filter(p => p.budget_inicial !== null && p.budget_inicial > 0 && p.gasto_total_facturas > p.budget_inicial).length;
+  const overrunExtendedCount = projects.filter(p => {
+    const budgetRef = p.calculations?.budget_actualizado ?? p.budget_inicial;
+    return budgetRef !== null && budgetRef > 0 && p.gasto_total_facturas > budgetRef;
+  }).length;
   const delayedPartialCount = projects.filter(p => p.has_hito_vencido).length;
   
   const todayStr = new Date().toISOString().split('T')[0];

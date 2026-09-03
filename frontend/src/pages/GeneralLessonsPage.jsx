@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, RotateCcw } from 'lucide-react';
+import usePersistentFilters from '../hooks/usePersistentFilters';
+
+const DEFAULT_LESSONS_FILTERS = {
+  tipoFilter: '',
+  partnerFilter: '',
+  proyectoFilter: ''
+};
 
 export default function GeneralLessonsPage() {
   const { t } = useTranslation();
@@ -9,10 +16,19 @@ export default function GeneralLessonsPage() {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Filtros
-  const [tipoFilter, setTipoFilter] = useState('');
-  const [partnerFilter, setPartnerFilter] = useState('');
-  const [proyectoFilter, setProyectoFilter] = useState('');
+  // Persistent Filters
+  const {
+    filters,
+    updateFilter,
+    resetFilters,
+    activeFiltersCount
+  } = usePersistentFilters('lessons', DEFAULT_LESSONS_FILTERS);
+
+  const { tipoFilter, partnerFilter, proyectoFilter } = filters;
+
+  const setTipoFilter = (val) => updateFilter('tipoFilter', val);
+  const setPartnerFilter = (val) => updateFilter('partnerFilter', val);
+  const setProyectoFilter = (val) => updateFilter('proyectoFilter', val);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/lessons`, {
@@ -55,12 +71,6 @@ export default function GeneralLessonsPage() {
     const matchesProyecto = !proyectoFilter || (l.Proyecto && String(l.Proyecto.id_proyecto) === proyectoFilter);
     return matchesTipo && matchesPartner && matchesProyecto;
   });
-
-  const clearFilters = () => {
-    setTipoFilter('');
-    setPartnerFilter('');
-    setProyectoFilter('');
-  };
 
   return (
     <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -130,13 +140,23 @@ export default function GeneralLessonsPage() {
           </div>
 
           {/* Limpiar Filtros */}
-          {(tipoFilter || partnerFilter || proyectoFilter) && (
+          {activeFiltersCount > 0 && (
             <button
-              className="m3-btn m3-btn-text"
-              onClick={clearFilters}
-              style={{ padding: '4px 8px', fontSize: '0.8rem', marginLeft: 'auto' }}
+              className="m3-btn m3-btn-tonal"
+              onClick={resetFilters}
+              style={{ 
+                padding: '6px 12px', 
+                fontSize: '0.8rem', 
+                marginLeft: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                color: 'var(--md-sys-color-error)',
+                backgroundColor: 'var(--md-sys-color-error-container)'
+              }}
             >
-              {t('generalLessons.clearFilters')}
+              <RotateCcw size={14} />
+              <span>{t('generalLessons.clearFilters')}</span>
             </button>
           )}
         </div>
@@ -154,7 +174,7 @@ export default function GeneralLessonsPage() {
           <p style={{ color: 'var(--md-sys-color-outline)', fontSize: '0.95rem', margin: 0 }}>{t('generalLessons.noMatchingLessons')}</p>
           <button
             className="m3-btn m3-btn-primary"
-            onClick={clearFilters}
+            onClick={resetFilters}
             style={{ borderRadius: 12 }}
           >
             {t('generalLessons.resetFilters')}

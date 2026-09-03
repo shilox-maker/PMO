@@ -10,7 +10,7 @@ export default function ProjectFichaTab({
   handleAddComment, handleDeleteComment,
   editingCommentId, setEditingCommentId, editingCommentText, setEditingCommentText,
   editingCommentImportant, setEditingCommentImportant, editingCommentDireccion, setEditingCommentDireccion,
-  handleUpdateComment, isEditingLifecycle, handleOpenEditLifecycle, handleDeleteParticipant,
+  handleUpdateComment, handleOpenEditLifecycle, handleDeleteParticipant,
   handleOpenAddRaci, handleOpenEditRaci, onViewVendor, contactosList,
   canSeeDireccion, getAuthHeaders, handleUpdateProject
 }) {

@@ -2,7 +2,8 @@ const {
   sequelize, Sedes, Proveedores, ContactosProveedor, Usuarios,
   Proyectos, Incidencias, Riesgos, LeccionesAprendidas, Facturas,
   CambiosAlcance, Tareas, EstadosProyecto, ComentariosProyecto,
-  Portfolios, TiposCapex, SubtiposCapex, PortfolioBudgets, TiposFactura
+  Portfolios, TiposCapex, SubtiposCapex, PortfolioBudgets, TiposFactura,
+  Workflows, WorkflowEstados
 } = require('./models/index');
 
 const crypto = require('crypto');
@@ -105,6 +106,24 @@ async function seed() {
     const sm = {};
     seededStates.forEach(s => { sm[s.nombre_estado] = s.id_estado; });
     console.log('EstadosProyecto seeded.');
+
+    // Seed default Workflow
+    const defaultWorkflow = await Workflows.create({
+      nombre: 'Flujo Estándar',
+      descripcion: 'Flujo de trabajo predeterminado de la organización con el ciclo de vida completo del portfolio.',
+      activo: true,
+      is_default: true,
+      id_ambito: null,
+      code: 'STANDARD'
+    });
+
+    const workflowEstadosData = seededStates.map((s, idx) => ({
+      id_workflow: defaultWorkflow.id,
+      id_estado: s.id_estado,
+      orden: s.orden !== undefined && s.orden !== null ? s.orden : (idx + 1)
+    }));
+    await WorkflowEstados.bulkCreate(workflowEstadosData);
+    console.log('Workflows & Workflow_Estados seeded.');
 
     // ==========================================
     // 5. USUARIOS (Including new PMs)
@@ -218,6 +237,7 @@ async function seed() {
         id_sede_distribuir: sedeDistId,
         id_sponsor: contactoRoberto.id_contacto,
         id_estado: sm['Ejecución'],
+        id_workflow: defaultWorkflow.id,
         indicador_rag: 'VERDE',
         fecha_inicio: '2026-01-01',
         fecha_fin_inicial: '2026-12-31',

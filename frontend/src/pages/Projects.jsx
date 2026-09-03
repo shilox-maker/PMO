@@ -7,6 +7,7 @@ import CreateProjectModal from '../components/modals/CreateProjectModal';
 import ProjectsFilterPanel from '../components/projects/ProjectsFilterPanel';
 import ProjectsTable from '../components/projects/ProjectsTable';
 import { useTableColumns } from '../hooks/useTableColumns';
+import usePersistentFilters from '../hooks/usePersistentFilters';
 
 const DEFAULT_PROJECT_COLUMNS = [
   { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
@@ -26,6 +27,21 @@ const DEFAULT_PROJECT_COLUMNS = [
   { id: 'accion', label: 'Acción', fixed: true, visible: true }
 ];
 
+const DEFAULT_PROJECT_FILTERS = {
+  filterPm: '',
+  filterVendor: '',
+  filterRag: '',
+  filterEstrategico: '',
+  filterIniciativa: '',
+  filterPortfolio: '',
+  filterWorkflow: '',
+  filterTag: '',
+  filterStates: [],
+  searchTerm: '',
+  isStatesOpen: false,
+  sortConfig: { key: 'id_proyecto', direction: 'asc' }
+};
+
 export default function Projects({ onViewProject, onViewVendor }) {
   const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
   const { getAuthHeaders, currentPm, selectedAmbito } = useAuth();
@@ -36,8 +52,52 @@ export default function Projects({ onViewProject, onViewVendor }) {
   // Column visibility
   const { columns: tableCols, visibleColumnsMap, columnWidths, updateColumnWidth, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
 
-  // Sorting state
-  const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
+  // Persistent filters & sorting
+  const {
+    filters,
+    setFilters,
+    updateFilter,
+    resetFilters,
+    activeFiltersCount
+  } = usePersistentFilters('projects', DEFAULT_PROJECT_FILTERS);
+
+  const {
+    filterPm,
+    filterVendor,
+    filterRag,
+    filterEstrategico,
+    filterIniciativa,
+    filterPortfolio,
+    filterWorkflow,
+    filterTag,
+    filterStates,
+    searchTerm,
+    isStatesOpen,
+    sortConfig
+  } = filters;
+
+  const setFilterPm = (val) => updateFilter('filterPm', val);
+  const setFilterVendor = (val) => updateFilter('filterVendor', val);
+  const setFilterRag = (val) => updateFilter('filterRag', val);
+  const setFilterEstrategico = (val) => updateFilter('filterEstrategico', val);
+  const setFilterIniciativa = (val) => updateFilter('filterIniciativa', val);
+  const setFilterPortfolio = (val) => updateFilter('filterPortfolio', val);
+  const setFilterWorkflow = (val) => updateFilter('filterWorkflow', val);
+  const setFilterTag = (val) => updateFilter('filterTag', val);
+  const setFilterStates = (updater) => {
+    setFilters(prev => ({
+      ...prev,
+      filterStates: typeof updater === 'function' ? updater(prev.filterStates || []) : updater
+    }));
+  };
+  const setSearchTerm = (val) => updateFilter('searchTerm', val);
+  const setIsStatesOpen = (val) => updateFilter('isStatesOpen', typeof val === 'function' ? val(isStatesOpen) : val);
+  const setSortConfig = (updater) => {
+    setFilters(prev => ({
+      ...prev,
+      sortConfig: typeof updater === 'function' ? updater(prev.sortConfig || { key: 'id_proyecto', direction: 'asc' }) : updater
+    }));
+  };
 
   // Quick Comment state
   const [quickCommentProjectId, setQuickCommentProjectId] = useState(null);
@@ -78,24 +138,13 @@ export default function Projects({ onViewProject, onViewVendor }) {
 
   const [isReportOpen, setIsReportOpen] = useState(false);
 
-  // Technical List Filters
-  const [filterPm, setFilterPm] = useState('');
-  const [filterVendor, setFilterVendor] = useState('');
-  const [filterRag, setFilterRag] = useState('');
-  const [filterEstrategico, setFilterEstrategico] = useState('');
-  const [filterIniciativa, setFilterIniciativa] = useState('');
-  const [filterPortfolio, setFilterPortfolio] = useState('');
-  const [filterTag, setFilterTag] = useState('');
-  const [filterStates, setFilterStates] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isStatesOpen, setIsStatesOpen] = useState(false);
-
   // Dropdowns lists
   const [pmsList, setPmsList] = useState([]);
   const [vendorsList, setVendorsList] = useState([]);
   const [sedesList, setSedesList] = useState([]);
   const [contactosList, setContactosList] = useState([]);
   const [statesList, setStatesList] = useState([]);
+  const [workflowsList, setWorkflowsList] = useState([]);
   const [portfoliosList, setPortfoliosList] = useState([]);
   const [tagsList, setTagsList] = useState([]);
   const [capexTypes, setCapexTypes] = useState([]);
@@ -111,8 +160,9 @@ export default function Projects({ onViewProject, onViewVendor }) {
     if (filterRag) params.append('rag', filterRag);
     if (filterEstrategico) params.append('estrategico', filterEstrategico);
     if (filterIniciativa) params.append('iniciativa_ligera', filterIniciativa);
-    if (filterStates.length > 0) params.append('state', filterStates.join(','));
+    if (filterStates && filterStates.length > 0) params.append('state', filterStates.join(','));
     if (filterPortfolio) params.append('portfolio', filterPortfolio);
+    if (filterWorkflow) params.append('workflow', filterWorkflow);
     if (filterTag) params.append('tag', filterTag);
     if (searchTerm) params.append('search', searchTerm);
 
@@ -136,6 +186,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedesList(data));
     fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data));
     fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
+    fetch(`${import.meta.env.VITE_API_URL}/portfolio/workflows`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowsList(Array.isArray(data) ? data : []));
     fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
     fetch(`${import.meta.env.VITE_API_URL}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(data));
     fetch(`${import.meta.env.VITE_API_URL}/capex-types`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setCapexTypes(data));
@@ -143,7 +194,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
 
   useEffect(() => {
     fetchProjects();
-  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterTag, filterStates, searchTerm, selectedAmbito]);
+  }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterWorkflow, filterTag, filterStates, searchTerm, selectedAmbito]);
 
   useEffect(() => {
     fetchMetadata();
@@ -159,16 +210,20 @@ export default function Projects({ onViewProject, onViewVendor }) {
         filterEstrategico={filterEstrategico} setFilterEstrategico={setFilterEstrategico}
         filterIniciativa={filterIniciativa} setFilterIniciativa={setFilterIniciativa}
         filterPortfolio={filterPortfolio} setFilterPortfolio={setFilterPortfolio}
+        filterWorkflow={filterWorkflow} setFilterWorkflow={setFilterWorkflow}
         filterTag={filterTag} setFilterTag={setFilterTag}
         filterStates={filterStates} setFilterStates={setFilterStates}
         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
         isStatesOpen={isStatesOpen} setIsStatesOpen={setIsStatesOpen}
         pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList}
+        workflowsList={workflowsList}
         tagsList={tagsList} statesList={statesList} projects={projects}
         tableCols={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns}
         density={density} onDensityChange={setDensity}
         onOpenReport={() => setIsReportOpen(true)}
         onOpenCreate={() => setShowCreateModal(true)}
+        activeFiltersCount={activeFiltersCount}
+        onResetFilters={resetFilters}
       />
 
       {/* Main Grid Table */}

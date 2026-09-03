@@ -2,7 +2,7 @@ const { Op } = require('sequelize');
 const { 
   Sedes, Proveedores, Usuarios, EstadosProyecto, 
   Proyectos, Facturas, CambiosAlcance, Riesgos, Incidencias, Tareas, ComentariosProyecto,
-  Portfolios, Tags
+  Portfolios, Tags, Workflows
 } = require('../../models/index');
 const { getProjectsCalculationsBatch } = require('../../models/automations');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -11,7 +11,7 @@ const { getTimeline } = require('./dashboardTimeline.controller');
 const { recordDailySnapshots, getKpiTrends } = require('../../services/kpiSnapshotService');
 
 const getPortfolioDashboard = asyncHandler(async (req, res) => {
-  const { pm, fecha_desde, fecha_hasta, search, vendor, rag, state, portfolio, tag, iniciativa_ligera, estrategico, include_trends, timeframe } = req.query;
+  const { pm, fecha_desde, fecha_hasta, search, vendor, rag, state, workflow, id_workflow, portfolio, tag, iniciativa_ligera, estrategico, include_trends, timeframe } = req.query;
   const user = await Usuarios.findByPk(req.currentPmId);
   const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
   
@@ -25,7 +25,24 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
   if (iniciativa_ligera) where.es_iniciativa_ligera = iniciativa_ligera === 'true';
   if (estrategico) where.es_estrategico = estrategico === 'true';
   if (portfolio) where.portfolio_id = parseInt(portfolio, 10);
-  if (search) where.nombre_proyecto = { [Op.like]: `%${search}%` };
+  if (workflow || id_workflow) where.id_workflow = parseInt(workflow || id_workflow, 10);
+  if (search) {
+    const pTags = await Proyectos.findAll({
+      attributes: ['id_proyecto'],
+      include: [{ model: Tags, as: 'Tags', where: { nombre: { [Op.like]: `%${search}%` } }, attributes: [] }],
+      raw: true
+    });
+    const tagProjIds = pTags.map(p => p.id_proyecto);
+    const searchConditions = [
+      { nombre_proyecto: { [Op.like]: `%${search}%` } },
+      { id_proyecto: { [Op.like]: `%${search}%` } },
+      { codigo_capex: { [Op.like]: `%${search}%` } }
+    ];
+    if (tagProjIds.length > 0) {
+      searchConditions.push({ id_proyecto: { [Op.in]: tagProjIds } });
+    }
+    where[Op.or] = searchConditions;
+  }
   if (tag) {
     const pTag = await Proyectos.findAll({ attributes: ['id_proyecto'], include: [{ model: Tags, as: 'Tags', where: { id: tag }, attributes: [] }], raw: true });
     where.id_proyecto = { [Op.in]: pTag.map(p => p.id_proyecto) };
@@ -40,6 +57,7 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
       { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
       { model: Sedes, as: 'SedeDistribuir', attributes: ['nombre_sede'] },
       { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre'] },
+      { model: Workflows, as: 'Workflow', attributes: ['id', 'nombre', 'code'] },
       { model: Tags, as: 'Tags', through: { attributes: [] } },
       { model: EstadosProyecto, as: 'Estado', attributes: ['nombre_estado', 'icono', 'descripcion'], ...(state ? { where: { nombre_estado: { [Op.in]: state.split(',') } } } : {}) }
     ],
@@ -105,8 +123,9 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
       prov_nombre: p.Proveedor ? p.Proveedor.nombre_razon_social : 'Sin Partner', sede_nombre: p.Sede ? p.Sede.nombre_sede : '',
       id_sede_distribuir: p.id_sede_distribuir, distribuir_sede_nombre: p.SedeDistribuir ? p.SedeDistribuir.nombre_sede : '',
       id_estado: p.id_estado, estado_proyecto: p.Estado ? p.Estado.nombre_estado : 'Sin Estado',
+      id_workflow: p.id_workflow, workflow_nombre: p.Workflow ? p.Workflow.nombre : null,
       estado_descripcion: p.Estado ? p.Estado.descripcion : null, estado_icono: p.Estado ? p.Estado.icono : '❓',
-      indicador_rag: p.indicador_rag, es_capex: p.es_capex, codigo_capex: p.codigo_capex, budget_inicial: parseFloat(p.budget_inicial),
+      indicador_rag: p.indicador_rag, es_capex: p.es_capex, codigo_capex: p.codigo_capex, budget_inicial: p.budget_inicial !== null && p.budget_inicial !== undefined ? parseFloat(p.budget_inicial) : null,
       fecha_inicio: p.fecha_inicio, fecha_fin_inicial: p.fecha_fin_inicial, fecha_fin_estimada: calc.fecha_fin_estimada,
       dias_retraso_aprobados: calc.total_cr_dias || 0, gasto_total_facturas: calc.consumo_real || 0,
       cambios_alcance_count: crCountMap.get(id) || 0, po_list, proximo_hito: nextMilestoneMap.get(id) || null,
@@ -130,8 +149,11 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
     rag_verde: finalData.filter(p => p.indicador_rag === 'VERDE').length,
     rag_amarillo: finalData.filter(p => p.indicador_rag === 'AMARILLO').length,
     rag_rojo: finalData.filter(p => p.indicador_rag === 'ROJO').length,
-    overrun: finalData.filter(p => p.gasto_total_facturas > p.budget_inicial).length,
-    overrun_extended: finalData.filter(p => p.gasto_total_facturas > (p.calculations?.budget_actualizado || p.budget_inicial)).length,
+    overrun: finalData.filter(p => p.budget_inicial !== null && p.budget_inicial > 0 && p.gasto_total_facturas > p.budget_inicial).length,
+    overrun_extended: finalData.filter(p => {
+      const budgetRef = p.calculations?.budget_actualizado ?? p.budget_inicial;
+      return budgetRef !== null && budgetRef > 0 && p.gasto_total_facturas > budgetRef;
+    }).length,
     delayed_base: finalData.filter(p => {
       const isClosed = ['CERRADO', 'CANCELADO', 'FINALIZADO', 'COMPLETADO', 'PARKING'].includes((p.estado_proyecto || '').toUpperCase());
       return !isClosed && p.fecha_fin_inicial && p.fecha_fin_inicial < todayStr;

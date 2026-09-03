@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Building, User, MapPin, Calendar, GitBranch, ExternalLink } from 'lucide-react';
+import { Building, User, MapPin, Calendar, GitBranch, ExternalLink, Globe } from 'lucide-react';
 import ProjectTagsSelect from '../../../components/ProjectTagsSelect';
 
 export default function ProjectGovernanceAttributes({
@@ -37,6 +37,14 @@ export default function ProjectGovernanceAttributes({
       <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 20 }}>
         <h3 style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 12 }}>{t('projectDetail.governance.title', 'Atributos de Gobernanza')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Globe size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>{t('ambitos.currentScope', 'Ámbito')}</div>
+              <div style={{ fontWeight: 500 }}>{project.Ambito?.nombre || '—'}</div>
+            </div>
+          </div>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <MapPin size={18} style={{ color: 'var(--md-sys-color-outline)' }} />
             <div>
@@ -103,6 +111,29 @@ export default function ProjectGovernanceAttributes({
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>{t('projectDetail.governance.portfolio', 'Portfolio')}</div>
               <div style={{ fontWeight: 500 }}>{project.Portfolio?.nombre || t('projectDetail.governance.unassigned', 'Sin asignar')}</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ fontSize: 18 }}>📈</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Avance del Proyecto</span>
+                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--md-sys-color-primary)' }}>
+                  {project.avance_porcentaje !== undefined && project.avance_porcentaje !== null ? project.avance_porcentaje : 0}%
+                </span>
+              </div>
+              <div className="progress-track" style={{ height: 6, marginTop: 4, width: '100%', backgroundColor: 'var(--md-sys-color-surface-container-highest)', borderRadius: 3 }}>
+                <div 
+                  className="progress-fill" 
+                  style={{ 
+                    width: `${Math.min(Math.max(project.avance_porcentaje || 0, 0), 100)}%`, 
+                    backgroundColor: 'var(--md-sys-color-primary)',
+                    height: '100%',
+                    borderRadius: 3
+                  }} 
+                />
+              </div>
             </div>
           </div>
 

@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context/AuthContext';
 import SearchableContactSelect from '../SearchableContactSelect';
 import CapexFieldsGroup from './CapexFieldsGroup';
 
 export default function ProjectEditModal({
   isOpen, onClose, project, getAuthHeaders, onSuccess,
-  sedes, vendors, contactosList, pms, workflowStates, portfolios = [], portfoliosList = [], capexTypes = []
+  sedes, vendors, contactosList, pms, workflowStates, workflowsList = [], portfolios = [], portfoliosList = [], capexTypes = []
 }) {
   const { t } = useTranslation();
+  const { availableAmbitos, selectedAmbito, currentPm } = useAuth();
   const portfoliosData = portfolios.length > 0 ? portfolios : portfoliosList;
+  const ambitosList = (availableAmbitos && availableAmbitos.length > 0)
+    ? availableAmbitos
+    : (currentPm?.Ambitos || []);
 
   const [form, setForm] = useState({
     nombre_proyecto: '',
@@ -18,6 +23,9 @@ export default function ProjectEditModal({
     id_sede: '',
     id_sede_distribuir: '',
     id_sponsor: '',
+    id_ambito: '',
+    id_workflow: '',
+    id_estado: '',
     es_capex: false,
     codigo_capex: '',
     id_tipo_capex: '',
@@ -27,12 +35,17 @@ export default function ProjectEditModal({
     budget_notas: '',
     portfolio_id: '',
     url_sharepoint: '',
+    avance_porcentaje: 0,
     involvedKus: []
   });
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (project) {
+      const defaultAmbito = project.id_ambito 
+        ? project.id_ambito.toString() 
+        : ((selectedAmbito && selectedAmbito !== 'ALL') ? String(selectedAmbito) : (ambitosList[0]?.id_ambito ? String(ambitosList[0].id_ambito) : ''));
+
       setForm({
         nombre_proyecto: project.nombre_proyecto || '',
         descripcion: project.descripcion || '',
@@ -41,6 +54,9 @@ export default function ProjectEditModal({
         id_sede: project.id_sede ? project.id_sede.toString() : '',
         id_sede_distribuir: project.id_sede_distribuir ? project.id_sede_distribuir.toString() : '',
         id_sponsor: project.id_sponsor ? project.id_sponsor.toString() : '',
+        id_ambito: defaultAmbito,
+        id_workflow: project.id_workflow ? project.id_workflow.toString() : '',
+        id_estado: project.id_estado ? project.id_estado.toString() : '',
         es_iniciativa_ligera: !!project.es_iniciativa_ligera,
         es_capex: !!project.es_capex,
         codigo_capex: project.codigo_capex || '',
@@ -51,11 +67,12 @@ export default function ProjectEditModal({
         budget_notas: project.budget_notas || '',
         portfolio_id: project.portfolio_id ? project.portfolio_id.toString() : '',
         url_sharepoint: project.url_sharepoint || '',
+        avance_porcentaje: project.avance_porcentaje !== undefined && project.avance_porcentaje !== null ? project.avance_porcentaje : 0,
         involvedKus: project.InvolvedContacts?.map(k => k.id_contacto) || []
       });
     }
     setError('');
-  }, [project, isOpen]);
+  }, [project, isOpen, selectedAmbito, availableAmbitos]);
 
   if (!isOpen) return null;
 
@@ -70,6 +87,15 @@ export default function ProjectEditModal({
         updated.id_tipo_capex = '';
         updated.id_subtipo_capex = '';
         updated.codigo_capex = '';
+      }
+      if (name === 'id_workflow') {
+        const targetWf = workflowsList.find(w => String(w.id) === String(value));
+        if (targetWf?.Estados?.length > 0) {
+          const hasCurrentState = targetWf.Estados.some(st => String(st.id_estado) === String(prev.id_estado));
+          if (!hasCurrentState) {
+            updated.id_estado = String(targetWf.Estados[0].id_estado);
+          }
+        }
       }
       return updated;
     });
@@ -89,34 +115,26 @@ export default function ProjectEditModal({
     e.preventDefault();
     setError('');
 
-    if (!form.es_iniciativa_ligera) {
-      if (form.es_capex && (!form.codigo_capex || form.codigo_capex.trim() === '')) {
-        setError('El código CAPEX es obligatorio para proyectos CAPEX.');
-        return;
-      }
-      if (form.es_capex && !form.id_tipo_capex) {
-        setError('El tipo de CAPEX es obligatorio para proyectos CAPEX.');
-        return;
-      }
-      const selectedTipo = capexTypes.find(t => t.id === parseInt(form.id_tipo_capex, 10));
-      if (form.es_capex && selectedTipo?.Subtipos?.length > 0 && !form.id_subtipo_capex) {
-        setError('El subtipo de CAPEX es obligatorio para el tipo seleccionado.');
-        return;
-      }
-    }
-
     const payload = {
       ...form,
+      id_ambito: form.id_ambito ? parseInt(form.id_ambito, 10) : null,
       es_iniciativa_ligera: !!form.es_iniciativa_ligera,
-      budget_inicial: form.es_iniciativa_ligera ? 0 : parseFloat(form.budget_inicial),
+      budget_inicial: form.es_iniciativa_ligera 
+        ? 0 
+        : (form.budget_inicial !== '' && form.budget_inicial !== null && form.budget_inicial !== undefined && !isNaN(Number(form.budget_inicial))
+            ? parseFloat(form.budget_inicial) 
+            : null),
+      budget_notas: form.es_iniciativa_ligera || !form.budget_notas?.trim() ? null : form.budget_notas.trim(),
       id_pm: form.id_pm ? parseInt(form.id_pm, 10) : null,
       id_proveedor: !form.es_iniciativa_ligera && form.id_proveedor ? parseInt(form.id_proveedor, 10) : null,
       id_sede: form.id_sede ? parseInt(form.id_sede, 10) : null,
       id_sede_distribuir: form.id_sede_distribuir ? parseInt(form.id_sede_distribuir, 10) : null,
       id_sponsor: form.id_sponsor ? parseInt(form.id_sponsor, 10) : null,
+      id_workflow: form.id_workflow ? parseInt(form.id_workflow, 10) : null,
+      id_estado: form.id_estado ? parseInt(form.id_estado, 10) : undefined,
       portfolio_id: form.portfolio_id ? parseInt(form.portfolio_id, 10) : null,
-      es_capex: form.es_iniciativa_ligera ? false : form.es_capex,
-      codigo_capex: form.es_iniciativa_ligera ? null : form.codigo_capex,
+      es_capex: form.es_iniciativa_ligera ? false : !!form.es_capex,
+      codigo_capex: form.es_iniciativa_ligera || !form.es_capex || !form.codigo_capex?.trim() ? null : form.codigo_capex.trim(),
       id_tipo_capex: !form.es_iniciativa_ligera && form.es_capex && form.id_tipo_capex ? parseInt(form.id_tipo_capex, 10) : null,
       id_subtipo_capex: !form.es_iniciativa_ligera && form.es_capex && form.id_subtipo_capex ? parseInt(form.id_subtipo_capex, 10) : null
     };
@@ -232,6 +250,75 @@ export default function ProjectEditModal({
               </select>
             </div>
 
+            {/* Ámbito de Trabajo */}
+            <div className="form-group">
+              <label className="form-label">{t('ambitos.scopeLabel', 'Ámbito *')}</label>
+              <select 
+                name="id_ambito"
+                value={form.id_ambito || ''}
+                onChange={handleInputChange}
+                required
+                className="user-select"
+              >
+                <option value="">{t('ambitos.selectScope', 'Seleccione Ámbito')}</option>
+                {project?.Ambito && !ambitosList.some(a => String(a.id_ambito) === String(project.id_ambito)) && (
+                  <option key={project.Ambito.id_ambito} value={String(project.Ambito.id_ambito)}>
+                    {project.Ambito.nombre} {project.Ambito.code ? `(${project.Ambito.code})` : ''}
+                  </option>
+                )}
+                {ambitosList.map(a => (
+                  <option key={a.id_ambito} value={String(a.id_ambito)}>
+                    {a.nombre} {a.code ? `(${a.code})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Flujo de Trabajo (Workflow) */}
+            <div className="form-group">
+              <label className="form-label">{t('adminPanel.workflows', 'Flujo de Trabajo *')}</label>
+              <select 
+                name="id_workflow"
+                value={form.id_workflow || ''}
+                onChange={handleInputChange}
+                required
+                className="user-select"
+              >
+                <option value="">{t('workflowsAdmin.selectWorkflow', 'Seleccione Flujo de Trabajo')}</option>
+                {workflowsList.map(w => (
+                  <option key={w.id} value={String(w.id)}>
+                    {w.is_default ? '⭐ ' : ''}{w.nombre} {w.Ambito ? `(${w.Ambito.nombre})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Estado del Proyecto dentro del Flujo */}
+            {(() => {
+              const currentWf = workflowsList.find(w => String(w.id) === String(form.id_workflow));
+              const availableStates = currentWf?.Estados && currentWf.Estados.length > 0 
+                ? currentWf.Estados 
+                : (workflowStates || []);
+              return (
+                <div className="form-group">
+                  <label className="form-label">{t('workflowsAdmin.stateInWorkflow', 'Fase / Estado *')}</label>
+                  <select 
+                    name="id_estado" 
+                    value={form.id_estado || ''} 
+                    onChange={handleInputChange}
+                    required
+                    className="user-select"
+                  >
+                    {availableStates.map(st => (
+                      <option key={st.id_estado} value={String(st.id_estado)}>
+                        {st.icono || '•'} {st.nombre_estado}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })()}
+
             <div className="form-group">
               <label className="form-label">PM Asignado *</label>
               <select 
@@ -274,30 +361,48 @@ export default function ProjectEditModal({
               />
             </div>
 
-            {/* SharePoint URL */}
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label className="form-label">URL Site SharePoint (Documentación)</label>
-              <input 
-                type="text" 
-                name="url_sharepoint"
-                value={form.url_sharepoint}
-                onChange={handleInputChange}
-                placeholder="https://dacsa.sharepoint.com/sites/..."
-                className="m3-input"
-              />
+            {/* SharePoint URL & Avance Porcentual */}
+            <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label className="form-label">URL Site SharePoint (Documentación)</label>
+                <input 
+                  type="text" 
+                  name="url_sharepoint"
+                  value={form.url_sharepoint}
+                  onChange={handleInputChange}
+                  placeholder="https://dacsa.sharepoint.com/sites/..."
+                  className="m3-input"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">% de Avance del Proyecto (0 - 100%)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input 
+                    type="number" 
+                    min="0"
+                    max="100"
+                    name="avance_porcentaje"
+                    value={form.avance_porcentaje}
+                    onChange={handleInputChange}
+                    className="m3-input"
+                    style={{ fontWeight: 'bold', color: 'var(--md-sys-color-primary)' }}
+                  />
+                  <span style={{ fontWeight: 600, color: 'var(--md-sys-color-outline)' }}>%</span>
+                </div>
+              </div>
             </div>
 
             {/* Presupuesto Inicial + Notas — fila completa */}
             <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div className="form-group">
-                <label className="form-label">Presupuesto Inicial (€) *</label>
+                <label className="form-label">Presupuesto Inicial (€)</label>
                 <input 
                   type="number" 
                   step="0.01"
                   name="budget_inicial"
                   value={form.budget_inicial}
                   onChange={handleInputChange}
-                  required
+                  placeholder="150000.00 (Opcional)"
                   className="m3-input"
                 />
               </div>

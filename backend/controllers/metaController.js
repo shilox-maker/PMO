@@ -1,6 +1,6 @@
 const { 
   getSedes, getContactos, getPms, getChangelog, 
-  getPortfolioStates, getPortfolios, getTags, createTag, 
+  getPortfolioStates, getPortfolioWorkflows, getPortfolios, getTags, createTag, 
   getCapexTypes, getPortfolioBudgets, getInvoiceTypes, getHealth 
 } = require('./meta/taxonomy.controller');
 
@@ -14,6 +14,7 @@ module.exports = {
   getPms,
   getChangelog,
   getPortfolioStates,
+  getPortfolioWorkflows,
   getPortfolioDashboard,
   getTimeline,
   getPortfolios,

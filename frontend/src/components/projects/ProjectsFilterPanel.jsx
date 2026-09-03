@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Filter, Search, Printer, Plus, ChevronUp, ChevronDown } from 'lucide-react';
+import { Filter, Search, Printer, Plus, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 import ColumnSelector from '../ColumnSelector';
 import DensitySelector from '../DensitySelector';
 
@@ -11,16 +11,46 @@ export default function ProjectsFilterPanel({
   filterEstrategico, setFilterEstrategico,
   filterIniciativa, setFilterIniciativa,
   filterPortfolio, setFilterPortfolio,
+  filterWorkflow, setFilterWorkflow,
   filterTag, setFilterTag,
   filterStates, setFilterStates,
   searchTerm, setSearchTerm,
   isStatesOpen, setIsStatesOpen,
-  pmsList, vendorsList, portfoliosList, tagsList, statesList, projects,
+  pmsList, vendorsList, portfoliosList, workflowsList = [], tagsList, statesList = [], projects,
   tableCols, toggleColumn, resetColumns,
   density, onDensityChange,
-  onOpenReport, onOpenCreate
+  onOpenReport, onOpenCreate,
+  activeFiltersCount = 0,
+  onResetFilters
 }) {
   const { t } = useTranslation();
+
+  // Estados efectivos según el Flujo de Trabajo seleccionado
+  const effectiveStates = useMemo(() => {
+    if (filterWorkflow && workflowsList?.length > 0) {
+      const selectedWf = workflowsList.find(w => String(w.id) === String(filterWorkflow));
+      if (selectedWf && Array.isArray(selectedWf.Estados) && selectedWf.Estados.length > 0) {
+        return [...selectedWf.Estados].sort((a, b) => {
+          const ordA = a.WorkflowEstados?.orden !== undefined ? a.WorkflowEstados.orden : (a.orden || 0);
+          const ordB = b.WorkflowEstados?.orden !== undefined ? b.WorkflowEstados.orden : (b.orden || 0);
+          return ordA - ordB;
+        });
+      }
+    }
+    return statesList || [];
+  }, [filterWorkflow, workflowsList, statesList]);
+
+  const handleWorkflowChange = (newWf) => {
+    setFilterWorkflow(newWf);
+    if (newWf && workflowsList?.length > 0) {
+      const selectedWf = workflowsList.find(w => String(w.id) === String(newWf));
+      if (selectedWf && Array.isArray(selectedWf.Estados)) {
+        const allowedStateNames = new Set(selectedWf.Estados.map(s => s.nombre_estado));
+        setFilterStates(prev => (Array.isArray(prev) ? prev.filter(st => allowedStateNames.has(st)) : []));
+      }
+    }
+  };
+
   return (
     <div className="m3-card glass-panel" style={{ padding: '20px 24px', marginBottom: 24, position: 'relative', zIndex: 10, overflow: 'visible' }}>
       {/* Row 1: Search & Master Dropdowns */}
@@ -28,7 +58,46 @@ export default function ProjectsFilterPanel({
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--md-sys-color-outline)' }}>
           <Filter size={18} />
           <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{t('common.filters')}</span>
+          {activeFiltersCount > 0 && (
+            <span 
+              className="badge badge-blue"
+              style={{
+                fontSize: '0.75rem',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontWeight: 700,
+                backgroundColor: 'var(--md-sys-color-primary-container)',
+                color: 'var(--md-sys-color-on-primary-container)',
+                border: '1px solid var(--md-sys-color-primary)'
+              }}
+              title={t('common.activeFiltersCount', { count: activeFiltersCount })}
+            >
+              {activeFiltersCount}
+            </span>
+          )}
         </div>
+
+        {onResetFilters && activeFiltersCount > 0 && (
+          <button 
+            type="button" 
+            onClick={onResetFilters} 
+            className="m3-btn m3-btn-tonal"
+            style={{ 
+              height: '38px', 
+              padding: '0 12px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6, 
+              fontSize: '0.8rem',
+              color: 'var(--md-sys-color-error)',
+              backgroundColor: 'var(--md-sys-color-error-container)'
+            }}
+            title={t('common.cleanAllFilters')}
+          >
+            <RotateCcw size={14} />
+            <span>{t('common.cleanFilters')}</span>
+          </button>
+        )}
       
         {/* Search */}
         <div style={{ position: 'relative', flexGrow: 1, minWidth: '180px' }}>
@@ -82,9 +151,9 @@ export default function ProjectsFilterPanel({
             style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
           >
             <option value="">{t('projectsTable.allRags')}</option>
-            <option value="VERDE">VERDE 🟢</option>
-            <option value="AMARILLO">AMARILLO 🟡</option>
-            <option value="ROJO">ROJO 🔴</option>
+            <option value="VERDE">🟢 VERDE</option>
+            <option value="AMARILLO">🟡 AMARILLO</option>
+            <option value="ROJO">🔴 ROJO</option>
           </select>
         </div>
 
@@ -132,6 +201,23 @@ export default function ProjectsFilterPanel({
             ))}
           </select>
         </div>
+
+        {/* Workflow Filter */}
+        {setFilterWorkflow && workflowsList?.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filterWorkflow || ''} 
+              onChange={(e) => handleWorkflowChange(e.target.value)}
+              className="user-select"
+              style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            >
+              <option value="">{t('projectsTable.allWorkflows', 'Todos los Flujos')}</option>
+              {workflowsList.map(w => (
+                <option key={w.id} value={w.id}>{w.nombre}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Tag Filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -186,9 +272,25 @@ export default function ProjectsFilterPanel({
           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
           onClick={() => setIsStatesOpen(!isStatesOpen)}
         >
-          <h4 style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {t('projectsTable.filterByStatus')}
-          </h4>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h4 style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+              {t('projectsTable.filterByStatus')}
+            </h4>
+            {filterStates && filterStates.length > 0 && (
+              <span 
+                style={{ 
+                  fontSize: '0.75rem', 
+                  padding: '2px 8px', 
+                  borderRadius: '10px', 
+                  backgroundColor: 'var(--md-sys-color-secondary-container)', 
+                  color: 'var(--md-sys-color-on-secondary-container)', 
+                  fontWeight: 600 
+                }}
+              >
+                {filterStates.length}
+              </span>
+            )}
+          </div>
           {isStatesOpen ? <ChevronUp size={18} color="var(--md-sys-color-outline)" /> : <ChevronDown size={18} color="var(--md-sys-color-outline)" />}
         </div>
         
@@ -198,7 +300,7 @@ export default function ProjectsFilterPanel({
               <button
                 type="button"
                 onClick={() => {
-                  const openStates = statesList
+                  const openStates = effectiveStates
                     .filter(s => !s.proyecto_cerrado)
                     .map(s => s.nombre_estado);
                   setFilterStates(openStates);
@@ -241,17 +343,18 @@ export default function ProjectsFilterPanel({
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-              {statesList.map(state => {
+              {effectiveStates.map(state => {
                 const st = state.nombre_estado;
-                const isSelected = filterStates.includes(st);
+                const isSelected = Array.isArray(filterStates) && filterStates.includes(st);
                 
                 return (
                   <div 
                     key={state.id_estado}
                     onClick={() => {
+                      const currentStates = Array.isArray(filterStates) ? filterStates : [];
                       const newStates = isSelected 
-                        ? filterStates.filter(x => x !== st) 
-                        : [...filterStates, st];
+                        ? currentStates.filter(x => x !== st) 
+                        : [...currentStates, st];
                       setFilterStates(newStates);
                     }}
                     style={{

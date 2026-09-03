@@ -11,6 +11,8 @@
     "filter": "Filtrar",
     "filters": "Filtros:",
     "cleanFilters": "Limpar filtros",
+    "cleanAllFilters": "Limpar todos os filtros",
+    "activeFiltersCount": "{{count}} ativos",
     "confirm": "Confirmar",
     "back": "Voltar",
     "close": "Fechar",
@@ -85,6 +87,7 @@
   },
   "adminPanel": {
     "title": "Módulo de Administração",
+    "workflows": "Fluxos de Trabalho",
     "states": "Estados",
     "users": "Utilizadores",
     "sedes": "Sedes",
@@ -93,6 +96,41 @@
     "invoices": "Tipos de Fatura",
     "maintenance": "Modo de Manutenção",
     "backups": "Backups"
+  },
+  "workflowsAdmin": {
+    "title": "Fluxos de Trabalho",
+    "subtitle": "Defina os fluxos de ciclo de vida disponíveis para projetos e os estados válidos em cada fluxo.",
+    "newWorkflow": "Novo Fluxo de Trabalho",
+    "editWorkflow": "Editar Fluxo",
+    "noWorkflows": "Não há fluxos de trabalho configurados.",
+    "name": "Nome do Fluxo *",
+    "code": "Código Identificador",
+    "globalScope": "Global (Disponível para todos os Âmbitos)",
+    "statesInWorkflow": "Estados e Sequência",
+    "statesInWorkflowDesc": "Configure os estados válidos para os projetos deste fluxo e defina a sua sequência cronológica.",
+    "projectCount": "Projetos",
+    "isActive": "Fluxo Ativo",
+    "isDefault": "Fluxo Predefinido",
+    "isDefaultHint": "será atribuído automaticamente a novos projetos",
+    "saveWorkflow": "Guardar Configuração",
+    "statesSaved": "Estados e ordenação do fluxo atualizados com sucesso.",
+    "saveFirstToManageStates": "Guarde o fluxo de trabalho primeiro para poder configurar os seus estados e sequência.",
+    "allStatesAdded": "Todos os estados mestres já foram adicionados",
+    "selectStateToAdd": "Selecionar estado para adicionar ao fluxo...",
+    "addState": "Adicionar Estado",
+    "emptyWorkflowStates": "Este fluxo ainda não tem estados atribuídos. Selecione estados acima para adicioná-los.",
+    "moveUp": "Mover para cima",
+    "moveDown": "Mover para baixo",
+    "removeState": "Remover do fluxo",
+    "nameRequired": "O nome do fluxo é obrigatório.",
+    "updatedSuccess": "Fluxo de trabalho atualizado com sucesso.",
+    "createdSuccess": "Fluxo de trabalho criado com sucesso.",
+    "confirmDelete": "Tem a certeza de que deseja eliminar este fluxo de trabalho?",
+    "deleteSuccess": "Fluxo de trabalho eliminado com sucesso.",
+    "selectWorkflow": "Selecione o Fluxo de Trabalho",
+    "initialState": "Fase / Estado Inicial *",
+    "stateInWorkflow": "Fase / Estado *",
+    "noStatesAssigned": "Sem estados"
   },
   "backupsAdmin": {
     "title": "Gestão de Cópias de Segurança (Backups)",
@@ -183,7 +221,7 @@
     "noProjects": "Nenhum projeto encontrado.",
     "newProject": "Criar Projeto",
     "generateReport": "Gerar Relatório",
-    "searchPlaceholder": "Pesquisar por nome...",
+    "searchPlaceholder": "Pesquisar por nome, código ou tags...",
     "allPms": "Todos os PMs",
     "allPartners": "Todos os Parceiros",
     "allRags": "Todos os RAGs",
@@ -191,6 +229,7 @@
     "isStrategic": "Estratégico?",
     "allTypes": "Todos os Tipos",
     "allPortfolios": "Todas as Carteiras",
+    "allWorkflows": "Todos os Fluxos",
     "allTags": "Todas as Tags",
     "filterByStatus": "FILTRO POR ESTADOS DO PROJETO",
     "viewDetail": "Ver Ficha do Projeto",
@@ -416,7 +455,22 @@
     "noLessons": "Nenhuma lição aprendida documentada sobre este fornecedor.",
     "context": "Contexto:",
     "futureRec": "Recomendação futura:",
-    "originatedIn": "Originado em:"
+    "originatedIn": "Originado em:",
+    "editGeneralInfo": "Editar Informações Gerais",
+    "saveChanges": "Salvar Alterações",
+    "cancel": "Cancelar",
+    "belongsDacsa": "Pertence ao Grupo Dacsa",
+    "companyName": "Razão Social / Nome do Parceiro",
+    "nameRequired": "A razão social é obrigatória.",
+    "editContact": "Editar Contacto de Parceiro",
+    "addContact": "Adicionar Contacto de Parceiro",
+    "deleteContactConfirm": "Tem certeza de que deseja excluir este contacto técnico?",
+    "firstName": "Nome",
+    "lastName": "Apelidos",
+    "position": "Cargo / Função",
+    "technicalPhone": "Telefone Técnico",
+    "officialEmail": "E-mail Oficial",
+    "allFieldsRequired": "Todos os campos são obrigatórios."
   },
   "vendorDirectory": {
     "techPartners": "Parceiros Tecnológicos:",
@@ -431,7 +485,9 @@
     "email": "E-mail:",
     "notRegistered": "Não registado",
     "contactsCount": "Contactos ({{count}})",
-    "noContacts": "Nenhum contacto de ligação técnica adicionado."
+    "noContacts": "Nenhum contacto de ligação técnica adicionado.",
+    "viewEditFicha": "Ver / Editar Ficha",
+    "deletePartnerConfirm": "Tem certeza de que deseja eliminar o parceiro tecnológico \"{{name}}\"?"
   },
   "generalLessons": {
     "type": "Tipo:",
@@ -547,7 +603,9 @@
     "active": "Ativo",
     "newAmbito": "Novo",
     "editAmbito": "Editar",
-    "assignUserAmbitos": "Atribuir Âmbitos ao Utilizador"
+    "assignUserAmbitos": "Atribuir Âmbitos ao Utilizador",
+    "scopeLabel": "Âmbito *",
+    "selectScope": "Selecionar Âmbito"
   },
   "assistant": {
     "title": "Assistente de Pendências",
@@ -720,7 +778,10 @@
       "milestonePlanning": "Planeamento",
       "milestoneKickoff": "Kickoff",
       "milestoneGoLive": "Go-Live",
-      "milestoneClose": "Encerramento"
+      "milestoneClose": "Encerramento",
+      "modalTitle": "Editar Marcos do Ciclo de Vida",
+      "modalSubtitle": "Defina as datas estimadas ou reais para cada fase do projeto.",
+      "clearDate": "Limpar data"
     },
     "executiveWall": {
       "title": "Muro Executivo (Minutas / Marcos chave)",
@@ -801,5 +862,24 @@
       "evaluator": "Avaliador: {{name}}",
       "deleteConfirm": "Deseja eliminar esta pesquisa qualitativa?"
     }
+  },
+  "stateTasksModal": {
+    "titleChangeState": "Adicionar Tarefas de Estado ({{state}})",
+    "titleCreateProject": "Adicionar Tarefas do Estado Inicial ({{state}})",
+    "descChangeState": "O novo estado possui tarefas predefinidas na administração. Selecione as que deseja adicionar à lista de tarefas do projeto:",
+    "descCreateProject": "O estado inicial possui tarefas predefinidas na administração. Selecione as que deseja adicionar à lista de tarefas do novo projeto:",
+    "type": "Tipo",
+    "taskOrMilestone": "Tarefa / Marco",
+    "description": "Descrição",
+    "milestone": "Marco",
+    "task": "Tarefa",
+    "selectAll": "Marcar todas",
+    "unselectAll": "Desmarcar todas",
+    "skipChangeState": "Alterar estado sem adicionar tarefas",
+    "skipCreateProject": "Criar projeto sem adicionar tarefas",
+    "cancel": "Cancelar",
+    "addTasksBtn": "Adicionar Tarefas ({{count}})",
+    "addingTasks": "Adicionando...",
+    "creatingAndAdding": "Criando projeto e adicionando tarefas..."
   }
 }

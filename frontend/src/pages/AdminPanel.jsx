@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { Sliders, Users, Edit2, Briefcase, Receipt, ShieldAlert, Database, Building2 } from 'lucide-react';
+import { Sliders, Users, Edit2, Briefcase, Receipt, ShieldAlert, Database, Building2, GitBranch } from 'lucide-react';
 import StatesAdmin from '../components/admin/StatesAdmin';
+import WorkflowsAdmin from '../components/admin/WorkflowsAdmin';
 import UsersAdmin from '../components/admin/UsersAdmin';
 import SedesAdmin from '../components/admin/SedesAdmin';
 import PortfoliosAdmin from '../components/admin/PortfoliosAdmin';
@@ -15,12 +16,16 @@ import AmbitosAdmin from '../components/admin/AmbitosAdmin';
 export default function AdminPanel() {
   const { t } = useTranslation();
   const { getAuthHeaders, refreshUsers, checkMaintenanceStatus } = useAuth();
-  const [activeTab, setActiveTab] = useState('states');
+  const [activeTab, setActiveTab] = useState('workflows');
 
   return (
     <div className="layout-col-gap-lg">
       {/* Sub tabs switcher */}
       <div className="m3-tabs-container">
+        <button className={`m3-tab ${activeTab === 'workflows' ? 'active' : ''}`} onClick={() => setActiveTab('workflows')}>
+          <GitBranch size={16} className="tab-icon-inline" />
+          {t('adminPanel.workflows', 'Flujos de Trabajo')}
+        </button>
         <button className={`m3-tab ${activeTab === 'states' ? 'active' : ''}`} onClick={() => setActiveTab('states')}>
           <Sliders size={16} className="tab-icon-inline" />
           {t('adminPanel.states')}
@@ -58,6 +63,10 @@ export default function AdminPanel() {
           {t('adminPanel.backups')}
         </button>
       </div>
+
+      {activeTab === 'workflows' && (
+        <WorkflowsAdmin getAuthHeaders={getAuthHeaders} />
+      )}
 
       {activeTab === 'states' && (
         <StatesAdmin getAuthHeaders={getAuthHeaders} />

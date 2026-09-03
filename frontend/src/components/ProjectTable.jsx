@@ -172,7 +172,7 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                       </div>
                     ) : project.es_capex ? (
                       <div style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-primary)', fontWeight: 600, marginTop: 2 }}>
-                        CAPEX • {project.codigo_capex}
+                        CAPEX{project.codigo_capex ? ` • ${project.codigo_capex}` : ''}
                         {project.TipoCapex && ` (${project.TipoCapex.nombre}${project.SubtipoCapex ? ` - ${project.SubtipoCapex.nombre}` : ''})`}
                       </div>
                     ) : null}

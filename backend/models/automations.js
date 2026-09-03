@@ -29,7 +29,7 @@ async function getProjectCalculations(id_proyecto, budget_inicial, fecha_fin_ini
     }
   });
 
-  const budget_actualizado = parseFloat(budget_inicial) + totalCRImporte;
+  const budget_actualizado = parseFloat(budget_inicial || 0) + totalCRImporte;
 
   // 2. Calculate actual consumption (all invoices, both PENDIENTE_DE_RECIBIR and RECIBIDA count)
   const invoices = await Facturas.findAll({

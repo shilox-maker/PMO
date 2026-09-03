@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Filter, Search, ZoomIn, ZoomOut } from 'lucide-react';
+import { Filter, Search, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 const ZOOM_LEVELS = ['trimestral', 'mensual', 'semanal'];
 const RAG_COLORS = {
@@ -15,6 +15,7 @@ export default function TimelineToolbar({
   filterPm, setFilterPm,
   filterVendor, setFilterVendor,
   filterPortfolio, setFilterPortfolio,
+  filterWorkflow, setFilterWorkflow,
   filterEstrategico, setFilterEstrategico,
   filterIniciativa, setFilterIniciativa,
   filterState, setFilterState,
@@ -22,7 +23,9 @@ export default function TimelineToolbar({
   filterEndDate, setFilterEndDate,
   showClosed, setShowClosed,
   zoomIndex, setZoomIndex,
-  pmsList = [], vendorsList = [], portfoliosList = [], statesList = [], zoom
+  pmsList = [], vendorsList = [], portfoliosList = [], workflowsList = [], statesList = [], zoom,
+  activeFiltersCount = 0,
+  onResetFilters
 }) {
   const { t } = useTranslation();
 
@@ -32,13 +35,79 @@ export default function TimelineToolbar({
     semanal: t('timeline.weekly')
   };
 
+  const effectiveStates = useMemo(() => {
+    if (filterWorkflow && workflowsList?.length > 0) {
+      const selectedWf = workflowsList.find(w => String(w.id) === String(filterWorkflow));
+      if (selectedWf && Array.isArray(selectedWf.Estados) && selectedWf.Estados.length > 0) {
+        return [...selectedWf.Estados].sort((a, b) => {
+          const ordA = a.WorkflowEstados?.orden !== undefined ? a.WorkflowEstados.orden : (a.orden || 0);
+          const ordB = b.WorkflowEstados?.orden !== undefined ? b.WorkflowEstados.orden : (b.orden || 0);
+          return ordA - ordB;
+        });
+      }
+    }
+    return statesList || [];
+  }, [filterWorkflow, workflowsList, statesList]);
+
+  const handleWorkflowChange = (newWf) => {
+    setFilterWorkflow(newWf);
+    if (newWf && workflowsList?.length > 0 && filterState) {
+      const selectedWf = workflowsList.find(w => String(w.id) === String(newWf));
+      if (selectedWf && Array.isArray(selectedWf.Estados)) {
+        const allowedStateIds = new Set(selectedWf.Estados.map(s => String(s.id_estado)));
+        if (!allowedStateIds.has(String(filterState))) {
+          setFilterState('');
+        }
+      }
+    }
+  };
+
   return (
     <div className="m3-card glass-panel timeline-toolbar" style={{ padding: '16px 20px', marginBottom: 20 }}>
       <div className="timeline-filters" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--md-sys-color-outline)' }}>
           <Filter size={18} />
           <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{t('common.filters')}</span>
+          {activeFiltersCount > 0 && (
+            <span 
+              className="badge badge-blue"
+              style={{
+                fontSize: '0.75rem',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontWeight: 700,
+                backgroundColor: 'var(--md-sys-color-primary-container)',
+                color: 'var(--md-sys-color-on-primary-container)',
+                border: '1px solid var(--md-sys-color-primary)'
+              }}
+              title={t('common.activeFiltersCount', { count: activeFiltersCount })}
+            >
+              {activeFiltersCount}
+            </span>
+          )}
         </div>
+
+        {onResetFilters && activeFiltersCount > 0 && (
+          <button 
+            type="button" 
+            onClick={onResetFilters} 
+            className="m3-btn m3-btn-tonal"
+            style={{ 
+              height: '38px', 
+              padding: '0 12px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6, 
+              fontSize: '0.8rem',
+              color: 'var(--md-sys-color-error)',
+              backgroundColor: 'var(--md-sys-color-error-container)'
+            }}
+            title={t('common.cleanAllFilters')}
+          >
+            <RotateCcw size={14} />
+            <span>{t('common.cleanFilters')}</span>
+          </button>
+        )}
 
         {/* Buscador de texto */}
         <div style={{ position: 'relative', flexGrow: 1, minWidth: '180px' }}>
@@ -95,7 +164,7 @@ export default function TimelineToolbar({
         </select>
 
         {/* Estado Proyecto */}
-        {statesList.length > 0 && (
+        {effectiveStates.length > 0 && (
           <select
             value={filterState}
             onChange={e => setFilterState(e.target.value)}
@@ -103,7 +172,7 @@ export default function TimelineToolbar({
             style={{ height: '38px', borderRadius: '12px', minWidth: '130px' }}
           >
             <option key="all-states" value="">{t('projectsTable.allStates')}</option>
-            {statesList.map(s => (
+            {effectiveStates.map(s => (
               <option key={s.id_estado} value={s.id_estado}>{s.nombre_estado}</option>
             ))}
           </select>
@@ -120,6 +189,21 @@ export default function TimelineToolbar({
             <option key="all-portfolios" value="">{t('projectsTable.allPortfolios')}</option>
             {portfoliosList.map(p => (
               <option key={p.id_portfolio} value={p.id_portfolio}>{p.nombre}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Workflow Filter */}
+        {workflowsList.length > 0 && (
+          <select
+            value={filterWorkflow}
+            onChange={e => handleWorkflowChange(e.target.value)}
+            className="user-select"
+            style={{ height: '38px', borderRadius: '12px', minWidth: '130px' }}
+          >
+            <option key="all-workflows" value="">{t('projectsTable.allWorkflows', 'Todos los Flujos')}</option>
+            {workflowsList.map(w => (
+              <option key={w.id} value={w.id}>{w.nombre}</option>
             ))}
           </select>
         )}

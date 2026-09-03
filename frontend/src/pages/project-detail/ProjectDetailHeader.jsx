@@ -101,9 +101,9 @@ export default function ProjectDetailHeader({
             className="user-select"
             style={{ width: 'auto', padding: '6px 12px', height: '36px' }}
           >
-            <option value="VERDE">VERDE 🟢</option>
-            <option value="AMARILLO">AMARILLO 🟡</option>
-            <option value="ROJO">ROJO 🔴</option>
+            <option value="VERDE">🟢 VERDE</option>
+            <option value="AMARILLO">🟡 AMARILLO</option>
+            <option value="ROJO">🔴 ROJO</option>
           </select>
         </div>
 
@@ -123,6 +123,11 @@ export default function ProjectDetailHeader({
                 </option>
               ))}
             </select>
+            {project.Workflow?.nombre && (
+              <span className="badge badge-gray" style={{ fontSize: '0.75rem', opacity: 0.85 }} title={t('adminPanel.workflows', 'Flujo de Trabajo')}>
+                {project.Workflow.nombre}
+              </span>
+            )}
           </div>
         )}
       </div>

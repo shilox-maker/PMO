@@ -39,13 +39,19 @@ export function buildProjectEmailBody(project, reportOptions, committeeName) {
     const gastoTotal = calc.gasto_comprometido || 0;
     const fmtCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
 
+    const rag = (project.indicador_rag || 'VERDE').toUpperCase();
+    const ragBadge = rag === 'ROJO' ? '🔴 ROJO' : (rag === 'AMARILLO' ? '🟡 AMARILLO' : '🟢 VERDE');
+    const avancePct = project.avance_porcentaje !== null && project.avance_porcentaje !== undefined 
+      ? project.avance_porcentaje 
+      : (calc.avance_porcentaje ?? 0);
+
     lines.push('┌──────────────────────────────────────────────────┐');
     lines.push('│ 📈 RESUMEN GENERAL Y KPIS DE CONTROL             │');
     lines.push('└──────────────────────────────────────────────────┘');
     lines.push(`  • Estado: ${getStatusBadge(project.Estado?.nombre_estado || project.estado)}`);
-    lines.push(`  • Salud General: ${project.salud_proyecto !== null && project.salud_proyecto !== undefined ? `${project.salud_proyecto}%` : 'N/A'}`);
+    lines.push(`  • Semáforo RAG: ${ragBadge}`);
+    lines.push(`  • Avance Proyecto: ${getProgressBar(avancePct)}`);
     lines.push(`  • Fechas: Fin Inicial ${fechaFinInicial} ➔ Estimada ${fechaFinEstimada}${diasRetraso > 0 ? ` (+${diasRetraso}d)` : ''}`);
-    lines.push(`  • Avance Tiempo:  ${getProgressBar(calc.tiempoTranscurridoPorcentaje)}`);
     lines.push(`  • Presupuesto / Gasto: ${fmtCurrency(budgetInitial)} / ${fmtCurrency(gastoTotal)}`);
     lines.push(`  • Progreso Gasto: ${getProgressBar(calc.gastoEjecutadoPorcentaje)}${gastoTotal > budgetInitial ? ' ⚠️ SOBRECOSTO' : ''}`);
     if (project.proximo_hito) lines.push(`  • Próximo Hito: 🎯 ${project.proximo_hito}`);

@@ -1,15 +1,15 @@
 const { Op } = require('sequelize');
 const { 
   Proyectos, Usuarios, Proveedores, Sedes, ContactosProveedor,
-  Tareas, EstadosProyecto, CambiosAlcance, Facturas, ComentariosProyecto,
+  Tareas, EstadosProyecto, EstadoTareasPlantilla, CambiosAlcance, Facturas, ComentariosProyecto,
   Incidencias, Riesgos, LeccionesAprendidas, Portfolios, Tags, TiposCapex, SubtiposCapex, TiposFactura,
-  PlanesComunicacion, PlanComunicacionLog, EncuestasCalidad
+  PlanesComunicacion, PlanComunicacionLog, EncuestasCalidad, Ambitos, Workflows, WorkflowEstados
 } = require('../../models/index');
 const { getProjectCalculations, getProjectsCalculationsBatch } = require('../../models/automations');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
 const getProjects = asyncHandler(async (req, res) => {
-  const { pm, vendor, rag, search, state, estrategico, portfolio, tag, iniciativa_ligera } = req.query;
+  const { pm, vendor, rag, search, state, workflow, id_workflow, estrategico, portfolio, tag, iniciativa_ligera } = req.query;
   const user = await Usuarios.findByPk(req.currentPmId);
   const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
   
@@ -23,7 +23,24 @@ const getProjects = asyncHandler(async (req, res) => {
   if (estrategico) where.es_estrategico = estrategico === 'true';
   if (iniciativa_ligera) where.es_iniciativa_ligera = iniciativa_ligera === 'true';
   if (portfolio) where.portfolio_id = portfolio;
-  if (search) where.nombre_proyecto = { [Op.like]: `%${search}%` };
+  if (workflow || id_workflow) where.id_workflow = Number(workflow || id_workflow);
+  if (search) {
+    const pTags = await Proyectos.findAll({
+      attributes: ['id_proyecto'],
+      include: [{ model: Tags, as: 'Tags', where: { nombre: { [Op.like]: `%${search}%` } }, attributes: [] }],
+      raw: true
+    });
+    const tagProjIds = pTags.map(p => p.id_proyecto);
+    const searchConditions = [
+      { nombre_proyecto: { [Op.like]: `%${search}%` } },
+      { id_proyecto: { [Op.like]: `%${search}%` } },
+      { codigo_capex: { [Op.like]: `%${search}%` } }
+    ];
+    if (tagProjIds.length > 0) {
+      searchConditions.push({ id_proyecto: { [Op.in]: tagProjIds } });
+    }
+    where[Op.or] = searchConditions;
+  }
   if (tag) {
     const pTag = await Proyectos.findAll({ attributes: ['id_proyecto'], include: [{ model: Tags, as: 'Tags', where: { id: tag }, attributes: [] }], raw: true });
     where.id_proyecto = { [Op.in]: pTag.map(p => p.id_proyecto) };
@@ -37,6 +54,8 @@ const getProjects = asyncHandler(async (req, res) => {
       { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
       { model: ContactosProveedor, as: 'Sponsor', attributes: ['nombre', 'apellidos'] },
       { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre'] },
+      { model: Ambitos, as: 'Ambito', attributes: ['id_ambito', 'nombre', 'code'] },
+      { model: Workflows, as: 'Workflow', attributes: ['id', 'nombre', 'code'] },
       { model: Tags, as: 'Tags', through: { attributes: [] } },
       { model: TiposCapex, as: 'TipoCapex', attributes: ['id', 'nombre'] },
       { model: SubtiposCapex, as: 'SubtipoCapex', attributes: ['id', 'nombre'] },
@@ -105,6 +124,18 @@ const getProjectDetail = asyncHandler(async (req, res) => {
       { model: Sedes, as: 'SedeDistribuir', attributes: ['id_sede', 'nombre_sede'] },
       { model: ContactosProveedor, as: 'Sponsor', attributes: ['id_contacto', 'nombre', 'apellidos', 'email'] },
       { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre', 'descripcion'] },
+      { model: Ambitos, as: 'Ambito', attributes: ['id_ambito', 'nombre', 'code'] },
+      {
+        model: Workflows,
+        as: 'Workflow',
+        attributes: ['id', 'nombre', 'descripcion', 'code', 'is_default'],
+        include: [{
+          model: EstadosProyecto,
+          as: 'Estados',
+          include: [{ model: EstadoTareasPlantilla, as: 'TareasPlantilla' }],
+          through: { attributes: ['orden', 'id'] }
+        }]
+      },
       { model: Tags, as: 'Tags', through: { attributes: [] } },
       { model: TiposCapex, as: 'TipoCapex', attributes: ['id', 'nombre'] },
       { model: SubtiposCapex, as: 'SubtipoCapex', attributes: ['id', 'nombre'] },
@@ -135,6 +166,9 @@ const getProjectDetail = asyncHandler(async (req, res) => {
   ]);
 
   const projectJson = project.toJSON();
+  if (projectJson.Workflow?.Estados && Array.isArray(projectJson.Workflow.Estados)) {
+    projectJson.Workflow.Estados.sort((a, b) => (a.Workflow_Estados?.orden ?? 0) - (b.Workflow_Estados?.orden ?? 0));
+  }
   projectJson.InvolvedContacts = involvedContacts;
   projectJson.ComSemanalContactos = comSemanalContactos;
   projectJson.ComMensualContactos = comMensualContactos;

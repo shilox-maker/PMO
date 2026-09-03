@@ -22,6 +22,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
 
   // Modal state
   const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedContact, setSelectedContact] = useState(null);
 
   const handleProjectsSort = (key) => {
     setProjectsSort(prev => ({
@@ -78,8 +79,32 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
     }
   }, [vendorId]);
 
+  const handleOpenAddContact = () => {
+    setSelectedContact(null);
+    setShowContactModal(true);
+  };
+
+  const handleOpenEditContact = (contact) => {
+    setSelectedContact(contact);
+    setShowContactModal(true);
+  };
+
+  const handleSaveVendor = async (updatedFields) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/vendors/${vendorId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(updatedFields)
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Error al actualizar el proveedor');
+    setData(prev => prev ? ({
+      ...prev,
+      vendor: { ...prev.vendor, ...json }
+    }) : prev);
+  };
+
   const handleDeleteContact = (contactId) => {
-    if (!window.confirm('¿Seguro que desea eliminar este contacto técnico?')) return;
+    if (!window.confirm(t('vendor360.deleteContactConfirm'))) return;
 
     fetch(`${import.meta.env.VITE_API_URL}/contacts/${contactId}`, {
       method: 'DELETE',
@@ -91,6 +116,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
       })
       .catch(err => console.error('Error deleting contact:', err));
   };
+
 
   if (loading) {
     return (
@@ -283,19 +309,26 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
         <VendorContactCard 
           vendor={vendor}
           contacts={vendor.Contactos_Proveedors}
-          onAddContact={() => setShowContactModal(true)}
+          onAddContact={handleOpenAddContact}
+          onEditContact={handleOpenEditContact}
           onDeleteContact={handleDeleteContact}
+          onSaveVendor={handleSaveVendor}
         />
       </div>
 
-      {/* Add Contact Modal Subcomponent */}
+      {/* Add / Edit Contact Modal Subcomponent */}
       <AddVendorContactModal 
         isOpen={showContactModal}
         vendorId={vendorId}
+        contact={selectedContact}
         getAuthHeaders={getAuthHeaders}
-        onClose={() => setShowContactModal(false)}
+        onClose={() => {
+          setShowContactModal(false);
+          setSelectedContact(null);
+        }}
         onSuccess={fetchVendorData}
       />
     </div>
+
   );
 }

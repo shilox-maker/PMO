@@ -240,6 +240,91 @@ const EstadoTareasPlantilla = sequelize.define('Estado_Tareas_Plantilla', {
 EstadosProyecto.hasMany(EstadoTareasPlantilla, { foreignKey: 'id_estado', as: 'TareasPlantilla', onDelete: 'CASCADE' });
 EstadoTareasPlantilla.belongsTo(EstadosProyecto, { foreignKey: 'id_estado', as: 'Estado' });
 
+// 4.5.2 Workflows Model (Agrupa y ordena estados de proyecto)
+const Workflows = sequelize.define('Workflows', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  nombre: {
+    type: DataTypes.STRING(100),
+    allowNull: false
+  },
+  descripcion: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
+  is_default: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  id_ambito: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Ambitos,
+      key: 'id_ambito'
+    }
+  },
+  code: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  }
+}, {
+  timestamps: true
+});
+
+// 4.5.3 Workflow_Estados Model (Relación M:N entre Workflows y EstadosProyecto con orden)
+const WorkflowEstados = sequelize.define('Workflow_Estados', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  id_workflow: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Workflows,
+      key: 'id'
+    },
+    onDelete: 'CASCADE'
+  },
+  id_estado: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: EstadosProyecto,
+      key: 'id_estado'
+    },
+    onDelete: 'CASCADE'
+  },
+  orden: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  }
+}, {
+  tableName: 'Workflow_Estados',
+  timestamps: false
+});
+
+// Workflows <-> EstadosProyecto associations
+Workflows.belongsToMany(EstadosProyecto, { through: WorkflowEstados, foreignKey: 'id_workflow', otherKey: 'id_estado', as: 'Estados' });
+EstadosProyecto.belongsToMany(Workflows, { through: WorkflowEstados, foreignKey: 'id_estado', otherKey: 'id_workflow', as: 'Workflows' });
+
+Workflows.hasMany(WorkflowEstados, { foreignKey: 'id_workflow', as: 'WorkflowEstados', onDelete: 'CASCADE' });
+WorkflowEstados.belongsTo(Workflows, { foreignKey: 'id_workflow', as: 'Workflow' });
+
+EstadosProyecto.hasMany(WorkflowEstados, { foreignKey: 'id_estado', as: 'WorkflowEstados', onDelete: 'CASCADE' });
+WorkflowEstados.belongsTo(EstadosProyecto, { foreignKey: 'id_estado', as: 'Estado' });
 
 // 4.6 Portfolios Model
 const Portfolios = sequelize.define('Portfolios', {
@@ -471,6 +556,14 @@ const Proyectos = sequelize.define('Proyectos', {
       key: 'id_estado'
     }
   },
+  id_workflow: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Workflows,
+      key: 'id'
+    }
+  },
   portfolio_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -498,6 +591,15 @@ const Proyectos = sequelize.define('Proyectos', {
     type: DataTypes.ENUM('VERDE', 'AMARILLO', 'ROJO'),
     allowNull: false,
     defaultValue: 'VERDE'
+  },
+  avance_porcentaje: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: 0,
+      max: 100
+    }
   },
   fecha_inicio: {
     type: DataTypes.DATEONLY,
@@ -662,6 +764,7 @@ const Proyectos = sequelize.define('Proyectos', {
     { name: 'idx_proyectos_id_sede', fields: ['id_sede'] },
     { name: 'idx_proyectos_id_sponsor', fields: ['id_sponsor'] },
     { name: 'idx_proyectos_id_estado', fields: ['id_estado'] },
+    { name: 'idx_proyectos_id_workflow', fields: ['id_workflow'] },
     { name: 'idx_proyectos_portfolio_id', fields: ['portfolio_id'] }
   ]
 });
@@ -1559,6 +1662,13 @@ Riesgos.belongsTo(Tareas, { foreignKey: 'id_tarea', as: 'tarea' });
 EstadosProyecto.hasMany(Proyectos, { foreignKey: 'id_estado', as: 'Proyectos' });
 Proyectos.belongsTo(EstadosProyecto, { foreignKey: 'id_estado', as: 'Estado' });
 
+// Workflows associations
+Workflows.hasMany(Proyectos, { foreignKey: 'id_workflow', as: 'Proyectos' });
+Proyectos.belongsTo(Workflows, { foreignKey: 'id_workflow', as: 'Workflow' });
+
+Ambitos.hasMany(Workflows, { foreignKey: 'id_ambito', as: 'Workflows' });
+Workflows.belongsTo(Ambitos, { foreignKey: 'id_ambito', as: 'Ambito' });
+
 // Project has many ComentariosProyecto
 Proyectos.hasMany(ComentariosProyecto, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
 ComentariosProyecto.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
@@ -1707,7 +1817,9 @@ module.exports = {
   SystemConfig,
   KpiSnapshots,
   Ambitos,
-  UsuarioAmbitos
+  UsuarioAmbitos,
+  Workflows,
+  WorkflowEstados
 };
 
 

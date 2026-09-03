@@ -1,21 +1,22 @@
-const { Proyectos, Sedes, Proveedores, EstadosProyecto, Portfolios, Usuarios, Ambitos } = require('../../models');
+const { Proyectos, Sedes, Proveedores, EstadosProyecto, Portfolios, Usuarios, Ambitos, Workflows, Tags } = require('../../models');
 const { Op } = require('sequelize');
 
 const listProjectsTool = {
   name: 'list_projects',
-  description: 'Lista los proyectos de la PMO permitiendo filtrar por ámbito/departamento, estado, sede, responsable (PM) o búsqueda de texto.',
+  description: 'Lista los proyectos de la PMO permitiendo filtrar por ámbito/departamento, estado, sede, responsable (PM) o búsqueda de texto (nombre, código o etiquetas/tags).',
   inputSchema: {
     type: 'object',
     properties: {
-      search: { type: 'string', description: 'Texto a buscar en código o nombre del proyecto' },
+      search: { type: 'string', description: 'Texto a buscar en código, nombre o etiquetas/tags del proyecto' },
       estado: { type: 'string', description: 'Nombre o ID del estado del proyecto' },
+      workflowId: { type: 'number', description: 'ID del flujo de trabajo (workflow)' },
       sedeId: { type: 'number', description: 'ID de la sede/departamento' },
       ambitoId: { type: 'number', description: 'ID del ámbito/unidad de negocio' },
       limit: { type: 'number', description: 'Número máximo de resultados (por defecto 20)', default: 20 }
     }
   },
   handler: async (args, mcpScope = { isGlobal: true }) => {
-    const { search, estado, sedeId, ambitoId, limit = 20 } = args || {};
+    const { search, estado, workflowId, sedeId, ambitoId, limit = 20 } = args || {};
     const where = {};
 
     // Scope isolation rule
@@ -26,16 +27,29 @@ const listProjectsTool = {
     }
 
     if (search) {
-      where[Op.or] = [
+      const pTags = await Proyectos.findAll({
+        attributes: ['id_proyecto'],
+        include: [{ model: Tags, as: 'Tags', where: { nombre: { [Op.like]: `%${search}%` } }, attributes: [] }],
+        raw: true
+      });
+      const tagProjIds = pTags.map(p => p.id_proyecto);
+      const searchConditions = [
         { id_proyecto: { [Op.like]: `%${search}%` } },
-        { nombre_proyecto: { [Op.like]: `%${search}%` } }
+        { nombre_proyecto: { [Op.like]: `%${search}%` } },
+        { codigo_capex: { [Op.like]: `%${search}%` } }
       ];
+      if (tagProjIds.length > 0) {
+        searchConditions.push({ id_proyecto: { [Op.in]: tagProjIds } });
+      }
+      where[Op.or] = searchConditions;
     }
     if (sedeId) where.id_sede = sedeId;
+    if (workflowId) where.id_workflow = workflowId;
 
     const include = [
       { model: Sedes, as: 'Sede', attributes: ['id_sede', 'nombre_sede'] },
       { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado'] },
+      { model: Workflows, as: 'Workflow', attributes: ['id', 'nombre'] },
       { model: Usuarios, as: 'PM', attributes: ['id_usuario', 'nombre', 'apellidos'] },
       { model: Ambitos, as: 'Ambito', attributes: ['id_ambito', 'nombre', 'code'] }
     ];
@@ -59,6 +73,7 @@ const listProjectsTool = {
             id: p.id_proyecto,
             nombre: p.nombre_proyecto,
             ambito: p.Ambito ? `${p.Ambito.nombre} (${p.Ambito.code})` : null,
+            workflow: p.Workflow ? p.Workflow.nombre : null,
             estado: p.Estado ? p.Estado.nombre_estado : null,
             rag: p.indicador_rag,
             pm: p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : null,
@@ -93,6 +108,7 @@ const getProjectDetailTool = {
       include: [
         { model: Sedes, as: 'Sede', attributes: ['nombre_sede'] },
         { model: EstadosProyecto, as: 'Estado', attributes: ['nombre_estado'] },
+        { model: Workflows, as: 'Workflow', attributes: ['id', 'nombre', 'descripcion', 'code'] },
         { model: Proveedores, as: 'Proveedor', attributes: ['nombre_razon_social'] },
         { model: Usuarios, as: 'PM', attributes: ['nombre', 'apellidos', 'correo'] },
         { model: Portfolios, as: 'Portfolio', attributes: ['nombre'] },

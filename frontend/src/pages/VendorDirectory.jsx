@@ -2,30 +2,48 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Building, Plus, Edit2, Trash2, Search, Eye, RefreshCw, Phone, Mail,
-  ArrowUp, ArrowDown, ArrowUpDown
+  Building, Plus, Trash2, Search, Eye, RefreshCw, Phone, Mail,
+  ArrowUp, ArrowDown, ArrowUpDown, RotateCcw
 } from 'lucide-react';
 import { getSortedData } from '../utils/sorting';
 import VendorModal from '../components/modals/VendorModal';
+import usePersistentFilters from '../hooks/usePersistentFilters';
+
+const DEFAULT_VENDOR_FILTERS = {
+  searchTerm: '',
+  sortConfig: { key: 'id_proveedor', direction: 'asc' }
+};
 
 export default function VendorDirectory({ onViewVendor }) {
   const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
 
-  // Sorting state
-  const [sortConfig, setSortConfig] = useState({ key: 'id_proveedor', direction: 'asc' });
+  // Persistent Filters
+  const {
+    filters,
+    setFilters,
+    updateFilter,
+    resetFilters,
+    activeFiltersCount
+  } = usePersistentFilters('vendors', DEFAULT_VENDOR_FILTERS);
 
-  // Modal state
+  const searchTerm = filters.searchTerm || '';
+  const sortConfig = filters.sortConfig || { key: 'id_proveedor', direction: 'asc' };
+
+  const setSearchTerm = (val) => updateFilter('searchTerm', val);
+
+  // Modal state (for registering new vendor)
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingVendor, setEditingVendor] = useState(null);
 
   const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    setFilters(prev => ({
+      ...prev,
+      sortConfig: {
+        key,
+        direction: prev.sortConfig?.key === key && prev.sortConfig?.direction === 'asc' ? 'desc' : 'asc'
+      }
     }));
   };
 
@@ -69,17 +87,11 @@ export default function VendorDirectory({ onViewVendor }) {
   }, []);
 
   const openCreateModal = () => {
-    setEditingVendor(null);
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (vendor) => {
-    setEditingVendor(vendor);
     setIsModalOpen(true);
   };
 
   const handleDeleteVendor = (vendorId, vendorName) => {
-    if (!window.confirm(`¿Seguro que desea eliminar el socio tecnológico "${vendorName}"?`)) return;
+    if (!window.confirm(t('vendorDirectory.deletePartnerConfirm', { name: vendorName }))) return;
 
     fetch(`${import.meta.env.VITE_API_URL}/vendors/${vendorId}`, {
       method: 'DELETE',
@@ -123,6 +135,27 @@ export default function VendorDirectory({ onViewVendor }) {
           />
           <Search size={18} style={{ position: 'absolute', left: '14px', top: '11px', color: 'var(--md-sys-color-outline)' }} />
         </div>
+
+        {activeFiltersCount > 0 && (
+          <button 
+            type="button" 
+            onClick={resetFilters} 
+            className="m3-btn m3-btn-tonal"
+            style={{ 
+              height: '40px', 
+              padding: '0 12px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6, 
+              fontSize: '0.8rem',
+              color: 'var(--md-sys-color-error)',
+              backgroundColor: 'var(--md-sys-color-error-container)'
+            }}
+          >
+            <RotateCcw size={14} />
+            <span>{t('common.cleanFilters')}</span>
+          </button>
+        )}
 
         <button className="m3-btn m3-btn-primary" onClick={openCreateModal} style={{ height: '40px' }}>
           <Plus size={18} />
@@ -193,16 +226,7 @@ export default function VendorDirectory({ onViewVendor }) {
                         style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px' }}
                       >
                         <Eye size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                        {t('projectsTable.viewFicha')}
-                      </button>
-
-                      <button 
-                        className="icon-btn" 
-                        onClick={() => openEditModal(vendor)}
-                        style={{ color: 'var(--md-sys-color-primary)', width: 32, height: 32 }}
-                        title={t('common.edit')}
-                      >
-                        <Edit2 size={16} />
+                        {t('vendorDirectory.viewEditFicha')}
                       </button>
 
                       <button 
@@ -222,10 +246,10 @@ export default function VendorDirectory({ onViewVendor }) {
         </div>
       )}
 
-      {/* Unified Create / Edit Vendor Modal */}
+      {/* Register New Vendor Modal */}
       <VendorModal 
         isOpen={isModalOpen}
-        vendor={editingVendor}
+        vendor={null}
         getAuthHeaders={getAuthHeaders}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchVendors}

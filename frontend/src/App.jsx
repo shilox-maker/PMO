@@ -510,6 +510,7 @@ function NavigationRail() {
       </div>
 
       <div className="nav-links">
+        {/* Section 1: Gestión Operativa (Visible para todos los perfiles) */}
         <a
           className={`nav-link ${isActive('/proyectos') || location.pathname === '/' ? 'active' : ''}`}
           onClick={() => navigate('/proyectos')}
@@ -519,42 +520,6 @@ function NavigationRail() {
           {!isCollapsed && <span>{t('nav.projects')}</span>}
         </a>
 
-        <a
-          className={`nav-link ${(isActive('/dashboard') || isActive('/dashboard-proyectos')) && !isActive('/dashboard-portfolio') ? 'active' : ''}`}
-          onClick={() => navigate('/dashboard')}
-          title={isCollapsed ? t('nav.dashboardProjects') : undefined}
-        >
-          <Activity className="nav-link-icon" />
-          {!isCollapsed && <span>{t('nav.dashboardProjects')}</span>}
-        </a>
-
-        <a
-          className={`nav-link ${isActive('/dashboard-portfolio') || isActive('/governance') ? 'active' : ''}`}
-          onClick={() => navigate('/dashboard-portfolio')}
-          title={isCollapsed ? t('nav.dashboardPortfolio') : undefined}
-        >
-          <PieChart className="nav-link-icon" />
-          {!isCollapsed && <span>{t('nav.dashboardPortfolio')}</span>}
-        </a>
-
-        <a
-          className={`nav-link ${isActive('/portfolios/report') ? 'active' : ''}`}
-          onClick={() => navigate('/portfolios/report')}
-          title={isCollapsed ? "PIPs" : undefined}
-        >
-          <Briefcase className="nav-link-icon" />
-          {!isCollapsed && <span>PIPs</span>}
-        </a>
-
-        <a
-          className={`nav-link ${isActive('/timeline') ? 'active' : ''}`}
-          onClick={() => navigate('/timeline')}
-          title={isCollapsed ? "Timeline" : undefined}
-        >
-          <Calendar className="nav-link-icon" />
-          {!isCollapsed && <span>Timeline</span>}
-        </a>
-        <hr />
         <a
           className={`nav-link ${isActive('/proveedores') || isActive('/proveedor/') ? 'active' : ''}`}
           onClick={() => navigate('/proveedores')}
@@ -573,15 +538,61 @@ function NavigationRail() {
           {!isCollapsed && <span>{t('nav.lessonsLearned')}</span>}
         </a>
 
+        {/* Section 2: Dirección y Supervisión (DIRECTOR y ADMINISTRADOR) */}
+        {currentPm && ['ADMINISTRADOR', 'DIRECTOR'].includes(currentPm.perfil) && (
+          <>
+            <hr />
+            <a
+              className={`nav-link ${(isActive('/dashboard') || isActive('/dashboard-proyectos')) && !isActive('/dashboard-portfolio') ? 'active' : ''}`}
+              onClick={() => navigate('/dashboard')}
+              title={isCollapsed ? t('nav.dashboardProjects') : undefined}
+            >
+              <Activity className="nav-link-icon" />
+              {!isCollapsed && <span>{t('nav.dashboardProjects')}</span>}
+            </a>
+
+            <a
+              className={`nav-link ${isActive('/dashboard-portfolio') || isActive('/governance') ? 'active' : ''}`}
+              onClick={() => navigate('/dashboard-portfolio')}
+              title={isCollapsed ? t('nav.dashboardPortfolio') : undefined}
+            >
+              <PieChart className="nav-link-icon" />
+              {!isCollapsed && <span>{t('nav.dashboardPortfolio')}</span>}
+            </a>
+
+            <a
+              className={`nav-link ${isActive('/portfolios/report') ? 'active' : ''}`}
+              onClick={() => navigate('/portfolios/report')}
+              title={isCollapsed ? "PIPs" : undefined}
+            >
+              <Briefcase className="nav-link-icon" />
+              {!isCollapsed && <span>PIPs</span>}
+            </a>
+
+            <a
+              className={`nav-link ${isActive('/timeline') ? 'active' : ''}`}
+              onClick={() => navigate('/timeline')}
+              title={isCollapsed ? "Timeline" : undefined}
+            >
+              <Calendar className="nav-link-icon" />
+              {!isCollapsed && <span>Timeline</span>}
+            </a>
+          </>
+        )}
+
+        {/* Section 3: Administración (Solo ADMINISTRADOR) */}
         {currentPm && currentPm.perfil === 'ADMINISTRADOR' && (
-          <a
-            className={`nav-link ${isActive('/admin') ? 'active' : ''}`}
-            onClick={() => navigate('/admin')}
-            title={isCollapsed ? t('nav.admin') : undefined}
-          >
-            <Settings className="nav-link-icon" />
-            {!isCollapsed && <span>{t('nav.admin')}</span>}
-          </a>
+          <>
+            <hr />
+            <a
+              className={`nav-link ${isActive('/admin') ? 'active' : ''}`}
+              onClick={() => navigate('/admin')}
+              title={isCollapsed ? t('nav.admin') : undefined}
+            >
+              <Settings className="nav-link-icon" />
+              {!isCollapsed && <span>{t('nav.admin')}</span>}
+            </a>
+          </>
         )}
       </div>
 
@@ -735,6 +746,9 @@ function MainAppContent() {
     return t('pageTitles.dashboard');
   };
 
+  const isDirectorOrAdmin = currentPm && ['ADMINISTRADOR', 'DIRECTOR'].includes(currentPm.perfil);
+  const isAdmin = currentPm && currentPm.perfil === 'ADMINISTRADOR';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {isMaintenanceActive && currentPm?.perfil === 'ADMINISTRADOR' && <AdminMaintenanceBanner />}
@@ -839,26 +853,32 @@ function MainAppContent() {
                   <Projects onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
                 } />
 
+                {/* Rutas exclusivas de Dirección / Administración */}
                 <Route path="/governance" element={
-                  <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+                  isDirectorOrAdmin ? <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} /> : <Navigate to="/proyectos" replace />
                 } />
 
                 <Route path="/dashboard-portfolio" element={
-                  <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+                  isDirectorOrAdmin ? <DashboardPortfolio onViewProject={handleViewProject} onViewVendor={handleViewVendor} /> : <Navigate to="/proyectos" replace />
                 } />
 
                 <Route path="/dashboard-proyectos" element={
-                  <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+                  isDirectorOrAdmin ? <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} /> : <Navigate to="/proyectos" replace />
                 } />
 
                 <Route path="/dashboard" element={
-                  <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} />
+                  isDirectorOrAdmin ? <DashboardProyectos onViewProject={handleViewProject} onViewVendor={handleViewVendor} /> : <Navigate to="/proyectos" replace />
                 } />
 
                 <Route path="/timeline" element={
-                  <Timeline onViewProject={handleViewProject} />
+                  isDirectorOrAdmin ? <Timeline onViewProject={handleViewProject} /> : <Navigate to="/proyectos" replace />
                 } />
 
+                <Route path="/portfolios/report" element={
+                  isDirectorOrAdmin ? <PortfolioReport /> : <Navigate to="/proyectos" replace />
+                } />
+
+                {/* Rutas compartidas */}
                 <Route path="/proveedores" element={
                   <VendorDirectory onViewVendor={handleViewVendor} />
                 } />
@@ -873,9 +893,11 @@ function MainAppContent() {
 
                 <Route path="/lecciones" element={<GeneralLessonsPage />} />
 
-                <Route path="/portfolios/report" element={<PortfolioReport />} />
+                {/* Ruta exclusiva de Administración */}
+                <Route path="/admin" element={
+                  isAdmin ? <AdminPanel /> : <Navigate to="/proyectos" replace />
+                } />
 
-                <Route path="/admin" element={<AdminPanel />} />
                 <Route path="*" element={<Navigate to="/proyectos" replace />} />
               </Routes>
             </React.Suspense>

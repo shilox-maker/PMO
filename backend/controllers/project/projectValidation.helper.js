@@ -21,26 +21,22 @@ async function validateCapexFields(data, res) {
     data.id_tipo_capex = null;
     data.id_subtipo_capex = null;
   }
-  if (data.es_capex && (!data.codigo_capex || data.codigo_capex.trim() === '')) {
-    res.status(400).json({ error: 'El código CAPEX es obligatorio para proyectos CAPEX.' });
-    return false;
-  }
-  if (data.es_capex && !data.id_tipo_capex) {
-    res.status(400).json({ error: 'El tipo de CAPEX es obligatorio para proyectos CAPEX.' });
-    return false;
-  }
-  if (data.es_capex && data.id_tipo_capex) {
-    const tipo = await TiposCapex.findByPk(data.id_tipo_capex, {
-      include: [{ model: SubtiposCapex, as: 'Subtipos' }]
-    });
-    if (tipo && tipo.Subtipos && tipo.Subtipos.length > 0 && !data.id_subtipo_capex) {
-      res.status(400).json({ error: 'El subtipo de CAPEX es obligatorio para el tipo seleccionado.' });
-      return false;
-    }
-  }
   if (!data.es_capex) {
+    data.codigo_capex = null;
     data.id_tipo_capex = null;
     data.id_subtipo_capex = null;
+  } else {
+    if (data.codigo_capex !== undefined) {
+      data.codigo_capex = data.codigo_capex && typeof data.codigo_capex === 'string' && data.codigo_capex.trim() !== '' 
+        ? data.codigo_capex.trim() 
+        : null;
+    }
+    if (data.id_tipo_capex !== undefined) {
+      data.id_tipo_capex = data.id_tipo_capex ? Number(data.id_tipo_capex) : null;
+    }
+    if (data.id_subtipo_capex !== undefined) {
+      data.id_subtipo_capex = (data.id_tipo_capex && data.id_subtipo_capex) ? Number(data.id_subtipo_capex) : null;
+    }
   }
   return true;
 }

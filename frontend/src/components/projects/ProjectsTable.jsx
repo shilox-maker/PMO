@@ -110,7 +110,7 @@ export default function ProjectsTable({
                     </div>
                   ) : project.es_capex ? (
                     <div style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-primary)', fontWeight: 600, marginTop: 2 }}>
-                      CAPEX • {project.codigo_capex}
+                      CAPEX{project.codigo_capex ? ` • ${project.codigo_capex}` : ''}
                     </div>
                   ) : null}
                 </td>}

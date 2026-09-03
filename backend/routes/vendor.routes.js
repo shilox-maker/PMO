@@ -12,6 +12,8 @@ router.delete('/vendors/:id_proveedor', restrictToAdmin, vendorController.delete
 
 // Contacts
 router.post('/contacts', vendorController.createContact);
+router.put('/contacts/:id_contacto', vendorController.updateContact);
 router.delete('/contacts/:id_contacto', vendorController.deleteContact);
 
 module.exports = router;
+

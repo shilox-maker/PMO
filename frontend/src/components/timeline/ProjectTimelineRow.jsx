@@ -58,7 +58,7 @@ export function generateTimelineColumns(timelineStart, timelineEnd, zoom, pxPerD
 export function filterTimelineProjects(projects, filters) {
   const {
     projectId, showClosed, filterRag, filterPm, filterVendor,
-    filterPortfolio, filterState, filterEstrategico, searchTerm,
+    filterPortfolio, filterWorkflow, filterState, filterEstrategico, searchTerm,
     filterStartDate, filterEndDate
   } = filters;
 
@@ -70,6 +70,7 @@ export function filterTimelineProjects(projects, filters) {
     if (filterPm && String(p.id_pm || '') !== String(filterPm) && p.pm_nombre !== filterPm) return false;
     if (filterVendor && String(p.id_proveedor || '') !== String(filterVendor)) return false;
     if (filterPortfolio && String(p.portfolio_id || '') !== String(filterPortfolio)) return false;
+    if (filterWorkflow && String(p.id_workflow || '') !== String(filterWorkflow)) return false;
     if (filterState && String(p.id_estado || '') !== String(filterState)) return false;
     if (filterEstrategico !== '' && String(p.es_estrategico) !== String(filterEstrategico)) return false;
 
@@ -79,7 +80,8 @@ export function filterTimelineProjects(projects, filters) {
       const matchCode = (p.id_proyecto || '').toLowerCase().includes(term);
       const matchPm = (p.pm_nombre || '').toLowerCase().includes(term);
       const matchVendor = (p.prov_nombre || '').toLowerCase().includes(term);
-      if (!matchName && !matchCode && !matchPm && !matchVendor) return false;
+      const matchTag = Array.isArray(p.Tags) && p.Tags.some(t => (t.nombre || '').toLowerCase().includes(term));
+      if (!matchName && !matchCode && !matchPm && !matchVendor && !matchTag) return false;
     }
 
     const pStart = p.fecha_kickoff || p.fecha_inicio;

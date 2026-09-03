@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../server');
-const { sequelize, Usuarios, Proyectos, EstadosProyecto, Sedes, Proveedores, ContactosProveedor } = require('../models');
+const { sequelize, Usuarios, Proyectos, EstadosProyecto, Sedes, Proveedores, ContactosProveedor, Workflows, WorkflowEstados, Tags } = require('../models');
 const bcrypt = require('bcryptjs');
 
 let token = '';
@@ -43,12 +43,17 @@ beforeAll(async () => {
   // Create mock states
   await EstadosProyecto.create({ id_estado: 1, nombre_estado: 'En Progreso', icono: '🚀', orden: 1, proyecto_cerrado: false });
 
+  // Create default workflow
+  const wf = await Workflows.create({ nombre: 'Flujo Estándar', is_default: true, activo: true });
+  await WorkflowEstados.create({ id_workflow: wf.id, id_estado: 1, orden: 1 });
+
   // Create a mock project
   await Proyectos.create({
     id_proyecto: 'PRJ-2026-001',
     nombre_proyecto: 'Proyecto Test',
     descripcion: 'Desc',
     id_estado: 1,
+    id_workflow: wf.id,
     id_pm: 1,
     id_proveedor: 1,
     id_sede: 1,
@@ -230,6 +235,68 @@ describe('API Endpoints', () => {
     });
   });
 
+  describe('Project Update and Progress', () => {
+    it('should update and persist avance_porcentaje successfully', async () => {
+      const res = await request(app)
+        .put('/api/projects/PRJ-2026-001')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          avance_porcentaje: 65
+        });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.avance_porcentaje).toBe(65);
+
+      // Verify persistence with GET
+      const getRes = await request(app)
+        .get('/api/projects/PRJ-2026-001')
+        .set('Authorization', `Bearer ${token}`);
+      expect(getRes.statusCode).toEqual(200);
+      expect(getRes.body.avance_porcentaje).toBe(65);
+    });
+  });
+
+  describe('Project Search by Tags and Text', () => {
+    it('should find projects by associated tag in projects list, global search and dashboard', async () => {
+      // 1. Create a tag and associate to test project
+      const testTag = await Tags.create({ nombre: 'SAP-2026' });
+      const project = await Proyectos.findByPk('PRJ-2026-001');
+      await project.setTags([testTag]);
+
+      // 2. Search in /api/projects?search=SAP-2026
+      const resProjects = await request(app)
+        .get('/api/projects?search=SAP-2026')
+        .set('Authorization', `Bearer ${token}`);
+      expect(resProjects.statusCode).toEqual(200);
+      expect(Array.isArray(resProjects.body)).toBe(true);
+      expect(resProjects.body.length).toBeGreaterThanOrEqual(1);
+      expect(resProjects.body.some(p => p.id_proyecto === 'PRJ-2026-001')).toBe(true);
+
+      // 3. Search in /api/search/global?q=SAP-2026
+      const resGlobal = await request(app)
+        .get('/api/search/global?q=SAP-2026')
+        .set('Authorization', `Bearer ${token}`);
+      expect(resGlobal.statusCode).toEqual(200);
+      expect(Array.isArray(resGlobal.body.projects)).toBe(true);
+      expect(resGlobal.body.projects.some(p => p.id_proyecto === 'PRJ-2026-001')).toBe(true);
+
+      // 4. Search in /api/portfolio/dashboard?search=SAP-2026
+      const resDash = await request(app)
+        .get('/api/portfolio/dashboard?search=SAP-2026')
+        .set('Authorization', `Bearer ${token}`);
+      expect(resDash.statusCode).toEqual(200);
+      const dashProjects = Array.isArray(resDash.body) ? resDash.body : resDash.body.projects;
+      expect(dashProjects.some(p => p.id_proyecto === 'PRJ-2026-001')).toBe(true);
+
+      // 5. Search for non-existent tag should return 0 results
+      const resNone = await request(app)
+        .get('/api/projects?search=TAG_INEXISTENTE_999')
+        .set('Authorization', `Bearer ${token}`);
+      expect(resNone.statusCode).toEqual(200);
+      expect(resNone.body.length).toBe(0);
+    });
+  });
+
   describe('Project Deletion', () => {
     it('should delete a project successfully when authorized', async () => {
       const res = await request(app)
@@ -254,4 +321,90 @@ describe('API Endpoints', () => {
       expect(res.statusCode).toEqual(404);
     });
   });
+
+  describe('Vendor & Contact Management (IDEA-80)', () => {
+    let createdContactId = null;
+
+    it('should update vendor general info', async () => {
+      const res = await request(app)
+        .put('/api/vendors/1')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          nombre_razon_social: 'Proveedor Test Actualizado',
+          telefono_general: '961234567',
+          email_general: 'contacto@proveedortest.com',
+          es_grupo_dacsa: true
+        });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.nombre_razon_social).toBe('Proveedor Test Actualizado');
+      expect(res.body.telefono_general).toBe('961234567');
+      expect(res.body.email_general).toBe('contacto@proveedortest.com');
+      expect(res.body.es_grupo_dacsa).toBe(true);
+    });
+
+    it('should create a new vendor contact', async () => {
+      const res = await request(app)
+        .post('/api/contacts')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          id_proveedor: 1,
+          nombre: 'Juan',
+          apellidos: 'García',
+          puesto: 'Lead Tech',
+          telefono: '600111222',
+          email: 'jgarcia@proveedortest.com'
+        });
+
+      expect(res.statusCode).toEqual(201);
+      expect(res.body.nombre).toBe('Juan');
+      expect(res.body.id_contacto).toBeDefined();
+      createdContactId = res.body.id_contacto;
+    });
+
+    it('should update an existing contact (PUT /api/contacts/:id_contacto)', async () => {
+      const res = await request(app)
+        .put(`/api/contacts/${createdContactId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          nombre: 'Juan Carlos',
+          apellidos: 'García Pérez',
+          puesto: 'Director Técnico',
+          telefono: '600999888',
+          email: 'jcgarcia@proveedortest.com'
+        });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.nombre).toBe('Juan Carlos');
+      expect(res.body.apellidos).toBe('García Pérez');
+      expect(res.body.puesto).toBe('Director Técnico');
+      expect(res.body.telefono).toBe('600999888');
+      expect(res.body.email).toBe('jcgarcia@proveedortest.com');
+    });
+
+    it('should delete a contact successfully', async () => {
+      const res = await request(app)
+        .delete(`/api/contacts/${createdContactId}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.message).toBe('Contacto eliminado con éxito');
+    });
+
+    it('should return 404 when updating non-existent contact', async () => {
+      const res = await request(app)
+        .put('/api/contacts/999999')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          nombre: 'Fantasma',
+          apellidos: 'Nadie',
+          puesto: 'Ninguno',
+          telefono: '000',
+          email: 'fantasma@test.com'
+        });
+
+      expect(res.statusCode).toEqual(404);
+    });
+  });
 });
+

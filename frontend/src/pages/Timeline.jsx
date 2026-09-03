@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import usePersistentFilters from '../hooks/usePersistentFilters';
 import TimelineToolbar from '../components/timeline/TimelineToolbar';
 import { 
   ProjectTimelineLabel, 
@@ -14,32 +15,79 @@ import {
 const ZOOM_LEVELS = ['trimestral', 'mensual', 'semanal'];
 const MS_PER_DAY = 86400000;
 
+const DEFAULT_TIMELINE_FILTERS = {
+  searchTerm: '',
+  showClosed: false,
+  filterRag: '',
+  filterPm: '',
+  filterVendor: '',
+  filterPortfolio: '',
+  filterWorkflow: '',
+  filterEstrategico: '',
+  filterIniciativa: '',
+  filterState: '',
+  filterStartDate: '',
+  filterEndDate: '',
+  zoomIndex: 1
+};
+
 export default function Timeline({ onViewProject, projectId, hideHeader }) {
   const { t } = useTranslation();
   const { getAuthHeaders, selectedAmbito } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [zoomIndex, setZoomIndex] = useState(1);
   const [expandedProjects, setExpandedProjects] = useState(new Set());
 
   // Master Lists
   const [pmsList, setPmsList] = useState([]);
   const [vendorsList, setVendorsList] = useState([]);
   const [portfoliosList, setPortfoliosList] = useState([]);
+  const [workflowsList, setWorkflowsList] = useState([]);
   const [statesList, setStatesList] = useState([]);
 
-  // Filter States
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showClosed, setShowClosed] = useState(false);
-  const [filterRag, setFilterRag] = useState('');
-  const [filterPm, setFilterPm] = useState('');
-  const [filterVendor, setFilterVendor] = useState('');
-  const [filterPortfolio, setFilterPortfolio] = useState('');
-  const [filterEstrategico, setFilterEstrategico] = useState('');
-  const [filterIniciativa, setFilterIniciativa] = useState('');
-  const [filterState, setFilterState] = useState('');
-  const [filterStartDate, setFilterStartDate] = useState('');
-  const [filterEndDate, setFilterEndDate] = useState('');
+  // Persistent Filters
+  const {
+    filters,
+    setFilters,
+    updateFilter,
+    resetFilters,
+    activeFiltersCount
+  } = usePersistentFilters('timeline', DEFAULT_TIMELINE_FILTERS);
+
+  const {
+    searchTerm,
+    showClosed,
+    filterRag,
+    filterPm,
+    filterVendor,
+    filterPortfolio,
+    filterWorkflow,
+    filterEstrategico,
+    filterIniciativa,
+    filterState,
+    filterStartDate,
+    filterEndDate,
+    zoomIndex
+  } = filters;
+
+  const setSearchTerm = (val) => updateFilter('searchTerm', val);
+  const setShowClosed = (val) => updateFilter('showClosed', typeof val === 'function' ? val(showClosed) : val);
+  const setFilterRag = (val) => updateFilter('filterRag', val);
+  const setFilterPm = (val) => updateFilter('filterPm', val);
+  const setFilterVendor = (val) => updateFilter('filterVendor', val);
+  const setFilterPortfolio = (val) => updateFilter('filterPortfolio', val);
+  const setFilterWorkflow = (val) => updateFilter('filterWorkflow', val);
+  const setFilterEstrategico = (val) => updateFilter('filterEstrategico', val);
+  const setFilterIniciativa = (val) => updateFilter('filterIniciativa', val);
+  const setFilterState = (val) => updateFilter('filterState', val);
+  const setFilterStartDate = (val) => updateFilter('filterStartDate', val);
+  const setFilterEndDate = (val) => updateFilter('filterEndDate', val);
+  const setZoomIndex = (updater) => {
+    setFilters(prev => ({
+      ...prev,
+      zoomIndex: typeof updater === 'function' ? updater(prev.zoomIndex !== undefined ? prev.zoomIndex : 1) : updater
+    }));
+  };
 
   const [tooltip, setTooltip] = useState(null);
   const scrollRef = useRef(null);
@@ -54,12 +102,14 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
       fetch(`${API}/vendors`, { headers }).then(r => r.json()),
       fetch(`${API}/portfolios`, { headers }).then(r => r.json()),
       fetch(`${API}/portfolio/states`, { headers }).then(r => r.json()),
+      fetch(`${API}/portfolio/workflows`, { headers }).then(r => r.json()),
       fetch(`${API}/timeline`, { headers }).then(r => r.json())
-    ]).then(([pms, vds, pts, sts, tml]) => {
+    ]).then(([pms, vds, pts, sts, wfs, tml]) => {
       setPmsList(Array.isArray(pms) ? pms : []);
       setVendorsList(Array.isArray(vds) ? vds : []);
       setPortfoliosList(Array.isArray(pts) ? pts : []);
       setStatesList(Array.isArray(sts) ? sts : []);
+      setWorkflowsList(Array.isArray(wfs) ? wfs : []);
       setProjects(Array.isArray(tml) ? tml : []);
       setLoading(false);
     }).catch(err => { console.error(err); setLoading(false); });
@@ -89,10 +139,10 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
   const filtered = useMemo(() => {
     return filterTimelineProjects(projects, {
       projectId, showClosed, filterRag, filterPm, filterVendor,
-      filterPortfolio, filterState, filterEstrategico, searchTerm,
+      filterPortfolio, filterWorkflow, filterState, filterEstrategico, searchTerm,
       filterStartDate, filterEndDate
     });
-  }, [projects, showClosed, filterRag, filterPm, filterVendor, filterPortfolio, filterState, filterEstrategico, searchTerm, filterStartDate, filterEndDate, projectId]);
+  }, [projects, showClosed, filterRag, filterPm, filterVendor, filterPortfolio, filterWorkflow, filterState, filterEstrategico, searchTerm, filterStartDate, filterEndDate, projectId]);
 
   const { timelineStart, timelineEnd, totalDays } = useMemo(() => {
     if (filtered.length === 0) return { timelineStart: new Date(), timelineEnd: new Date(), totalDays: 365 };
@@ -154,6 +204,7 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
           filterPm={filterPm} setFilterPm={setFilterPm}
           filterVendor={filterVendor} setFilterVendor={setFilterVendor}
           filterPortfolio={filterPortfolio} setFilterPortfolio={setFilterPortfolio}
+          filterWorkflow={filterWorkflow} setFilterWorkflow={setFilterWorkflow}
           filterEstrategico={filterEstrategico} setFilterEstrategico={setFilterEstrategico}
           filterIniciativa={filterIniciativa} setFilterIniciativa={setFilterIniciativa}
           filterState={filterState} setFilterState={setFilterState}
@@ -161,8 +212,10 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
           filterEndDate={filterEndDate} setFilterEndDate={setFilterEndDate}
           showClosed={showClosed} setShowClosed={setShowClosed}
           zoomIndex={zoomIndex} setZoomIndex={setZoomIndex}
-          pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList} statesList={statesList}
+          pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList} workflowsList={workflowsList} statesList={statesList}
           zoom={zoom}
+          activeFiltersCount={activeFiltersCount}
+          onResetFilters={resetFilters}
         />
       )}
 

@@ -1,4 +1,4 @@
-const { Proyectos, Riesgos, Incidencias, Ambitos } = require('../../models');
+const { Proyectos, Riesgos, Incidencias, Ambitos, Tags } = require('../../models');
 const { Op } = require('sequelize');
 
 const searchPmoTool = {
@@ -17,12 +17,24 @@ const searchPmoTool = {
     const { query, ambitoId, limit = 5 } = args || {};
     const l = Math.min(limit, 10);
 
+    const pTags = await Proyectos.findAll({
+      attributes: ['id_proyecto'],
+      include: [{ model: Tags, as: 'Tags', where: { nombre: { [Op.like]: `%${query}%` } }, attributes: [] }],
+      raw: true
+    });
+    const tagProjIds = pTags.map(p => p.id_proyecto);
+
+    const projectOrConditions = [
+      { id_proyecto: { [Op.like]: `%${query}%` } },
+      { nombre_proyecto: { [Op.like]: `%${query}%` } },
+      { descripcion: { [Op.like]: `%${query}%` } }
+    ];
+    if (tagProjIds.length > 0) {
+      projectOrConditions.push({ id_proyecto: { [Op.in]: tagProjIds } });
+    }
+
     const projectWhere = {
-      [Op.or]: [
-        { id_proyecto: { [Op.like]: `%${query}%` } },
-        { nombre_proyecto: { [Op.like]: `%${query}%` } },
-        { descripcion: { [Op.like]: `%${query}%` } }
-      ]
+      [Op.or]: projectOrConditions
     };
 
     if (!mcpScope.isGlobal && mcpScope.id_ambito) {

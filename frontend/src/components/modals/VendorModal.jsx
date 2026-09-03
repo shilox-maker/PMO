@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const isEdit = !!vendor;
   const [vendorForm, setVendorForm] = useState({
     nombre_razon_social: '',
@@ -9,6 +11,7 @@ export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, o
     email_general: ''
   });
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (vendor) {
@@ -41,10 +44,11 @@ export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, o
     setFormError('');
 
     if (!vendorForm.nombre_razon_social.trim()) {
-      setFormError('El nombre o razón social es obligatorio.');
+      setFormError(t('vendor360.nameRequired'));
       return;
     }
 
+    setSaving(true);
     const url = isEdit 
       ? `${import.meta.env.VITE_API_URL}/vendors/${vendor.id_proveedor}`
       : `${import.meta.env.VITE_API_URL}/vendors`;
@@ -61,17 +65,21 @@ export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, o
         return data;
       })
       .then(() => {
+        setSaving(false);
         onSuccess();
         onClose();
       })
-      .catch(err => setFormError(err.message));
+      .catch(err => {
+        setSaving(false);
+        setFormError(err.message);
+      });
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content glass-panel" style={{ maxWidth: '500px' }}>
         <div className="modal-header">
-          <h3 className="modal-title">{isEdit ? 'Editar Socio Tecnológico' : 'Registrar Socio Tecnológico'}</h3>
+          <h3 className="modal-title">{isEdit ? t('vendor360.saveChanges') : t('vendorDirectory.registerPartner')}</h3>
           <button className="icon-btn" onClick={onClose}>✕</button>
         </div>
 
@@ -83,7 +91,7 @@ export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, o
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Razón Social o Nombre del Socio *</label>
+            <label className="form-label">{t('vendor360.companyName')} *</label>
             <input 
               type="text" 
               name="nombre_razon_social"
@@ -96,7 +104,7 @@ export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, o
           </div>
 
           <div className="form-group">
-            <label className="form-label">Teléfono de Contacto General</label>
+            <label className="form-label">{t('vendorDirectory.generalPhone')}</label>
             <input 
               type="text" 
               name="telefono_general"
@@ -108,7 +116,7 @@ export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, o
           </div>
 
           <div className="form-group">
-            <label className="form-label">Email de Contacto General</label>
+            <label className="form-label">{t('vendorDirectory.email')}</label>
             <input 
               type="email" 
               name="email_general"
@@ -129,15 +137,17 @@ export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, o
               className="m3-checkbox"
               style={{ width: 18, height: 18 }}
             />
-            <label htmlFor="es_grupo_dacsa_modal" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>Pertenece al Grupo Dacsa</label>
+            <label htmlFor="es_grupo_dacsa_modal" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>
+              {t('vendor360.belongsDacsa')}
+            </label>
           </div>
 
           <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end', marginTop: 24 }}>
-            <button type="button" className="m3-btn m3-btn-outline" onClick={onClose}>
-              Cancelar
+            <button type="button" className="m3-btn m3-btn-outline" onClick={onClose} disabled={saving}>
+              {t('vendor360.cancel')}
             </button>
-            <button type="submit" className="m3-btn m3-btn-primary">
-              {isEdit ? 'Guardar Cambios' : 'Registrar Socio'}
+            <button type="submit" className="m3-btn m3-btn-primary" disabled={saving}>
+              {saving ? t('vendor360.saveChanges') : (isEdit ? t('vendor360.saveChanges') : t('vendorDirectory.registerPartner'))}
             </button>
           </div>
         </form>
@@ -145,3 +155,4 @@ export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, o
     </div>
   );
 }
+

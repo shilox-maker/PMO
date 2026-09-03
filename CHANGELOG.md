@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## [4.1.0] - 2026-09-03
+### Added
+- **Flujos de Trabajo (Workflows) y Estados Condicionados por Proyecto (FEATURE-75 / IDEA-75)**:
+  - Sistema completo de `Workflows` con soporte Many-to-Many con Estados de Proyecto (`Workflow_Estados`), permitiendo definir qué subconjunto de estados y en qué secuencia cronológica aplica a cada tipo de proyecto.
+  - Soporte de flujos globales y segregados por Ámbito, asignación de flujo predeterminado (`is_default`), resolución automática de estado inicial al dar de alta proyectos y validación de coherencia de estados en edición/transiciones.
+  - Pestaña de administración de Flujos de Trabajo en el Panel de Administración (`WorkflowsAdmin`, `WorkflowsList`, `WorkflowDetailForm`, `WorkflowStatesManager`).
+  - Adaptación contextual y visualización de estados en la ficha de proyecto (`ProjectDetailHeader`), modales de alta/edición (`CreateProjectModal`, `ProjectEditModal`), y selectores/filtros por flujo en Dashboards, Timeline y listado de proyectos.
+- **Persistencia Inteligente de Filtros y Vistas por Usuario y Ámbito (FEATURE-77 / IDEA-77)**:
+  - Hook personalizado `usePersistentFilters` que aísla preferencias y filtros en `localStorage` bajo claves dinámicas `pmo_filters_u{userId}_amb{ambitoId}_{pageKey}`.
+  - Persistencia reactiva integrada en Proyectos, Dashboard Portfolio, Dashboard Proyectos, Timeline Gantt, Governance Dashboard, Lecciones Aprendidas y Directorio de Proveedores.
+  - Sincronización del segmentador de estados según el flujo de trabajo activo (`filterWorkflow`) y botones de restablecimiento global de filtros con indicadores de conteo activo.
+- **Búsqueda Omnicanal por Etiquetas (Tags), Código y CAPEX (FEATURE-78 / IDEA-78)**:
+  - Búsqueda textual omnicanal que resuelve coincidencias sobre etiquetas (`Tags.nombre`), código de proyecto, identificador y código CAPEX en consultas de Proyectos, Dashboards, Timeline Gantt, Búsqueda Global (`Ctrl + K`) y Servidor MCP (`list_projects`, `search_pmo`).
+- **Creación Opcional de Tareas del Estado Inicial al Registrar Proyecto (FEATURE-79 / IDEA-79)**:
+  - Modal interactivo de confirmación (`ConfirmAddStateTasksModal`) al crear un proyecto cuando el estado inicial contiene tareas plantilla asociadas (`TareasPlantilla`), permitiendo seleccionar o deseleccionar tareas individualmente, crearlas con fecha límite sincronizada, o ignorarlas.
+- **Unificación de Edición de Socios Tecnológicos en Pantalla Única - Ficha Vendor 360º (FEATURE-80 / IDEA-80)**:
+  - Centralización de edición y gestión de proveedores en la Ficha Vendor 360º (`VendorContactCard`), con edición en línea (*inline form*) de información general, persistencia reactiva en backend (`PUT /api/vendors/:id_proveedor`) y actualización inmediata de la cabecera.
+  - Edición interactiva de contactos existentes en `AddVendorContactModal` y simplificación de las acciones en `VendorDirectory` orientadas a "Ver / Editar Ficha" y "Eliminar".
+
+### Changed / Improved
+- **Flexibilización de Campos CAPEX y Presupuesto Inicial Opcional (FEATURE-76 / IDEA-76)**:
+  - Eliminada la obligatoriedad de campos financieros (`codigo_capex`, `id_tipo_capex`, `id_subtipo_capex`, `budget_inicial`) en el alta y edición de proyectos para permitir iniciativas tempranas sin código ERP/SAP previo.
+  - Fallbacks defensivos (`budget_inicial || 0`) en cálculos automáticos y protección de métricas de sobrecoste/alertas preventivas CAPEX para evaluar únicamente proyectos con presupuesto mayor a 0.
+- **Auto-sincronización de Esquema y Migraciones**:
+  - Inclusión de migraciones `19_add_avance_porcentaje_to_proyectos` y `20_create_workflows_and_workflow_estados`.
+  - Auto-sincronización y comprobación de integridad de tablas y restricciones en el arranque de la aplicación en Azure (`autoSchema.js`).
+- **Sanitización Segura y Resiliencia en Backend**:
+  - Sanitización estricta de enteros (`dia_semana`, `dia_mes`) para MSSQL y mejora del `keyGenerator` del rate limiter y gestión de errores en comunicaciones.
+- **Internacionalización y Localización (i18n)**:
+  - Cobertura completa trilingüe (Español, Inglés, Portugués) para todos los nuevos componentes de flujos de trabajo, modales de tareas iniciales, edición unificada de proveedores y persistencia de filtros.
+
 ## [4.0.0] - 2026-08-13
 ### Added / Changed
 - **Segregación y Gestión Estricta por Ámbito / Multi-tenancy (FEATURE-56 / BUG-12 / BUG-09 / BUG-10)**:

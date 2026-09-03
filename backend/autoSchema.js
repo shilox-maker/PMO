@@ -113,6 +113,15 @@ async function ensureSchemaConsistency(sequelize) {
           ALTER TABLE [${schema}].[Tareas] ADD CONSTRAINT DF_Tareas_estado_${schema} DEFAULT 'SIN INICIAR' FOR [estado];
           ALTER TABLE [${schema}].[Tareas] ADD CONSTRAINT CK_Tareas_estado_${schema} CHECK ([estado] IN ('SIN INICIAR', 'EN CURSO', 'COMPLETADA'));
       END;
+
+      -- 5. Asegurar columna avance_porcentaje en [Proyectos]
+      IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Proyectos' AND schema_id = SCHEMA_ID('${schema}'))
+      BEGIN
+          IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[${schema}].[Proyectos]') AND name = 'avance_porcentaje')
+          BEGIN
+              ALTER TABLE [${schema}].[Proyectos] ADD [avance_porcentaje] INT NOT NULL CONSTRAINT DF_Proyectos_avance_${schema} DEFAULT 0;
+          END;
+      END;
     `);
 
     logger.info(`✅ [Auto-Schema] Esquema [${schema}] sincronizado y restricciones actualizadas.`);

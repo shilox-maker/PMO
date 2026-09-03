@@ -1,5 +1,6 @@
 const { 
-  Proyectos, Usuarios, EstadosProyecto, ComentariosProyecto
+  Proyectos, Usuarios, EstadosProyecto, ComentariosProyecto,
+  Workflows, WorkflowEstados
 } = require('../../models/index');
 const { generateNextId } = require('../../utils/helpers');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -9,16 +10,42 @@ const {
   validateDateFields
 } = require('./projectValidation.helper');
 
-// Helper to resolve state
-async function resolveStateId(data) {
+// Helper to resolve state and workflow
+async function resolveWorkflowAndState(data) {
+  // 1. Resolver Workflow si no viene indicado
+  if (!data.id_workflow) {
+    const defaultWf = await Workflows.findOne({ where: { is_default: true, activo: true } })
+      || await Workflows.findOne({ where: { activo: true }, order: [['id', 'ASC']] });
+    if (defaultWf) {
+      data.id_workflow = defaultWf.id;
+    }
+  }
+
+  // 2. Si viene texto de estado sin id_estado, buscar id_estado
   if (data.estado_proyecto && !data.id_estado) {
     const stateObj = await EstadosProyecto.findOne({ where: { nombre_estado: data.estado_proyecto } });
-    if (stateObj) {
-      data.id_estado = stateObj.id_estado;
-    } else {
-      const firstState = await EstadosProyecto.findOne({ order: [['orden', 'ASC']] });
-      if (firstState) data.id_estado = firstState.id_estado;
+    if (stateObj) data.id_estado = stateObj.id_estado;
+  }
+
+  // 3. Si hay id_workflow asignado, obtener sus estados ordenados
+  if (data.id_workflow) {
+    const wfStates = await WorkflowEstados.findAll({
+      where: { id_workflow: data.id_workflow },
+      order: [['orden', 'ASC']]
+    });
+
+    if (wfStates.length > 0) {
+      // Si no tiene id_estado o el id_estado no pertenece al flujo, usar el primer estado del flujo
+      if (!data.id_estado) {
+        data.id_estado = wfStates[0].id_estado;
+      }
     }
+  }
+
+  // Fallback si todavía no hay id_estado
+  if (!data.id_estado) {
+    const firstState = await EstadosProyecto.findOne({ order: [['orden', 'ASC']] });
+    if (firstState) data.id_estado = firstState.id_estado;
   }
 }
 
@@ -47,12 +74,11 @@ const createProject = asyncHandler(async (req, res) => {
     }
   }
 
-  await resolveStateId(data);
-
-  if (!data.id_estado) {
-    const firstState = await EstadosProyecto.findOne({ order: [['orden', 'ASC']] });
-    if (firstState) data.id_estado = firstState.id_estado;
+  if (data.id_workflow) {
+    data.id_workflow = Number(data.id_workflow);
   }
+
+  await resolveWorkflowAndState(data);
 
   const project = await Proyectos.create(data);
 
@@ -72,6 +98,9 @@ const updateProject = asyncHandler(async (req, res) => {
   data.modifiedBy = req.currentPmId;
 
   sanitizeRichTextFields(data);
+  if (data.id_ambito !== undefined) {
+    data.id_ambito = data.id_ambito ? Number(data.id_ambito) : null;
+  }
 
   const project = await Proyectos.findByPk(id_proyecto);
   if (!project) {
@@ -81,7 +110,39 @@ const updateProject = asyncHandler(async (req, res) => {
   if (!(await validateCapexFields(data, res))) return;
   if (!validateDateFields(data, res)) return;
 
-  await resolveStateId(data);
+  if (data.id_workflow !== undefined) {
+    data.id_workflow = data.id_workflow ? Number(data.id_workflow) : null;
+  }
+  if (data.id_estado !== undefined) {
+    data.id_estado = data.id_estado ? Number(data.id_estado) : null;
+  }
+
+  const targetWorkflowId = data.id_workflow !== undefined ? data.id_workflow : project.id_workflow;
+  if (targetWorkflowId) {
+    const wfStates = await WorkflowEstados.findAll({
+      where: { id_workflow: targetWorkflowId },
+      order: [['orden', 'ASC']]
+    });
+
+    if (wfStates.length > 0) {
+      const validStateIds = wfStates.map(w => w.id_estado);
+      // Si se envió un id_estado específico, validar que pertenezca al flujo
+      if (data.id_estado && !validStateIds.includes(data.id_estado)) {
+        return res.status(400).json({ error: 'El estado seleccionado no pertenece al flujo de trabajo del proyecto.' });
+      }
+      // Si cambió de flujo y no se especificó id_estado, comprobar si el estado actual sigue siendo válido
+      if (data.id_workflow !== undefined && data.id_estado === undefined) {
+        if (!validStateIds.includes(project.id_estado)) {
+          data.id_estado = wfStates[0].id_estado;
+        }
+      }
+    }
+  }
+
+  if (data.estado_proyecto && !data.id_estado) {
+    const stateObj = await EstadosProyecto.findOne({ where: { nombre_estado: data.estado_proyecto } });
+    if (stateObj) data.id_estado = stateObj.id_estado;
+  }
 
   const autorId = req.currentPmId || 0;
   const autorObj = await Usuarios.findByPk(autorId);

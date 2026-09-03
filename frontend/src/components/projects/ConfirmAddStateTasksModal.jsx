@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, CheckSquare, Square, Flag, CheckCircle2, ListPlus } from 'lucide-react';
 
 export default function ConfirmAddStateTasksModal({ 
   targetState, 
+  isCreationMode = false,
   onConfirm, 
   onSkip, 
-  onCancel,
+  onCancel, 
   loading 
 }) {
+  const { t } = useTranslation();
   const tasks = targetState?.TareasPlantilla || [];
   
   // Por defecto todas las tareas seleccionadas
@@ -39,6 +42,10 @@ export default function ConfirmAddStateTasksModal({
     const selectedTasks = tasks.filter(t => selectedTaskIds.has(t.id));
     onConfirm(selectedTasks);
   };
+
+  const stateName = targetState?.nombre_estado || '';
+  const stateIcon = targetState?.icono || '';
+  const fullStateLabel = `${stateIcon} ${stateName}`.trim();
 
   return (
     <div 
@@ -73,15 +80,23 @@ export default function ConfirmAddStateTasksModal({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontWeight: 600, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--md-sys-color-primary)' }}>
             <ListPlus size={22} />
-            <span>Añadir Tareas de Estado ({targetState?.icono || ''} {targetState?.nombre_estado})</span>
+            <span>
+              {isCreationMode
+                ? t('stateTasksModal.titleCreateProject', { state: fullStateLabel, defaultValue: `Añadir Tareas de Estado Inicial (${fullStateLabel})` })
+                : t('stateTasksModal.titleChangeState', { state: fullStateLabel, defaultValue: `Añadir Tareas de Estado (${fullStateLabel})` })
+              }
+            </span>
           </h3>
-          <button className="icon-btn" onClick={onCancel} title="Cancelar">
+          <button className="icon-btn" onClick={onCancel} title={t('common.cancel', 'Cancelar')}>
             <X size={20} />
           </button>
         </div>
 
         <p style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface)', marginBottom: 16, lineHeight: '1.5' }}>
-          El nuevo estado <strong>{targetState?.nombre_estado}</strong> cuenta con tareas preconfiguradas en administración. Selecciona las que deseas añadir a la lista de tareas del proyecto:
+          {isCreationMode
+            ? t('stateTasksModal.descCreateProject', { state: stateName, defaultValue: `El estado inicial (${stateName}) cuenta con tareas preconfiguradas en administración. Selecciona las que deseas añadir a la lista de tareas del nuevo proyecto:` })
+            : t('stateTasksModal.descChangeState', { state: stateName, defaultValue: `El nuevo estado (${stateName}) cuenta con tareas preconfiguradas en administración. Selecciona las que deseas añadir a la lista de tareas del proyecto:` })
+          }
         </p>
 
         {/* Tabla de tareas preconfiguradas */}
@@ -94,23 +109,23 @@ export default function ConfirmAddStateTasksModal({
                     type="button" 
                     onClick={toggleSelectAll} 
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--md-sys-color-primary)' }}
-                    title={allSelected ? 'Desmarcar todas' : 'Marcar todas'}
+                    title={allSelected ? t('stateTasksModal.unselectAll', 'Desmarcar todas') : t('stateTasksModal.selectAll', 'Marcar todas')}
                   >
                     {allSelected ? <CheckSquare size={18} /> : <Square size={18} />}
                   </button>
                 </th>
-                <th style={{ width: '35px' }}>Tipo</th>
-                <th>Tarea / Hito</th>
-                <th>Descripción</th>
+                <th style={{ width: '35px' }}>{t('stateTasksModal.type', 'Tipo')}</th>
+                <th>{t('stateTasksModal.taskOrMilestone', 'Tarea / Hito')}</th>
+                <th>{t('stateTasksModal.description', 'Descripción')}</th>
               </tr>
             </thead>
             <tbody>
-              {tasks.map(t => {
-                const isChecked = selectedTaskIds.has(t.id);
+              {tasks.map(t_item => {
+                const isChecked = selectedTaskIds.has(t_item.id);
                 return (
                   <tr 
-                    key={t.id} 
-                    onClick={() => toggleTask(t.id)} 
+                    key={t_item.id} 
+                    onClick={() => toggleTask(t_item.id)} 
                     style={{ cursor: 'pointer', backgroundColor: isChecked ? 'rgba(56, 189, 248, 0.08)' : 'transparent' }}
                   >
                     <td style={{ textAlign: 'center' }}>
@@ -122,14 +137,14 @@ export default function ConfirmAddStateTasksModal({
                       />
                     </td>
                     <td>
-                      {t.es_hito ? (
-                        <Flag size={16} style={{ color: '#f59e0b' }} title="Hito" />
+                      {t_item.es_hito ? (
+                        <Flag size={16} style={{ color: '#f59e0b' }} title={t('stateTasksModal.milestone', 'Hito')} />
                       ) : (
-                        <CheckCircle2 size={16} style={{ color: 'var(--md-sys-color-primary)' }} title="Tarea" />
+                        <CheckCircle2 size={16} style={{ color: 'var(--md-sys-color-primary)' }} title={t('stateTasksModal.task', 'Tarea')} />
                       )}
                     </td>
-                    <td style={{ fontWeight: 600, fontSize: '0.88rem' }}>{t.nombre_tarea}</td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t.descripcion || '—'}</td>
+                    <td style={{ fontWeight: 600, fontSize: '0.88rem' }}>{t_item.nombre_tarea}</td>
+                    <td style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t_item.descripcion || '—'}</td>
                   </tr>
                 );
               })}
@@ -146,7 +161,10 @@ export default function ConfirmAddStateTasksModal({
             disabled={loading}
             style={{ fontSize: '0.85rem' }}
           >
-            Cambiar estado sin añadir tareas
+            {isCreationMode
+              ? t('stateTasksModal.skipCreateProject', 'Crear proyecto sin añadir tareas')
+              : t('stateTasksModal.skipChangeState', 'Cambiar estado sin añadir tareas')
+            }
           </button>
 
           <div style={{ display: 'flex', gap: 12 }}>
@@ -156,7 +174,7 @@ export default function ConfirmAddStateTasksModal({
               onClick={onCancel}
               disabled={loading}
             >
-              Cancelar
+              {t('common.cancel', 'Cancelar')}
             </button>
             <button 
               type="button" 
@@ -164,7 +182,10 @@ export default function ConfirmAddStateTasksModal({
               onClick={handleConfirmAdd}
               disabled={loading || selectedTaskIds.size === 0}
             >
-              {loading ? 'Añadiendo...' : `Añadir Tareas (${selectedTaskIds.size})`}
+              {loading 
+                ? (isCreationMode ? t('stateTasksModal.creatingAndAdding', 'Creando y añadiendo...') : t('stateTasksModal.addingTasks', 'Añadiendo...'))
+                : t('stateTasksModal.addTasksBtn', { count: selectedTaskIds.size, defaultValue: `Añadir Tareas (${selectedTaskIds.size})` })
+              }
             </button>
           </div>
         </div>
