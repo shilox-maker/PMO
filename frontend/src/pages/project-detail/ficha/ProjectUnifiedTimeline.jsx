@@ -1,9 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Edit2, Check } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectUnifiedTimeline({ project, handleOpenEditLifecycle, formatDate }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
 
   const lifecycleList = [
     { label: t('projectDetail.timeline.milestonePetition', 'Petición'), val: project.fecha_peticion, icon: '📩', key: 'fecha_peticion' },
@@ -51,13 +53,15 @@ export default function ProjectUnifiedTimeline({ project, handleOpenEditLifecycl
     <div className="m3-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>{t('projectDetail.timeline.title', 'Línea de Tiempo del Proyecto')}</h3>
-        <button 
-          className="m3-btn m3-btn-outline" 
-          onClick={handleOpenEditLifecycle} 
-          style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 6 }}
-        >
-          <Edit2 size={14} /> {t('projectDetail.timeline.milestonesBtn', 'Hitos')}
-        </button>
+        {canWrite && (
+          <button 
+            className="m3-btn m3-btn-outline" 
+            onClick={handleOpenEditLifecycle} 
+            style={{ padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <Edit2 size={14} /> {t('projectDetail.timeline.milestonesBtn', 'Hitos')}
+          </button>
+        )}
       </div>
 
       {datedEvents.length === 0 && pendingLifecycle.length === 0 ? (

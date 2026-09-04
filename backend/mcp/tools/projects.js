@@ -9,6 +9,7 @@ const listProjectsTool = {
     properties: {
       search: { type: 'string', description: 'Texto a buscar en código, nombre o etiquetas/tags del proyecto' },
       estado: { type: 'string', description: 'Nombre o ID del estado del proyecto' },
+      macroEtapa: { type: 'string', description: 'Macro-Etapa del ciclo de vida (INICIATIVA, PLANIFICACION, EJECUCION, PAUSA, CIERRE)' },
       workflowId: { type: 'number', description: 'ID del flujo de trabajo (workflow)' },
       sedeId: { type: 'number', description: 'ID de la sede/departamento' },
       ambitoId: { type: 'number', description: 'ID del ámbito/unidad de negocio' },
@@ -16,7 +17,7 @@ const listProjectsTool = {
     }
   },
   handler: async (args, mcpScope = { isGlobal: true }) => {
-    const { search, estado, workflowId, sedeId, ambitoId, limit = 20 } = args || {};
+    const { search, estado, macroEtapa, workflowId, sedeId, ambitoId, limit = 20 } = args || {};
     const where = {};
 
     // Scope isolation rule
@@ -48,14 +49,25 @@ const listProjectsTool = {
 
     const include = [
       { model: Sedes, as: 'Sede', attributes: ['id_sede', 'nombre_sede'] },
-      { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado'] },
+      { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'macro_etapa'] },
       { model: Workflows, as: 'Workflow', attributes: ['id', 'nombre'] },
       { model: Usuarios, as: 'PM', attributes: ['id_usuario', 'nombre', 'apellidos'] },
       { model: Ambitos, as: 'Ambito', attributes: ['id_ambito', 'nombre', 'code'] }
     ];
 
+    const estadoFilter = {};
     if (estado) {
-      include[1].where = typeof estado === 'number' ? { id_estado: estado } : { nombre_estado: { [Op.like]: `%${estado}%` } };
+      if (typeof estado === 'number') {
+        estadoFilter.id_estado = estado;
+      } else {
+        estadoFilter.nombre_estado = { [Op.like]: `%${estado}%` };
+      }
+    }
+    if (macroEtapa) {
+      estadoFilter.macro_etapa = macroEtapa.toUpperCase();
+    }
+    if (Object.keys(estadoFilter).length > 0) {
+      include[1].where = estadoFilter;
     }
 
     const projects = await Proyectos.findAll({
@@ -75,6 +87,7 @@ const listProjectsTool = {
             ambito: p.Ambito ? `${p.Ambito.nombre} (${p.Ambito.code})` : null,
             workflow: p.Workflow ? p.Workflow.nombre : null,
             estado: p.Estado ? p.Estado.nombre_estado : null,
+            macro_etapa: p.Estado ? p.Estado.macro_etapa : null,
             rag: p.indicador_rag,
             pm: p.PM ? `${p.PM.nombre} ${p.PM.apellidos}` : null,
             sede: p.Sede ? p.Sede.nombre_sede : null,

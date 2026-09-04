@@ -13,7 +13,8 @@ export default function ProjectDetailHeader({
   currentPm
 }) {
   const { t } = useTranslation();
-  const canDelete = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR' || project?.id_pm === currentPm.id_usuario);
+  const isReadOnly = currentPm?.perfil === 'SOLO_LECTURA';
+  const canDelete = !isReadOnly && currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR' || project?.id_pm === currentPm.id_usuario);
 
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 24, marginBottom: 24 }}>
@@ -67,10 +68,12 @@ export default function ProjectDetailHeader({
           <span>{t('projectDetail.report', 'Informe')}</span>
         </button>
 
-        <button className="m3-btn m3-btn-primary" onClick={() => setShowEditProjectModal(true)}>
-          <Edit2 size={16} />
-          <span>{t('projectDetail.editProject', 'Editar Proyecto')}</span>
-        </button>
+        {!isReadOnly && (
+          <button className="m3-btn m3-btn-primary" onClick={() => setShowEditProjectModal(true)}>
+            <Edit2 size={16} />
+            <span>{t('projectDetail.editProject', 'Editar Proyecto')}</span>
+          </button>
+        )}
 
         {canDelete && (
           <button 
@@ -98,8 +101,9 @@ export default function ProjectDetailHeader({
           <select 
             value={project.indicador_rag || 'VERDE'}
             onChange={(e) => handleUpdateProject({ indicador_rag: e.target.value })}
+            disabled={isReadOnly}
             className="user-select"
-            style={{ width: 'auto', padding: '6px 12px', height: '36px' }}
+            style={{ width: 'auto', padding: '6px 12px', height: '36px', opacity: isReadOnly ? 0.75 : 1, cursor: isReadOnly ? 'default' : 'pointer' }}
           >
             <option value="VERDE">🟢 VERDE</option>
             <option value="AMARILLO">🟡 AMARILLO</option>
@@ -114,8 +118,9 @@ export default function ProjectDetailHeader({
             <select 
               value={project.id_estado || ''}
               onChange={(e) => handleUpdateProject({ id_estado: parseInt(e.target.value, 10) })}
+              disabled={isReadOnly}
               className="user-select"
-              style={{ width: 'auto', padding: '6px 12px', height: '36px' }}
+              style={{ width: 'auto', padding: '6px 12px', height: '36px', opacity: isReadOnly ? 0.75 : 1, cursor: isReadOnly ? 'default' : 'pointer' }}
             >
               {workflowStates.map(state => (
                 <option key={state.id_estado} value={state.id_estado}>

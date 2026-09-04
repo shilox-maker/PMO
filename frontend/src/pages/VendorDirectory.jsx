@@ -16,7 +16,7 @@ const DEFAULT_VENDOR_FILTERS = {
 
 export default function VendorDirectory({ onViewVendor }) {
   const { t } = useTranslation();
-  const { getAuthHeaders } = useAuth();
+  const { getAuthHeaders, canWrite } = useAuth();
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -86,36 +86,37 @@ export default function VendorDirectory({ onViewVendor }) {
     fetchVendors();
   }, []);
 
+  const handleDeleteVendor = (id, name) => {
+    if (window.confirm(t('vendorDirectory.deleteConfirm', { name }))) {
+      fetch(`${import.meta.env.VITE_API_URL}/vendors/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      })
+        .then(async res => {
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Error al eliminar el proveedor');
+          }
+          fetchVendors();
+        })
+        .catch(err => alert(err.message));
+    }
+  };
+
   const openCreateModal = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteVendor = (vendorId, vendorName) => {
-    if (!window.confirm(t('vendorDirectory.deletePartnerConfirm', { name: vendorName }))) return;
-
-    fetch(`${import.meta.env.VITE_API_URL}/vendors/${vendorId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al eliminar el socio tecnológico');
-        return data;
-      })
-      .then(() => {
-        fetchVendors();
-      })
-      .catch(err => alert(err.message));
-  };
-
   // Filter vendors in search client side
   const filteredVendors = vendors.filter(v => 
-    v.nombre_razon_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (v.email_general && v.email_general.toLowerCase().includes(searchTerm.toLowerCase()))
+    v.nombre_razon_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    v.cif_nif?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    v.telefono_general?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    v.email_general?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Header filter actions bar */}
       <div className="filter-panel glass-panel" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--md-sys-color-outline)' }}>
@@ -157,10 +158,12 @@ export default function VendorDirectory({ onViewVendor }) {
           </button>
         )}
 
-        <button className="m3-btn m3-btn-primary" onClick={openCreateModal} style={{ height: '40px' }}>
-          <Plus size={18} />
-          {t('vendorDirectory.registerPartner')}
-        </button>
+        {canWrite && (
+          <button className="m3-btn m3-btn-primary" onClick={openCreateModal} style={{ height: '40px' }}>
+            <Plus size={18} />
+            {t('vendorDirectory.registerPartner')}
+          </button>
+        )}
       </div>
 
       {/* Main Directory Table */}
@@ -226,17 +229,19 @@ export default function VendorDirectory({ onViewVendor }) {
                         style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px' }}
                       >
                         <Eye size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                        {t('vendorDirectory.viewEditFicha')}
+                        {canWrite ? t('vendorDirectory.viewEditFicha') : t('vendorDirectory.viewFicha', 'Ver Ficha')}
                       </button>
 
-                      <button 
-                        className="icon-btn" 
-                        onClick={() => handleDeleteVendor(vendor.id_proveedor, vendor.nombre_razon_social)}
-                        style={{ color: 'var(--color-rag-red)', width: 32, height: 32 }}
-                        title={t('common.delete')}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {canWrite && (
+                        <button 
+                          className="icon-btn" 
+                          onClick={() => handleDeleteVendor(vendor.id_proveedor, vendor.nombre_razon_social)}
+                          style={{ color: 'var(--color-rag-red)', width: 32, height: 32 }}
+                          title={t('common.delete')}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

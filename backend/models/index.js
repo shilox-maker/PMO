@@ -124,7 +124,7 @@ const Usuarios = sequelize.define('Usuarios', {
     allowNull: true
   },
   perfil: {
-    type: DataTypes.ENUM('ADMINISTRADOR', 'PM', 'DIRECTOR'),
+    type: DataTypes.ENUM('ADMINISTRADOR', 'PM', 'DIRECTOR', 'SOLO_LECTURA'),
     allowNull: false,
     defaultValue: 'PM'
   },
@@ -189,6 +189,11 @@ const EstadosProyecto = sequelize.define('Estados_Proyecto', {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: false
+  },
+  macro_etapa: {
+    type: DataTypes.ENUM('INICIATIVA', 'PLANIFICACION', 'EJECUCION', 'PAUSA', 'CIERRE'),
+    allowNull: false,
+    defaultValue: 'EJECUCION'
   },
   code: {
     type: DataTypes.STRING(50),

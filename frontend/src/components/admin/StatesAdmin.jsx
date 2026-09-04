@@ -24,11 +24,10 @@ export default function StatesAdmin({ getAuthHeaders }) {
       .then(data => {
         setStates(data);
         setStatesLoading(false);
-        // Si estábamos en detalle editando, actualizar la referencia local de editingState
-        if (editingState) {
-          const updated = data.find(s => s.id_estado === editingState.id_estado);
-          if (updated) setEditingState(updated);
-        }
+        setEditingState(prevEditing => {
+          if (!prevEditing) return null;
+          return (Array.isArray(data) ? data : []).find(s => s.id_estado === prevEditing.id_estado) || prevEditing;
+        });
       })
       .catch(err => {
         setStateError(err.message);

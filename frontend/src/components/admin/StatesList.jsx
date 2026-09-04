@@ -73,7 +73,8 @@ export default function StatesList({
             <thead>
               <tr>
                 {defaultRenderSortHeader(t('statesAdmin.order'), 'orden', { width: '80px', textAlign: 'center' })}
-                {defaultRenderSortHeader(t('statesAdmin.state'), 'nombre_estado', { width: '200px' })}
+                {defaultRenderSortHeader(t('statesAdmin.state'), 'nombre_estado', { width: '180px' })}
+                {defaultRenderSortHeader(t('macroEtapas.macroEtapa', 'Macro-Etapa'), 'macro_etapa', { width: '140px', textAlign: 'center' })}
                 <th>{t('statesAdmin.description')}</th>
                 {defaultRenderSortHeader(t('statesAdmin.icon'), 'icono', { width: '80px', textAlign: 'center' })}
                 {defaultRenderSortHeader(t('generalLessons.type'), 'proyecto_cerrado', { width: '110px', textAlign: 'center' })}
@@ -82,21 +83,47 @@ export default function StatesList({
               </tr>
             </thead>
             <tbody>
-              {getSortedData(states, statesSort).map(st => (
-                <tr key={st.id_estado}>
-                  <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{st.orden}</td>
-                  <td style={{ fontWeight: 600 }}>{st.nombre_estado}</td>
-                  <td style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
-                    {st.descripcion || <em style={{ opacity: 0.5 }}>{t('statesAdmin.noDesc')}</em>}
-                  </td>
-                  <td style={{ fontSize: '1.2rem', textAlign: 'center' }}>{st.icono || '❓'}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    {st.proyecto_cerrado ? (
-                      <span className="badge badge-red" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{t('statesAdmin.closed')}</span>
-                    ) : (
-                      <span className="badge badge-blue" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{t('statesAdmin.open')}</span>
-                    )}
-                  </td>
+              {getSortedData(states, statesSort).map(st => {
+                const macro = (st.macro_etapa || (st.proyecto_cerrado ? 'CIERRE' : 'EJECUCION')).toUpperCase();
+                const macroColors = {
+                  INICIATIVA: { bg: 'rgba(99, 102, 241, 0.15)', color: '#6366f1' },
+                  PLANIFICACION: { bg: 'rgba(14, 165, 233, 0.15)', color: '#0ea5e9' },
+                  EJECUCION: { bg: 'rgba(16, 185, 129, 0.15)', color: '#10b981' },
+                  PAUSA: { bg: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' },
+                  CIERRE: { bg: 'rgba(100, 116, 139, 0.15)', color: '#64748b' }
+                };
+                const currentStyle = macroColors[macro] || macroColors.EJECUCION;
+
+                return (
+                  <tr key={st.id_estado}>
+                    <td style={{ fontWeight: 'bold', textAlign: 'center' }}>{st.orden}</td>
+                    <td style={{ fontWeight: 600 }}>{st.nombre_estado}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          borderRadius: '100px',
+                          backgroundColor: currentStyle.bg,
+                          color: currentStyle.color,
+                          display: 'inline-block'
+                        }}
+                      >
+                        {t(`macroEtapas.${macro}`, macro)}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)' }}>
+                      {st.descripcion || <em style={{ opacity: 0.5 }}>{t('statesAdmin.noDesc')}</em>}
+                    </td>
+                    <td style={{ fontSize: '1.2rem', textAlign: 'center' }}>{st.icono || '❓'}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      {st.proyecto_cerrado ? (
+                        <span className="badge badge-red" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{t('statesAdmin.closed')}</span>
+                      ) : (
+                        <span className="badge badge-blue" style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{t('statesAdmin.open')}</span>
+                      )}
+                    </td>
                   <td style={{ textAlign: 'center' }}>
                     <span 
                       style={{ 
@@ -135,8 +162,9 @@ export default function StatesList({
                       </button>
                     </div>
                   </td>
-                </tr>
-              ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

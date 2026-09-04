@@ -59,7 +59,7 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
       { model: Portfolios, as: 'Portfolio', attributes: ['id', 'nombre'] },
       { model: Workflows, as: 'Workflow', attributes: ['id', 'nombre', 'code'] },
       { model: Tags, as: 'Tags', through: { attributes: [] } },
-      { model: EstadosProyecto, as: 'Estado', attributes: ['nombre_estado', 'icono', 'descripcion'], ...(state ? { where: { nombre_estado: { [Op.in]: state.split(',') } } } : {}) }
+      { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'descripcion', 'macro_etapa', 'proyecto_cerrado'], ...(state ? { where: { nombre_estado: { [Op.in]: state.split(',') } } } : {}) }
     ],
     order: [['createdAt', 'DESC']]
   });

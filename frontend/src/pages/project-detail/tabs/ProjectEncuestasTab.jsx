@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Star, Plus, Edit2, Trash2, Calendar, User, MessageSquare, Award } from 'lucide-react';
 import SurveyModal from '../../../components/modals/SurveyModal';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
   const [surveys, setSurveys] = useState([]);
   const [averageScore, setAverageScore] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -92,13 +94,15 @@ export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
             {t('projectDetail.surveysTab.subtitle', 'Evaluaciones registradas por el cliente, patrocinadores y comités de seguimiento.')}
           </p>
         </div>
-        <button
-          className="m3-btn m3-btn-primary"
-          onClick={() => { setSelectedSurvey(null); setIsModalOpen(true); }}
-          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-        >
-          <Plus size={16} /> {t('projectDetail.surveysTab.newSurvey', 'Nueva Encuesta')}
-        </button>
+        {canWrite && (
+          <button
+            className="m3-btn m3-btn-primary"
+            onClick={() => { setSelectedSurvey(null); setIsModalOpen(true); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <Plus size={16} /> {t('projectDetail.surveysTab.newSurvey', 'Nueva Encuesta')}
+          </button>
+        )}
       </div>
 
       {/* Average Score Summary Card */}
@@ -161,24 +165,26 @@ export default function ProjectEncuestasTab({ project, getAuthHeaders }) {
                   )}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14, borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 10 }}>
-                  <button
-                    className="icon-btn"
-                    onClick={() => { setSelectedSurvey(s); setIsModalOpen(true); }}
-                    title={t('common.edit', 'Editar Encuesta')}
-                    style={{ padding: 4 }}
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    className="icon-btn"
-                    onClick={() => handleDeleteSurvey(s.id)}
-                    title={t('common.delete', 'Eliminar Encuesta')}
-                    style={{ padding: 4, color: 'var(--color-rag-red)' }}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+                {canWrite && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14, borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 10 }}>
+                    <button
+                      className="icon-btn"
+                      onClick={() => { setSelectedSurvey(s); setIsModalOpen(true); }}
+                      title={t('common.edit', 'Editar Encuesta')}
+                      style={{ padding: 4 }}
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      className="icon-btn"
+                      onClick={() => handleDeleteSurvey(s.id)}
+                      title={t('common.delete', 'Eliminar Encuesta')}
+                      style={{ padding: 4, color: 'var(--color-rag-red)' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

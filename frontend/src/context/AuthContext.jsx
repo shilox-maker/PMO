@@ -32,7 +32,12 @@ const defaultAuthValue = {
   canSelectAll: false,
   isFirstLoginSelection: false,
   setIsFirstLoginSelection: () => {},
-  refreshAmbitos: async () => {}
+  refreshAmbitos: async () => {},
+  isReadOnly: false,
+  canWrite: true,
+  isAdmin: false,
+  isDirector: false,
+  isDirectorOrAdmin: false
 };
 
 const AuthContext = createContext(defaultAuthValue);
@@ -344,7 +349,12 @@ export const AuthProvider = ({ children }) => {
       canSelectAll,
       isFirstLoginSelection,
       setIsFirstLoginSelection,
-      refreshAmbitos: fetchUserAmbitos
+      refreshAmbitos: fetchUserAmbitos,
+      isReadOnly: currentPm?.perfil === 'SOLO_LECTURA',
+      canWrite: Boolean(currentPm && currentPm.perfil !== 'SOLO_LECTURA'),
+      isAdmin: currentPm?.perfil === 'ADMINISTRADOR',
+      isDirector: currentPm?.perfil === 'DIRECTOR',
+      isDirectorOrAdmin: Boolean(currentPm && ['ADMINISTRADOR', 'DIRECTOR'].includes(currentPm.perfil))
     }}>
       {children}
     </AuthContext.Provider>

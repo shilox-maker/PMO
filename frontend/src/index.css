@@ -161,7 +161,8 @@ button, input, select, textarea {
 /* Material Layout */
 .app-container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* Navigation Rail / Drawer */
@@ -172,9 +173,7 @@ button, input, select, textarea {
   display: flex;
   flex-direction: column;
   padding: 24px 12px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  height: 100%;
   flex-shrink: 0;
   z-index: 100;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -581,18 +580,19 @@ button, input, select, textarea {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .top-bar {
   height: 64px;
+  flex-shrink: 0;
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
   background-color: var(--md-sys-color-background);
-  position: sticky;
-  top: 0;
   z-index: 10;
   transition: var(--transition-smooth);
 }
@@ -627,10 +627,32 @@ button, input, select, textarea {
   background-color: var(--md-sys-color-surface-container-high);
 }
 
-/* Main content wrapper */
+/* Main content wrapper with interior scroll */
 .content-wrapper {
   padding: 32px;
   flex-grow: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+/* Custom scrollbar for content wrapper */
+.content-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.content-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 4px;
+}
+
+.content-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--md-sys-color-outline);
 }
 
 /* Cards & Components */
@@ -1793,9 +1815,7 @@ button, input, select, textarea {
   border-left: 1px solid var(--md-sys-color-outline-variant);
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  height: 100%;
   flex-shrink: 0;
   z-index: 100;
   overflow: hidden;

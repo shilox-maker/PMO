@@ -116,6 +116,7 @@ export default function UserFormAdmin({
             <option value="PM">PM (Gestor Técnico)</option>
             <option value="DIRECTOR">DIRECTOR (Control Ejecutivo)</option>
             <option value="ADMINISTRADOR">ADMINISTRADOR (Acceso Total)</option>
+            <option value="SOLO_LECTURA">{t('usersAdmin.roleReadOnlyOption', 'SOLO_LECTURA (Solo Lectura)')}</option>
           </select>
         </div>
 

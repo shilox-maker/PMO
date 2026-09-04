@@ -2,11 +2,13 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Edit2, Check } from 'lucide-react';
 import RichTextEditor from '../../../components/RichTextEditor';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectAlcanceTab({
   project, editingBlock, setEditingBlock, blockValue, setBlockValue, handleSaveBlock
 }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
 
   const blocks = [
     { key: 'alcance_por_que', label: t('projectDetail.scopeTab.why', '¿Por qué se realiza este proyecto? (Justificación / Drivers de negocio)') },
@@ -24,13 +26,13 @@ export default function ProjectAlcanceTab({
       <div style={{ marginBottom: 8 }}>
         <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>{t('projectDetail.scopeTab.title', 'Alcance y Criterios de Cierre')}</h3>
         <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
-          {t('projectDetail.scopeTab.subtitle', 'Haga doble clic en cualquier bloque o use el botón editar para redactar las especificaciones de alcance y de aceptación/cierre.')}
+          {canWrite ? t('projectDetail.scopeTab.subtitle', 'Haga doble clic en cualquier bloque o use el botón editar para redactar las especificaciones de alcance y de aceptación/cierre.') : t('projectDetail.scopeTab.subtitleReadOnly', 'Especificaciones de alcance y de aceptación/cierre del proyecto.')}
         </p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: 24 }}>
         {blocks.map((b) => {
-          const isEditing = editingBlock === b.key;
+          const isEditing = canWrite && editingBlock === b.key;
           const value = project[b.key] || '';
 
           return (
@@ -44,7 +46,7 @@ export default function ProjectAlcanceTab({
                 border: isEditing ? '1px solid var(--md-sys-color-primary)' : '1px solid var(--md-sys-color-outline-variant)'
               }}
               onDoubleClick={() => {
-                if (!isEditing) {
+                if (canWrite && !isEditing) {
                   setEditingBlock(b.key);
                   setBlockValue(value);
                 }
@@ -54,34 +56,36 @@ export default function ProjectAlcanceTab({
                 <h4 style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
                   {b.label}
                 </h4>
-                {isEditing ? (
-                  <button 
-                    type="button"
-                    className="m3-btn m3-btn-text" 
-                    onClick={() => setEditingBlock(null)} 
-                    title={t('projectDetail.scopeTab.doneBtn', 'Listo')}
-                    style={{ 
-                      fontSize: '0.8rem', 
-                      padding: '4px 10px',
-                      color: 'var(--md-sys-color-primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <Check size={14} /> {t('projectDetail.scopeTab.doneBtn', 'Listo')}
-                  </button>
-                ) : (
-                  <button 
-                    className="icon-btn" 
-                    onClick={() => {
-                      setEditingBlock(b.key);
-                      setBlockValue(value);
-                    }}
-                    title={t('common.edit', 'Editar')}
-                  >
-                    <Edit2 size={14} />
-                  </button>
+                {canWrite && (
+                  isEditing ? (
+                    <button 
+                      type="button"
+                      className="m3-btn m3-btn-text" 
+                      onClick={() => setEditingBlock(null)} 
+                      title={t('projectDetail.scopeTab.doneBtn', 'Listo')}
+                      style={{ 
+                        fontSize: '0.8rem', 
+                        padding: '4px 10px',
+                        color: 'var(--md-sys-color-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Check size={14} /> {t('projectDetail.scopeTab.doneBtn', 'Listo')}
+                    </button>
+                  ) : (
+                    <button 
+                      className="icon-btn" 
+                      onClick={() => {
+                        setEditingBlock(b.key);
+                        setBlockValue(value);
+                      }}
+                      title={t('common.edit', 'Editar')}
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                  )
                 )}
               </div>
 
@@ -96,7 +100,11 @@ export default function ProjectAlcanceTab({
               ) : (
                 <div 
                   className="wysiwyg-content" 
-                  dangerouslySetInnerHTML={{ __html: value || `<p style="font-style: italic; opacity: 0.6;">${t('projectDetail.scopeTab.doubleClickPlaceholder', 'Doble clic para definir este bloque de alcance...')}</p>` }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: value || (canWrite 
+                      ? `<p style="font-style: italic; opacity: 0.6;">${t('projectDetail.scopeTab.doubleClickPlaceholder', 'Doble clic para definir este bloque de alcance...')}</p>` 
+                      : `<p style="font-style: italic; opacity: 0.6;">—</p>`)
+                  }}
                   style={{ 
                     fontSize: '0.85rem', 
                     lineHeight: '1.6', 

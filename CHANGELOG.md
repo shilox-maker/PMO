@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## [4.2.0] - 2026-09-04
+### Added
+- **Sistema Unificado de Filtrado de Proyectos por Macro-Etapas del Ciclo de Vida y Flujos de Trabajo (FEATURE-81 / IDEA-81)**:
+  - Clasificación estándar del ciclo de vida en 5 Macro-Etapas canónicas: `INICIATIVA`, `PLANIFICACION`, `EJECUCION`, `PAUSA` y `CIERRE`.
+  - Migración Sequelize `22_add_macro_etapa_to_estados_proyecto.js` con restricción CHECK en SQL Server y SQLite, y backfill automático de los 13 estados predeterminados.
+  - Componente frontend `MacroEtapasFilter.jsx` integrado en `ProjectsFilterPanel` con tarjetas visuales, contadores en tiempo real, selección bidireccional inteligente, desglose en acordeón (*drill-down*) y botones de presets rápidos (*Proyectos Activos*, *Solo en Ejecución*, *Proyectos Abiertos*, *Limpiar*).
+  - Agrupación jerárquica con `<optgroup>` en la barra del Gantt/Cronología (`TimelineToolbar.jsx`).
+  - Campo obligatorio `macro_etapa` con selector interactivo y badges visuales en el panel de administración de estados (`StateDetailForm.jsx`, `StatesList.jsx`).
+  - Soporte de filtrado por `macroEtapa` en consultas MCP (`list_projects`) y desglose `distribucion_macro_etapa` en `get_pmo_summary`.
+- **Perfil de Usuario "Solo Lectura" (Read-Only) para Auditoría y Consulta (FEATURE-82 / IDEA-81)**:
+  - Perfil `SOLO_LECTURA` con segregación por ámbito para permitir la auditoría de proyectos, proveedores y lecciones aprendidas sin permisos de edición ni visualización de comentarios confidenciales de dirección.
+  - Middleware de seguridad Zero-Trust `restrictReadOnly` (`backend/middlewares/readOnly.middleware.js`) que bloquea operaciones mutantes (`POST`, `PUT`, `DELETE`, `PATCH`) con HTTP 403 Forbidden.
+  - Ocultación y deshabilitación adaptativa de botones de creación, edición, eliminación y transiciones de estado en todas las vistas y pestañas de detalle de proyectos y proveedores.
+  - Migración `21_add_solo_lectura_perfil.js` y sincronización completa en `AuthContext` y Panel de Administración de Usuarios (`UserFormAdmin`, `UsersAdmin`).
+
+### Fixed / Improved
+- **Corrección de Seguridad en Gestión de Ámbitos (BUG-13)**:
+  - `scopeMiddleware.js` en modo Fail-Closed con denegación explícita (HTTP 403) a peticiones sin permisos hacia la vista global (`ALL`) o ámbitos ajenos.
+  - Validación estricta de pertenencia y existencia de ámbito en creación, actualización y eliminación de proyectos y asignaciones de usuario.
+- **Traducciones e i18n de Tipos de Proyecto**:
+  - Añadidas las claves de localización (`projectType`, `standardProject`, `lightInitiative`) para el selector de tipo de proyecto en español, inglés y portugués.
+
 ## [4.1.0] - 2026-09-03
 ### Added
 - **Flujos de Trabajo (Workflows) y Estados Condicionados por Proyecto (FEATURE-75 / IDEA-75)**:

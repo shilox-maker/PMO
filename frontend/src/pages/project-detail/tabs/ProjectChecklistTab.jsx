@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { getSortedData } from '../../../utils/sorting';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectChecklistTab({
   project, 
@@ -14,6 +15,7 @@ export default function ProjectChecklistTab({
   getAuthHeaders
 }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
   const sortedTasks = getSortedData(project?.Tareas || [], tasksSort);
 
   const openAddTask = () => {
@@ -88,9 +90,11 @@ export default function ProjectChecklistTab({
           <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>{t('projectDetail.tasksTab.title', 'Tareas del Proyecto')}</h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t('projectDetail.tasksTab.subtitle', 'Seguimiento y control de tareas y hitos de gobernanza del proyecto')}</p>
         </div>
-        <button className="m3-btn m3-btn-primary" onClick={openAddTask}>
-          <Plus size={16} /> {t('projectDetail.tasksTab.createTask', 'Crear Tarea / Hito')}
-        </button>
+        {canWrite && (
+          <button className="m3-btn m3-btn-primary" onClick={openAddTask}>
+            <Plus size={16} /> {t('projectDetail.tasksTab.createTask', 'Crear Tarea / Hito')}
+          </button>
+        )}
       </div>
 
       {(!project?.Tareas || project.Tareas.length === 0) ? (
@@ -107,7 +111,7 @@ export default function ProjectChecklistTab({
                 {renderSortHeader(t('projectDetail.tasksTab.dateHeader', 'Fecha Límite / Cierre'), 'fecha_limite', tasksSort, setTasksSort)}
                 {renderSortHeader(t('projectDetail.tasksTab.milestoneHeader', 'Hito?'), 'es_hito', tasksSort, setTasksSort)}
                 {renderSortHeader(t('projectDetail.tasksTab.statusHeader', 'Estado'), 'estado', tasksSort, setTasksSort)}
-                <th style={{ width: 110 }}>{t('projectDetail.tasksTab.actionsHeader', 'Acciones')}</th>
+                {canWrite && <th style={{ width: 110 }}>{t('projectDetail.tasksTab.actionsHeader', 'Acciones')}</th>}
               </tr>
             </thead>
             <tbody>
@@ -143,9 +147,11 @@ export default function ProjectChecklistTab({
                     <select
                       value={tItem.estado || 'SIN INICIAR'}
                       onChange={(e) => handleStatusChange(tItem.id_tarea, e.target.value)}
+                      disabled={!canWrite}
                       className={`badge ${getBadgeClass(tItem.estado)}`}
                       style={{
-                        cursor: 'pointer',
+                        cursor: canWrite ? 'pointer' : 'default',
+                        opacity: canWrite ? 1 : 0.8,
                         border: 'none',
                         outline: 'none',
                         fontWeight: 600,
@@ -159,16 +165,18 @@ export default function ProjectChecklistTab({
                       <option value="COMPLETADA">{t('projectDetail.tasksTab.statusCompleted', '🟢 COMPLETADA')}</option>
                     </select>
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <button className="icon-btn" onClick={() => openEditTask(tItem)} title={t('common.edit', 'Editar')}>
-                        <Edit2 size={14} />
-                      </button>
-                      <button className="icon-btn" onClick={() => handleDeleteTask(tItem.id_tarea)} title={t('common.delete', 'Eliminar')} style={{ color: 'var(--color-rag-red)' }}>
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+                  {canWrite && (
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <button className="icon-btn" onClick={() => openEditTask(tItem)} title={t('common.edit', 'Editar')}>
+                          <Edit2 size={14} />
+                        </button>
+                        <button className="icon-btn" onClick={() => handleDeleteTask(tItem.id_tarea)} title={t('common.delete', 'Eliminar')} style={{ color: 'var(--color-rag-red)' }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

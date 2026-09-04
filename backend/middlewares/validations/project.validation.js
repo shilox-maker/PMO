@@ -23,7 +23,11 @@ const projectCreateSchema = Joi.object({
   id_tipo_capex: Joi.number().integer().empty('').allow(null).optional(),
   id_subtipo_capex: Joi.number().integer().empty('').allow(null).optional(),
   es_estrategico: Joi.boolean().default(false),
-  budget_inicial: Joi.number().precision(2).min(0).empty('').allow(null).optional(),
+  budget_inicial: Joi.number().precision(2).min(0).empty('').allow(null).optional()
+    .messages({
+      'number.base': 'El presupuesto inicial debe ser un número válido.',
+      'number.min': 'El presupuesto inicial no puede ser un número negativo.'
+    }),
   budget_notas: Joi.string().allow('', null).optional(),
   com_semanal_activo: Joi.boolean().default(false),
   com_semanal_finalidad: Joi.string().allow('', null).optional(),
@@ -76,7 +80,11 @@ const projectUpdateSchema = Joi.object({
   id_tipo_capex: Joi.number().integer().empty('').allow(null).optional(),
   id_subtipo_capex: Joi.number().integer().empty('').allow(null).optional(),
   es_estrategico: Joi.boolean().optional(),
-  budget_inicial: Joi.number().precision(2).min(0).empty('').allow(null).optional(),
+  budget_inicial: Joi.number().precision(2).min(0).empty('').allow(null).optional()
+    .messages({
+      'number.base': 'El presupuesto inicial debe ser un número válido.',
+      'number.min': 'El presupuesto inicial no puede ser un número negativo.'
+    }),
   budget_notas: Joi.string().allow('', null).optional(),
   com_semanal_activo: Joi.boolean().optional(),
   com_semanal_finalidad: Joi.string().allow('', null).optional(),

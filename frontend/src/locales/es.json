@@ -22,6 +22,30 @@
     "no": "No",
     "language": "Idioma"
   },
+  "roles": {
+    "ADMINISTRADOR": "Administrador",
+    "DIRECTOR": "Director",
+    "PM": "Project Manager",
+    "SOLO_LECTURA": "Solo Lectura"
+  },
+  "macroEtapas": {
+    "macroEtapa": "Macro-Etapa",
+    "INICIATIVA": "Iniciativa / Propuesta",
+    "PLANIFICACION": "Planificación y Aprobación",
+    "EJECUCION": "En Ejecución",
+    "PAUSA": "En Pausa / Bloqueado",
+    "CIERRE": "Finalizado / Histórico",
+    "drilldownStates": "{{count}} estados",
+    "presetActive": "Proyectos Activos",
+    "presetExecution": "Solo en Ejecución",
+    "presetOpen": "Proyectos Abiertos",
+    "presetClear": "Limpiar Selección",
+    "desc_INICIATIVA": "Estados iniciales de registro de solicitud, análisis de viabilidad y búsqueda de propuestas.",
+    "desc_PLANIFICACION": "Estados de planificación formal, revisión de aprobaciones y kickoff.",
+    "desc_EJECUCION": "Estados activos de desarrollo, despliegue, entrega y estabilización.",
+    "desc_PAUSA": "Estados temporales de suspensión o retención de actividades.",
+    "desc_CIERRE": "Estados terminales, archivados o descartados de proyectos."
+  },
   "nav": {
     "dashboardProjects": "Dashboard Proyectos",
     "dashboardPortfolio": "Dashboard Portfolio",
@@ -459,6 +483,9 @@
     "allStates": "Todos los Estados",
     "isStrategic": "¿Estratégico?",
     "allTypes": "Todos los Tipos",
+    "projectType": "Tipo de Proyecto",
+    "standardProject": "Proyecto Estándar",
+    "lightInitiative": "Iniciativa Ligera",
     "allPortfolios": "Todos los Portfolios",
     "allWorkflows": "Todos los Flujos",
     "allTags": "Todos los Tags",

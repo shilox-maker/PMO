@@ -10,6 +10,7 @@ const httpLogger = require('./middlewares/httpLogger');
 const { verifyToken } = require('./middlewares/auth');
 const { checkMaintenance } = require('./middlewares/maintenance');
 const { scopeMiddleware } = require('./middlewares/scopeMiddleware');
+const { restrictReadOnly } = require('./middlewares/readOnly.middleware');
 const { errorHandler } = require('./middlewares/errorHandler');
 
 // Prevent Node process crashes from throwing 502 Bad Gateway on IIS
@@ -91,6 +92,9 @@ app.use(checkMaintenance);
 
 // Apply Scope/Tenant Middleware
 app.use(scopeMiddleware);
+
+// Apply Read-Only Protection Middleware (Zero-Trust)
+app.use(restrictReadOnly);
 
 // Register API Routes
 app.use('/api', authRoutes);

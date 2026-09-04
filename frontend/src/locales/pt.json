@@ -22,6 +22,30 @@
     "no": "Não",
     "language": "Idioma"
   },
+  "roles": {
+    "ADMINISTRADOR": "Administrador",
+    "DIRECTOR": "Diretor",
+    "PM": "Gerente de Projeto",
+    "SOLO_LECTURA": "Apenas Leitura"
+  },
+  "macroEtapas": {
+    "macroEtapa": "Macro-Etapa",
+    "INICIATIVA": "Iniciativa / Proposta",
+    "PLANIFICACION": "Planeamento e Aprovação",
+    "EJECUCION": "Em Execução",
+    "PAUSA": "Em Pausa / Bloqueado",
+    "CIERRE": "Concluído / Histórico",
+    "drilldownStates": "{{count}} estados",
+    "presetActive": "Projetos Ativos",
+    "presetExecution": "Apenas em Execução",
+    "presetOpen": "Projetos Abertos",
+    "presetClear": "Limpar Seleção",
+    "desc_INICIATIVA": "Estados iniciais de solicitação, viabilidade e busca de propostas.",
+    "desc_PLANIFICACION": "Estados de planeamento formal, aprovações e kickoff.",
+    "desc_EJECUCION": "Estados ativos de desenvolvimento, implementação e estabilização.",
+    "desc_PAUSA": "Estados temporários de suspensão ou retenção de atividades.",
+    "desc_CIERRE": "Estados finais, arquivados ou cancelados de projetos."
+  },
   "nav": {
     "dashboardProjects": "Dashboard Projetos",
     "dashboardPortfolio": "Dashboard Portfolio",
@@ -228,6 +252,9 @@
     "allStates": "Todos os Estados",
     "isStrategic": "Estratégico?",
     "allTypes": "Todos os Tipos",
+    "projectType": "Tipo de Projeto",
+    "standardProject": "Projeto Padrão",
+    "lightInitiative": "Iniciativa Leve",
     "allPortfolios": "Todas as Carteiras",
     "allWorkflows": "Todos os Fluxos",
     "allTags": "Todas as Tags",

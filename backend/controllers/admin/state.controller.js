@@ -10,36 +10,61 @@ const getStates = asyncHandler(async (req, res) => {
   res.json(states);
 });
 
+const VALID_MACRO_ETAPAS = ['INICIATIVA', 'PLANIFICACION', 'EJECUCION', 'PAUSA', 'CIERRE'];
+
 const createState = asyncHandler(async (req, res) => {
-  const { nombre_estado, icono, orden, proyecto_cerrado, pasos, descripcion } = req.body;
+  const { nombre_estado, icono, orden, proyecto_cerrado, pasos, descripcion, macro_etapa } = req.body;
   if (!nombre_estado || orden === undefined) {
     return res.status(400).json({ error: 'El nombre del estado y el orden son obligatorios.' });
   }
+
+  const effectiveMacro = macro_etapa ? macro_etapa.toUpperCase() : 'EJECUCION';
+  if (!VALID_MACRO_ETAPAS.includes(effectiveMacro)) {
+    return res.status(400).json({ error: `Macro-Etapa no válida. Valores permitidos: ${VALID_MACRO_ETAPAS.join(', ')}` });
+  }
+
   const state = await EstadosProyecto.create({
     nombre_estado,
     icono,
     orden: parseInt(orden, 10),
     proyecto_cerrado: proyecto_cerrado !== undefined ? !!proyecto_cerrado : false,
+    macro_etapa: effectiveMacro,
     pasos: pasos !== undefined ? pasos : null,
     descripcion: descripcion !== undefined ? descripcion : null
+  });
+  await state.reload({
+    include: [{ model: EstadoTareasPlantilla, as: 'TareasPlantilla' }]
   });
   res.status(201).json(state);
 });
 
 const updateState = asyncHandler(async (req, res) => {
   const { id_estado } = req.params;
-  const { nombre_estado, icono, orden, proyecto_cerrado, pasos, descripcion } = req.body;
+  const { nombre_estado, icono, orden, proyecto_cerrado, pasos, descripcion, macro_etapa } = req.body;
   const state = await EstadosProyecto.findByPk(id_estado);
   if (!state) {
     return res.status(404).json({ error: 'Estado no encontrado.' });
   }
+
+  let effectiveMacro = state.macro_etapa;
+  if (macro_etapa !== undefined) {
+    effectiveMacro = macro_etapa ? macro_etapa.toUpperCase() : 'EJECUCION';
+    if (!VALID_MACRO_ETAPAS.includes(effectiveMacro)) {
+      return res.status(400).json({ error: `Macro-Etapa no válida. Valores permitidos: ${VALID_MACRO_ETAPAS.join(', ')}` });
+    }
+  }
+
   await state.update({
     nombre_estado: nombre_estado !== undefined ? nombre_estado : state.nombre_estado,
     icono: icono !== undefined ? icono : state.icono,
     orden: orden !== undefined ? parseInt(orden, 10) : state.orden,
     proyecto_cerrado: proyecto_cerrado !== undefined ? !!proyecto_cerrado : state.proyecto_cerrado,
+    macro_etapa: effectiveMacro,
     pasos: pasos !== undefined ? pasos : state.pasos,
     descripcion: descripcion !== undefined ? descripcion : state.descripcion
+  });
+  await state.reload({
+    include: [{ model: EstadoTareasPlantilla, as: 'TareasPlantilla' }]
   });
   res.json(state);
 });

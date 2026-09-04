@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MessageSquare, Star, Edit2, Trash2, Filter } from 'lucide-react';
 import RichTextEditor from '../../../components/RichTextEditor';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectExecutiveWall({
   comments,
@@ -27,6 +28,7 @@ export default function ProjectExecutiveWall({
   formatDateTime
 }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
   const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'IMPORTANT' | 'DIRECCION'
 
   const filteredComments = useMemo(() => {
@@ -65,44 +67,46 @@ export default function ProjectExecutiveWall({
       </p>
 
       {/* Input area */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24, padding: 16, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: 16 }}>
-        <RichTextEditor 
-          value={newCommentText}
-          onChange={setNewCommentText}
-          placeholder={t('projectDetail.executiveWall.placeholder', 'Añada un comentario o acuerdo ejecutivo aquí...')}
-        />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', gap: 20 }}>
-            <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
-              <input 
-                type="checkbox" 
-                checked={newCommentImportant} 
-                onChange={(e) => setNewCommentImportant(e.target.checked)}
-                className="m3-checkbox"
-              />
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--priority-alta)', fontWeight: 600 }}>
-                <Star size={14} fill={newCommentImportant ? 'var(--priority-alta)' : 'none'} /> {t('projectDetail.executiveWall.markImportant', 'Marcar como importante / ejecutivo (PDF)')}
-              </span>
-            </label>
-            {canSeeDireccion && (
+      {canWrite && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24, padding: 16, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: 16 }}>
+          <RichTextEditor 
+            value={newCommentText}
+            onChange={setNewCommentText}
+            placeholder={t('projectDetail.executiveWall.placeholder', 'Añada un comentario o acuerdo ejecutivo aquí...')}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 20 }}>
               <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
                 <input 
                   type="checkbox" 
-                  checked={newCommentDireccion} 
-                  onChange={(e) => setNewCommentDireccion(e.target.checked)}
+                  checked={newCommentImportant} 
+                  onChange={(e) => setNewCommentImportant(e.target.checked)}
                   className="m3-checkbox"
                 />
-                <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
-                  {t('projectDetail.executiveWall.forManagement', '📢 Para dirección')}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--priority-alta)', fontWeight: 600 }}>
+                  <Star size={14} fill={newCommentImportant ? 'var(--priority-alta)' : 'none'} /> {t('projectDetail.executiveWall.markImportant', 'Marcar como importante / ejecutivo (PDF)')}
                 </span>
               </label>
-            )}
+              {canSeeDireccion && (
+                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={newCommentDireccion} 
+                    onChange={(e) => setNewCommentDireccion(e.target.checked)}
+                    className="m3-checkbox"
+                  />
+                  <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
+                    {t('projectDetail.executiveWall.forManagement', '📢 Para dirección')}
+                  </span>
+                </label>
+              )}
+            </div>
+            <button className="m3-btn m3-btn-primary" onClick={handleAddComment} style={{ height: '36px' }}>
+              {t('projectDetail.executiveWall.publishBtn', 'Publicar Comentario')}
+            </button>
           </div>
-          <button className="m3-btn m3-btn-primary" onClick={handleAddComment} style={{ height: '36px' }}>
-            {t('projectDetail.executiveWall.publishBtn', 'Publicar Comentario')}
-          </button>
         </div>
-      </div>
+      )}
 
       {/* Filter Bar */}
       {comments && comments.length > 0 && (
@@ -256,28 +260,30 @@ export default function ProjectExecutiveWall({
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 12, borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: 8 }}>
-                      <button 
-                        className="icon-btn" 
-                        onClick={() => {
-                          setEditingCommentId(c.id_comentario);
-                          setEditingCommentText(c.texto_comentario);
-                          setEditingCommentImportant(c.es_importante);
-                          setEditingCommentDireccion(c.para_direccion || false);
-                        }}
-                        title={t('common.edit', 'Editar comentario')}
-                      >
-                        <Edit2 size={12} /> <span style={{ fontSize: '0.75rem', marginLeft: 4 }}>{t('common.edit', 'Editar')}</span>
-                      </button>
-                      <button 
-                        className="icon-btn" 
-                        onClick={() => handleDeleteWithConfirm(c.id_comentario)}
-                        title={t('common.delete', 'Eliminar comentario')}
-                        style={{ color: 'var(--color-rag-red)' }}
-                      >
-                        <Trash2 size={12} /> <span style={{ fontSize: '0.75rem', marginLeft: 4 }}>{t('common.delete', 'Eliminar')}</span>
-                      </button>
-                    </div>
+                    {canWrite && (
+                      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 12, borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: 8 }}>
+                        <button 
+                          className="icon-btn" 
+                          onClick={() => {
+                            setEditingCommentId(c.id_comentario);
+                            setEditingCommentText(c.texto_comentario);
+                            setEditingCommentImportant(c.es_importante);
+                            setEditingCommentDireccion(c.para_direccion || false);
+                          }}
+                          title={t('common.edit', 'Editar comentario')}
+                        >
+                          <Edit2 size={12} /> <span style={{ fontSize: '0.75rem', marginLeft: 4 }}>{t('common.edit', 'Editar')}</span>
+                        </button>
+                        <button 
+                          className="icon-btn" 
+                          onClick={() => handleDeleteWithConfirm(c.id_comentario)}
+                          title={t('common.delete', 'Eliminar comentario')}
+                          style={{ color: 'var(--color-rag-red)' }}
+                        >
+                          <Trash2 size={12} /> <span style={{ fontSize: '0.75rem', marginLeft: 4 }}>{t('common.delete', 'Eliminar')}</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

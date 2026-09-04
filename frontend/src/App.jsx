@@ -750,14 +750,14 @@ function MainAppContent() {
   const isAdmin = currentPm && currentPm.perfil === 'ADMINISTRADOR';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       {isMaintenanceActive && currentPm?.perfil === 'ADMINISTRADOR' && <AdminMaintenanceBanner />}
       <CommandPaletteModal isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
-      <div className="app-container" style={{ flex: 1 }}>
+      <div className="app-container" style={{ flex: 1, minHeight: 0 }}>
         <NavigationRail />
 
         <div className="main-viewport">
-          {/* Sticky Top Bar */}
+          {/* Fixed Top Bar */}
           <div className="top-bar">
             <h1 className="page-title">{getPageTitle()}</h1>
 

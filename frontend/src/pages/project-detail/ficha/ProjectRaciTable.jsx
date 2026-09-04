@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Edit2, Trash2 } from 'lucide-react';
 import SearchableContactSelect from '../../../components/SearchableContactSelect';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectRaciTable({
   sortedInvolvedContacts,
@@ -11,6 +12,7 @@ export default function ProjectRaciTable({
   handleDeleteParticipant
 }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
 
   return (
     <div className="m3-card glass-panel" style={{ overflow: 'visible', zIndex: 5 }}>
@@ -19,18 +21,20 @@ export default function ProjectRaciTable({
           <h3 style={{ fontWeight: 600, fontSize: '1.15rem' }}>{t('projectDetail.raci.title', 'Participantes (RACI)')}</h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>{t('projectDetail.raci.subtitle', 'Gestión de responsabilidades internas y externas del proyecto')}</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, width: '280px', position: 'relative' }}>
-          <SearchableContactSelect 
-            contacts={contactosList}
-            selected={null}
-            onChange={(val) => {
-              if (val) {
-                handleOpenAddRaci(val);
-              }
-            }}
-            placeholder={t('projectDetail.raci.addPlaceholder', '+ Añadir Participante')}
-          />
-        </div>
+        {canWrite && (
+          <div style={{ display: 'flex', gap: 8, width: '280px', position: 'relative' }}>
+            <SearchableContactSelect 
+              contacts={contactosList}
+              selected={null}
+              onChange={(val) => {
+                if (val) {
+                  handleOpenAddRaci(val);
+                }
+              }}
+              placeholder={t('projectDetail.raci.addPlaceholder', '+ Añadir Participante')}
+            />
+          </div>
+        )}
       </div>
 
       {(!sortedInvolvedContacts || sortedInvolvedContacts.length === 0) ? (
@@ -45,7 +49,7 @@ export default function ProjectRaciTable({
                 <th>{t('projectDetail.raci.name', 'Nombre')}</th>
                 <th>{t('projectDetail.raci.role', 'Rol en Proyecto')}</th>
                 <th>{t('projectDetail.raci.raci', 'RACI')}</th>
-                <th>{t('projectDetail.raci.actions', 'Acciones')}</th>
+                {canWrite && <th>{t('projectDetail.raci.actions', 'Acciones')}</th>}
               </tr>
             </thead>
             <tbody>
@@ -88,16 +92,18 @@ export default function ProjectRaciTable({
                       })}
                     </div>
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="icon-btn" onClick={() => handleOpenEditRaci(ku)} title={t('projectDetail.raci.editRole', 'Editar rol RACI')}>
-                        <Edit2 size={14} />
-                      </button>
-                      <button className="icon-btn" onClick={() => handleDeleteParticipant(ku.id_contacto)} title={t('projectDetail.raci.deleteTitle', 'Eliminar del proyecto')} style={{ color: 'var(--color-rag-red)' }}>
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+                  {canWrite && (
+                    <td>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="icon-btn" onClick={() => handleOpenEditRaci(ku)} title={t('projectDetail.raci.editRole', 'Editar rol RACI')}>
+                          <Edit2 size={14} />
+                        </button>
+                        <button className="icon-btn" onClick={() => handleDeleteParticipant(ku.id_contacto)} title={t('projectDetail.raci.deleteTitle', 'Eliminar del proyecto')} style={{ color: 'var(--color-rag-red)' }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

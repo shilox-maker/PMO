@@ -108,9 +108,11 @@ export default function InvoiceFormFields({
         <label className="form-label">{isRecurring ? 'Importe por Cuota (€) *' : 'Importe Facturado (€) *'}</label>
         <input 
           type="number" 
+          min="0"
           step="0.01"
           value={form.importe}
           onChange={(e) => setForm({ ...form, importe: e.target.value })}
+          onWheel={(e) => e.target.blur()}
           placeholder="15000.00"
           required
           className="m3-input"

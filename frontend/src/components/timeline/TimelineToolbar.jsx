@@ -49,6 +49,25 @@ export default function TimelineToolbar({
     return statesList || [];
   }, [filterWorkflow, workflowsList, statesList]);
 
+  const groupedEffectiveStates = useMemo(() => {
+    const groups = {
+      INICIATIVA: [],
+      PLANIFICACION: [],
+      EJECUCION: [],
+      PAUSA: [],
+      CIERRE: []
+    };
+    effectiveStates.forEach(st => {
+      const macro = (st.macro_etapa || (st.proyecto_cerrado ? 'CIERRE' : 'EJECUCION')).toUpperCase();
+      if (groups[macro]) {
+        groups[macro].push(st);
+      } else {
+        groups.EJECUCION.push(st);
+      }
+    });
+    return groups;
+  }, [effectiveStates]);
+
   const handleWorkflowChange = (newWf) => {
     setFilterWorkflow(newWf);
     if (newWf && workflowsList?.length > 0 && filterState) {
@@ -163,7 +182,7 @@ export default function TimelineToolbar({
           <option key="rag-rojo" value="ROJO">🔴 {t('status.ROJO')}</option>
         </select>
 
-        {/* Estado Proyecto */}
+        {/* Estado Proyecto agrupado por Macro-Etapas */}
         {effectiveStates.length > 0 && (
           <select
             value={filterState}
@@ -172,9 +191,18 @@ export default function TimelineToolbar({
             style={{ height: '38px', borderRadius: '12px', minWidth: '130px' }}
           >
             <option key="all-states" value="">{t('projectsTable.allStates')}</option>
-            {effectiveStates.map(s => (
-              <option key={s.id_estado} value={s.id_estado}>{s.nombre_estado}</option>
-            ))}
+            {Object.entries(groupedEffectiveStates).map(([macroKey, statesInGroup]) => {
+              if (statesInGroup.length === 0) return null;
+              return (
+                <optgroup key={macroKey} label={t(`macroEtapas.${macroKey}`, macroKey)}>
+                  {statesInGroup.map(s => (
+                    <option key={s.id_estado} value={s.id_estado}>
+                      {s.icono ? `${s.icono} ` : ''}{s.nombre_estado}
+                    </option>
+                  ))}
+                </optgroup>
+              );
+            })}
           </select>
         )}
 
@@ -182,7 +210,7 @@ export default function TimelineToolbar({
         {portfoliosList.length > 0 && (
           <select
             value={filterPortfolio}
-            onChange={e => setFilterPortfolio(e.target.value)}
+            onChange={e => setFilterPortfolio(e.target.value)} 
             className="user-select"
             style={{ height: '38px', borderRadius: '12px', minWidth: '130px' }}
           >

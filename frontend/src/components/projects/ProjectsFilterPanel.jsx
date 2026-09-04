@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Filter, Search, Printer, Plus, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 import ColumnSelector from '../ColumnSelector';
 import DensitySelector from '../DensitySelector';
+import MacroEtapasFilter from './MacroEtapasFilter';
 
 export default function ProjectsFilterPanel({
   filterPm, setFilterPm,
@@ -118,22 +119,24 @@ export default function ProjectsFilterPanel({
             value={filterPm} 
             onChange={(e) => setFilterPm(e.target.value)}
             className="user-select"
-            style={{ width: 'auto', minWidth: '140px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            style={{ height: '40px' }}
           >
             <option value="">{t('projectsTable.allPms')}</option>
-            {pmsList.map(p => (
-              <option key={p.id_usuario} value={p.id_usuario}>{p.nombre} {p.apellidos}</option>
+            {pmsList.map((p, idx) => (
+              <option key={p.id_usuario || `pm-${idx}`} value={p.id_usuario || p.nombre}>
+                {p.nombre_completo || (p.nombre ? `${p.nombre} ${p.apellidos || ''}`.trim() : p)}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Vendor Filter */}
+        {/* Partner filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <select 
             value={filterVendor} 
             onChange={(e) => setFilterVendor(e.target.value)}
             className="user-select"
-            style={{ width: 'auto', minWidth: '140px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            style={{ height: '40px' }}
           >
             <option value="">{t('projectsTable.allPartners')}</option>
             {vendorsList.map(v => (
@@ -142,74 +145,14 @@ export default function ProjectsFilterPanel({
           </select>
         </div>
 
-        {/* RAG Status Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select 
-            value={filterRag} 
-            onChange={(e) => setFilterRag(e.target.value)}
-            className="user-select"
-            style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
-          >
-            <option value="">{t('projectsTable.allRags')}</option>
-            <option value="VERDE">🟢 VERDE</option>
-            <option value="AMARILLO">🟡 AMARILLO</option>
-            <option value="ROJO">🔴 ROJO</option>
-          </select>
-        </div>
-
-        {/* Estratégico Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select 
-            value={filterEstrategico} 
-            onChange={(e) => setFilterEstrategico(e.target.value)}
-            className="user-select"
-            style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
-          >
-            <option value="">{t('projectsTable.isStrategic')}</option>
-            <option value="true">{t('common.yes')}</option>
-            <option value="false">{t('common.no')}</option>
-          </select>
-        </div>
-
-        {/* Tipo Iniciativa Filter */}
-        {setFilterIniciativa && (
+        {/* Workflow filter */}
+        {workflowsList?.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <select 
-              value={filterIniciativa || ''} 
-              onChange={(e) => setFilterIniciativa(e.target.value)}
-              className="user-select"
-              style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
-            >
-              <option value="">{t('projectsTable.allTypes')}</option>
-              <option value="false">📁 Proyectos Estándar</option>
-              <option value="true">⚡ Iniciativas Ligeras</option>
-            </select>
-          </div>
-        )}
-
-        {/* Portfolio Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select 
-            value={filterPortfolio} 
-            onChange={(e) => setFilterPortfolio(e.target.value)}
-            className="user-select"
-            style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
-          >
-            <option value="">{t('projectsTable.allPortfolios')}</option>
-            {portfoliosList.map(p => (
-              <option key={p.id} value={p.id}>{p.nombre}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Workflow Filter */}
-        {setFilterWorkflow && workflowsList?.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <select 
-              value={filterWorkflow || ''} 
+            <select
+              value={filterWorkflow}
               onChange={(e) => handleWorkflowChange(e.target.value)}
               className="user-select"
-              style={{ width: 'auto', minWidth: '150px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+              style={{ height: '40px', borderColor: filterWorkflow ? 'var(--md-sys-color-primary)' : undefined }}
             >
               <option value="">{t('projectsTable.allWorkflows', 'Todos los Flujos')}</option>
               {workflowsList.map(w => (
@@ -219,34 +162,105 @@ export default function ProjectsFilterPanel({
           </div>
         )}
 
-        {/* Tag Filter */}
+        {/* Portfolio filter */}
+        {portfoliosList?.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select 
+              value={filterPortfolio} 
+              onChange={(e) => setFilterPortfolio(e.target.value)}
+              className="user-select"
+              style={{ height: '40px' }}
+            >
+              <option value="">{t('projectsTable.allPortfolios')}</option>
+              {portfoliosList.map(p => (
+                <option key={p.id_portfolio} value={p.id_portfolio}>{p.nombre}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* RAG Status Filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <select 
-            value={filterTag} 
-            onChange={(e) => setFilterTag(e.target.value)}
+            value={filterRag} 
+            onChange={(e) => setFilterRag(e.target.value)}
             className="user-select"
-            style={{ width: 'auto', minWidth: '130px', height: '40px', paddingTop: 0, paddingBottom: 0 }}
+            style={{ height: '40px' }}
           >
-            <option value="">{t('projectsTable.allTags')}</option>
-            {tagsList.map(t => (
-              <option key={t.id} value={t.id}>{t.nombre}</option>
-            ))}
+            <option value="">{t('projectsTable.allRags')}</option>
+            <option value="VERDE">🟢 {t('status.VERDE')}</option>
+            <option value="AMARILLO">🟡 {t('status.AMARILLO')}</option>
+            <option value="ROJO">🔴 {t('status.ROJO')}</option>
           </select>
         </div>
-        
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto', position: 'relative', zIndex: 50 }}>
-          <DensitySelector density={density} onChange={onDensityChange} />
-          <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
-          
+
+        {/* Strategic Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <select 
+            value={filterEstrategico} 
+            onChange={(e) => setFilterEstrategico(e.target.value)}
+            className="user-select"
+            style={{ height: '40px' }}
+          >
+            <option value="">{t('projectsTable.isStrategic')}</option>
+            <option value="true">{t('common.yes')}</option>
+            <option value="false">{t('common.no')}</option>
+          </select>
+        </div>
+
+        {/* Iniciativa Ligera Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <select 
+            value={filterIniciativa} 
+            onChange={(e) => setFilterIniciativa(e.target.value)}
+            className="user-select"
+            style={{ height: '40px' }}
+          >
+            <option value="">{t('projectsTable.projectType')}</option>
+            <option value="false">💼 {t('projectsTable.standardProject')}</option>
+            <option value="true">⚡ {t('projectsTable.lightInitiative')}</option>
+          </select>
+        </div>
+
+        {/* Tag filter */}
+        {tagsList?.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select
+              value={filterTag}
+              onChange={(e) => setFilterTag(e.target.value)}
+              className="user-select"
+              style={{ height: '40px' }}
+            >
+              <option value="">{t('projectsTable.allTags')}</option>
+              {tagsList.map(tag => (
+                <option key={tag.id} value={tag.id}>{tag.nombre}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Right actions: Density, Column Selector, Report & New Project */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+          {density !== undefined && onDensityChange && (
+            <DensitySelector density={density} onDensityChange={onDensityChange} />
+          )}
+
+          {tableCols && toggleColumn && resetColumns && (
+            <ColumnSelector 
+              tableCols={tableCols} 
+              toggleColumn={toggleColumn} 
+              resetColumns={resetColumns} 
+            />
+          )}
+
           {onOpenReport && (
             <button 
-              className="m3-btn m3-btn-tonal" 
-              onClick={onOpenReport}
+              className="m3-btn m3-btn-outline" 
+              onClick={onOpenReport} 
               style={{ 
-                height: '40px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 8
+                height: '40px',
+                borderColor: 'var(--md-sys-color-outline)',
+                color: 'var(--md-sys-color-on-surface)'
               }}
             >
               <Printer size={18} />
@@ -266,7 +280,7 @@ export default function ProjectsFilterPanel({
       {/* Separator Line */}
       <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', margin: '16px 0' }}></div>
 
-      {/* Row 2: State Segmentation Buttons */}
+      {/* Row 2: Macro-Etapas & State Segmentation */}
       <div>
         <div 
           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
@@ -296,90 +310,12 @@ export default function ProjectsFilterPanel({
         
         {isStatesOpen && (
           <div style={{ marginTop: 16 }}>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  const openStates = effectiveStates
-                    .filter(s => !s.proyecto_cerrado)
-                    .map(s => s.nombre_estado);
-                  setFilterStates(openStates);
-                }}
-                style={{
-                  borderRadius: '20px',
-                  padding: '8px 16px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  border: '1px solid var(--md-sys-color-primary)',
-                  color: 'var(--md-sys-color-primary)',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                  transition: 'var(--transition-smooth)'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(168, 199, 250, 0.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                📂 Proyectos abiertos
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterStates([])}
-                style={{
-                  borderRadius: '20px',
-                  padding: '8px 16px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  border: 'none',
-                  color: 'var(--md-sys-color-outline)',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                  transition: 'var(--transition-smooth)'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--md-sys-color-on-surface)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--md-sys-color-outline)'}
-              >
-                🧹 Limpiar selección
-              </button>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-              {effectiveStates.map(state => {
-                const st = state.nombre_estado;
-                const isSelected = Array.isArray(filterStates) && filterStates.includes(st);
-                
-                return (
-                  <div 
-                    key={state.id_estado}
-                    onClick={() => {
-                      const currentStates = Array.isArray(filterStates) ? filterStates : [];
-                      const newStates = isSelected 
-                        ? currentStates.filter(x => x !== st) 
-                        : [...currentStates, st];
-                      setFilterStates(newStates);
-                    }}
-                    style={{
-                      padding: '12px 16px',
-                      backgroundColor: isSelected ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-high)',
-                      color: isSelected ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface)',
-                      borderRadius: '16px',
-                      cursor: 'pointer',
-                      border: isSelected ? '1px solid var(--md-sys-color-primary)' : '1px solid var(--md-sys-color-outline-variant)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      transition: 'var(--transition-smooth)'
-                    }}
-                  >
-                    <span style={{ fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>
-                      {state.icono || '❓'} {st}
-                    </span>
-                    <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>
-                      {projects.filter(p => p.Estado && p.Estado.nombre_estado === st).length}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            <MacroEtapasFilter
+              effectiveStates={effectiveStates}
+              filterStates={filterStates}
+              setFilterStates={setFilterStates}
+              projects={projects}
+            />
           </div>
         )}
       </div>

@@ -34,6 +34,13 @@ export default function UserMenuDropdown({
 
   const initials = `${currentPm.nombre?.[0] || ''}${currentPm.apellidos?.[0] || ''}`;
 
+  const formatRole = (role) => {
+    if (role === 'SOLO_LECTURA') return t('roles.SOLO_LECTURA', 'Solo Lectura');
+    if (role === 'ADMINISTRADOR') return t('roles.ADMINISTRADOR', 'ADMINISTRADOR');
+    if (role === 'DIRECTOR') return t('roles.DIRECTOR', 'DIRECTOR');
+    return role || 'PM';
+  };
+
   return (
     <div className={`user-menu-dropdown-container ${isCollapsed ? 'collapsed' : ''}`} ref={dropdownRef}>
       {/* Dropdown Menu Popover */}
@@ -46,7 +53,7 @@ export default function UserMenuDropdown({
                 <div className="user-avatar-compact">{initials}</div>
                 <div className="user-menu-details-compact">
                   <div className="user-menu-name-compact">{currentPm.nombre} {currentPm.apellidos}</div>
-                  <div className="user-menu-role-compact">{currentPm.perfil}</div>
+                  <div className="user-menu-role-compact">{formatRole(currentPm.perfil)}</div>
                 </div>
               </div>
               <div className="user-menu-divider" />
@@ -171,7 +178,7 @@ export default function UserMenuDropdown({
         type="button"
         className={`user-profile-trigger-card ${isOpen ? 'open' : ''} ${isCollapsed ? 'card-collapsed' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
-        title={`${currentPm.nombre} ${currentPm.apellidos} (${currentPm.perfil})`}
+        title={`${currentPm.nombre} ${currentPm.apellidos} (${formatRole(currentPm.perfil)})`}
       >
         <div className="user-avatar-trigger">
           {initials}
@@ -183,7 +190,7 @@ export default function UserMenuDropdown({
                 {currentPm.nombre} {currentPm.apellidos}
               </div>
               <div className="user-trigger-role">
-                {currentPm.perfil}
+                {formatRole(currentPm.perfil)}
               </div>
             </div>
             <div className="user-trigger-chevron">

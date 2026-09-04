@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus, Edit2, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getSortedData } from '../../../utils/sorting';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectRiesgosTab({
   project, openAddRisk, openEditRisk, handleToggleRiskState,
@@ -10,6 +11,7 @@ export default function ProjectRiesgosTab({
   risksSort, setRisksSort, issuesSort, setIssuesSort, renderSortHeader
 }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
   const sortedRisks = getSortedData(project.Riesgos || [], risksSort);
   const sortedIssues = getSortedData(project.Incidencias || [], issuesSort);
 
@@ -74,9 +76,11 @@ export default function ProjectRiesgosTab({
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t('risksTab.risksSubtitle', 'Identificación y planificación de planes de contingencia para mitigar desviaciones')}</p>
           </div>
-          <button className="m3-btn m3-btn-primary" onClick={handleOpenAddRisk}>
-            <Plus size={16} /> {t('risksTab.newRisk', 'Nuevo Riesgo')}
-          </button>
+          {canWrite && (
+            <button className="m3-btn m3-btn-primary" onClick={handleOpenAddRisk}>
+              <Plus size={16} /> {t('risksTab.newRisk', 'Nuevo Riesgo')}
+            </button>
+          )}
         </div>
 
         {(!project.Riesgos || project.Riesgos.length === 0) ? (
@@ -96,7 +100,7 @@ export default function ProjectRiesgosTab({
                   {renderSortHeader(t('risksTab.nextReview', 'Próxima Revisión'), 'fecha_proxima_revision', risksSort, setRisksSort)}
                   {renderSortHeader(t('risksTab.linkedTask', 'Tarea Relacionada'), 'id_tarea', risksSort, setRisksSort)}
                   {renderSortHeader(t('risksTab.status', 'Estado'), 'estado_riesgo', risksSort, setRisksSort)}
-                  <th>{t('risksTab.actions', 'Acciones')}</th>
+                  {canWrite && <th>{t('risksTab.actions', 'Acciones')}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -129,20 +133,23 @@ export default function ProjectRiesgosTab({
                       <td>
                         <button 
                           className={`badge ${r.estado_riesgo === 'ACTIVO' ? 'badge-red' : 'badge-green'}`}
-                          onClick={() => handleToggleRisk(r.id_riesgo, r.estado_riesgo)}
-                          title={t('risksTab.toggleStatusTooltip', 'Haga clic para cambiar estado del riesgo')}
-                          style={{ border: 'none', cursor: 'pointer' }}
+                          onClick={canWrite ? () => handleToggleRisk(r.id_riesgo, r.estado_riesgo) : undefined}
+                          title={canWrite ? t('risksTab.toggleStatusTooltip', 'Haga clic para cambiar estado del riesgo') : undefined}
+                          disabled={!canWrite}
+                          style={{ border: 'none', cursor: canWrite ? 'pointer' : 'default', opacity: canWrite ? 1 : 0.85 }}
                         >
                           {statusLabel}
                         </button>
                       </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button className="icon-btn" onClick={() => handleOpenEditRisk(r)} title={t('risksTab.editRiskTooltip', 'Editar riesgo')}>
-                            <Edit2 size={14} />
-                          </button>
-                        </div>
-                      </td>
+                      {canWrite && (
+                        <td>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button className="icon-btn" onClick={() => handleOpenEditRisk(r)} title={t('risksTab.editRiskTooltip', 'Editar riesgo')}>
+                              <Edit2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -161,9 +168,11 @@ export default function ProjectRiesgosTab({
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t('risksTab.issuesSubtitle', 'Registro de problemas bloqueantes actuales y sus planes de acción/soluciones aplicadas')}</p>
           </div>
-          <button className="m3-btn m3-btn-primary" onClick={handleOpenAddIssue}>
-            <Plus size={16} /> {t('risksTab.newIssue', 'Registrar Incidencia')}
-          </button>
+          {canWrite && (
+            <button className="m3-btn m3-btn-primary" onClick={handleOpenAddIssue}>
+              <Plus size={16} /> {t('risksTab.newIssue', 'Registrar Incidencia')}
+            </button>
+          )}
         </div>
 
         {(!project.Incidencias || project.Incidencias.length === 0) ? (
@@ -183,7 +192,7 @@ export default function ProjectRiesgosTab({
                   {renderSortHeader(t('risksTab.closeDate', 'Cierre'), 'fecha_cierre', issuesSort, setIssuesSort)}
                   {renderSortHeader(t('risksTab.linkedTask', 'Tarea Relacionada'), 'id_tarea', issuesSort, setIssuesSort)}
                   {renderSortHeader(t('risksTab.status', 'Estado'), 'estado', issuesSort, setIssuesSort)}
-                  <th>{t('risksTab.actions', 'Acciones')}</th>
+                  {canWrite && <th>{t('risksTab.actions', 'Acciones')}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -225,13 +234,15 @@ export default function ProjectRiesgosTab({
                           {statusLabel}
                         </span>
                       </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button className="icon-btn" onClick={() => handleOpenEditIssue(i)} title={t('risksTab.editIssueTooltip', 'Editar incidencia')}>
-                            <Edit2 size={14} />
-                          </button>
-                        </div>
-                      </td>
+                      {canWrite && (
+                        <td>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button className="icon-btn" onClick={() => handleOpenEditIssue(i)} title={t('risksTab.editIssueTooltip', 'Editar incidencia')}>
+                              <Edit2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

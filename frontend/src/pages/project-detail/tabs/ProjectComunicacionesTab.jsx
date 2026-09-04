@@ -4,9 +4,11 @@ import { MessageSquare, Users, Edit2, Mail, Plus, Trash2, Calendar, Clock, Check
 import EmailReportModal from '../../../components/modals/EmailReportModal';
 import CommunicationPlanModal from './CommunicationPlanModal';
 import CommunicationAuditHistory from './CommunicationAuditHistory';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectComunicacionesTab({ project, getAuthHeaders, handleUpdateProject }) {
   const { t, i18n } = useTranslation();
+  const { canWrite } = useAuth();
   const [plans, setPlans] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -122,13 +124,15 @@ export default function ProjectComunicacionesTab({ project, getAuthHeaders, hand
             {t('projectDetail.communicationTab.subtitle', 'Planes dinámicos configurados para reportes de avance y seguimiento relacional con contactos RACI.')}
           </p>
         </div>
-        <button
-          className="m3-btn m3-btn-primary"
-          onClick={handleOpenCreateModal}
-          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-        >
-          <Plus size={16} /> {t('projectDetail.communicationTab.newPlan', 'Nuevo Plan de Comunicación')}
-        </button>
+        {canWrite && (
+          <button
+            className="m3-btn m3-btn-primary"
+            onClick={handleOpenCreateModal}
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <Plus size={16} /> {t('projectDetail.communicationTab.newPlan', 'Nuevo Plan de Comunicación')}
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
@@ -162,12 +166,16 @@ export default function ProjectComunicacionesTab({ project, getAuthHeaders, hand
                     <span className={`badge ${p.activo ? 'badge-green' : 'badge-red'}`}>
                       {p.activo ? 'ACTIVO' : 'INACTIVO'}
                     </span>
-                    <button className="icon-btn" onClick={() => handleOpenEditModal(p)} title={t('common.edit', 'Editar Plan')} style={{ padding: 4 }}>
-                      <Edit2 size={14} />
-                    </button>
-                    <button className="icon-btn" onClick={() => handleDeletePlan(p.id)} title={t('common.delete', 'Eliminar Plan')} style={{ padding: 4, color: 'var(--color-rag-red)' }}>
-                      <Trash2 size={14} />
-                    </button>
+                    {canWrite && (
+                      <>
+                        <button className="icon-btn" onClick={() => handleOpenEditModal(p)} title={t('common.edit', 'Editar Plan')} style={{ padding: 4 }}>
+                          <Edit2 size={14} />
+                        </button>
+                        <button className="icon-btn" onClick={() => handleDeletePlan(p.id)} title={t('common.delete', 'Eliminar Plan')} style={{ padding: 4, color: 'var(--color-rag-red)' }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -204,14 +212,16 @@ export default function ProjectComunicacionesTab({ project, getAuthHeaders, hand
                   <Calendar size={12} />
                   {lastSendDate ? t('projectDetail.communicationTab.lastSend', { date: lastSendDate, defaultValue: `Último envío: ${lastSendDate}` }) : t('projectDetail.communicationTab.noSends', 'Sin envíos registrados')}
                 </div>
-                <button
-                  className="m3-btn m3-btn-outline"
-                  onClick={() => handleOpenEmailModal(p)}
-                  disabled={!p.activo}
-                  style={{ fontSize: '0.78rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
-                >
-                  <Mail size={13} /> {t('projectDetail.communicationTab.sendReport', 'Enviar Informe')}
-                </button>
+                {canWrite && (
+                  <button
+                    className="m3-btn m3-btn-outline"
+                    onClick={() => handleOpenEmailModal(p)}
+                    disabled={!p.activo}
+                    style={{ fontSize: '0.78rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <Mail size={13} /> {t('projectDetail.communicationTab.sendReport', 'Enviar Informe')}
+                  </button>
+                )}
               </div>
             </div>
           );

@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus, Edit2, Trash2, BookOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getSortedData } from '../../../utils/sorting';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectLeccionesTab({
   project, openAddLesson, openEditLesson, handleDeleteLesson,
@@ -9,6 +10,7 @@ export default function ProjectLeccionesTab({
   lessonsSort, setLessonsSort, renderSortHeader
 }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
   const lessons = project.LeccionesAprendidas || [];
   const sortedLessons = getSortedData(lessons, lessonsSort);
 
@@ -39,9 +41,11 @@ export default function ProjectLeccionesTab({
           </h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t('lessonsTab.subtitle', 'Base de conocimiento técnica: aciertos, buenas prácticas y errores detectados')}</p>
         </div>
-        <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
-          <Plus size={16} /> {t('lessonsTab.newLesson', 'Nueva Lección')}
-        </button>
+        {canWrite && (
+          <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
+            <Plus size={16} /> {t('lessonsTab.newLesson', 'Nueva Lección')}
+          </button>
+        )}
       </div>
 
       {(lessons.length === 0) ? (
@@ -58,7 +62,7 @@ export default function ProjectLeccionesTab({
                 {renderSortHeader(t('lessonsTab.summary', 'Título / Resumen'), 'titulo', lessonsSort, setLessonsSort)}
                 {renderSortHeader(t('lessonsTab.description', 'Lección Aprendida'), 'contexto', lessonsSort, setLessonsSort)}
                 {renderSortHeader(t('lessonsTab.recommendation', 'Recomendación'), 'recomendacion_futura', lessonsSort, setLessonsSort)}
-                <th>{t('common.actions', 'Acciones')}</th>
+                {canWrite && <th>{t('common.actions', 'Acciones')}</th>}
               </tr>
             </thead>
             <tbody>
@@ -73,16 +77,18 @@ export default function ProjectLeccionesTab({
                   <td style={{ fontWeight: 600 }}>{l.titulo}</td>
                   <td>{l.contexto || '—'}</td>
                   <td>{l.recomendacion_futura || '—'}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="icon-btn" onClick={() => handleOpenEdit(l)} title={t('lessonsTab.editTooltip', 'Editar lección')}>
-                        <Edit2 size={14} />
-                      </button>
-                      <button className="icon-btn" onClick={() => handleDelete(l.id_leccion || l.id)} title={t('lessonsTab.deleteTooltip', 'Eliminar lección')} style={{ color: 'var(--color-rag-red)' }}>
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+                  {canWrite && (
+                    <td>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="icon-btn" onClick={() => handleOpenEdit(l)} title={t('lessonsTab.editTooltip', 'Editar lección')}>
+                          <Edit2 size={14} />
+                        </button>
+                        <button className="icon-btn" onClick={() => handleDelete(l.id_leccion || l.id)} title={t('lessonsTab.deleteTooltip', 'Eliminar lección')} style={{ color: 'var(--color-rag-red)' }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

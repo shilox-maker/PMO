@@ -3,7 +3,8 @@ const { Usuarios, Ambitos, UsuarioAmbitos } = require('../models');
 /**
  * Scope Middleware (tenantScope)
  * Valida el ámbito activo enviado en las cabeceras HTTP ('x-ambito-id' o 'x-ambito-code').
- * Garantiza seguridad Zero-Trust rechazando peticiones no autorizadas con HTTP 403 Forbidden.
+ * Garantiza seguridad Zero-Trust rechazando peticiones no autorizadas con HTTP 403 Forbidden
+ * y ámbitos inexistentes o inactivos con HTTP 404 Not Found (modo Fail-Closed).
  */
 const scopeMiddleware = async (req, res, next) => {
   try {
@@ -30,13 +31,12 @@ const scopeMiddleware = async (req, res, next) => {
 
     // 1. Si solicita Vista Global ('ALL')
     if (rawHeader && String(rawHeader).toUpperCase() === 'ALL') {
-      if (isAdminOrDirector) {
-        req.currentAmbitoId = 'ALL';
-        req.userAmbitoIds = 'ALL';
-      } else {
-        req.currentAmbitoId = effectiveUserAmbitoIds[0] || 1;
-        req.userAmbitoIds = effectiveUserAmbitoIds;
+      if (!isAdminOrDirector) {
+        console.warn(`[ScopeSecurity] Intento de acceso denegado: Usuario ${user.id_usuario} (${user.perfil}) intentó acceder a Vista Global ('ALL') sin permisos.`);
+        return res.status(403).json({ error: 'Acceso denegado. No tienes permisos para acceder a la vista global.' });
       }
+      req.currentAmbitoId = 'ALL';
+      req.userAmbitoIds = 'ALL';
       return next();
     }
 
@@ -50,16 +50,14 @@ const scopeMiddleware = async (req, res, next) => {
       }
 
       if (!targetAmbito || !targetAmbito.activo) {
-        req.currentAmbitoId = effectiveUserAmbitoIds[0] || 1;
-        req.userAmbitoIds = isAdminOrDirector ? 'ALL' : effectiveUserAmbitoIds;
-        return next();
+        console.warn(`[ScopeSecurity] Ámbito inexistente o inactivo solicitado: "${rawHeader}" por usuario ${user.id_usuario} (${user.perfil}).`);
+        return res.status(404).json({ error: 'El ámbito solicitado no existe o está inactivo.' });
       }
 
-      const isAuthorized = isAdminOrDirector || effectiveUserAmbitoIds.includes(targetAmbito.id_ambito);
+      const isAuthorized = isAdminOrDirector || effectiveUserAmbitoIds.includes(Number(targetAmbito.id_ambito));
       if (!isAuthorized) {
-        req.currentAmbitoId = effectiveUserAmbitoIds[0] || 1;
-        req.userAmbitoIds = isAdminOrDirector ? 'ALL' : effectiveUserAmbitoIds;
-        return next();
+        console.warn(`[ScopeSecurity] Intento de acceso denegado: Usuario ${user.id_usuario} (${user.perfil}) intentó acceder al ámbito ${targetAmbito.id_ambito} (${targetAmbito.code}) sin autorización.`);
+        return res.status(403).json({ error: 'Acceso denegado. No tienes permisos para acceder a este ámbito.' });
       }
 
       req.currentAmbitoId = targetAmbito.id_ambito;

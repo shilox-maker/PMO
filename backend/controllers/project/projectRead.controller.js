@@ -9,7 +9,7 @@ const { getProjectCalculations, getProjectsCalculationsBatch } = require('../../
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
 const getProjects = asyncHandler(async (req, res) => {
-  const { pm, vendor, rag, search, state, workflow, id_workflow, estrategico, portfolio, tag, iniciativa_ligera } = req.query;
+  const { pm, vendor, rag, search, state, macro_etapa, workflow, id_workflow, estrategico, portfolio, tag, iniciativa_ligera } = req.query;
   const user = await Usuarios.findByPk(req.currentPmId);
   const canSeeDireccion = user && (user.perfil === 'ADMINISTRADOR' || user.perfil === 'DIRECTOR');
   
@@ -46,6 +46,11 @@ const getProjects = asyncHandler(async (req, res) => {
     where.id_proyecto = { [Op.in]: pTag.map(p => p.id_proyecto) };
   }
 
+  const estadoWhere = {};
+  if (state) estadoWhere.nombre_estado = { [Op.in]: state.split(',') };
+  if (macro_etapa) estadoWhere.macro_etapa = { [Op.in]: macro_etapa.split(',') };
+  const hasEstadoFilter = Object.keys(estadoWhere).length > 0;
+
   const projectsList = await Proyectos.findAll({
     where,
     include: [
@@ -59,7 +64,7 @@ const getProjects = asyncHandler(async (req, res) => {
       { model: Tags, as: 'Tags', through: { attributes: [] } },
       { model: TiposCapex, as: 'TipoCapex', attributes: ['id', 'nombre'] },
       { model: SubtiposCapex, as: 'SubtipoCapex', attributes: ['id', 'nombre'] },
-      { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono'], ...(state ? { where: { nombre_estado: { [Op.in]: state.split(',') } } } : {}) }
+      { model: EstadosProyecto, as: 'Estado', attributes: ['id_estado', 'nombre_estado', 'icono', 'macro_etapa', 'proyecto_cerrado'], ...(hasEstadoFilter ? { where: estadoWhere, required: true } : { required: false }) }
     ],
     order: [['createdAt', 'DESC']]
   });

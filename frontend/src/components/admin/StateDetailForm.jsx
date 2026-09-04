@@ -10,6 +10,7 @@ export default function StateDetailForm({ initialState, onBack, onStateSaved, ge
     nombre_estado: initialState?.nombre_estado || '',
     icono: initialState?.icono || '',
     orden: initialState?.orden !== undefined ? initialState.orden.toString() : '',
+    macro_etapa: initialState?.macro_etapa || 'EJECUCION',
     proyecto_cerrado: Boolean(initialState?.proyecto_cerrado),
     pasos: initialState?.pasos || '',
     descripcion: initialState?.descripcion || ''
@@ -27,6 +28,7 @@ export default function StateDetailForm({ initialState, onBack, onStateSaved, ge
       nombre_estado: initialState?.nombre_estado || '',
       icono: initialState?.icono || '',
       orden: initialState?.orden !== undefined ? initialState.orden.toString() : '',
+      macro_etapa: initialState?.macro_etapa || 'EJECUCION',
       proyecto_cerrado: Boolean(initialState?.proyecto_cerrado),
       pasos: initialState?.pasos || '',
       descripcion: initialState?.descripcion || ''
@@ -48,6 +50,7 @@ export default function StateDetailForm({ initialState, onBack, onStateSaved, ge
       nombre_estado: stateForm.nombre_estado,
       icono: stateForm.icono || null,
       orden: parseInt(stateForm.orden, 10),
+      macro_etapa: stateForm.macro_etapa || 'EJECUCION',
       proyecto_cerrado: Boolean(stateForm.proyecto_cerrado),
       pasos: stateForm.pasos || '',
       descripcion: stateForm.descripcion || ''
@@ -81,9 +84,18 @@ export default function StateDetailForm({ initialState, onBack, onStateSaved, ge
         const updatedStateObj = savedData.state || savedData;
         if (updatedStateObj && updatedStateObj.id_estado) {
           setCurrentState(updatedStateObj);
-          setStateForm(prev => ({ ...prev, id_estado: updatedStateObj.id_estado }));
+          setStateForm({
+            id_estado: updatedStateObj.id_estado,
+            nombre_estado: updatedStateObj.nombre_estado || '',
+            icono: updatedStateObj.icono || '',
+            orden: updatedStateObj.orden !== undefined ? updatedStateObj.orden.toString() : '',
+            macro_etapa: updatedStateObj.macro_etapa || 'EJECUCION',
+            proyecto_cerrado: Boolean(updatedStateObj.proyecto_cerrado),
+            pasos: updatedStateObj.pasos || '',
+            descripcion: updatedStateObj.descripcion || ''
+          });
         }
-        onStateSaved();
+        if (onStateSaved) onStateSaved();
       })
       .catch(err => {
         setError(err.message);
@@ -103,19 +115,25 @@ export default function StateDetailForm({ initialState, onBack, onStateSaved, ge
         >
           <ArrowLeft size={18} /> Volver a Estados
         </button>
-        <h2 style={{ fontWeight: 600, fontSize: '1.25rem' }}>
-          {stateForm.id_estado ? `Detalle de Estado: ${stateForm.nombre_estado}` : 'Alta de Nuevo Estado'}
-        </h2>
+        <button 
+          type="submit" 
+          form="state-detail-form" 
+          className="m3-btn m3-btn-primary" 
+          disabled={saving}
+          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+        >
+          <Save size={18} /> {saving ? 'Guardando...' : 'Guardar Estado'}
+        </button>
       </div>
 
+      {/* Alertas */}
       {error && (
-        <div style={{ backgroundColor: 'rgba(255, 69, 58, 0.1)', color: 'var(--color-rag-red)', padding: 12, borderRadius: 12, fontSize: '0.85rem' }}>
+        <div style={{ padding: '12px 16px', backgroundColor: 'rgba(255, 69, 58, 0.1)', color: 'var(--color-rag-red)', borderRadius: 12, border: '1px solid var(--color-rag-red)', fontSize: '0.9rem' }}>
           {error}
         </div>
       )}
-
       {success && (
-        <div style={{ backgroundColor: 'rgba(52, 199, 89, 0.1)', color: 'var(--color-rag-green)', padding: 12, borderRadius: 12, fontSize: '0.85rem' }}>
+        <div style={{ padding: '12px 16px', backgroundColor: 'rgba(48, 209, 88, 0.1)', color: 'var(--color-rag-green)', borderRadius: 12, border: '1px solid var(--color-rag-green)', fontSize: '0.9rem' }}>
           {success}
         </div>
       )}
@@ -126,7 +144,7 @@ export default function StateDetailForm({ initialState, onBack, onStateSaved, ge
           Campos del Estado
         </h3>
         
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form id="state-detail-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
             <div className="form-group">
               <label className="form-label">Nombre del Estado *</label>
@@ -138,6 +156,23 @@ export default function StateDetailForm({ initialState, onBack, onStateSaved, ge
                 placeholder="Ej: Validación Técnica"
                 className="m3-input"
               />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Macro-Etapa del Ciclo de Vida *</label>
+              <select
+                value={stateForm.macro_etapa}
+                onChange={(e) => setStateForm(prev => ({ ...prev, macro_etapa: e.target.value }))}
+                required
+                className="m3-input"
+                style={{ height: '40px' }}
+              >
+                <option value="INICIATIVA">💡 Iniciativa / Propuesta</option>
+                <option value="PLANIFICACION">📅 Planificación y Aprobación</option>
+                <option value="EJECUCION">🛠️ En Ejecución</option>
+                <option value="PAUSA">⏸️ En Pausa / Bloqueado</option>
+                <option value="CIERRE">🏁 Finalizado / Histórico</option>
+              </select>
             </div>
 
             <div className="form-group">

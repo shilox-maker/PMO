@@ -1,6 +1,6 @@
 const { 
   Proyectos, Usuarios, EstadosProyecto, ComentariosProyecto,
-  Workflows, WorkflowEstados
+  Workflows, WorkflowEstados, Ambitos
 } = require('../../models/index');
 const { generateNextId } = require('../../utils/helpers');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -9,6 +9,19 @@ const {
   validateCapexFields,
   validateDateFields
 } = require('./projectValidation.helper');
+
+async function getUserScopeInfo(req) {
+  let user = req.currentUser;
+  if (!user || !user.Ambitos) {
+    user = await Usuarios.findByPk(req.currentPmId, {
+      include: [{ model: Ambitos, as: 'Ambitos', through: { attributes: ['rol_ambito'] } }]
+    });
+  }
+  const isAdminOrDirector = user && ['ADMINISTRADOR', 'DIRECTOR'].includes(user.perfil);
+  const userAmbitoIds = (user?.Ambitos || []).map(a => Number(a.id_ambito));
+  const effectiveUserAmbitoIds = (!isAdminOrDirector && userAmbitoIds.length === 0) ? [1] : userAmbitoIds;
+  return { user, isAdminOrDirector, effectiveUserAmbitoIds };
+}
 
 // Helper to resolve state and workflow
 async function resolveWorkflowAndState(data) {
@@ -54,13 +67,24 @@ const createProject = asyncHandler(async (req, res) => {
   data.createdBy = req.currentPmId;
   data.modifiedBy = req.currentPmId;
 
+  const { isAdminOrDirector, effectiveUserAmbitoIds } = await getUserScopeInfo(req);
+
   sanitizeRichTextFields(data);
-  if (data.id_ambito) {
-    data.id_ambito = Number(data.id_ambito);
+  if (data.id_ambito !== undefined && data.id_ambito !== null && String(data.id_ambito).trim() !== '') {
+    const targetAmbitoId = Number(data.id_ambito);
+    const targetAmbito = await Ambitos.findByPk(targetAmbitoId);
+    if (!targetAmbito || !targetAmbito.activo) {
+      return res.status(400).json({ error: 'El ámbito especificado no existe o está inactivo.' });
+    }
+    const isAuthorized = isAdminOrDirector || effectiveUserAmbitoIds.includes(targetAmbitoId);
+    if (!isAuthorized) {
+      return res.status(403).json({ error: 'Acceso denegado. No tienes permisos para crear proyectos en este ámbito.' });
+    }
+    data.id_ambito = targetAmbitoId;
   } else if (req.currentAmbitoId && req.currentAmbitoId !== 'ALL') {
-    data.id_ambito = req.currentAmbitoId;
+    data.id_ambito = Number(req.currentAmbitoId);
   } else {
-    data.id_ambito = 1;
+    data.id_ambito = effectiveUserAmbitoIds[0] || 1;
   }
   if (!(await validateCapexFields(data, res))) return;
   if (!validateDateFields(data, res)) return;
@@ -97,14 +121,37 @@ const updateProject = asyncHandler(async (req, res) => {
   delete data.createdBy;
   data.modifiedBy = req.currentPmId;
 
+  const { isAdminOrDirector, effectiveUserAmbitoIds } = await getUserScopeInfo(req);
+
   sanitizeRichTextFields(data);
-  if (data.id_ambito !== undefined) {
-    data.id_ambito = data.id_ambito ? Number(data.id_ambito) : null;
-  }
 
   const project = await Proyectos.findByPk(id_proyecto);
   if (!project) {
     return res.status(404).json({ error: 'Proyecto no encontrado' });
+  }
+
+  // Validar acceso al ámbito actual del proyecto
+  if (project.id_ambito) {
+    const hasCurrentScopeAccess = isAdminOrDirector || effectiveUserAmbitoIds.includes(Number(project.id_ambito));
+    if (!hasCurrentScopeAccess) {
+      return res.status(403).json({ error: 'Acceso denegado. No tienes permisos para modificar proyectos en este ámbito.' });
+    }
+  }
+
+  // Validar si se intenta modificar el ámbito del proyecto
+  if (data.id_ambito !== undefined && data.id_ambito !== null && String(data.id_ambito).trim() !== '') {
+    const targetAmbitoId = Number(data.id_ambito);
+    const targetAmbito = await Ambitos.findByPk(targetAmbitoId);
+    if (!targetAmbito || !targetAmbito.activo) {
+      return res.status(400).json({ error: 'El ámbito especificado no existe o está inactivo.' });
+    }
+    const hasTargetScopeAccess = isAdminOrDirector || effectiveUserAmbitoIds.includes(targetAmbitoId);
+    if (!hasTargetScopeAccess) {
+      return res.status(403).json({ error: 'Acceso denegado. No tienes permisos para mover el proyecto al ámbito especificado.' });
+    }
+    data.id_ambito = targetAmbitoId;
+  } else if (data.id_ambito === null || data.id_ambito === '') {
+    delete data.id_ambito;
   }
 
   if (!(await validateCapexFields(data, res))) return;
@@ -217,13 +264,20 @@ const deleteProject = asyncHandler(async (req, res) => {
     return res.status(404).json({ error: 'Proyecto no encontrado' });
   }
 
-  const user = await Usuarios.findByPk(req.currentPmId);
+  const { user, isAdminOrDirector, effectiveUserAmbitoIds } = await getUserScopeInfo(req);
   if (!user) {
     return res.status(401).json({ error: 'Acceso denegado. Usuario no encontrado.' });
   }
 
-  const isAuthorized = user.perfil === 'ADMINISTRADOR' || 
-                       user.perfil === 'DIRECTOR' || 
+  // Validar acceso al ámbito del proyecto
+  if (project.id_ambito) {
+    const hasScopeAccess = isAdminOrDirector || effectiveUserAmbitoIds.includes(Number(project.id_ambito));
+    if (!hasScopeAccess) {
+      return res.status(403).json({ error: 'Acceso denegado. No tienes permisos en el ámbito de este proyecto para eliminarlo.' });
+    }
+  }
+
+  const isAuthorized = isAdminOrDirector || 
                        project.id_pm === req.currentPmId;
 
   if (!isAuthorized) {

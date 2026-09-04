@@ -122,6 +122,61 @@ async function ensureSchemaConsistency(sequelize) {
               ALTER TABLE [${schema}].[Proyectos] ADD [avance_porcentaje] INT NOT NULL CONSTRAINT DF_Proyectos_avance_${schema} DEFAULT 0;
           END;
       END;
+
+      -- 6. Asegurar CHECK constraint para [Usuarios].[perfil] incluyendo 'SOLO_LECTURA'
+      IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Usuarios' AND schema_id = SCHEMA_ID('${schema}'))
+      BEGIN
+          DECLARE @chkUserPerfil NVARCHAR(256);
+          DECLARE curUserChk CURSOR FOR
+              SELECT cc.name 
+              FROM sys.check_constraints cc
+              INNER JOIN sys.tables t ON cc.parent_object_id = t.object_id
+              INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+              INNER JOIN sys.columns c ON cc.parent_object_id = c.object_id AND cc.parent_column_id = c.column_id
+              WHERE s.name = '${schema}' AND t.name = 'Usuarios' AND c.name = 'perfil';
+
+          OPEN curUserChk;
+          FETCH NEXT FROM curUserChk INTO @chkUserPerfil;
+          WHILE @@FETCH_STATUS = 0
+          BEGIN
+              EXEC('ALTER TABLE [${schema}].[Usuarios] DROP CONSTRAINT [' + @chkUserPerfil + ']');
+              FETCH NEXT FROM curUserChk INTO @chkUserPerfil;
+          END;
+          CLOSE curUserChk;
+          DEALLOCATE curUserChk;
+
+          ALTER TABLE [${schema}].[Usuarios] ADD CONSTRAINT CK_Usuarios_perfil_${schema} CHECK ([perfil] IN ('ADMINISTRADOR', 'PM', 'DIRECTOR', 'SOLO_LECTURA'));
+      END;
+
+      -- 7. Asegurar columna macro_etapa y CHECK constraint en [Estados_Proyecto]
+      IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Estados_Proyecto' AND schema_id = SCHEMA_ID('${schema}'))
+      BEGIN
+          IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[${schema}].[Estados_Proyecto]') AND name = 'macro_etapa')
+          BEGIN
+              ALTER TABLE [${schema}].[Estados_Proyecto] ADD [macro_etapa] NVARCHAR(50) NOT NULL CONSTRAINT DF_Estados_macro_${schema} DEFAULT 'EJECUCION';
+          END;
+
+          DECLARE @chkMacroEtapa NVARCHAR(256);
+          DECLARE curMacroChk CURSOR FOR
+              SELECT cc.name 
+              FROM sys.check_constraints cc
+              INNER JOIN sys.tables t ON cc.parent_object_id = t.object_id
+              INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+              INNER JOIN sys.columns c ON cc.parent_object_id = c.object_id AND cc.parent_column_id = c.column_id
+              WHERE s.name = '${schema}' AND t.name = 'Estados_Proyecto' AND c.name = 'macro_etapa';
+
+          OPEN curMacroChk;
+          FETCH NEXT FROM curMacroChk INTO @chkMacroEtapa;
+          WHILE @@FETCH_STATUS = 0
+          BEGIN
+              EXEC('ALTER TABLE [${schema}].[Estados_Proyecto] DROP CONSTRAINT [' + @chkMacroEtapa + ']');
+              FETCH NEXT FROM curMacroChk INTO @chkMacroEtapa;
+          END;
+          CLOSE curMacroChk;
+          DEALLOCATE curMacroChk;
+
+          ALTER TABLE [${schema}].[Estados_Proyecto] ADD CONSTRAINT CK_Estados_macro_${schema} CHECK ([macro_etapa] IN ('INICIATIVA', 'PLANIFICACION', 'EJECUCION', 'PAUSA', 'CIERRE'));
+      END;
     `);
 
     logger.info(`✅ [Auto-Schema] Esquema [${schema}] sincronizado y restricciones actualizadas.`);

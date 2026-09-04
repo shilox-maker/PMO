@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { Op } = require('sequelize');
 const { Usuarios, Proyectos, Ambitos, UsuarioAmbitos } = require('../../models/index');
 const { hashPassword } = require('../../utils/helpers');
 const { asyncHandler } = require('../../middlewares/errorHandler');
@@ -36,9 +37,23 @@ const createUser = asyncHandler(async (req, res) => {
   }
 
   // Asignación de Ámbitos
-  let ambitosIds = Array.isArray(ambitos) && ambitos.length > 0 ? ambitos : [1];
+  let rawAmbitos = Array.isArray(ambitos) && ambitos.length > 0 ? ambitos : [1];
   if (perfil !== 'ADMINISTRADOR' && Array.isArray(ambitos) && ambitos.length === 0) {
     return res.status(400).json({ error: 'Un usuario no administrador debe tener al menos un ámbito asociado.' });
+  }
+
+  const parsedIds = [...new Set(rawAmbitos.map(id => Number(id)).filter(id => !isNaN(id) && id > 0))];
+  if (rawAmbitos.length > 0 && parsedIds.length !== new Set(rawAmbitos).size) {
+    return res.status(400).json({ error: 'Uno o más identificadores de ámbito son inválidos.' });
+  }
+
+  if (parsedIds.length > 0) {
+    const existingAmbitos = await Ambitos.findAll({
+      where: { id_ambito: { [Op.in]: parsedIds } }
+    });
+    if (existingAmbitos.length !== parsedIds.length) {
+      return res.status(400).json({ error: 'Uno o más ámbitos especificados no existen en el sistema.' });
+    }
   }
 
   const user = await Usuarios.create({
@@ -52,9 +67,9 @@ const createUser = asyncHandler(async (req, res) => {
     metodo_acceso: accessMethod
   });
 
-  const associations = ambitosIds.map(id_ambito => ({
+  const associations = parsedIds.map(id_ambito => ({
     id_usuario: user.id_usuario,
-    id_ambito: Number(id_ambito),
+    id_ambito,
     rol_ambito: 'MEMBER'
   }));
   await UsuarioAmbitos.bulkCreate(associations);
@@ -102,10 +117,24 @@ const updateUser = asyncHandler(async (req, res) => {
   await user.update(updates);
 
   if (Array.isArray(ambitos)) {
+    const parsedIds = [...new Set(ambitos.map(id => Number(id)).filter(id => !isNaN(id) && id > 0))];
+    if (ambitos.length > 0 && parsedIds.length !== new Set(ambitos).size) {
+      return res.status(400).json({ error: 'Uno o más identificadores de ámbito son inválidos.' });
+    }
+
+    if (parsedIds.length > 0) {
+      const existingAmbitos = await Ambitos.findAll({
+        where: { id_ambito: { [Op.in]: parsedIds } }
+      });
+      if (existingAmbitos.length !== parsedIds.length) {
+        return res.status(400).json({ error: 'Uno o más ámbitos especificados no existen en el sistema.' });
+      }
+    }
+
     await UsuarioAmbitos.destroy({ where: { id_usuario } });
-    const newAssociations = ambitos.map(id_ambito => ({
+    const newAssociations = parsedIds.map(id_ambito => ({
       id_usuario: Number(id_usuario),
-      id_ambito: Number(id_ambito),
+      id_ambito,
       rol_ambito: 'MEMBER'
     }));
     if (newAssociations.length > 0) {

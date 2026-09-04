@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { Ambitos, UsuarioAmbitos, Usuarios } = require('../models');
 const { handleErr } = require('../utils/helpers');
 
@@ -126,10 +127,24 @@ const updateUserAmbitos = async (req, res) => {
       return res.status(400).json({ error: 'Un usuario no administrador debe tener al menos un ámbito asociado.' });
     }
 
+    const parsedIds = [...new Set(ambitosIds.map(id => Number(id)).filter(id => !isNaN(id) && id > 0))];
+    if (ambitosIds.length > 0 && parsedIds.length !== new Set(ambitosIds).size) {
+      return res.status(400).json({ error: 'Uno o más identificadores de ámbito son inválidos.' });
+    }
+
+    if (parsedIds.length > 0) {
+      const existingAmbitos = await Ambitos.findAll({
+        where: { id_ambito: { [Op.in]: parsedIds } }
+      });
+      if (existingAmbitos.length !== parsedIds.length) {
+        return res.status(400).json({ error: 'Uno o más ámbitos especificados no existen en el sistema.' });
+      }
+    }
+
     await UsuarioAmbitos.destroy({ where: { id_usuario } });
 
-    const newAssociations = ambitosIds.map(id_ambito => ({
-      id_usuario,
+    const newAssociations = parsedIds.map(id_ambito => ({
+      id_usuario: Number(id_usuario),
       id_ambito,
       rol_ambito: 'MEMBER'
     }));

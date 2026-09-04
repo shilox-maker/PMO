@@ -78,10 +78,17 @@ export default function ProjectEditModal({
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    let finalValue = type === 'checkbox' ? checked : value;
+    if (name === 'budget_inicial' && typeof finalValue === 'string' && finalValue !== '') {
+      const parsed = parseFloat(finalValue);
+      if (!isNaN(parsed) && parsed < 0) {
+        finalValue = '';
+      }
+    }
     setForm(prev => {
       const updated = {
         ...prev,
-        [name]: type === 'checkbox' ? checked : value
+        [name]: finalValue
       };
       if (name === 'es_capex' && !checked) {
         updated.id_tipo_capex = '';
@@ -122,7 +129,7 @@ export default function ProjectEditModal({
       budget_inicial: form.es_iniciativa_ligera 
         ? 0 
         : (form.budget_inicial !== '' && form.budget_inicial !== null && form.budget_inicial !== undefined && !isNaN(Number(form.budget_inicial))
-            ? parseFloat(form.budget_inicial) 
+            ? Math.max(0, parseFloat(form.budget_inicial)) 
             : null),
       budget_notas: form.es_iniciativa_ligera || !form.budget_notas?.trim() ? null : form.budget_notas.trim(),
       id_pm: form.id_pm ? parseInt(form.id_pm, 10) : null,
@@ -398,10 +405,12 @@ export default function ProjectEditModal({
                 <label className="form-label">Presupuesto Inicial (€)</label>
                 <input 
                   type="number" 
+                  min="0"
                   step="0.01"
                   name="budget_inicial"
                   value={form.budget_inicial}
                   onChange={handleInputChange}
+                  onWheel={(e) => e.target.blur()}
                   placeholder="150000.00 (Opcional)"
                   className="m3-input"
                 />

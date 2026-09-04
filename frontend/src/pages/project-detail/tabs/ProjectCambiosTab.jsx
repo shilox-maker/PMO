@@ -2,11 +2,13 @@ import React from 'react';
 import { Plus, Edit2, TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getSortedData } from '../../../utils/sorting';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectCambiosTab({
   project, openAddCr, openEditCr, setShowCrModal, setEditingCr, crSort, setCrSort, renderSortHeader
 }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
   const sortedCrs = getSortedData(project.CambiosAlcance || [], crSort);
 
   const handleOpenAdd = openAddCr || (() => {
@@ -30,9 +32,11 @@ export default function ProjectCambiosTab({
           </h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t('changesTab.subtitle', 'Control de ampliaciones de plazos, presupuestos y justificaciones técnicas')}</p>
         </div>
-        <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
-          <Plus size={16} /> {t('changesTab.newChange', 'Nuevo Cambio')}
-        </button>
+        {canWrite && (
+          <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
+            <Plus size={16} /> {t('changesTab.newChange', 'Nuevo Cambio')}
+          </button>
+        )}
       </div>
 
       {sortedCrs.length === 0 ? (
@@ -51,7 +55,7 @@ export default function ProjectCambiosTab({
                 {renderSortHeader(t('changesTab.costImpact', 'Impacto Coste (€)'), 'impacta_importe', crSort, setCrSort)}
                 {renderSortHeader(t('changesTab.timeImpact', 'Impacto Plazo (Días)'), 'impacta_tiempo', crSort, setCrSort)}
                 {renderSortHeader(t('changesTab.status', 'Estado'), 'estado_cambio', crSort, setCrSort)}
-                <th>{t('common.actions', 'Acciones')}</th>
+                {canWrite && <th>{t('common.actions', 'Acciones')}</th>}
               </tr>
             </thead>
             <tbody>
@@ -75,13 +79,15 @@ export default function ProjectCambiosTab({
                       {cr.estado_cambio}
                     </span>
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="icon-btn" onClick={() => handleOpenEdit(cr)} title={t('changesTab.editTooltip', 'Editar solicitud')}>
-                        <Edit2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+                  {canWrite && (
+                    <td>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="icon-btn" onClick={() => handleOpenEdit(cr)} title={t('changesTab.editTooltip', 'Editar solicitud')}>
+                          <Edit2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

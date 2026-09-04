@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Building, Phone, Mail, User, Plus, Trash2, Edit2, Check, X, Tag } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function VendorContactCard({ 
   vendor, 
@@ -11,6 +12,7 @@ export default function VendorContactCard({
   onSaveVendor 
 }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
   
   // Inline general info editing state
   const [isEditingGeneral, setIsEditingGeneral] = useState(false);
@@ -87,7 +89,7 @@ export default function VendorContactCard({
             </div>
           </div>
           
-          {!isEditingGeneral && (
+          {!isEditingGeneral && canWrite && (
             <button 
               className="icon-btn"
               onClick={handleStartEdit}
@@ -143,39 +145,37 @@ export default function VendorContactCard({
               />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-              <input 
-                type="checkbox" 
-                id="edit_es_grupo_dacsa"
-                checked={generalForm.es_grupo_dacsa}
-                onChange={(e) => setGeneralForm({ ...generalForm, es_grupo_dacsa: e.target.checked })}
-                className="m3-checkbox"
-                style={{ width: 16, height: 16 }}
-              />
-              <label htmlFor="edit_es_grupo_dacsa" className="form-label" style={{ margin: 0, cursor: 'pointer', fontSize: '0.85rem' }}>
-                {t('vendor360.belongsDacsa')}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="m3-checkbox-label" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input 
+                  type="checkbox" 
+                  checked={generalForm.es_grupo_dacsa}
+                  onChange={(e) => setGeneralForm({ ...generalForm, es_grupo_dacsa: e.target.checked })}
+                  className="m3-checkbox"
+                />
+                <span style={{ fontWeight: 500 }}>{t('vendor360.isDacsaGroup')}</span>
               </label>
             </div>
 
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
               <button 
                 type="button" 
                 className="m3-btn m3-btn-outline" 
                 onClick={handleCancelEdit}
                 disabled={savingGeneral}
-                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                style={{ height: '32px', fontSize: '0.8rem', padding: '0 12px' }}
               >
                 <X size={14} style={{ marginRight: 4 }} />
-                {t('vendor360.cancel')}
+                {t('common.cancel')}
               </button>
               <button 
                 type="submit" 
-                className="m3-btn m3-btn-primary"
+                className="m3-btn m3-btn-primary" 
                 disabled={savingGeneral}
-                style={{ padding: '6px 14px', fontSize: '0.8rem' }}
+                style={{ height: '32px', fontSize: '0.8rem', padding: '0 12px' }}
               >
                 <Check size={14} style={{ marginRight: 4 }} />
-                {savingGeneral ? t('vendor360.saveChanges') : t('vendor360.saveChanges')}
+                {savingGeneral ? t('common.saving') : t('common.save')}
               </button>
             </div>
           </form>
@@ -211,14 +211,16 @@ export default function VendorContactCard({
             <User style={{ color: 'var(--md-sys-color-primary)' }} />
             <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t('vendorDirectory.contactsCount', { count: contacts?.length || 0 })}</h3>
           </div>
-          <button 
-            className="icon-btn" 
-            onClick={onAddContact}
-            title={t('vendor360.addContact')}
-            style={{ color: 'var(--md-sys-color-primary)' }}
-          >
-            <Plus size={20} />
-          </button>
+          {canWrite && (
+            <button 
+              className="icon-btn" 
+              onClick={onAddContact}
+              title={t('vendor360.addContact')}
+              style={{ color: 'var(--md-sys-color-primary)' }}
+            >
+              <Plus size={20} />
+            </button>
+          )}
         </div>
 
         {contacts?.length === 0 ? (
@@ -227,24 +229,26 @@ export default function VendorContactCard({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {contacts.map(c => (
               <div key={c.id_contacto} style={{ padding: 12, backgroundColor: 'var(--md-sys-color-surface-container-high)', borderRadius: '12px', border: '1px solid var(--md-sys-color-outline-variant)', position: 'relative' }}>
-                <div style={{ position: 'absolute', right: 8, top: 8, display: 'flex', gap: 4 }}>
-                  <button 
-                    className="icon-btn" 
-                    onClick={() => onEditContact(c)}
-                    title={t('vendor360.editContact')}
-                    style={{ width: 28, height: 28, color: 'var(--md-sys-color-primary)' }}
-                  >
-                    <Edit2 size={13} />
-                  </button>
-                  <button 
-                    className="icon-btn" 
-                    onClick={() => onDeleteContact(c.id_contacto)}
-                    title={t('common.delete')}
-                    style={{ width: 28, height: 28, color: 'var(--color-rag-red)' }}
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
+                {canWrite && (
+                  <div style={{ position: 'absolute', right: 8, top: 8, display: 'flex', gap: 4 }}>
+                    <button 
+                      className="icon-btn" 
+                      onClick={() => onEditContact(c)}
+                      title={t('vendor360.editContact')}
+                      style={{ width: 28, height: 28, color: 'var(--md-sys-color-primary)' }}
+                    >
+                      <Edit2 size={13} />
+                    </button>
+                    <button 
+                      className="icon-btn" 
+                      onClick={() => onDeleteContact(c.id_contacto)}
+                      title={t('common.delete')}
+                      style={{ width: 28, height: 28, color: 'var(--color-rag-red)' }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                )}
                 <div style={{ fontWeight: 600, fontSize: '0.9rem', width: '75%' }}>{c.nombre} {c.apellidos}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-primary)', fontWeight: 500, marginBottom: 8 }}>{c.puesto}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>

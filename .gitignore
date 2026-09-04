@@ -41,3 +41,6 @@ dist-azure-staging/
 logs/
 pmo-logs/
 *.log
+
+# Scratch
+scratch/

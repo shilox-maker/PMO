@@ -3,18 +3,13 @@
 ## 🎈 0. Ideas Felices
 *(Sin ideas felices pendientes)*
 ## 💡 1. Bandeja de Entrada (Ideas en bruto)
-- **BUG-13: Fallos de seguridad en la gestión de ámbitos (scope middleware fail-open, bypass de ámbito en escritura, delete sin check de ámbito, asignación de IDs inexistentes)**
-  - **(a)** El `scopeMiddleware.js` opera en modo **fail-open**: cuando un usuario no autorizado solicita un ámbito al que no tiene acceso, no devuelve 403 sino que silenciosamente redirige al primer ámbito del usuario sin logging.
-  - **(b)** `createProject` y `updateProject` en `projectWrite.controller.js` aceptan `id_ambito` directamente del body sin validar que el usuario tenga acceso a ese ámbito, permitiendo crear/mover proyectos a ámbitos no autorizados.
-  - **(c)** `deleteProject` no valida que el proyecto pertenezca a un ámbito accesible por el usuario que lo elimina.
-  - **(d)** `updateUserAmbitos` y `createUser`/`updateUser` no validan que los `ambitosIds` enviados correspondan a registros reales en la tabla `Ambitos`, permitiendo asignar ámbitos fantasma.
-
+*(Sin ideas en bruto pendientes)*
 
 ## 🔍 2. En Análisis / Especificación
 *(Sin especificaciones en análisis)*
 
 ## 📋 3. Listas para Codificar (Tú les has dado el OK)
-*(Sin especificaciones en listas para codificar)*
+*(Sin especificaciones listas para codificar)*
 
 ## 📦 4. Implementadas
 *(Sin especificaciones en implementadas)*
@@ -25,10 +20,45 @@
 
 
 ## 🚀 6. Pendiente de Subir (Listo para Git)
-*(Sin tareas pendientes de subir)*
+*(Sin especificaciones pendientes de subir)*
 
 
 ## 📦 7. Completado e Integrado (Historial)
+- [x] **FEATURE-81 (IDEA-81): Sistema Unificado de Filtrado de Proyectos por Macro-Etapas del Ciclo de Vida y Flujos de Trabajo** (2026-09-04)
+  - **Análisis Técnico:** Se desarrolló el sistema unificado de Macro-Etapas para consolidar y organizar los estados heterogéneos de múltiples Flujos de Trabajo (`Workflows`) en 5 fases estándar del ciclo de vida de proyectos PMO (`INICIATIVA`, `PLANIFICACION`, `EJECUCION`, `PAUSA`, `CIERRE`):
+    1. **Base de Datos y Migración:** Se creó la migración Sequelize `22_add_macro_etapa_to_estados_proyecto.js` añadiendo la columna `macro_etapa` con restricción CHECK en MSSQL y SQLite. Se mapearon y migraron automáticamente los 13 estados por defecto de la base de datos a sus macro-etapas canónicas. Se actualizó el modelo `EstadosProyecto` (`backend/models/index.js`), el script de consistencia `backend/autoSchema.js` y el semillero `backend/seed.js`.
+    2. **Controladores Backend y Servidor MCP:**
+       - `state.controller.js`: Validación y persistencia del campo obligatorio `macro_etapa` en `createState` y `updateState` con recarga de asociaciones (`reload`).
+       - `projectRead.controller.js` y `dashboard.controller.js`: Soporte de filtrado directo por `macro_etapa` en query params y proyección del atributo en la relación `Estado`.
+       - `mcp/tools/projects.js` y `mcp/tools/summary.js`: Soporte de filtro `macroEtapa` en `list_projects` y agregación de `distribucion_macro_etapa` en `get_pmo_summary`.
+    3. **Componentes Frontend y Experiencia UI/UX:**
+       - `MacroEtapasFilter.jsx`: Componente modular interactivo con 5 tarjetas visuales por macro-etapa, contadores de proyectos en tiempo real, selección bidireccional (macro <-> estados individuales), acordeón desplegable (*drill-down*) y botones de presets rápidos (*"Proyectos Activos"*, *"Solo en Ejecución"*, *"Proyectos Abiertos"*, *"Limpiar"*).
+       - `ProjectsFilterPanel.jsx`: Sustitución del grid plano por `MacroEtapasFilter`, manteniendo integración con persistencia de filtros por usuario y ámbito (`usePersistentFilters`).
+       - `TimelineToolbar.jsx`: Agrupación jerárquica de estados mediante `<optgroup>` según su `macro_etapa`.
+       - `StateDetailForm.jsx` y `StatesList.jsx`: Selector obligatorio de `macro_etapa` con badges de color en la administración de estados y sincronización reactiva completa del formulario.
+    4. **Internacionalización y Tests:** Traducción trilingüe completa (`macroEtapas`, selector de tipo de proyecto en `es.json`, `en.json`, `pt.json`) y suite de pruebas automatizadas `backend/tests/macroEtapas.test.js` con 5 casos pasando al 100% junto a los 93 tests globales del sistema.
+  - **Archivos Afectados:** `backend/migrations/22_add_macro_etapa_to_estados_proyecto.js`, `backend/models/index.js`, `backend/autoSchema.js`, `backend/seed.js`, `backend/controllers/admin/state.controller.js`, `backend/controllers/project/projectRead.controller.js`, `backend/controllers/meta/dashboard.controller.js`, `backend/mcp/tools/projects.js`, `backend/mcp/tools/summary.js`, `backend/mcp/tools/pmoSummary.js`, `backend/mcp/tools/projectSummary.js`, `backend/tests/macroEtapas.test.js`, `frontend/src/components/projects/MacroEtapasFilter.jsx`, `frontend/src/components/projects/ProjectsFilterPanel.jsx`, `frontend/src/components/timeline/TimelineToolbar.jsx`, `frontend/src/components/admin/StateDetailForm.jsx`, `frontend/src/components/admin/StatesList.jsx`, `frontend/src/locales/es.json`, `frontend/src/locales/en.json`, `frontend/src/locales/pt.json`, `backend/docs/roadmap.md`.
+- [x] **FEATURE-82 (IDEA-81): Creación de un Perfil "Solo Lectura" (Read-Only) equivalente a PM sin permisos de modificación** (2026-09-04)
+  - **Análisis Técnico:** Se implementó el perfil de usuario `SOLO_LECTURA` para permitir la consulta y auditoría de proyectos, proveedores y lecciones aprendidas dentro de los ámbitos asignados al usuario, sin permitir la realización de cambios ni el acceso a comentarios confidenciales de dirección:
+    1. **Base de Datos y Modelo:** Se creó la migración Sequelize `21_add_solo_lectura_perfil.js` para actualizar el constraint `Usuarios.perfil` en MSSQL y SQLite incorporando `'SOLO_LECTURA'`. Se sincronizó el modelo `Usuarios` en `backend/models/index.js` y el autocheck en `backend/autoSchema.js`.
+    2. **Seguridad Backend (Zero-Trust Middleware):** Se desarrolló el middleware `backend/middlewares/readOnly.middleware.js` (`restrictReadOnly`) que intercepta cualquier petición mutante (`POST`, `PUT`, `DELETE`, `PATCH`) para usuarios con perfil `SOLO_LECTURA`, devolviendo HTTP 403 Forbidden y registrando avisos de seguridad. Se habilitaron las rutas de autoservicio de cambio de contraseña (`/api/users/me/change-password`) y actualización de idioma (`/api/users/me/language`).
+    3. **Frontend & Auth Context:** Se amplió `AuthContext.jsx` exponiendo helpers booleanos `isReadOnly` y `canWrite`. En `UserMenuDropdown.jsx` se añadió el formateador localizado para mostrar el rol `Solo Lectura`. En `UserFormAdmin.jsx` y `UsersAdmin.jsx` se integró la opción `SOLO_LECTURA` con sus badges correspondientes y validación obligatoria de ámbito.
+    4. **UX / UI Read-Only en Vistas y Pestañas:**
+       - `Projects.jsx`: Deshabilitación de botones de creación y comentarios rápidos cuando `canWrite === false`.
+       - `ProjectDetailHeader.jsx`: Ocultación de botones "Editar Proyecto" y "Eliminar Proyecto", y deshabilitación de selectores rápidos de RAG y Estado.
+       - Pestañas de detalle (`ProjectFichaTab`, `ProjectExecutiveWall`, `ProjectRaciTable`, `ProjectUnifiedTimeline`, `ProjectFinanzasTab`, `ProjectChecklistTab`, `ProjectRiesgosTab`, `ProjectCambiosTab`, `ProjectLeccionesTab`, `ProjectComunicacionesTab`, `ProjectEncuestasTab`, `ProjectAlcanceTab`): Ocultamiento de botones de añadir/crear/eliminar, edición inline y deshabilitación de cambios de estado.
+       - `VendorDirectory.jsx`, `Vendor360.jsx` y `VendorContactCard.jsx`: Ocultación de botones de añadir/eliminar socio, añadir/eliminar contactos y deshabilitación de formulario inline.
+    5. **Internacionalización y Tests:** Traducción trilingüe completa (`es.json`, `en.json`, `pt.json`) de `roles.SOLO_LECTURA`, y creación de la suite de pruebas automatizadas `backend/tests/readOnlySecurity.test.js` con 9 casos de prueba pasando al 100% junto a los 88 tests globales del sistema.
+  - **Archivos Afectados:** `backend/migrations/21_add_solo_lectura_perfil.js`, `backend/models/index.js`, `backend/autoSchema.js`, `backend/middlewares/readOnly.middleware.js`, `backend/server.js`, `backend/tests/readOnlySecurity.test.js`, `frontend/src/context/AuthContext.jsx`, `frontend/src/components/UserMenuDropdown.jsx`, `frontend/src/components/admin/UserFormAdmin.jsx`, `frontend/src/components/admin/UsersAdmin.jsx`, `frontend/src/pages/Projects.jsx`, `frontend/src/pages/project-detail/ProjectDetailHeader.jsx`, `frontend/src/pages/project-detail/ficha/ProjectExecutiveWall.jsx`, `frontend/src/pages/project-detail/ficha/ProjectRaciTable.jsx`, `frontend/src/pages/project-detail/ficha/ProjectUnifiedTimeline.jsx`, `frontend/src/pages/project-detail/tabs/ProjectFinanzasTab.jsx`, `frontend/src/pages/project-detail/tabs/ProjectChecklistTab.jsx`, `frontend/src/pages/project-detail/tabs/ProjectRiesgosTab.jsx`, `frontend/src/pages/project-detail/tabs/ProjectCambiosTab.jsx`, `frontend/src/pages/project-detail/tabs/ProjectLeccionesTab.jsx`, `frontend/src/pages/project-detail/tabs/ProjectComunicacionesTab.jsx`, `frontend/src/pages/project-detail/tabs/ProjectEncuestasTab.jsx`, `frontend/src/pages/project-detail/tabs/ProjectAlcanceTab.jsx`, `frontend/src/pages/VendorDirectory.jsx`, `frontend/src/components/vendor/VendorContactCard.jsx`, `frontend/src/locales/es.json`, `frontend/src/locales/en.json`, `frontend/src/locales/pt.json`, `backend/docs/roadmap.md`.
+
+- [x] **BUG-13: Corrección de fallos de seguridad en la gestión de ámbitos (Fail-closed middleware, validación estricta de ámbitos en creación/edición/borrado de proyectos y validación de IDs en asignación de usuarios)** (2026-09-03)
+  - **Análisis Técnico:** Se cerraron los 4 vectores de vulnerabilidad de segregación multi-tenancy/ámbitos:
+    1. **`scopeMiddleware.js` en modo Fail-Closed:** Se eliminó el comportamiento de redirección silenciosa. Cuando un usuario no autorizado solicita la vista global (`ALL`) o un ámbito no asignado, el middleware registra un aviso de seguridad (`console.warn`) con el usuario/perfil y deniega la petición con HTTP 403 Forbidden. Solicitudes a ámbitos inexistentes o inactivos responden con HTTP 404 Not Found.
+    2. **Validación de ámbito en creación y edición de proyectos (`projectWrite.controller.js`):** `createProject` y `updateProject` verifican que el `id_ambito` exista, esté activo y pertenezca a los ámbitos autorizados del usuario (salvo administradores/directores), impidiendo inyectar o transferir proyectos a ámbitos ajenos.
+    3. **Control de ámbito en eliminación (`deleteProject`):** Se blindó el borrado verificando que el proyecto pertenezca a un ámbito accesible por el usuario además de los permisos de rol/gestor asignado.
+    4. **Validación de existencia de IDs de ámbitos en usuarios:** En `updateUserAmbitos` (`ambitosController.js`), `createUser` y `updateUser` (`user.controller.js`) se implementó la comprobación contra la tabla `Ambitos` para impedir la creación de asignaciones con identificadores inexistentes o fantasma.
+    5. **Suite de pruebas:** Se creó la suite automatizada `scopeSecurity.test.js` con 17 casos de prueba de seguridad.
+  - **Archivos Afectados:** `backend/middlewares/scopeMiddleware.js`, `backend/controllers/project/projectWrite.controller.js`, `backend/controllers/ambitosController.js`, `backend/controllers/admin/user.controller.js`, `backend/tests/scopeSecurity.test.js`, `backend/docs/roadmap.md`.
 - [x] **FEATURE-80 (IDEA-80): Unificación de la Edición de Proveedores y Gestión Integral en Pantalla Única (Ficha Vendor 360º)** (2026-09-02)
   - **Análisis Técnico:** Se centralizó y unificó toda la edición y gestión de socios tecnológicos en una única vista (**Ficha Vendor 360º**), eliminando la dispersión entre el modal flotante de datos generales y la ficha técnica de contactos. En `VendorContactCard.jsx` se integró la edición en línea (*inline form*) de Información General (`nombre_razon_social`, `telefono_general`, `email_general` y pertenencia a `es_grupo_dacsa`) con persistencia en tiempo real (`PUT /api/vendors/:id_proveedor`) y actualización reactiva de la cabecera. Se evolucionó la gestión de contactos en `AddVendorContactModal.jsx` y `vendorController.js` para admitir tanto creación como edición interactiva de contactos existentes (`PUT /api/contacts/:id_contacto`). En el directorio principal `VendorDirectory.jsx` se simplificaron las acciones de tabla eliminando el modal duplicado de edición y orientando el flujo hacia **"Ver / Editar Ficha"** y **"Eliminar"**, conservando el modal de alta rápida para registrar nuevos socios. Se añadió cobertura de tests en backend (`api.test.js`) y soporte i18n completo en ES, EN y PT.
   - **Archivos Afectados:** `backend/controllers/vendorController.js`, `backend/routes/vendor.routes.js`, `backend/tests/api.test.js`, `frontend/src/components/vendor/VendorContactCard.jsx`, `frontend/src/components/modals/AddVendorContactModal.jsx`, `frontend/src/components/modals/VendorModal.jsx`, `frontend/src/pages/Vendor360.jsx`, `frontend/src/pages/VendorDirectory.jsx`, `frontend/src/locales/es.json`, `frontend/src/locales/en.json`, `frontend/src/locales/pt.json`, `backend/docs/roadmap.md`.

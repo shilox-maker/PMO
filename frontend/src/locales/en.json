@@ -22,6 +22,30 @@
     "no": "No",
     "language": "Language"
   },
+  "roles": {
+    "ADMINISTRADOR": "Administrator",
+    "DIRECTOR": "Director",
+    "PM": "Project Manager",
+    "SOLO_LECTURA": "Read Only"
+  },
+  "macroEtapas": {
+    "macroEtapa": "Macro-Stage",
+    "INICIATIVA": "Initiative / Proposal",
+    "PLANIFICACION": "Planning & Approval",
+    "EJECUCION": "In Execution",
+    "PAUSA": "On Hold / Blocked",
+    "CIERRE": "Completed / Historical",
+    "drilldownStates": "{{count}} states",
+    "presetActive": "Active Projects",
+    "presetExecution": "Execution Only",
+    "presetOpen": "Open Projects",
+    "presetClear": "Clear Selection",
+    "desc_INICIATIVA": "Initial request intake, feasibility study and proposal sourcing.",
+    "desc_PLANIFICACION": "Formal planning, approvals and project kickoff.",
+    "desc_EJECUCION": "Active development, deployment, delivery and stabilization.",
+    "desc_PAUSA": "Temporary suspension or holding states.",
+    "desc_CIERRE": "Completed, archived or discarded terminal states."
+  },
   "nav": {
     "dashboardProjects": "Projects Dashboard",
     "dashboardPortfolio": "Portfolio Dashboard",
@@ -459,6 +483,9 @@
     "allStates": "All States",
     "isStrategic": "Strategic?",
     "allTypes": "All Types",
+    "projectType": "Project Type",
+    "standardProject": "Standard Project",
+    "lightInitiative": "Light Initiative",
     "allPortfolios": "All Portfolios",
     "allWorkflows": "All Workflows",
     "allTags": "All Tags",

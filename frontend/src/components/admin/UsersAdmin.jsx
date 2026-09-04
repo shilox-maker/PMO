@@ -216,8 +216,8 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
                     <td style={{ fontWeight: 500 }}>{u.nombre} {u.apellidos}</td>
                     <td style={{ fontSize: '0.85rem' }}>{u.correo}</td>
                     <td style={{ textAlign: 'center' }}>
-                      <span className={`m3-badge ${u.perfil === 'ADMINISTRADOR' ? 'badge-primary' : (u.perfil === 'DIRECTOR' ? 'badge-amber' : 'badge-secondary')}`}>
-                        {u.perfil}
+                      <span className={`m3-badge ${u.perfil === 'ADMINISTRADOR' ? 'badge-primary' : (u.perfil === 'DIRECTOR' ? 'badge-amber' : (u.perfil === 'SOLO_LECTURA' ? 'badge-gray' : 'badge-secondary'))}`}>
+                        {u.perfil === 'SOLO_LECTURA' ? t('roles.SOLO_LECTURA', 'SOLO_LECTURA') : u.perfil}
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>

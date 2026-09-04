@@ -44,7 +44,7 @@ const DEFAULT_PROJECT_FILTERS = {
 
 export default function Projects({ onViewProject, onViewVendor }) {
   const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
-  const { getAuthHeaders, currentPm, selectedAmbito } = useAuth();
+  const { getAuthHeaders, currentPm, selectedAmbito, canWrite } = useAuth();
   const canSeeDireccion = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR');
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -221,7 +221,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
         tableCols={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns}
         density={density} onDensityChange={setDensity}
         onOpenReport={() => setIsReportOpen(true)}
-        onOpenCreate={() => setShowCreateModal(true)}
+        onOpenCreate={canWrite ? () => setShowCreateModal(true) : undefined}
         activeFiltersCount={activeFiltersCount}
         onResetFilters={resetFilters}
       />
@@ -238,7 +238,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
         handleMouseDown={handleMouseDown}
         onViewProject={onViewProject}
         onViewVendor={onViewVendor}
-        onOpenQuickComment={handleOpenQuickComment}
+        onOpenQuickComment={canWrite ? handleOpenQuickComment : undefined}
       />
 
       {/* Create Project Modal */}

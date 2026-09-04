@@ -2,6 +2,7 @@ import React from 'react';
 import { Euro, Plus, Edit2, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getSortedData } from '../../../utils/sorting';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectFinanzasTab({
   project, openAddInvoice, openEditInvoice, handleDeleteInvoice,
@@ -9,6 +10,7 @@ export default function ProjectFinanzasTab({
   invoicesSort, setInvoicesSort, renderSortHeader
 }) {
   const { t } = useTranslation();
+  const { canWrite } = useAuth();
   const calc = project.calculations || {};
   const sortedInvoices = getSortedData(project.Facturas || [], invoicesSort);
 
@@ -71,28 +73,23 @@ export default function ProjectFinanzasTab({
           </div>
         </div>
 
-        <div className="m3-card metric-card glass-panel" style={{ borderLeft: '4px solid var(--color-rag-green)' }}>
-          <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(52, 199, 89, 0.15)', color: 'var(--color-rag-green)' }}>
+        <div className="m3-card metric-card glass-panel" style={{ borderLeft: '4px solid #81c995' }}>
+          <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(129, 201, 149, 0.15)', color: '#81c995' }}>
             <Euro size={24} />
           </div>
           <div className="metric-info">
-            <span className="metric-value" style={{ color: 'var(--color-rag-green)' }}>{formatCurrency(calc.consumo_real)}</span>
-            <span className="metric-label">{t('financeTab.executedBudget', 'Gasto Ejecutado')}</span>
+            <span className="metric-value">{formatCurrency(calc.total_facturado || 0)}</span>
+            <span className="metric-label">{t('financeTab.invoicedCommitted', 'Facturado / Comprometido')}</span>
           </div>
         </div>
 
-        <div className="m3-card metric-card glass-panel" style={{ borderLeft: calc.presupuesto_disponible < 0 ? '4px solid var(--color-rag-red)' : '4px solid var(--color-rag-green)' }}>
-          <div className="metric-icon-wrapper" style={{
-            backgroundColor: calc.presupuesto_disponible < 0 ? 'rgba(255, 69, 58, 0.15)' : 'rgba(52, 199, 89, 0.15)',
-            color: calc.presupuesto_disponible < 0 ? 'var(--color-rag-red)' : 'var(--color-rag-green)'
-          }}>
+        <div className="m3-card metric-card glass-panel" style={{ borderLeft: '4px solid #ffb74d' }}>
+          <div className="metric-icon-wrapper" style={{ backgroundColor: 'rgba(255, 183, 77, 0.15)', color: '#ffb74d' }}>
             <Euro size={24} />
           </div>
           <div className="metric-info">
-            <span className="metric-value" style={{ color: calc.presupuesto_disponible < 0 ? 'var(--color-rag-red)' : 'var(--color-rag-green)' }}>
-              {formatCurrency(calc.presupuesto_disponible)}
-            </span>
-            <span className="metric-label">{t('financeTab.availableBudget', 'Presupuesto Disponible')}</span>
+            <span className="metric-value">{formatCurrency(calc.total_pagado || 0)}</span>
+            <span className="metric-label">{t('financeTab.realSpent', 'Gasto Real (Facturas Recibidas)')}</span>
           </div>
         </div>
       </div>
@@ -104,9 +101,11 @@ export default function ProjectFinanzasTab({
             <h3 style={{ fontWeight: 600, fontSize: '1.25rem' }}>{t('financeTab.invoicesTitle', 'Facturas y Cobros')}</h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t('financeTab.invoicesSubtitle', 'Seguimiento contable de hitos de cobro y órdenes de compra')}</p>
           </div>
-          <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
-            <Plus size={16} /> {t('financeTab.newInvoice', 'Nueva Factura')}
-          </button>
+          {canWrite && (
+            <button className="m3-btn m3-btn-primary" onClick={handleOpenAdd}>
+              <Plus size={16} /> {t('financeTab.newInvoice', 'Nueva Factura')}
+            </button>
+          )}
         </div>
 
         {(!project.Facturas || project.Facturas.length === 0) ? (
@@ -126,7 +125,7 @@ export default function ProjectFinanzasTab({
                   {renderSortHeader(t('financeTab.issueDate', 'Fecha Emisión'), 'fecha_factura', invoicesSort, setInvoicesSort)}
                   {renderSortHeader(t('financeTab.amount', 'Importe'), 'importe', invoicesSort, setInvoicesSort)}
                   {renderSortHeader(t('financeTab.status', 'Estado'), 'estado', invoicesSort, setInvoicesSort)}
-                  <th>{t('financeTab.actions', 'Acciones')}</th>
+                  {canWrite && <th>{t('financeTab.actions', 'Acciones')}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -150,16 +149,18 @@ export default function ProjectFinanzasTab({
                         {fac.estado.replace(/_/g, ' ')}
                       </span>
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button className="icon-btn" onClick={() => handleOpenEdit(fac)} title={t('financeTab.editTooltip', 'Editar factura')}>
-                          <Edit2 size={14} />
-                        </button>
-                        <button className="icon-btn" onClick={() => handleDelete(fac.id_interno_factura)} title={t('financeTab.deleteTooltip', 'Eliminar factura')} style={{ color: 'var(--color-rag-red)' }}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
+                    {canWrite && (
+                      <td>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="icon-btn" onClick={() => handleOpenEdit(fac)} title={t('financeTab.editTooltip', 'Editar factura')}>
+                            <Edit2 size={14} />
+                          </button>
+                          <button className="icon-btn" onClick={() => handleDelete(fac.id_interno_factura)} title={t('financeTab.deleteTooltip', 'Eliminar factura')} style={{ color: 'var(--color-rag-red)' }}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
