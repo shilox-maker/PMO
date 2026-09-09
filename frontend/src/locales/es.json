@@ -20,7 +20,16 @@
     "error": "Error",
     "yes": "Sí",
     "no": "No",
-    "language": "Idioma"
+    "language": "Idioma",
+    "refresh": "Actualizar",
+    "description": "Descripción",
+    "noDescription": "Sin descripción",
+    "status": "Estado",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "continue": "Continuar",
+    "clear": "Limpiar",
+    "important": "Clave / Importante"
   },
   "roles": {
     "ADMINISTRADOR": "Administrador",
@@ -311,7 +320,8 @@
     "technicalPhone": "Teléfono Técnico",
     "officialEmail": "Email Oficial",
     "allFieldsRequired": "Todos los campos obligatorios deben ser completados.",
-    "requiredFields": "Por favor, rellene todos los campos obligatorios."
+    "requiredFields": "Por favor, rellene todos los campos obligatorios.",
+    "criticality": "Criticidad"
   },
   "vendorDirectory": {
     "techPartners": "Socios Tecnológicos:",
@@ -328,7 +338,9 @@
     "contactsCount": "Contactos ({{count}})",
     "noContacts": "No se han agregado contactos de enlace técnico.",
     "viewEditFicha": "Ver / Editar Ficha",
-    "deletePartnerConfirm": "¿Seguro que desea eliminar el socio tecnológico \"{{name}}\"?"
+    "deletePartnerConfirm": "¿Seguro que desea eliminar el socio tecnológico \"{{name}}\"?",
+    "viewFicha": "Ver Ficha",
+    "deleteConfirm": "¿Seguro que desea eliminar este partner?"
   },
   "generalLessons": {
     "type": "Tipo:",
@@ -349,8 +361,10 @@
     "title": "Personal Interno / Gestores ({{count}})",
     "subtitle": "Lista de usuarios con acceso a la plataforma.",
     "noUsers": "No hay usuarios en la base de datos.",
+    "name": "Nombre y Apellidos",
     "nameAndSurname": "Nombre y Apellidos",
     "email": "Correo",
+    "role": "Perfil",
     "profile": "Perfil",
     "method": "Método",
     "status": "Estado",
@@ -370,6 +384,7 @@
     "localPassword": "Contraseña Local",
     "ssoEntra": "Microsoft Entra ID (SSO)",
     "roleLabel": "Perfil / Rol *",
+    "roleReadOnlyOption": "SOLO_LECTURA (Solo Lectura)",
     "activeUser": "Usuario Activo (Permitir acceso)",
     "saveChanges": "Guardar Cambios",
     "registerUser": "Registrar PM / User",
@@ -423,7 +438,8 @@
     "templateTasks": "Tareas Plantilla",
     "action": "Acción",
     "open": "Abierto",
-    "closed": "Cerrado"
+    "closed": "Cerrado",
+    "tasksCount": "tareas"
   },
   "status": {
     "VERDE": "VERDE",
@@ -507,7 +523,10 @@
     "quickComment": "Comentar",
     "editProject": "Editar Proyecto",
     "deleteProject": "Eliminar Proyecto",
-    "confirmDelete": "¿Estás seguro de que deseas eliminar este proyecto?"
+    "confirmDelete": "¿Estás seguro de que deseas eliminar este proyecto?",
+    "columnVisibility": "Personalizar columnas",
+    "fixed": "Fija",
+    "resetDefault": "Restablecer por defecto"
   },
   "projectForm": {
     "createTitle": "Crear Nuevo Proyecto",
@@ -570,7 +589,9 @@
     "noInvoices": "No hay facturas registradas en este proyecto.",
     "deleteConfirm": "¿Seguro que desea eliminar esta factura?",
     "editTooltip": "Editar factura",
-    "deleteTooltip": "Eliminar factura"
+    "deleteTooltip": "Eliminar factura",
+    "invoicedCommitted": "Facturado / Comprometido",
+    "realSpent": "Gasto Real (Facturas Recibidas)"
   },
   "risksTab": {
     "risksTitle": "Riesgos del Proyecto",
@@ -633,6 +654,7 @@
     "relogin": "Iniciar Sesión"
   },
   "ambitos": {
+    "ambitosTitle": "Ámbitos Autorizados",
     "selectTitle": "Seleccionar Ámbito de Trabajo",
     "selectDescription": "Selecciona el departamento o ámbito operacional sobre el que deseas trabajar en esta sesión.",
     "allAmbitos": "Todos los Ámbitos (Vista Global)",
@@ -648,7 +670,8 @@
     "editAmbito": "Editar",
     "assignUserAmbitos": "Asignar Ámbitos a Usuario",
     "scopeLabel": "Ámbito *",
-    "selectScope": "Seleccione Ámbito"
+    "selectScope": "Seleccione Ámbito",
+    "loadingAmbitos": "Cargando ámbitos disponibles..."
   },
   "assistant": {
     "title": "Asistente de Pendientes",
@@ -873,7 +896,8 @@
       "closureAcceptance": "Criterios de Aceptación (Condiciones necesarias para validar la entrega)",
       "closureSuccess": "Criterios de Éxito (Métricas, KPIs y objetivos logrados)",
       "doneBtn": "Listo",
-      "doubleClickPlaceholder": "Doble clic para definir este bloque de alcance..."
+      "doubleClickPlaceholder": "Doble clic para definir este bloque de alcance...",
+      "subtitleReadOnly": "Especificaciones de alcance y de aceptación/cierre del proyecto."
     },
     "tasksTab": {
       "title": "Tareas del Proyecto",

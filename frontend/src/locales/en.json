@@ -20,7 +20,16 @@
     "error": "Error",
     "yes": "Yes",
     "no": "No",
-    "language": "Language"
+    "language": "Language",
+    "refresh": "Refresh",
+    "description": "Description",
+    "noDescription": "No description",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "continue": "Continue",
+    "clear": "Clear",
+    "important": "Key / Important"
   },
   "roles": {
     "ADMINISTRADOR": "Administrator",
@@ -311,7 +320,8 @@
     "technicalPhone": "Technical Phone",
     "officialEmail": "Official Email",
     "allFieldsRequired": "All required fields must be completed.",
-    "requiredFields": "Please fill in all required fields."
+    "requiredFields": "Please fill in all required fields.",
+    "criticallity": "Criticality"
   },
   "vendorDirectory": {
     "techPartners": "Tech Partners:",
@@ -328,7 +338,9 @@
     "contactsCount": "Contacts ({{count}})",
     "noContacts": "No technical liaison contacts added.",
     "viewEditFicha": "View / Edit File",
-    "deletePartnerConfirm": "Are you sure you want to delete the tech partner \"{{name}}\"?"
+    "deletePartnerConfirm": "Are you sure you want to delete the tech partner \"{{name}}\"?",
+    "viewFicha": "View File",
+    "deleteConfirm": "Are you sure you want to delete this partner?"
   },
   "generalLessons": {
     "type": "Type:",
@@ -349,8 +361,10 @@
     "title": "Internal Staff / Managers ({{count}})",
     "subtitle": "List of users with platform access.",
     "noUsers": "No users in database.",
+    "name": "Name & Surname",
     "nameAndSurname": "Name & Surname",
     "email": "Email",
+    "role": "Profile",
     "profile": "Profile",
     "method": "Method",
     "status": "Status",
@@ -370,6 +384,7 @@
     "localPassword": "Local Password",
     "ssoEntra": "Microsoft Entra ID (SSO)",
     "roleLabel": "Role / Profile *",
+    "roleReadOnlyOption": "SOLO_LECTURA (Read-Only)",
     "activeUser": "Active User (Allow access)",
     "saveChanges": "Save Changes",
     "registerUser": "Register PM / User",
@@ -423,7 +438,8 @@
     "templateTasks": "Template Tasks",
     "action": "Action",
     "open": "Open",
-    "closed": "Closed"
+    "closed": "Closed",
+    "tasksCount": "tasks"
   },
   "status": {
     "VERDE": "GREEN",
@@ -507,7 +523,10 @@
     "quickComment": "Comment",
     "editProject": "Edit Project",
     "deleteProject": "Delete Project",
-    "confirmDelete": "Are you sure you want to delete this project?"
+    "confirmDelete": "Are you sure you want to delete this project?",
+    "columnVisibility": "Customize columns",
+    "fixed": "Fixed",
+    "resetDefault": "Reset to default"
   },
   "projectForm": {
     "createTitle": "Create New Project",
@@ -570,7 +589,9 @@
     "noInvoices": "No invoices recorded for this project.",
     "deleteConfirm": "Are you sure you want to delete this invoice?",
     "editTooltip": "Edit invoice",
-    "deleteTooltip": "Delete invoice"
+    "deleteTooltip": "Delete invoice",
+    "invoicedCommitted": "Invoiced / Committed",
+    "realSpent": "Actual Spend (Received Invoices)"
   },
   "risksTab": {
     "risksTitle": "Project Risks",
@@ -633,6 +654,7 @@
     "relogin": "Sign In"
   },
   "ambitos": {
+    "ambitosTitle": "Authorized Scopes",
     "selectTitle": "Select Work Scope",
     "selectDescription": "Select the department or operational scope you wish to work on in this session.",
     "allAmbitos": "All Scopes (Global View)",
@@ -648,7 +670,8 @@
     "editAmbito": "Edit",
     "assignUserAmbitos": "Assign Scopes to User",
     "scopeLabel": "Scope *",
-    "selectScope": "Select Scope"
+    "selectScope": "Select Scope",
+    "loadingAmbitos": "Loading available scopes..."
   },
   "assistant": {
     "title": "Pending Assistant",
@@ -873,7 +896,8 @@
       "closureAcceptance": "Acceptance Criteria (Necessary conditions to validate delivery)",
       "closureSuccess": "Success Criteria (Metrics, KPIs, and achieved goals)",
       "doneBtn": "Done",
-      "doubleClickPlaceholder": "Double-click to define this scope block..."
+      "doubleClickPlaceholder": "Double-click to define this scope block...",
+      "subtitleReadOnly": "Project scope and acceptance/closure specifications."
     },
     "tasksTab": {
       "title": "Project Tasks",

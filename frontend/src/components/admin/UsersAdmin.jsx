@@ -202,12 +202,12 @@ export default function UsersAdmin({ getAuthHeaders, refreshUsers }) {
             <table className="m3-table">
               <thead>
                 <tr>
-                  {renderSortHeader(t('usersAdmin.name'), 'nombre', usersSort, handleUsersSort)}
-                  {renderSortHeader(t('usersAdmin.email'), 'correo', usersSort, handleUsersSort)}
-                  {renderSortHeader(t('usersAdmin.role'), 'perfil', usersSort, handleUsersSort, { textAlign: 'center' })}
-                  <th style={{ textAlign: 'center' }}>{t('usersAdmin.ambitosColumn')}</th>
-                  {renderSortHeader(t('usersAdmin.status'), 'activo', usersSort, handleUsersSort, { textAlign: 'center', width: '80px' })}
-                  <th style={{ width: '90px' }}>{t('usersAdmin.action')}</th>
+                  {renderSortHeader(t('usersAdmin.name', 'Nombre y Apellidos'), 'nombre', usersSort, handleUsersSort)}
+                  {renderSortHeader(t('usersAdmin.email', 'Correo'), 'correo', usersSort, handleUsersSort)}
+                  {renderSortHeader(t('usersAdmin.role', 'Perfil'), 'perfil', usersSort, handleUsersSort, { textAlign: 'center' })}
+                  <th style={{ textAlign: 'center' }}>{t('usersAdmin.ambitosColumn', 'Ámbitos')}</th>
+                  {renderSortHeader(t('usersAdmin.status', 'Estado'), 'activo', usersSort, handleUsersSort, { textAlign: 'center', width: '80px' })}
+                  <th style={{ width: '90px' }}>{t('usersAdmin.action', 'Acción')}</th>
                 </tr>
               </thead>
               <tbody>

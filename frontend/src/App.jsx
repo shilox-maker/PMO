@@ -233,9 +233,11 @@ function LoginScreen() {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '100vh',
-      backgroundColor: '#ffffff',
+      backgroundColor: 'var(--md-sys-color-background)',
+      color: 'var(--md-sys-color-on-background)',
       padding: '20px',
-      fontFamily: "'Outfit', sans-serif"
+      fontFamily: "'Outfit', sans-serif",
+      transition: 'background-color 0.3s ease, color 0.3s ease'
     }}>
       {/* Top Header Bar Banner */}
       <div style={{
@@ -277,33 +279,35 @@ function LoginScreen() {
         flexDirection: 'column',
         gap: '24px',
         borderRadius: '16px',
-        backgroundColor: '#ffffff',
-        border: '1px solid #e0e4ec',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
+        backgroundColor: 'var(--md-sys-color-surface)',
+        border: '1px solid var(--md-sys-color-outline-variant)',
+        boxShadow: theme === 'dark' ? '0 10px 30px rgba(0, 0, 0, 0.4)' : '0 10px 30px rgba(0, 0, 0, 0.05)',
         textAlign: 'center',
-        marginTop: '42px'
+        marginTop: '42px',
+        transition: 'background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease'
       }}>
-        {/* SVG Dacsa Group Logo */}
-        <div style={{ margin: '0 auto' }}>
-          <svg width="220" height="70" viewBox="0 0 220 70">
-            <g transform="translate(5, 5)">
-              <g transform="translate(30, 30)">
-                {/* 5 Petals of DACSA Star */}
-                <path d="M -4,-8 L -15,-20 L -8,-25 L 0,-15 L 8,-25 L 15,-20 L 4,-8 L 0,-12 Z" fill="#1A5B36" transform="rotate(-60)" />
-                <path d="M -4,-8 L -15,-20 L -8,-25 L 0,-15 L 8,-25 L 15,-20 L 4,-8 L 0,-12 Z" fill="#FFB800" transform="rotate(12)" />
-                <path d="M -4,-8 L -15,-20 L -8,-25 L 0,-15 L 8,-25 L 15,-20 L 4,-8 L 0,-12 Z" fill="#E28C00" transform="rotate(84)" />
-                <path d="M -4,-8 L -15,-20 L -8,-25 L 0,-15 L 8,-25 L 15,-20 L 4,-8 L 0,-12 Z" fill="#FFB800" transform="rotate(156)" />
-                <path d="M -4,-8 L -15,-20 L -8,-25 L 0,-15 L 8,-25 L 15,-20 L 4,-8 L 0,-12 Z" fill="#FFA800" transform="rotate(228)" />
-              </g>
-            </g>
-            <text x="75" y="36" fill="#1A5B36" style={{ fontFamily: "'Outfit', sans-serif", fontSize: '26px', fontWeight: 'bold', letterSpacing: '0.05em' }}>DACSA</text>
-            <text x="75" y="52" fill="#757575" style={{ fontFamily: "'Outfit', sans-serif", fontSize: '13px', fontWeight: '300', letterSpacing: '0.25em' }}>GROUP</text>
-          </svg>
+        {/* Dacsa Group Official Logo */}
+        <div style={{ margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <img
+            src="/Dacsa-group-Logo-1-1.svg"
+            alt="Dacsa Group"
+            style={{
+              height: '56px',
+              width: 'auto',
+              maxWidth: '220px',
+              objectFit: 'contain',
+              padding: theme === 'dark' ? '6px 14px' : '0',
+              borderRadius: '8px',
+              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.92)' : 'transparent',
+              boxShadow: theme === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.2)' : 'none',
+              transition: 'background-color 0.3s ease, padding 0.3s ease, box-shadow 0.3s ease'
+            }}
+          />
         </div>
 
         <div>
-          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#3c4858', margin: '4px 0 2px 0' }}>Dacsa Group – PMO Control Tower</h3>
-          <p style={{ fontSize: '0.75rem', color: '#8898aa', margin: 0 }}>{t('loginScreen.subtitle')}</p>
+          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface)', margin: '4px 0 2px 0' }}>Dacsa Group – PMO Control Tower</h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', margin: 0 }}>{t('loginScreen.subtitle')}</p>
         </div>
 
         {error && (
@@ -320,14 +324,21 @@ function LoginScreen() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: '#525f7f' }}>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: 'var(--md-sys-color-on-surface)' }}>
               <Mail size={12} /> {t('loginScreen.emailLabel')}
             </label>
             <input
               type="email"
               required
               className="m3-input"
-              style={{ padding: '10px 14px', fontSize: '0.9rem', color: '#333', backgroundColor: '#f4f5f7', border: '1px solid #cad1d7' }}
+              style={{
+                padding: '10px 14px',
+                fontSize: '0.9rem',
+                color: 'var(--md-sys-color-on-surface)',
+                backgroundColor: 'var(--md-sys-color-surface-container-high)',
+                border: '1px solid var(--md-sys-color-outline-variant)',
+                borderRadius: '8px'
+              }}
               placeholder={t('loginScreen.emailPlaceholder')}
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
@@ -335,27 +346,34 @@ function LoginScreen() {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: '#525f7f' }}>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: 'var(--md-sys-color-on-surface)' }}>
               <Lock size={12} /> {t('loginScreen.passwordLabel')}
             </label>
             <input
               type="password"
               required
               className="m3-input"
-              style={{ padding: '10px 14px', fontSize: '0.9rem', color: '#333', backgroundColor: '#f4f5f7', border: '1px solid #cad1d7' }}
+              style={{
+                padding: '10px 14px',
+                fontSize: '0.9rem',
+                color: 'var(--md-sys-color-on-surface)',
+                backgroundColor: 'var(--md-sys-color-surface-container-high)',
+                border: '1px solid var(--md-sys-color-outline-variant)',
+                borderRadius: '8px'
+              }}
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          <button type="submit" disabled={loading} className="m3-btn" style={{ marginTop: '8px', height: '42px', backgroundColor: '#1A5B36', color: '#ffffff', borderRadius: '6px', fontSize: '0.9rem', width: '100%' }}>
+          <button type="submit" disabled={loading} className="m3-btn" style={{ marginTop: '8px', height: '42px', backgroundColor: '#1A5B36', color: '#ffffff', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600, width: '100%', cursor: loading ? 'not-allowed' : 'pointer' }}>
             {loading ? t('loginScreen.submitting') : t('loginScreen.submit')}
           </button>
         </form>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, borderTop: '1px solid #e9ecef', paddingTop: '16px' }}>
-          <span style={{ fontSize: '0.8rem', color: '#8898aa' }}>{t('loginScreen.signInWith')}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: '16px' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>{t('loginScreen.signInWith')}</span>
           <div 
             style={{ 
               display: 'flex', 
@@ -379,43 +397,68 @@ function LoginScreen() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: '8px', flexWrap: 'wrap' }}>
+          {/* Segmented language selector */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            borderRadius: '8px',
+            padding: '2px',
+            backgroundColor: 'var(--md-sys-color-surface-container-high)',
+            border: '1px solid var(--md-sys-color-outline-variant)',
+            gap: 2
+          }}>
+            <span style={{ padding: '0 6px', color: 'var(--md-sys-color-outline)', display: 'flex', alignItems: 'center' }}>
+              <Globe size={13} />
+            </span>
+            {['es', 'en', 'pt'].map((langCode) => {
+              const isSelected = (language || 'es').toLowerCase().startsWith(langCode);
+              return (
+                <button
+                  key={langCode}
+                  type="button"
+                  onClick={() => changeLanguage(langCode)}
+                  style={{
+                    padding: '4px 8px',
+                    fontSize: '0.75rem',
+                    fontWeight: isSelected ? 700 : 500,
+                    borderRadius: '6px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    backgroundColor: isSelected ? '#1A5B36' : 'transparent',
+                    color: isSelected ? '#ffffff' : 'var(--md-sys-color-outline)'
+                  }}
+                  title={langCode === 'es' ? 'Español' : langCode === 'en' ? 'English' : 'Português'}
+                >
+                  {langCode.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Theme toggle button */}
           <button 
             type="button"
-            className="m3-btn m3-btn-tonal" 
-            onClick={() => {
-              const nextLang = language === 'es' ? 'en' : language === 'en' ? 'pt' : 'es';
-              changeLanguage(nextLang);
-            }} 
-            style={{ 
-              borderRadius: '6px', 
-              fontSize: '0.75rem', 
-              padding: '6px 12px', 
-              backgroundColor: '#f4f5f7', 
-              color: '#525f7f',
-              border: '1px solid #cad1d7',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6
-            }}
-          >
-            <Globe size={14} />
-            <span>{language.toUpperCase()}</span>
-          </button>
-          <button 
-            type="button"
-            className="m3-btn m3-btn-tonal" 
             onClick={toggleTheme} 
             style={{ 
-              borderRadius: '6px', 
+              borderRadius: '8px', 
               fontSize: '0.75rem', 
+              fontWeight: 600,
               padding: '6px 12px', 
-              backgroundColor: '#f4f5f7', 
-              color: '#525f7f',
-              border: '1px solid #cad1d7'
+              backgroundColor: 'var(--md-sys-color-surface-container-high)', 
+              color: 'var(--md-sys-color-on-surface)',
+              border: '1px solid var(--md-sys-color-outline-variant)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
             }}
+            title={t('loginScreen.theme')}
           >
-            {t('loginScreen.theme')}: {t(`loginScreen.themeOptions.${theme}`, theme === 'dark' ? 'Oscuro' : 'Dacsa')}
+            {theme === 'dark' ? <Moon size={14} style={{ color: '#6dd4a0' }} /> : <Sun size={14} style={{ color: '#FFB800' }} />}
+            <span>{t(`loginScreen.themeOptions.${theme}`, theme === 'dark' ? 'Oscuro' : 'Dacsa')}</span>
           </button>
         </div>
       </div>

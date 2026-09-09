@@ -20,7 +20,16 @@
     "error": "Erro",
     "yes": "Sim",
     "no": "Não",
-    "language": "Idioma"
+    "language": "Idioma",
+    "refresh": "Atualizar",
+    "description": "Descrição",
+    "noDescription": "Sem descrição",
+    "status": "Estado",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "continue": "Continuar",
+    "clear": "Limpar",
+    "important": "Chave / Importante"
   },
   "roles": {
     "ADMINISTRADOR": "Administrador",
@@ -274,7 +283,10 @@
     "quickComment": "Comentar",
     "editProject": "Editar Projeto",
     "deleteProject": "Eliminar Projeto",
-    "confirmDelete": "Tem a certeza que deseja eliminar este projeto?"
+    "confirmDelete": "Tem a certeza que deseja eliminar este projeto?",
+    "columnVisibility": "Personalizar colunas",
+    "fixed": "Fixa",
+    "resetDefault": "Redefinir padrão"
   },
   "projectForm": {
     "createTitle": "Criar Novo Projeto",
@@ -337,7 +349,9 @@
     "noInvoices": "Não há faturas registadas neste projeto.",
     "deleteConfirm": "Tem a certeza de que deseja eliminar esta fatura?",
     "editTooltip": "Editar fatura",
-    "deleteTooltip": "Eliminar fatura"
+    "deleteTooltip": "Eliminar fatura",
+    "invoicedCommitted": "Faturado / Comprometido",
+    "realSpent": "Gasto Real (Faturas Recebidas)"
   },
   "risksTab": {
     "risksTitle": "Riscos do Projeto",
@@ -458,7 +472,8 @@
     "totalSpent": "Total Executado",
     "statusDistribution": "Distribuição por Estado",
     "sedeDistribution": "Distribuição por Sede",
-    "budgetVsSpent": "Orçamento vs Gasto Executado"
+    "budgetVsSpent": "Orçamento vs Gasto Executado",
+    "portfolioSummary": "Resumo do Portfólio"
   },
   "timeline": {
     "allRag": "Todos os RAGs",
@@ -512,7 +527,8 @@
     "technicalPhone": "Telefone Técnico",
     "officialEmail": "E-mail Oficial",
     "allFieldsRequired": "Todos os campos obrigatórios devem ser preenchidos.",
-    "requiredFields": "Por favor, preencha todos os campos obrigatórios."
+    "requiredFields": "Por favor, preencha todos os campos obrigatórios.",
+    "criticallity": "Criticidade"
   },
   "vendorDirectory": {
     "techPartners": "Parceiros Tecnológicos:",
@@ -529,7 +545,9 @@
     "contactsCount": "Contactos ({{count}})",
     "noContacts": "Nenhum contacto de ligação técnica adicionado.",
     "viewEditFicha": "Ver / Editar Ficha",
-    "deletePartnerConfirm": "Tem certeza de que deseja eliminar o parceiro tecnológico \"{{name}}\"?"
+    "deletePartnerConfirm": "Tem certeza de que deseja eliminar o parceiro tecnológico \"{{name}}\"?",
+    "viewFicha": "Ver Ficha",
+    "deleteConfirm": "Tem certeza de que deseja excluir este parceiro?"
   },
   "generalLessons": {
     "type": "Tipo:",
@@ -550,8 +568,10 @@
     "title": "Pessoal Interno / Gestores ({{count}})",
     "subtitle": "Lista de utilizadores com acesso à plataforma.",
     "noUsers": "Nenhum utilizador na base de dados.",
+    "name": "Nome e Apelidos",
     "nameAndSurname": "Nome e Apelidos",
     "email": "E-mail",
+    "role": "Perfil",
     "profile": "Perfil",
     "method": "Método",
     "status": "Estado",
@@ -571,6 +591,7 @@
     "localPassword": "Palavra-passe Local",
     "ssoEntra": "Microsoft Entra ID (SSO)",
     "roleLabel": "Perfil / Função *",
+    "roleReadOnlyOption": "SOLO_LECTURA (Apenas Leitura)",
     "activeUser": "Utilizador Ativo (Permitir acesso)",
     "saveChanges": "Guardar Alterações",
     "registerUser": "Registar PM / Utilizador",
@@ -624,7 +645,8 @@
     "templateTasks": "Tarefas Modelo",
     "action": "Ação",
     "open": "Aberto",
-    "closed": "Fechado"
+    "closed": "Fechado",
+    "tasksCount": "tarefas"
   },
   "auth": {
     "sessionExpiredTitle": "Sessão Expirada",
@@ -632,6 +654,7 @@
     "relogin": "Iniciar Sessão"
   },
   "ambitos": {
+    "ambitosTitle": "Âmbitos Autorizados",
     "selectTitle": "Selecionar Âmbito de Trabalho",
     "selectDescription": "Selecione o departamento ou âmbito operacional com o qual deseja trabalhar nesta sessão.",
     "allAmbitos": "Todos os Âmbitos (Vista Global)",
@@ -647,7 +670,8 @@
     "editAmbito": "Editar",
     "assignUserAmbitos": "Atribuir Âmbitos ao Utilizador",
     "scopeLabel": "Âmbito *",
-    "selectScope": "Selecionar Âmbito"
+    "selectScope": "Selecionar Âmbito",
+    "loadingAmbitos": "Carregando âmbitos disponíveis..."
   },
   "assistant": {
     "title": "Assistente de Pendências",
@@ -665,7 +689,8 @@
     "openReport": "Criar relatório",
     "taskCompleted": "Tarefa concluída",
     "loading": "A carregar pendentes...",
-    "error": "Erro ao carregar pendentes"
+    "error": "Erro ao carregar pendentes",
+    "editTask": "Editar tarefa"
   },
   "reportModal": {
     "title": "Gerar Relatório de Carteira",
@@ -871,7 +896,8 @@
       "closureAcceptance": "Critérios de Aceitação (Condições necessárias para validar a entrega)",
       "closureSuccess": "Critérios de Sucesso (Métricas, KPIs e objetivos alcançados)",
       "doneBtn": "Concluído",
-      "doubleClickPlaceholder": "Duplo clique para definir este bloco de âmbito..."
+      "doubleClickPlaceholder": "Duplo clique para definir este bloco de âmbito...",
+      "subtitleReadOnly": "Especificações de escopo e aceitação/encerramento do projeto."
     },
     "tasksTab": {
       "title": "Tarefas do Projeto",

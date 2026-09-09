@@ -266,18 +266,42 @@ export const AuthProvider = ({ children }) => {
     return handleLoginResponse(data);
   };
 
+  const [language, setLanguageState] = useState(() => {
+    const saved = localStorage.getItem('user_language');
+    if (saved && ['es', 'en', 'pt'].includes(saved)) return saved;
+    const initialLng = (i18n.language || 'es').split('-')[0].toLowerCase();
+    return ['es', 'en', 'pt'].includes(initialLng) ? initialLng : 'es';
+  });
+
+  useEffect(() => {
+    const handleLangChanged = (lng) => {
+      const cleanLng = (lng || 'es').split('-')[0].toLowerCase();
+      const validLng = ['es', 'en', 'pt'].includes(cleanLng) ? cleanLng : 'es';
+      setLanguageState(validLng);
+    };
+    i18n.on('languageChanged', handleLangChanged);
+    return () => {
+      i18n.off('languageChanged', handleLangChanged);
+    };
+  }, []);
+
   useEffect(() => {
     if (currentPm?.idioma) {
-      i18n.changeLanguage(currentPm.idioma);
-      localStorage.setItem('user_language', currentPm.idioma);
+      const validLng = ['es', 'en', 'pt'].includes(currentPm.idioma) ? currentPm.idioma : 'es';
+      setLanguageState(validLng);
+      i18n.changeLanguage(validLng);
+      localStorage.setItem('user_language', validLng);
     }
   }, [currentPm?.idioma]);
 
   const changeLanguage = async (newLang) => {
-    i18n.changeLanguage(newLang);
-    localStorage.setItem('user_language', newLang);
+    const cleanLng = (newLang || 'es').split('-')[0].toLowerCase();
+    const validLng = ['es', 'en', 'pt'].includes(cleanLng) ? cleanLng : 'es';
+    setLanguageState(validLng);
+    i18n.changeLanguage(validLng);
+    localStorage.setItem('user_language', validLng);
     if (currentPm) {
-      setCurrentPm(prev => (prev ? { ...prev, idioma: newLang } : null));
+      setCurrentPm(prev => (prev ? { ...prev, idioma: validLng } : null));
       try {
         const savedToken = token || localStorage.getItem('pm_token');
         await fetch(`${API_URL}/users/me/language`, {
@@ -286,7 +310,7 @@ export const AuthProvider = ({ children }) => {
             'Content-Type': 'application/json',
             'Authorization': savedToken ? `Bearer ${savedToken}` : ''
           },
-          body: JSON.stringify({ idioma: newLang })
+          body: JSON.stringify({ idioma: validLng })
         });
       } catch (err) {
         console.error('Error preferencia idioma:', err);
@@ -330,7 +354,7 @@ export const AuthProvider = ({ children }) => {
       getAuthHeaders,
       theme,
       toggleTheme,
-      language: i18n.language || 'es',
+      language,
       changeLanguage,
       login,
       loginAzure,
