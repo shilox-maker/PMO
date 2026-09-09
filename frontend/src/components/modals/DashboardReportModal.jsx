@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { generateDashboardReport } from '../../utils/dashboardReportGenerator';
+import { useAuth } from '../../context/AuthContext';
 
 export default function DashboardReportModal({ isOpen, onClose, projects, getAuthHeaders }) {
   const { t, i18n } = useTranslation();
+  const { currentPm } = useAuth();
+  const canSeeDireccion = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR');
+
   const [loading, setLoading] = useState(false);
   const [highlightDate, setHighlightDate] = useState('');
   const [reportOptions, setReportOptions] = useState({
@@ -34,17 +38,36 @@ export default function DashboardReportModal({ isOpen, onClose, projects, getAut
           });
           const projData = await projRes.json();
 
-          // Fetch project comments
+          // Fetch project comments (Operational)
           const commRes = await fetch(`${import.meta.env.VITE_API_URL}/projects/${p.id_proyecto}/comments`, {
             headers: getAuthHeaders()
           });
           const commData = await commRes.json();
 
-          return { project: projData, comments: commData };
+          // Fetch direction comments if Director / Admin
+          let dirCommData = [];
+          if (canSeeDireccion) {
+            try {
+              const dirRes = await fetch(`${import.meta.env.VITE_API_URL}/projects/${p.id_proyecto}/direction-comments`, {
+                headers: getAuthHeaders()
+              });
+              if (dirRes.ok) {
+                dirCommData = await dirRes.json();
+              }
+            } catch (e) {
+              console.warn('Error fetching direction comments for project in report:', p.id_proyecto, e);
+            }
+          }
+
+          return { 
+            project: projData, 
+            comments: Array.isArray(commData) ? commData : [], 
+            directionComments: Array.isArray(dirCommData) ? dirCommData : [] 
+          };
         })
       );
 
-      generateDashboardReport(detailedProjects, reportOptions, highlightDate || null, t, i18n.language);
+      generateDashboardReport(detailedProjects, reportOptions, highlightDate || null, canSeeDireccion, t, i18n.language);
       onClose();
     } catch (err) {
       console.error('Error generating consolidated report:', err);

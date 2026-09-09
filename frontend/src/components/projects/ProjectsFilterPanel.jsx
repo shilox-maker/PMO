@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Filter, Search, Printer, Plus, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
-import ColumnSelector from '../ColumnSelector';
-import DensitySelector from '../DensitySelector';
 import MacroEtapasFilter from './MacroEtapasFilter';
 
 export default function ProjectsFilterPanel({
@@ -19,7 +17,6 @@ export default function ProjectsFilterPanel({
   isStatesOpen, setIsStatesOpen,
   pmsList, vendorsList, portfoliosList, workflowsList = [], tagsList, statesList = [], projects,
   tableCols, toggleColumn, resetColumns,
-  density, onDensityChange,
   onOpenReport, onOpenCreate,
   activeFiltersCount = 0,
   onResetFilters
@@ -139,8 +136,8 @@ export default function ProjectsFilterPanel({
             style={{ height: '40px' }}
           >
             <option value="">{t('projectsTable.allPartners')}</option>
-            {vendorsList.map(v => (
-              <option key={v.id_proveedor} value={v.id_proveedor}>{v.nombre_razon_social}</option>
+            {vendorsList.map((v, idx) => (
+              <option key={v.id_proveedor || `vendor-${idx}`} value={v.id_proveedor}>{v.nombre_razon_social}</option>
             ))}
           </select>
         </div>
@@ -155,8 +152,8 @@ export default function ProjectsFilterPanel({
               style={{ height: '40px', borderColor: filterWorkflow ? 'var(--md-sys-color-primary)' : undefined }}
             >
               <option value="">{t('projectsTable.allWorkflows', 'Todos los Flujos')}</option>
-              {workflowsList.map(w => (
-                <option key={w.id} value={w.id}>{w.nombre}</option>
+              {workflowsList.map((w, idx) => (
+                <option key={w.id || `wf-${idx}`} value={w.id}>{w.nombre}</option>
               ))}
             </select>
           </div>
@@ -172,8 +169,8 @@ export default function ProjectsFilterPanel({
               style={{ height: '40px' }}
             >
               <option value="">{t('projectsTable.allPortfolios')}</option>
-              {portfoliosList.map(p => (
-                <option key={p.id_portfolio} value={p.id_portfolio}>{p.nombre}</option>
+              {portfoliosList.map((p, idx) => (
+                <option key={p.id_portfolio || p.id || `port-${idx}`} value={p.id_portfolio || p.id}>{p.nombre}</option>
               ))}
             </select>
           </div>
@@ -232,27 +229,15 @@ export default function ProjectsFilterPanel({
               style={{ height: '40px' }}
             >
               <option value="">{t('projectsTable.allTags')}</option>
-              {tagsList.map(tag => (
-                <option key={tag.id} value={tag.id}>{tag.nombre}</option>
+              {tagsList.map((tag, idx) => (
+                <option key={tag.id || `tag-${idx}`} value={tag.id}>{tag.nombre}</option>
               ))}
             </select>
           </div>
         )}
 
-        {/* Right actions: Density, Column Selector, Report & New Project */}
+        {/* Right actions: Report & New Project */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-          {density !== undefined && onDensityChange && (
-            <DensitySelector density={density} onDensityChange={onDensityChange} />
-          )}
-
-          {tableCols && toggleColumn && resetColumns && (
-            <ColumnSelector 
-              tableCols={tableCols} 
-              toggleColumn={toggleColumn} 
-              resetColumns={resetColumns} 
-            />
-          )}
-
           {onOpenReport && (
             <button 
               className="m3-btn m3-btn-outline" 

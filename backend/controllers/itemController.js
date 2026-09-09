@@ -1,5 +1,5 @@
 const { 
-  createInvoice, createBatchInvoices, updateInvoice, deleteInvoice, createScopeChange, updateScopeChange 
+  createInvoice, createBatchInvoices, updateInvoice, deleteInvoice, createScopeChange, updateScopeChange, deleteScopeChange 
 } = require('./item/financial.controller');
 
 
@@ -15,6 +15,10 @@ const {
   getProjectComments, createComment, updateComment, deleteComment 
 } = require('./item/comment.controller');
 
+const {
+  getProjectDirectionComments, createDirectionComment, updateDirectionComment, deleteDirectionComment
+} = require('./item/directionComment.controller');
+
 module.exports = {
   createInvoice,
   createBatchInvoices,
@@ -23,6 +27,7 @@ module.exports = {
   deleteInvoice,
   createScopeChange,
   updateScopeChange,
+  deleteScopeChange,
   createRisk,
   updateRisk,
   createIssue,
@@ -37,5 +42,9 @@ module.exports = {
   getProjectComments,
   createComment,
   updateComment,
-  deleteComment
+  deleteComment,
+  getProjectDirectionComments,
+  createDirectionComment,
+  updateDirectionComment,
+  deleteDirectionComment
 };

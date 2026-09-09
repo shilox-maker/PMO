@@ -4,12 +4,15 @@ import { Eye, MessageSquare } from 'lucide-react';
 import { getSortedData } from '../../utils/sorting';
 import SkeletonLoader from '../SkeletonLoader';
 import ProjectTableHeader from '../ProjectTableHeader';
+import ColumnSelector from '../ColumnSelector';
 
 export default function ProjectsTable({
   projects,
   loading,
-  density = 'standard',
   visibleColumnsMap,
+  tableCols,
+  toggleColumn,
+  resetColumns,
   columnWidths = {},
   sortConfig,
   handleSort,
@@ -52,11 +55,11 @@ export default function ProjectsTable({
   }
 
   return (
-    <div className="m3-table-wrapper glass-panel" data-density={density}>
+    <div className="m3-table-wrapper glass-panel">
       <table className="m3-table">
         <thead>
           <tr>
-            {visibleColumnsMap.id_proyecto && renderTH(t('projectsTable.code'), 'id_proyecto')}
+            {visibleColumnsMap.id_proyecto && renderTH(t('projectsTable.code'), 'id_proyecto', { minWidth: '135px', whiteSpace: 'nowrap' })}
             {visibleColumnsMap.nombre_proyecto && renderTH(t('projectsTable.name'), 'nombre_proyecto')}
             {visibleColumnsMap.estado_proyecto && renderTH(t('projectsTable.status'), 'estado_proyecto')}
             {visibleColumnsMap.indicador_rag && renderTH('RAG', 'indicador_rag')}
@@ -70,7 +73,25 @@ export default function ProjectsTable({
             {visibleColumnsMap.progreso && renderTH(t('projectsTable.spentProgress'), 'calculations.consumo_real', {}, 'progreso')}
             {visibleColumnsMap.proximo_hito && renderTH(t('projectsTable.nextMilestone'), 'nextMilestone.fecha_limite', {}, 'proximo_hito')}
             {visibleColumnsMap.ultimo_comentario && renderTH(t('projectsTable.lastComment'), 'ultimo_comentario')}
-            {visibleColumnsMap.accion && renderTH(t('projectsTable.actions'), null, {}, 'accion')}
+            {visibleColumnsMap.accion && (
+              <ProjectTableHeader
+                label={t('projectsTable.actions')}
+                sortKey={null}
+                sortConfig={sortConfig}
+                onSort={handleSort}
+                colId="accion"
+                columnWidths={columnWidths}
+                onMouseDown={handleMouseDown}
+              >
+                {tableCols && toggleColumn && resetColumns && (
+                  <ColumnSelector 
+                    columns={tableCols} 
+                    toggleColumn={toggleColumn} 
+                    resetColumns={resetColumns} 
+                  />
+                )}
+              </ProjectTableHeader>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -88,13 +109,12 @@ export default function ProjectsTable({
             const statusCode = project.EstadoProyecto?.code || project.estado_proyecto?.toUpperCase().replace(/\s+/g, '_');
             const statusLabel = statusCode && t(`status.${statusCode}`) !== `status.${statusCode}` ? t(`status.${statusCode}`) : project.estado_proyecto;
 
-            const sedeCode = project.Sede?.code || project.Sede?.nombre_sede?.toUpperCase().replace(/\s+/g, '_');
-            const sedeLabel = sedeCode && t(`sede.${sedeCode}`) !== `sede.${sedeCode}` ? t(`sede.${sedeCode}`) : project.Sede?.nombre_sede;
+            const sedeLabel = project.Sede?.nombre_sede || '-';
 
             return (
               <tr key={project.id_proyecto} style={isProjectOverdue ? { backgroundColor: 'rgba(255, 69, 58, 0.1)' } : {}}>
                 {/* ID */}
-                {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{project.id_proyecto}</td>}
+                {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{project.id_proyecto}</td>}
                 
                 {/* Name */}
                 {visibleColumnsMap.nombre_proyecto && <td style={{ fontWeight: 600, minWidth: '180px' }}>
@@ -146,7 +166,7 @@ export default function ProjectsTable({
                       style={{ textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)', fontWeight: 500 }}
                       onClick={() => onViewVendor(project.id_proveedor)}
                     >
-                      {project.Proveedor.nombre_razon_social}
+                      {project.Proveedor?.nombre_razon_social || '—'}
                     </span>
                   )}
                 </td>}

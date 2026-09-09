@@ -11,27 +11,30 @@ module.exports = {
       throw new Error('[FATAL] La variable de entorno DB_SCHEMA es obligatoria para conexiones MSSQL / Azure SQL.');
     }
 
-    const originalCreateTable = queryInterface.createTable.bind(queryInterface);
+    const getTarget = (tbl) => isSqlite ? tbl : { tableName: tbl, schema };
 
     const createTable = async (tableName, attributes, options) => {
-      if (isSqlite) {
-        return originalCreateTable(tableName, attributes, options);
-      }
-      const targetTable = { tableName, schema };
+      const actualTableName = typeof tableName === 'object' && tableName !== null ? tableName.tableName : tableName;
+      const targetTable = isSqlite ? actualTableName : { tableName: actualTableName, schema };
       const qualifiedAttributes = { ...attributes };
-      for (const key in qualifiedAttributes) {
-        const attribute = qualifiedAttributes[key];
-        if (attribute && attribute.references && typeof attribute.references.model === 'string') {
-          attribute.references.model = {
-            tableName: attribute.references.model,
-            schema
-          };
+      if (!isSqlite) {
+        for (const key in qualifiedAttributes) {
+          const attribute = qualifiedAttributes[key];
+          if (attribute && attribute.references) {
+            const refModel = typeof attribute.references.model === 'object' && attribute.references.model !== null
+              ? attribute.references.model.tableName
+              : attribute.references.model;
+            if (typeof refModel === 'string') {
+              attribute.references.model = {
+                tableName: refModel,
+                schema
+              };
+            }
+          }
         }
       }
-      return originalCreateTable(targetTable, qualifiedAttributes, options);
+      return queryInterface.createTable(targetTable, qualifiedAttributes, options);
     };
-
-    const getTarget = (tbl) => isSqlite ? tbl : { tableName: tbl, schema };
 
     // 1. Crear Planes_Comunicacion
     let planesExists = false;
@@ -126,7 +129,7 @@ module.exports = {
         id_contacto: {
           type: DataTypes.INTEGER,
           allowNull: false,
-          references: { model: 'Contactos_Proveedor', key: 'id_contacto' },
+          references: { model: 'Contactos_Proveedors', key: 'id_contacto' },
           onDelete: 'CASCADE'
         },
         createdAt: {

@@ -1,5 +1,5 @@
 'use strict';
-const { DataTypes } = require('sequelize');
+const { DataTypes, QueryTypes } = require('sequelize');
 
 function toSlugCode(str) {
   if (!str) return 'UNKNOWN';
@@ -42,7 +42,7 @@ module.exports = {
         // Backfill existing rows (always run to ensure clean codes)
         const rows = await queryInterface.sequelize.query(
           `SELECT * FROM ${isSqlite ? `"${tableConfig.name}"` : `[${schema}].[${tableConfig.name}]`}`,
-          { type: queryInterface.sequelize.QueryTypes.SELECT }
+          { type: QueryTypes.SELECT }
         );
 
         for (const row of rows) {
@@ -54,7 +54,7 @@ module.exports = {
               `UPDATE ${isSqlite ? `"${tableConfig.name}"` : `[${schema}].[${tableConfig.name}]`} SET code = :code WHERE ${tableConfig.idCol} = :idVal`,
               {
                 replacements: { code: generatedCode, idVal },
-                type: queryInterface.sequelize.QueryTypes.UPDATE
+                type: QueryTypes.UPDATE
               }
             );
           }

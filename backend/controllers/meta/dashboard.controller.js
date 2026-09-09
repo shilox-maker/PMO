@@ -80,7 +80,7 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
     Tareas.findAll({ where: { id_proyecto: { [Op.in]: projectIds }, es_hito: true }, attributes: ['id_proyecto', 'titulo_tarea', 'fecha_limite', 'estado', 'updatedAt'], order: [['fecha_limite', 'ASC']], raw: true }),
     Riesgos.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'updatedAt'], raw: true }),
     Incidencias.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'updatedAt'], raw: true }),
-    ComentariosProyecto.findAll({ where: { id_proyecto: { [Op.in]: projectIds }, ...(!canSeeDireccion ? { para_direccion: false } : {}) }, attributes: ['id_proyecto', 'texto_comentario', 'fecha_registro'], order: [['fecha_registro', 'DESC']], raw: true })
+    ComentariosProyecto.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'texto_comentario', 'fecha_registro'], order: [['fecha_registro', 'DESC']], raw: true })
   ]);
 
   const poSets = new Map(), maxUpdatedMap = new Map(), crCountMap = new Map(), nextMilestoneMap = new Map(), overdueSet = new Set(), lastCommentMap = new Map();

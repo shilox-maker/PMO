@@ -405,6 +405,117 @@ describe('API Endpoints', () => {
 
       expect(res.statusCode).toEqual(404);
     });
+
+    it('should create a partner without general phone', async () => {
+      const res = await request(app)
+        .post('/api/vendors')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          nombre_razon_social: 'Partner Sin Telefono S.L.',
+          email_general: 'info@partner-sin-tel.com'
+        });
+
+      expect(res.statusCode).toEqual(201);
+      expect(res.body.nombre_razon_social).toBe('Partner Sin Telefono S.L.');
+      expect(res.body.telefono_general).toBeNull();
+    });
+
+    it('should create a vendor contact without phone', async () => {
+      const res = await request(app)
+        .post('/api/contacts')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          id_proveedor: 1,
+          nombre: 'Elena',
+          apellidos: 'Sin Teléfono',
+          puesto: 'Consultora',
+          email: 'elena@proveedortest.com',
+          telefono: ''
+        });
+
+      expect(res.statusCode).toEqual(201);
+      expect(res.body.nombre).toBe('Elena');
+      expect(res.body.telefono).toBeNull();
+    });
+  });
+
+  describe('Scope Change Management (CR)', () => {
+    let testCrId = null;
+
+    beforeAll(async () => {
+      // Re-create a test project if needed for CR tests
+      await Proyectos.findOrCreate({
+        where: { id_proyecto: 'PRJ-2026-CR01' },
+        defaults: {
+          id_proyecto: 'PRJ-2026-CR01',
+          nombre_proyecto: 'Proyecto CR Test',
+          descripcion: 'Desc',
+          id_estado: 1,
+          id_pm: 1,
+          id_proveedor: 1,
+          id_sede: 1,
+          id_sponsor: 1,
+          presupuesto_inicial: 15000,
+          budget_inicial: 15000,
+          fecha_inicio: '2026-01-01',
+          fecha_fin_inicial: '2026-12-31'
+        }
+      });
+    });
+
+    it('should create a new scope change (CR)', async () => {
+      const res = await request(app)
+        .post('/api/scope-changes')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          id_proyecto: 'PRJ-2026-CR01',
+          fecha_solicitud: '2026-05-01',
+          id_solicitante_contacto: 1,
+          id_aprobador_contacto: 1,
+          descripcion_motivo: 'Ampliación de funcionalidades test',
+          impacta_importe: true,
+          importe_impacto: 5000,
+          impacta_tiempo: true,
+          dias_impacto: 15,
+          estado_cambio: 'SOLICITADO'
+        });
+
+      expect(res.statusCode).toEqual(201);
+      expect(res.body).toHaveProperty('id_cambio');
+      testCrId = res.body.id_cambio;
+    });
+
+    it('should update a scope change', async () => {
+      const res = await request(app)
+        .put(`/api/scope-changes/${testCrId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          estado_cambio: 'APROBADO',
+          descripcion_motivo: 'Ampliación aprobada por dirección'
+        });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.estado_cambio).toBe('APROBADO');
+      expect(res.body.descripcion_motivo).toBe('Ampliación aprobada por dirección');
+    });
+
+    it('should delete a scope change successfully', async () => {
+      const res = await request(app)
+        .delete(`/api/scope-changes/${testCrId}`)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body.message).toBe('Cambio de alcance eliminado con éxito');
+    });
+
+    it('should return 404 when deleting non-existent scope change', async () => {
+      const res = await request(app)
+        .delete('/api/scope-changes/CR-9999-999')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.statusCode).toEqual(404);
+      expect(res.body.error).toBe('Cambio de alcance no encontrado');
+    });
   });
 });
 

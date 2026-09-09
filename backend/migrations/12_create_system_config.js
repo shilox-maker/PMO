@@ -11,19 +11,17 @@ module.exports = {
       throw new Error('[FATAL] La variable de entorno DB_SCHEMA es obligatoria para conexiones MSSQL / Azure SQL.');
     }
 
-    const originalCreateTable = queryInterface.createTable.bind(queryInterface);
+    const targetTable = isSqlite ? 'System_Config' : { tableName: 'System_Config', schema };
 
     const createTable = async (tableName, attributes, options) => {
-      if (isSqlite) {
-        return originalCreateTable(tableName, attributes, options);
-      }
-      const targetTable = { tableName, schema };
-      return originalCreateTable(targetTable, attributes, options);
+      const actualTableName = typeof tableName === 'object' && tableName !== null ? tableName.tableName : tableName;
+      const target = isSqlite ? actualTableName : { tableName: actualTableName, schema };
+      return queryInterface.createTable(target, attributes, options);
     };
 
     let exists = false;
     try {
-      const tableInfo = await queryInterface.describeTable('System_Config');
+      const tableInfo = await queryInterface.describeTable(targetTable);
       if (tableInfo && Object.keys(tableInfo).length > 0) exists = true;
     } catch (e) {
       exists = false;

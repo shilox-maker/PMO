@@ -10,7 +10,7 @@ import { useTableColumns } from '../hooks/useTableColumns';
 import usePersistentFilters from '../hooks/usePersistentFilters';
 
 const DEFAULT_PROJECT_COLUMNS = [
-  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
+  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true, width: 140 },
   { id: 'nombre_proyecto', label: 'Nombre del Proyecto', fixed: true, visible: true },
   { id: 'estado_proyecto', label: 'Estado/Fase', fixed: false, visible: true },
   { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
@@ -43,8 +43,7 @@ const DEFAULT_PROJECT_FILTERS = {
 };
 
 export default function Projects({ onViewProject, onViewVendor }) {
-  const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
-  const { getAuthHeaders, currentPm, selectedAmbito, canWrite } = useAuth();
+  const { getAuthHeaders, currentPm, selectedAmbito, changeAmbito, canWrite } = useAuth();
   const canSeeDireccion = currentPm && (currentPm.perfil === 'ADMINISTRADOR' || currentPm.perfil === 'DIRECTOR');
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -200,6 +199,17 @@ export default function Projects({ onViewProject, onViewVendor }) {
     fetchMetadata();
   }, [selectedAmbito]);
 
+  const handleProjectCreated = (createdProject) => {
+    if (createdProject?.id_ambito && selectedAmbito && selectedAmbito !== 'ALL' && String(createdProject.id_ambito) !== String(selectedAmbito)) {
+      changeAmbito(String(createdProject.id_ambito));
+    }
+    resetFilters();
+    fetchProjects();
+    if (createdProject?.id_proyecto && onViewProject) {
+      onViewProject(createdProject.id_proyecto);
+    }
+  };
+
   return (
     <div>
       {/* Filters bar */}
@@ -218,8 +228,6 @@ export default function Projects({ onViewProject, onViewVendor }) {
         pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList}
         workflowsList={workflowsList}
         tagsList={tagsList} statesList={statesList} projects={projects}
-        tableCols={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns}
-        density={density} onDensityChange={setDensity}
         onOpenReport={() => setIsReportOpen(true)}
         onOpenCreate={canWrite ? () => setShowCreateModal(true) : undefined}
         activeFiltersCount={activeFiltersCount}
@@ -230,8 +238,10 @@ export default function Projects({ onViewProject, onViewVendor }) {
       <ProjectsTable 
         projects={projects}
         loading={loading}
-        density={density}
         visibleColumnsMap={visibleColumnsMap}
+        tableCols={tableCols}
+        toggleColumn={toggleColumn}
+        resetColumns={resetColumns}
         columnWidths={columnWidths}
         sortConfig={sortConfig}
         handleSort={handleSort}
@@ -246,7 +256,7 @@ export default function Projects({ onViewProject, onViewVendor }) {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         getAuthHeaders={getAuthHeaders}
-        onSuccess={fetchProjects}
+        onSuccess={handleProjectCreated}
         currentPm={currentPm}
         pmsList={pmsList}
         vendorsList={vendorsList}

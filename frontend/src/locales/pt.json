@@ -64,11 +64,26 @@
     "logout": "Sair",
     "language": "Idioma da Interface",
     "releaseNotes": "Notas de versão",
+    "userManual": "Manual do Utilizador",
     "themeDark": "Tema Escuro",
     "themeDacsa": "Tema Dacsa",
     "spanish": "Espanhol",
     "english": "Inglês",
     "portuguese": "Português"
+  },
+  "manual": {
+    "title": "Manual do Utilizador e Formação",
+    "subtitle": "Plataforma Corporativa de Governança Estratégica e Controlo de Projetos",
+    "searchPlaceholder": "Pesquisar no manual...",
+    "toc": "Índice de Conteúdos",
+    "backToTop": "Voltar ao topo",
+    "loading": "A carregar manual de formação...",
+    "error": "Não foi possível carregar o manual de utilizador.",
+    "zoomHint": "Clique na imagem para ampliar",
+    "close": "Fechar",
+    "openInTab": "Abrir em novo separador",
+    "noResults": "Nenhum resultado encontrado para",
+    "filterSections": "Filtrar secções..."
   },
   "header": {
     "commandPaletteTooltip": "Paleta de Comandos (Ctrl+K)",
@@ -220,11 +235,6 @@
     "RECURSOS_INTERNOS": "Recursos Internos",
     "OTROS_GASTOS": "Outras Despesas"
   },
-  "density": {
-    "comfortable": "Confortável",
-    "standard": "Padrão",
-    "compact": "Compacta"
-  },
   "projectsTable": {
     "title": "Projetos",
     "code": "Código",
@@ -301,7 +311,10 @@
     "daysSuffix": "+{{count}} dias",
     "status": "Estado",
     "noChanges": "Não há registo de alterações de âmbito neste projeto.",
-    "editTooltip": "Editar solicitação"
+    "editTooltip": "Editar solicitação",
+    "deleteTooltip": "Eliminar solicitação",
+    "deleteConfirm": "Tem a certeza de que deseja eliminar esta alteração de âmbito (CR)?",
+    "deleteError": "Erro ao eliminar a alteração de âmbito"
   },
   "financeTab": {
     "initialBudget": "Orçamento Inicial",
@@ -487,6 +500,7 @@
     "saveChanges": "Salvar Alterações",
     "cancel": "Cancelar",
     "belongsDacsa": "Pertence ao Grupo Dacsa",
+    "isDacsaGroup": "Pertence ao Grupo Dacsa",
     "companyName": "Razão Social / Nome do Parceiro",
     "nameRequired": "A razão social é obrigatória.",
     "editContact": "Editar Contacto de Parceiro",
@@ -497,7 +511,8 @@
     "position": "Cargo / Função",
     "technicalPhone": "Telefone Técnico",
     "officialEmail": "E-mail Oficial",
-    "allFieldsRequired": "Todos os campos são obrigatórios."
+    "allFieldsRequired": "Todos os campos obrigatórios devem ser preenchidos.",
+    "requiredFields": "Por favor, preencha todos os campos obrigatórios."
   },
   "vendorDirectory": {
     "techPartners": "Parceiros Tecnológicos:",
@@ -811,23 +826,38 @@
       "clearDate": "Limpar data"
     },
     "executiveWall": {
-      "title": "Muro Executivo (Minutas / Marcos chave)",
+      "title": "Mural Executivo (Atas / Acordos Chave)",
       "subtitle": "Registo cronológico de comentários importantes de governança e acordos de comités.",
       "placeholder": "Adicione um comentário ou acordo executivo aqui...",
       "markImportant": "Marcar como importante / executivo (PDF)",
-      "forManagement": "📢 Para a direção",
       "publishBtn": "Publicar Comentário",
       "filterLabel": "Filtrar mural:",
       "filterAll": "Todos ({{count}})",
       "filterImportant": "⭐ Importantes ({{count}})",
-      "filterManagement": "📢 Direção ({{count}})",
       "loading": "A carregar comentários...",
       "noComments": "Não há comentários registados neste projeto.",
       "noFilterComments": "Não há comentários que correspondam ao filtro selecionado.",
       "importantBadge": "IMPORTANTE",
-      "managementBadge": "DIREÇÃO",
       "editedBy": "Editado por {{name}} em {{date}}",
       "deleteConfirm": "Tem a certeza de que deseja eliminar este comentário?"
+    },
+    "directionWall": {
+      "title": "Mural de Direção (Canal Confidencial)",
+      "subtitle": "Anotações estratégicas e acordos reservados do Comité de Direção. Não visível para o Project Manager.",
+      "placeholder": "Escreva um apontamento estratégico ou decisão de direção...",
+      "markImportant": "Marcar como chave para relatório de Direção",
+      "publishBtn": "Publicar Nota de Direção",
+      "filterLabel": "Filtrar notas:",
+      "filterAll": "Todas ({{count}})",
+      "filterImportant": "⭐ Chaves ({{count}})",
+      "loading": "A carregar notas de direção...",
+      "noComments": "Não há notas de direção registadas para este projeto.",
+      "noFilterComments": "Não há notas que correspondam ao filtro selecionado.",
+      "badge": "APENAS DIREÇÃO",
+      "directionBadge": "DIREÇÃO",
+      "importantBadge": "CHAVE",
+      "editedBy": "Editado por {{name}} em {{date}}",
+      "deleteConfirm": "Tem a certeza de que deseja eliminar esta nota de direção?"
     },
     "scopeTab": {
       "title": "Âmbito e Critérios de Encerramento",

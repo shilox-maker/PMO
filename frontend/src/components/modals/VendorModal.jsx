@@ -54,10 +54,16 @@ export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, o
       : `${import.meta.env.VITE_API_URL}/vendors`;
     const method = isEdit ? 'PUT' : 'POST';
 
+    const payload = {
+      ...vendorForm,
+      telefono_general: vendorForm.telefono_general.trim() || null,
+      email_general: vendorForm.email_general.trim() || null
+    };
+
     fetch(url, {
       method,
       headers: getAuthHeaders(),
-      body: JSON.stringify(vendorForm)
+      body: JSON.stringify(payload)
     })
       .then(async (res) => {
         const data = await res.json();
@@ -127,18 +133,19 @@ export default function VendorModal({ isOpen, vendor, getAuthHeaders, onClose, o
             />
           </div>
 
-          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-            <input 
-              type="checkbox" 
-              name="es_grupo_dacsa"
-              id="es_grupo_dacsa_modal"
-              checked={vendorForm.es_grupo_dacsa}
-              onChange={handleInputChange}
-              className="m3-checkbox"
-              style={{ width: 18, height: 18 }}
-            />
-            <label htmlFor="es_grupo_dacsa_modal" className="form-label" style={{ margin: 0, cursor: 'pointer' }}>
-              {t('vendor360.belongsDacsa')}
+          <div className="form-group" style={{ marginTop: 12, marginBottom: 8 }}>
+            <label className="m3-checkbox-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                name="es_grupo_dacsa"
+                id="es_grupo_dacsa_modal"
+                checked={vendorForm.es_grupo_dacsa}
+                onChange={handleInputChange}
+                className="m3-checkbox"
+              />
+              <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--md-sys-color-on-surface)' }}>
+                {t('vendor360.belongsDacsa')}
+              </span>
             </label>
           </div>
 

@@ -9,8 +9,7 @@ export default function DashboardSummaryTable({
   selectedChartFilter,
   setSelectedChartFilter,
   onViewProject,
-  onViewVendor,
-  density
+  onViewVendor
 }) {
   const displayProjects = filteredProjects || projects || [];
   return (
@@ -92,7 +91,6 @@ export default function DashboardSummaryTable({
           onViewProject={onViewProject} 
           onViewVendor={onViewVendor} 
           showHeaderSelector={true} 
-          density={density}
         />
       )}
     </div>

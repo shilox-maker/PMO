@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { getMsalInstance } from './config/msal';
@@ -23,13 +24,14 @@ import AmbitoSelectionModal from './components/modals/AmbitoSelectionModal';
 import PendingAssistantDrawer from './components/assistant/PendingAssistantDrawer';
 import EmailReportModal from './components/modals/EmailReportModal';
 import TaskModal from './components/modals/TaskModal';
+import UserManualModal from './components/modals/UserManualModal';
 import { API_URL } from './config/api';
 import { validatePassword } from './utils/passwordValidation';
 import { useTranslation } from 'react-i18next';
 import {
   Briefcase, BookOpen, Sun, Moon, Activity, Calendar, Building,
   Settings, LogOut, RefreshCw, User, Lock, Mail, Building2, Key, Info, PieChart, Search, Globe,
-  ChevronLeft, ChevronRight, Bell
+  ChevronLeft, ChevronRight, Bell, HelpCircle
 } from 'lucide-react';
 import pkg from '../package.json';
 
@@ -466,6 +468,7 @@ function NavigationRail() {
   const { t } = useTranslation();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const [isManualOpen, setIsManualOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('pmo_nav_collapsed') === 'true');
   const navigate = useNavigate();
   const location = useLocation();
@@ -628,6 +631,24 @@ function NavigationRail() {
         </div>
 
         <ChangelogModal isOpen={isChangelogOpen} onClose={() => setIsChangelogOpen(false)} />
+
+        {/* User Manual / Ayuda (?) */}
+        <div style={{ marginTop: 6, textAlign: 'center' }}>
+          <button
+            onClick={() => setIsManualOpen(true)}
+            style={{
+              background: 'none', border: 'none', color: 'var(--md-sys-color-outline)',
+              fontSize: '0.75rem', cursor: 'pointer', textDecoration: isCollapsed ? 'none' : 'underline',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, width: '100%'
+            }}
+            title={t('user.userManual', 'Manual de Usuario / Ayuda')}
+          >
+            <HelpCircle size={isCollapsed ? 18 : 12} />
+            {!isCollapsed && <span>{t('user.userManual', 'Manual de Usuario')}</span>}
+          </button>
+        </div>
+
+        <UserManualModal isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
       </div>
     </div>
   );

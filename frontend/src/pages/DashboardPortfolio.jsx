@@ -7,9 +7,10 @@ import usePersistentFilters from '../hooks/usePersistentFilters';
 import ProjectsFilterPanel from '../components/projects/ProjectsFilterPanel';
 import GovernanceKpiHeader from '../components/governance/GovernanceKpiHeader';
 import ProjectTableHeader from '../components/ProjectTableHeader';
+import ColumnSelector from '../components/ColumnSelector';
 
 const DEFAULT_GOV_COLUMNS = [
-  { id: 'id_proyecto', labelKey: 'projectsTable.code', label: 'Código', fixed: true, visible: true },
+  { id: 'id_proyecto', labelKey: 'projectsTable.code', label: 'Código', fixed: true, visible: true, width: 140 },
   { id: 'nombre_proyecto', labelKey: 'projectsTable.name', label: 'Proyecto', fixed: true, visible: true },
   { id: 'pm_nombre', labelKey: 'projectsTable.pm', label: 'PM', fixed: false, visible: true },
   { id: 'indicador_rag', labelKey: 'projectsTable.status', label: 'RAG', fixed: false, visible: true },
@@ -111,7 +112,6 @@ export default function DashboardPortfolio({ onViewProject }) {
   const { columns: tableCols, visibleColumnsMap, columnWidths, updateColumnWidth, toggleColumn, resetColumns } = useTableColumns('ppm-portfolio-columns', DEFAULT_GOV_COLUMNS);
   const [selectedKpi, setSelectedKpi] = useState(null);
   const [trends, setTrends] = useState({});
-  const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(Array.isArray(data) ? data : [])).catch(() => {});
@@ -308,8 +308,6 @@ export default function DashboardPortfolio({ onViewProject }) {
         isStatesOpen={isStatesOpen} setIsStatesOpen={setIsStatesOpen}
         pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList} workflowsList={workflowsList} tagsList={tagsList} statesList={statesList}
         projects={rawProjects}
-        tableCols={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns}
-        density={density} onDensityChange={setDensity}
         activeFiltersCount={activeFiltersCount}
         onResetFilters={resetFilters}
       />
@@ -371,11 +369,11 @@ export default function DashboardPortfolio({ onViewProject }) {
         {loading ? (
           <div style={{ padding: 20, textAlign: 'center', opacity: 0.7 }}>{t('common.loading')}</div>
         ) : (
-          <div className="m3-table-wrapper table-responsive" data-density={density} style={{ overflowX: 'auto' }}>
+          <div className="m3-table-wrapper table-responsive" style={{ overflowX: 'auto' }}>
             <table className="m3-table" style={{ width: '100%' }}>
               <thead>
                 <tr>
-                  {visibleColumnsMap.id_proyecto && renderTH(t('projectsTable.code'), 'id_proyecto')}
+                  {visibleColumnsMap.id_proyecto && renderTH(t('projectsTable.code'), 'id_proyecto', { minWidth: '135px', whiteSpace: 'nowrap' })}
                   {visibleColumnsMap.nombre_proyecto && renderTH(t('projectsTable.name'), 'nombre_proyecto')}
                   {visibleColumnsMap.pm_nombre && renderTH(t('projectsTable.pm'), 'pm_nombre')}
                   {visibleColumnsMap.indicador_rag && renderTH('RAG', 'indicador_rag')}
@@ -387,7 +385,19 @@ export default function DashboardPortfolio({ onViewProject }) {
                   {visibleColumnsMap.alerta_dinero && renderTH(t('projectsTable.budget'), null, {}, 'alerta_dinero')}
                   {visibleColumnsMap.proximo_hito && renderTH(t('projectsTable.nextMilestone'), 'nextMilestone.fecha_limite', {}, 'proximo_hito')}
                   {visibleColumnsMap.ultimo_comentario && renderTH(t('projectsTable.lastComment'), 'ultimo_comentario')}
-                  {visibleColumnsMap.accion && renderTH(t('projectsTable.actions'), null, {}, 'accion')}
+                  {visibleColumnsMap.accion && (
+                    <ProjectTableHeader
+                      label={t('projectsTable.actions')}
+                      sortKey={null}
+                      sortConfig={sortConfig}
+                      onSort={handleSort}
+                      colId="accion"
+                      columnWidths={columnWidths}
+                      onMouseDown={handleMouseDown}
+                    >
+                      <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
+                    </ProjectTableHeader>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -395,7 +405,7 @@ export default function DashboardPortfolio({ onViewProject }) {
                   const pmName = `${p.PM?.nombre || ''} ${p.PM?.apellidos || ''}`.trim() || p.pm_nombre || '—';
                   return (
                     <tr key={p.id_proyecto}>
-                      {visibleColumnsMap.id_proyecto && <td><strong>{p.id_proyecto}</strong></td>}
+                      {visibleColumnsMap.id_proyecto && <td style={{ whiteSpace: 'nowrap' }}><strong>{p.id_proyecto}</strong></td>}
                       {visibleColumnsMap.nombre_proyecto && (
                         <td>
                           <button

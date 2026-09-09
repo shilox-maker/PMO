@@ -62,13 +62,17 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
     fetch(`${import.meta.env.VITE_API_URL}/vendors/${vendorId}`, {
       headers: getAuthHeaders()
     })
-      .then(res => res.json())
-      .then(result => {
+      .then(async res => {
+        const result = await res.json();
+        if (!res.ok || !result || result.error || !result.vendor) {
+          throw new Error(result?.error || 'Error al cargar el proveedor');
+        }
         setData(result);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching vendor 360 view:', err);
+        setData(null);
         setLoading(false);
       });
   };
@@ -127,18 +131,18 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
     );
   }
 
-  if (!data) {
+  if (!data || !data.vendor) {
     return (
       <div className="m3-card" style={{ textAlign: 'center', padding: 32 }}>
-        {t('vendor360.notFound')}
-        <button className="m3-btn m3-btn-primary" onClick={onBack} style={{ marginTop: 16 }}>
-          <ArrowLeft size={16} /> {t('vendor360.back')}
+        <p style={{ marginBottom: 16 }}>{t('vendor360.notFound', 'Proveedor no encontrado')}</p>
+        <button className="m3-btn m3-btn-primary" onClick={onBack}>
+          <ArrowLeft size={16} /> {t('vendor360.back', 'Volver')}
         </button>
       </div>
     );
   }
 
-  const { vendor, projects, incidents, lessons } = data;
+  const { vendor = {}, projects = [], incidents = [], lessons = [] } = data;
 
   return (
     <div>
@@ -151,7 +155,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
           <span style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', fontWeight: 600, uppercase: 'true' }}>
             {t('vendor360.partnerFile')}
           </span>
-          <h2 className="page-title" style={{ marginTop: -4 }}>{vendor.nombre_razon_social}</h2>
+          <h2 className="page-title" style={{ marginTop: -4 }}>{vendor?.nombre_razon_social || '—'}</h2>
         </div>
       </div>
 
@@ -174,7 +178,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
                 <table className="m3-table">
                   <thead>
                     <tr>
-                      {renderSortHeader(t('projectsTable.code'), 'id_proyecto', projectsSort, handleProjectsSort)}
+                      {renderSortHeader(t('projectsTable.code'), 'id_proyecto', projectsSort, handleProjectsSort, { minWidth: '135px', whiteSpace: 'nowrap' })}
                       {renderSortHeader(t('projectsTable.name'), 'nombre_proyecto', projectsSort, handleProjectsSort)}
                       {renderSortHeader(t('vendor360.internalPm'), 'PM.nombre', projectsSort, handleProjectsSort)}
                       {renderSortHeader('RAG', 'indicador_rag', projectsSort, handleProjectsSort)}
@@ -185,7 +189,7 @@ export default function Vendor360({ vendorId, onBack, onViewProject }) {
                   <tbody>
                     {getSortedData(projects, projectsSort).map(p => (
                       <tr key={p.id_proyecto}>
-                        <td style={{ fontWeight: 700 }}>{p.id_proyecto}</td>
+                        <td style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{p.id_proyecto}</td>
                         <td style={{ fontWeight: 500 }}>{p.nombre_proyecto}</td>
                         <td>{p.PM?.nombre} {p.PM?.apellidos}</td>
                         <td>

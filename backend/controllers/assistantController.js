@@ -68,7 +68,7 @@ const getPendingAssistant = asyncHandler(async (req, res) => {
   // El asistente recuerda pendientes de proyectos donde el usuario es el Project Manager asignado (id_pm)
   const userProjects = await Proyectos.findAll({
     where: { id_pm: pmId },
-    attributes: ['id_proyecto', 'uuid_v7', 'nombre_proyecto', 'estado_proyecto']
+    attributes: ['id_proyecto', 'uuid_v7', 'nombre_proyecto', 'id_estado']
   });
 
   if (!userProjects.length) {

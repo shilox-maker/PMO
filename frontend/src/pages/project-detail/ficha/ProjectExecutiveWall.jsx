@@ -11,8 +11,6 @@ export default function ProjectExecutiveWall({
   setNewCommentText,
   newCommentImportant,
   setNewCommentImportant,
-  newCommentDireccion,
-  setNewCommentDireccion,
   handleAddComment,
   handleDeleteComment,
   editingCommentId,
@@ -21,33 +19,26 @@ export default function ProjectExecutiveWall({
   setEditingCommentText,
   editingCommentImportant,
   setEditingCommentImportant,
-  editingCommentDireccion,
-  setEditingCommentDireccion,
   handleUpdateComment,
-  canSeeDireccion,
   formatDateTime
 }) {
   const { t } = useTranslation();
   const { canWrite } = useAuth();
-  const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'IMPORTANT' | 'DIRECCION'
+  const [filterType, setFilterType] = useState('ALL'); // 'ALL' | 'IMPORTANT'
 
   const filteredComments = useMemo(() => {
     if (!Array.isArray(comments)) return [];
     if (filterType === 'IMPORTANT') {
       return comments.filter(c => c.es_importante);
     }
-    if (filterType === 'DIRECCION' && canSeeDireccion) {
-      return comments.filter(c => c.para_direccion);
-    }
     return comments;
-  }, [comments, filterType, canSeeDireccion]);
+  }, [comments, filterType]);
 
   const counts = useMemo(() => {
-    if (!Array.isArray(comments)) return { all: 0, important: 0, direccion: 0 };
+    if (!Array.isArray(comments)) return { all: 0, important: 0 };
     return {
       all: comments.length,
-      important: comments.filter(c => c.es_importante).length,
-      direccion: comments.filter(c => c.para_direccion).length
+      important: comments.filter(c => c.es_importante).length
     };
   }, [comments]);
 
@@ -87,19 +78,6 @@ export default function ProjectExecutiveWall({
                   <Star size={14} fill={newCommentImportant ? 'var(--priority-alta)' : 'none'} /> {t('projectDetail.executiveWall.markImportant', 'Marcar como importante / ejecutivo (PDF)')}
                 </span>
               </label>
-              {canSeeDireccion && (
-                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={newCommentDireccion} 
-                    onChange={(e) => setNewCommentDireccion(e.target.checked)}
-                    className="m3-checkbox"
-                  />
-                  <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
-                    {t('projectDetail.executiveWall.forManagement', '📢 Para dirección')}
-                  </span>
-                </label>
-              )}
             </div>
             <button className="m3-btn m3-btn-primary" onClick={handleAddComment} style={{ height: '36px' }}>
               {t('projectDetail.executiveWall.publishBtn', 'Publicar Comentario')}
@@ -137,22 +115,6 @@ export default function ProjectExecutiveWall({
             >
               {t('projectDetail.executiveWall.filterImportant', { count: counts.important, defaultValue: `⭐ Importantes (${counts.important})` })}
             </button>
-            {canSeeDireccion && (
-              <button
-                type="button"
-                className={`m3-btn ${filterType === 'DIRECCION' ? 'm3-btn-primary' : 'm3-btn-outline'}`}
-                onClick={() => setFilterType('DIRECCION')}
-                style={{
-                  height: '30px',
-                  fontSize: '0.78rem',
-                  padding: '0 12px',
-                  borderColor: filterType === 'DIRECCION' ? undefined : '#007aff',
-                  color: filterType === 'DIRECCION' ? undefined : '#007aff'
-                }}
-              >
-                {t('projectDetail.executiveWall.filterManagement', { count: counts.direccion, defaultValue: `📢 Dirección (${counts.direccion})` })}
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -178,12 +140,8 @@ export default function ProjectExecutiveWall({
                 key={c.id_comentario} 
                 style={{ 
                   padding: 16, 
-                  backgroundColor: c.para_direccion 
-                    ? 'rgba(10, 132, 255, 0.08)' 
-                    : (c.es_importante ? 'rgba(245, 158, 11, 0.08)' : 'var(--md-sys-color-surface-container)'), 
-                  borderLeft: c.para_direccion 
-                    ? '4px solid #007aff' 
-                    : (c.es_importante ? '4px solid #f59e0b' : '4px solid var(--md-sys-color-outline-variant)'),
+                  backgroundColor: c.es_importante ? 'rgba(245, 158, 11, 0.08)' : 'var(--md-sys-color-surface-container)', 
+                  borderLeft: c.es_importante ? '4px solid #f59e0b' : '4px solid var(--md-sys-color-outline-variant)',
                   borderRadius: '0 16px 16px 0',
                   transition: 'var(--transition-smooth)'
                 }}
@@ -199,23 +157,12 @@ export default function ProjectExecutiveWall({
                         <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
                           <input 
                             type="checkbox" 
-                            checked={editingCommentImportant}
+                            checked={editingCommentImportant} 
                             onChange={(e) => setEditingCommentImportant(e.target.checked)}
                             className="m3-checkbox"
                           />
                           <span style={{ color: '#f59e0b', fontWeight: 600 }}>{t('common.important', 'Importante')}</span>
                         </label>
-                        {canSeeDireccion && (
-                          <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
-                            <input 
-                              type="checkbox" 
-                              checked={editingCommentDireccion}
-                              onChange={(e) => setEditingCommentDireccion(e.target.checked)}
-                              className="m3-checkbox"
-                            />
-                            <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>{t('projectDetail.executiveWall.forManagement', 'Para dirección')}</span>
-                          </label>
-                        )}
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button className="m3-btn m3-btn-outline" onClick={() => setEditingCommentId(null)} style={{ height: '32px', fontSize: '0.8rem' }}>
@@ -235,11 +182,6 @@ export default function ProjectExecutiveWall({
                         {c.es_importante && (
                           <span style={{ fontSize: '0.7rem', backgroundColor: '#ffe0b2', color: '#e65100', padding: '2px 8px', borderRadius: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
                             <Star size={10} fill="#e65100" /> {t('projectDetail.executiveWall.importantBadge', 'IMPORTANTE')}
-                          </span>
-                        )}
-                        {c.para_direccion && (
-                          <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)', padding: '2px 8px', borderRadius: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Star size={10} fill="var(--md-sys-color-primary)" /> {t('projectDetail.executiveWall.managementBadge', 'DIRECCIÓN')}
                           </span>
                         )}
                       </div>
@@ -268,7 +210,6 @@ export default function ProjectExecutiveWall({
                             setEditingCommentId(c.id_comentario);
                             setEditingCommentText(c.texto_comentario);
                             setEditingCommentImportant(c.es_importante);
-                            setEditingCommentDireccion(c.para_direccion || false);
                           }}
                           title={t('common.edit', 'Editar comentario')}
                         >

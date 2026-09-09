@@ -3,14 +3,24 @@ import ProjectGovernanceAttributes from '../ficha/ProjectGovernanceAttributes';
 import ProjectRaciTable from '../ficha/ProjectRaciTable';
 import ProjectUnifiedTimeline from '../ficha/ProjectUnifiedTimeline';
 import ProjectExecutiveWall from '../ficha/ProjectExecutiveWall';
+import ProjectDirectionWall from '../ficha/ProjectDirectionWall';
 
 export default function ProjectFichaTab({
   project, comments, commentsLoading, newCommentText, setNewCommentText,
-  newCommentImportant, setNewCommentImportant, newCommentDireccion, setNewCommentDireccion,
+  newCommentImportant, setNewCommentImportant,
   handleAddComment, handleDeleteComment,
   editingCommentId, setEditingCommentId, editingCommentText, setEditingCommentText,
-  editingCommentImportant, setEditingCommentImportant, editingCommentDireccion, setEditingCommentDireccion,
-  handleUpdateComment, handleOpenEditLifecycle, handleDeleteParticipant,
+  editingCommentImportant, setEditingCommentImportant,
+  handleUpdateComment,
+  directionComments, directionCommentsLoading,
+  newDirCommentText, setNewDirCommentText,
+  newDirCommentImportant, setNewDirCommentImportant,
+  handleAddDirectionComment, handleDeleteDirectionComment,
+  editingDirCommentId, setEditingDirCommentId,
+  editingDirCommentText, setEditingDirCommentText,
+  editingDirCommentImportant, setEditingDirCommentImportant,
+  handleUpdateDirectionComment,
+  handleOpenEditLifecycle, handleDeleteParticipant,
   handleOpenAddRaci, handleOpenEditRaci, onViewVendor, contactosList,
   canSeeDireccion, getAuthHeaders, handleUpdateProject
 }) {
@@ -90,7 +100,7 @@ export default function ProjectFichaTab({
         </div>
       </div>
 
-      {/* Muro Ejecutivo (Comentarios) */}
+      {/* Muro Ejecutivo Estándar (Operativo / PM) */}
       <ProjectExecutiveWall 
         comments={comments}
         commentsLoading={commentsLoading}
@@ -98,8 +108,6 @@ export default function ProjectFichaTab({
         setNewCommentText={setNewCommentText}
         newCommentImportant={newCommentImportant}
         setNewCommentImportant={setNewCommentImportant}
-        newCommentDireccion={newCommentDireccion}
-        setNewCommentDireccion={setNewCommentDireccion}
         handleAddComment={handleAddComment}
         handleDeleteComment={handleDeleteComment}
         editingCommentId={editingCommentId}
@@ -108,12 +116,31 @@ export default function ProjectFichaTab({
         setEditingCommentText={setEditingCommentText}
         editingCommentImportant={editingCommentImportant}
         setEditingCommentImportant={setEditingCommentImportant}
-        editingCommentDireccion={editingCommentDireccion}
-        setEditingCommentDireccion={setEditingCommentDireccion}
         handleUpdateComment={handleUpdateComment}
-        canSeeDireccion={canSeeDireccion}
         formatDateTime={formatDateTime}
       />
+
+      {/* Muro Confidencial de Dirección (Exclusivo DIRECTOR y ADMINISTRADOR) */}
+      {canSeeDireccion && (
+        <ProjectDirectionWall 
+          comments={directionComments}
+          commentsLoading={directionCommentsLoading}
+          newCommentText={newDirCommentText}
+          setNewCommentText={setNewDirCommentText}
+          newCommentImportant={newDirCommentImportant}
+          setNewCommentImportant={setNewDirCommentImportant}
+          handleAddComment={handleAddDirectionComment}
+          handleDeleteComment={handleDeleteDirectionComment}
+          editingCommentId={editingDirCommentId}
+          setEditingCommentId={setEditingDirCommentId}
+          editingCommentText={editingDirCommentText}
+          setEditingCommentText={setEditingDirCommentText}
+          editingCommentImportant={editingDirCommentImportant}
+          setEditingCommentImportant={setEditingDirCommentImportant}
+          handleUpdateComment={handleUpdateDirectionComment}
+          formatDateTime={formatDateTime}
+        />
+      )}
     </div>
   );
 }

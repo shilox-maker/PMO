@@ -84,7 +84,7 @@ export function usePersistentFilters(pageKey, defaultFilters) {
   // Calculate the number of actively applied filters (excluding defaults, sorting, or pagination)
   const activeFiltersCount = useMemo(() => {
     let count = 0;
-    const ignoredKeys = new Set(['sortConfig', 'zoomIndex', 'density', 'timeframe', 'customDate']);
+    const ignoredKeys = new Set(['sortConfig', 'zoomIndex', 'timeframe', 'customDate']);
 
     for (const [key, value] of Object.entries(filters)) {
       if (ignoredKeys.has(key)) continue;

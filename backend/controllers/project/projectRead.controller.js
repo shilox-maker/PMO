@@ -77,7 +77,7 @@ const getProjects = asyncHandler(async (req, res) => {
   const [calcMap, allMilestones, allComments, allTasksLatest] = await Promise.all([
     getProjectsCalculationsBatch(projectsList),
     Tareas.findAll({ where: { id_proyecto: { [Op.in]: projectIds }, es_hito: true, estado: 'PENDIENTE' }, attributes: ['id_proyecto', 'id_tarea', 'titulo_tarea', 'fecha_limite', 'estado'], order: [['fecha_limite', 'ASC']], raw: true }),
-    ComentariosProyecto.findAll({ where: { id_proyecto: { [Op.in]: projectIds }, ...(!canSeeDireccion ? { para_direccion: false } : {}) }, attributes: ['id_proyecto', 'texto_comentario', 'fecha_registro', 'updatedAt'], order: [['fecha_registro', 'DESC']], raw: true }),
+    ComentariosProyecto.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'texto_comentario', 'fecha_registro', 'updatedAt'], order: [['fecha_registro', 'DESC']], raw: true }),
     Tareas.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'updatedAt'], order: [['updatedAt', 'DESC']], raw: true })
   ]);
 

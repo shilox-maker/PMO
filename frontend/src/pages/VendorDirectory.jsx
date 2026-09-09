@@ -71,13 +71,15 @@ export default function VendorDirectory({ onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/vendors`, {
       headers: getAuthHeaders()
     })
-      .then(res => res.json())
-      .then(data => {
-        setVendors(data);
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Error al cargar proveedores');
+        setVendors(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error fetching vendors list:', err);
+        setVendors([]);
         setLoading(false);
       });
   };
@@ -108,7 +110,7 @@ export default function VendorDirectory({ onViewVendor }) {
   };
 
   // Filter vendors in search client side
-  const filteredVendors = vendors.filter(v => 
+  const filteredVendors = (vendors || []).filter(v => 
     v.nombre_razon_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     v.cif_nif?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     v.telefono_general?.toLowerCase().includes(searchTerm.toLowerCase()) ||

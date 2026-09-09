@@ -267,21 +267,56 @@ export const getTimelineHtml = (sortedTimelineEvents, reportOptions, t) => {
   `;
 };
 
-export const getCommentsHtml = (importantComments, reportOptions, t) => {
+export const getCommentsHtml = (commentsList, reportOptions, highlightDate = null, isDirectorReport = false, t) => {
   if (!reportOptions.resumen) return '';
   const tr = t || ((key, opts) => key);
-  return importantComments.length === 0
-    ? `<p style="color:#999;text-align:center;padding:20px;">${tr('reportExport.noAlerts')}</p>`
-    : importantComments.map(c => `
-      <div style="padding:16px;margin-bottom:12px;background:#fffbf0;border-left:4px solid #f59e0b;border-radius:8px;">
+  if (!commentsList || commentsList.length === 0) {
+    return `<p style="color:#999;text-align:center;padding:20px;">${isDirectorReport ? 'No hay notas de dirección registradas.' : tr('reportExport.noAlerts')}</p>`;
+  }
+
+  return commentsList.map(c => {
+    let borderColor = isDirectorReport ? '#007aff' : '#f59e0b';
+    let bgColor = isDirectorReport ? 'rgba(0, 122, 255, 0.04)' : '#fffbf0';
+    let badgeHtml = '';
+
+    if (isDirectorReport) {
+      if (highlightDate && c.fecha_registro) {
+        const commentDate = new Date(c.fecha_registro).toISOString().split('T')[0];
+        if (commentDate >= highlightDate) {
+          // Posterior / igual a la fecha de corte -> AZUL
+          borderColor = '#007aff';
+          bgColor = 'rgba(0, 122, 255, 0.06)';
+          badgeHtml = `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background-color:#e8f0fe;color:#007aff;margin-left:8px;border:1px solid #b3d7ff;">POSTERIOR</span>`;
+        } else {
+          // Anterior a la fecha de corte -> ROJO
+          borderColor = '#dc2626';
+          bgColor = 'rgba(220, 38, 38, 0.05)';
+          badgeHtml = `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background-color:#ffebeb;color:#dc2626;margin-left:8px;border:1px solid #ffccd5;">ANTERIOR</span>`;
+        }
+      } else {
+        badgeHtml = `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background-color:#e8f0fe;color:#007aff;margin-left:8px;border:1px solid #b3d7ff;">DIRECCIÓN</span>`;
+      }
+    } else {
+      if (highlightDate && c.fecha_registro) {
+        const commentDate = new Date(c.fecha_registro).toISOString().split('T')[0];
+        if (commentDate >= highlightDate) {
+          badgeHtml = `<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background-color:#e8f0fe;color:#1a73e8;margin-left:8px;border:1px solid #d2e3fc;">NUEVO</span>`;
+        }
+      }
+    }
+
+    return `
+      <div style="padding:16px;margin-bottom:12px;background:${bgColor};border-left:4px solid ${borderColor};border-radius:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <strong style="font-size:13px;color:#1a1a2e;">
             ${c.Autor?.nombre || ''} ${c.Autor?.apellidos || ''}
+            ${badgeHtml}
           </strong>
           <span style="font-size:11px;color:#888;">${formatDate(c.fecha_registro)}</span>
         </div>
         <div style="font-size:13px;line-height:1.6;color:#333;">${c.texto_comentario}</div>
         ${c.editado ? `<div style="font-size:11px;color:#999;margin-top:6px;font-style:italic;">Editado por ${c.Editor?.nombre || ''} ${c.Editor?.apellidos || ''} el ${formatDateTime(c.fecha_modificacion)}</div>` : ''}
       </div>
-    `).join('');
+    `;
+  }).join('');
 };

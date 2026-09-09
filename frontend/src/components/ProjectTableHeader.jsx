@@ -7,18 +7,19 @@ export default function ProjectTableHeader({
   sortConfig,
   onSort,
   colId,
-  columnWidths,
+  columnWidths = {},
   onMouseDown,
-  extraStyle = {}
+  extraStyle = {},
+  children
 }) {
-  const isSorted = sortKey && sortConfig.key === sortKey;
+  const isSorted = sortKey && sortConfig && sortConfig.key === sortKey;
   const isCentered = extraStyle.textAlign === 'center';
-  const customWidth = columnWidths[colId];
+  const customWidth = columnWidths ? columnWidths[colId] : undefined;
 
   return (
     <th
       className="th-resizable"
-      onClick={() => sortKey && onSort(sortKey)}
+      onClick={() => sortKey && onSort && onSort(sortKey)}
       style={{
         cursor: sortKey ? 'pointer' : 'default',
         userSelect: 'none',
@@ -26,21 +27,26 @@ export default function ProjectTableHeader({
         ...extraStyle
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: isCentered ? 'center' : 'flex-start' }}>
-        {label}
-        {sortKey && (
-          isSorted ? (
-            sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
-          ) : (
-            <ArrowUpDown size={14} style={{ opacity: 0.3 }} />
-          )
-        )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: isCentered ? 'center' : (children ? 'space-between' : 'flex-start'), width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {label}
+          {sortKey && (
+            isSorted ? (
+              sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
+            ) : (
+              <ArrowUpDown size={14} style={{ opacity: 0.3 }} />
+            )
+          )}
+        </div>
+        {children}
       </div>
-      <div
-        className="table-resizer"
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => onMouseDown(e, colId)}
-      />
+      {onMouseDown && colId && (
+        <div
+          className="table-resizer"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => onMouseDown(e, colId)}
+        />
+      )}
     </th>
   );
 }

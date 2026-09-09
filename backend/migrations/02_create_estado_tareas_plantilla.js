@@ -31,9 +31,10 @@ module.exports = {
       return originalCreateTable(targetTable, qualifiedAttributes, options);
     };
 
+    const targetTable = isSqlite ? 'Estado_Tareas_Plantilla' : { tableName: 'Estado_Tareas_Plantilla', schema };
     let exists = false;
     try {
-      const tableInfo = await queryInterface.describeTable('Estado_Tareas_Plantilla');
+      const tableInfo = await queryInterface.describeTable(targetTable);
       if (tableInfo && Object.keys(tableInfo).length > 0) {
         exists = true;
       }

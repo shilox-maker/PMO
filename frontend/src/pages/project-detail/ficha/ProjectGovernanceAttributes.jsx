@@ -72,7 +72,7 @@ export default function ProjectGovernanceAttributes({
                   style={{ fontWeight: 500, textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)' }}
                   onClick={() => onViewVendor(project.id_proveedor)}
                 >
-                  {project.Proveedor.nombre_razon_social}
+                  {project.Proveedor?.nombre_razon_social || '—'}
                 </span>
               )}
             </div>

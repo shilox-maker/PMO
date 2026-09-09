@@ -16,9 +16,21 @@ module.exports = {
     const targetTable = isSqlite ? 'Estados_Proyecto' : { tableName: 'Estados_Proyecto', schema: schema || 'dbo' };
     const fullTableName = isSqlite ? 'Estados_Proyecto' : `[${schema || 'dbo'}].[Estados_Proyecto]`;
 
+    const columnExists = async (tableName, columnName) => {
+      if (isSqlite) {
+        const res = await queryInterface.sequelize.query(`PRAGMA table_info("${tableName}")`, { type: QueryTypes.SELECT });
+        return res && res.some(c => c.name === columnName);
+      }
+      const res = await queryInterface.sequelize.query(
+        `SELECT 1 FROM sys.columns c INNER JOIN sys.tables t ON c.object_id = t.object_id INNER JOIN sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = :schema AND t.name = :tableName AND c.name = :columnName`,
+        { replacements: { schema: schema || 'dbo', tableName, columnName }, type: QueryTypes.SELECT }
+      );
+      return res && res.length > 0;
+    };
+
     // 1. Comprobar si la columna macro_etapa ya existe
-    const tableInfo = await queryInterface.describeTable(targetTable).catch(() => ({}));
-    if (!tableInfo.macro_etapa) {
+    const hasMacro = await columnExists('Estados_Proyecto', 'macro_etapa');
+    if (!hasMacro) {
       await queryInterface.addColumn(targetTable, 'macro_etapa', {
         type: DataTypes.STRING(50),
         allowNull: false,

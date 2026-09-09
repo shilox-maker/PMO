@@ -2,7 +2,7 @@ const { Op } = require('sequelize');
 const { 
   Proveedores, ContactosProveedor, Proyectos, Usuarios, Sedes, EstadosProyecto, Incidencias, LeccionesAprendidas 
 } = require('../models/index');
-const { getProjectCalculations } = require('../models/automations');
+const { getProjectCalculations, getProjectsCalculationsBatch } = require('../models/automations');
 const { asyncHandler } = require('../middlewares/errorHandler');
 
 const getVendors = asyncHandler(async (req, res) => {
@@ -38,34 +38,32 @@ const getVendorDetail = asyncHandler(async (req, res) => {
       ]
     });
 
-    const projectsWithCalculations = await Promise.all(
-      projects.map(async (project) => {
-        const calc = await getProjectCalculations(
-          project.id_proyecto,
-          project.budget_inicial,
-          project.fecha_fin_inicial
-        );
-        return {
-          ...project.toJSON(),
-          calculations: calc
-        };
-      })
-    );
+    const calcMap = await getProjectsCalculationsBatch(projects);
+    const projectsWithCalculations = projects.map((project) => ({
+      ...project.toJSON(),
+      calculations: calcMap.get(project.id_proyecto) || {}
+    }));
 
     const projectIds = projects.map(p => p.id_proyecto);
-    const incidents = await Incidencias.findAll({
-      where: { id_proyecto: projectIds },
-      include: [{ model: Proyectos, attributes: ['nombre_proyecto'] }],
-      order: [['fecha_apertura', 'DESC']]
-    });
+    const incidents = projectIds.length > 0 
+      ? await Incidencias.findAll({
+          where: { id_proyecto: { [Op.in]: projectIds } },
+          include: [{ model: Proyectos, attributes: ['nombre_proyecto'] }],
+          order: [['fecha_apertura', 'DESC']]
+        })
+      : [];
+
+    const lessonsWhere = projectIds.length > 0
+      ? {
+          [Op.or]: [
+            { id_proveedor },
+            { id_proyecto: { [Op.in]: projectIds } }
+          ]
+        }
+      : { id_proveedor };
 
     const lessons = await LeccionesAprendidas.findAll({
-      where: {
-        [Op.or]: [
-          { id_proveedor },
-          { id_proyecto: projectIds }
-        ]
-      },
+      where: lessonsWhere,
       include: [
         { model: Proyectos, as: 'Proyecto', attributes: ['nombre_proyecto'] }
       ],
@@ -81,17 +79,23 @@ const getVendorDetail = asyncHandler(async (req, res) => {
 });
 
 const createVendor = asyncHandler(async (req, res) => {
-    const vendor = await Proveedores.create(req.body);
+    const data = { ...req.body };
+    if (!data.telefono_general || data.telefono_general === '') data.telefono_general = null;
+    if (!data.email_general || data.email_general === '') data.email_general = null;
+    const vendor = await Proveedores.create(data);
     res.status(201).json(vendor);
 });
 
 const updateVendor = asyncHandler(async (req, res) => {
     const { id_proveedor } = req.params;
+    const data = { ...req.body };
+    if (data.hasOwnProperty('telefono_general') && (!data.telefono_general || data.telefono_general === '')) data.telefono_general = null;
+    if (data.hasOwnProperty('email_general') && (!data.email_general || data.email_general === '')) data.email_general = null;
     const vendor = await Proveedores.findByPk(id_proveedor);
     if (!vendor) {
       return res.status(404).json({ error: 'Proveedor no encontrado' });
     }
-    await vendor.update(req.body);
+    await vendor.update(data);
     res.json(vendor);
 });
 
@@ -112,17 +116,21 @@ const deleteVendor = asyncHandler(async (req, res) => {
 });
 
 const createContact = asyncHandler(async (req, res) => {
-    const contact = await ContactosProveedor.create(req.body);
+    const data = { ...req.body };
+    if (!data.telefono || data.telefono === '') data.telefono = null;
+    const contact = await ContactosProveedor.create(data);
     res.status(201).json(contact);
 });
 
 const updateContact = asyncHandler(async (req, res) => {
     const { id_contacto } = req.params;
+    const data = { ...req.body };
+    if (data.hasOwnProperty('telefono') && (!data.telefono || data.telefono === '')) data.telefono = null;
     const contact = await ContactosProveedor.findByPk(id_contacto);
     if (!contact) {
       return res.status(404).json({ error: 'Contacto no encontrado' });
     }
-    await contact.update(req.body);
+    await contact.update(data);
     res.json(contact);
 });
 

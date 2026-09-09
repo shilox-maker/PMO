@@ -38,7 +38,7 @@ export const getDashboardStyles = () => `
   .print-btn { position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; z-index: 100; }
 `;
 
-export const renderProjectCard = (project, comments, reportOptions, highlightDate, t) => {
+export const renderProjectCard = (project, comments = [], directionComments = [], reportOptions = {}, highlightDate = null, isDirector = false, t = null) => {
   const tr = t || ((key, opts) => key);
   const calc = project.calculations || {};
   const budgetInitial = parseFloat(project.budget_inicial) || 0;
@@ -57,8 +57,16 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
   const completed = milestones.filter(t => t.estado === 'COMPLETADA').slice(0, 3);
   const pending = milestones.filter(t => t.estado === 'PENDIENTE').slice(0, 3);
 
-  // Comments filter
-  const importantComments = comments.filter(c => c.es_importante);
+  const risksList = (project.Riesgos || []).slice(0, 3);
+  const incidentsList = (project.Incidencias || []).slice(0, 3);
+  const crList = (project.CambiosAlcance || []).slice(0, 3);
+  const lessonsList = (project.LeccionesAprendidas || []).slice(0, 3);
+
+  // Para el informe de Dirección: mostrar exclusivamente las notas de Dirección.
+  // Para el PM / operativo: mostrar exclusivamente los comentarios importantes del muro ordinario.
+  const commentsToInclude = isDirector 
+    ? (directionComments || []) 
+    : (comments || []).filter(c => c.es_importante);
 
   const kpisHtml = reportOptions.resumen ? `
     <div class="kpi-grid">
@@ -114,31 +122,28 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
   const timelineHtml = reportOptions.timeline ? `
     <div class="sub-section">
       <h3>${tr('reportExport.timelineTitle')}</h3>
-      ${allTasks.length === 0 ? `<p style="color:#999;font-size:11px;font-style:italic;">${tr('reportExport.noTimeline')}</p>` : `
-      <div style="position:relative; padding-left: 15px; border-left: 2px solid #1a1a2e; margin: 12px 0 12px 5px;">
-        ${allTasks.sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite)).slice(0, 8).map(event => `
-          <div style="position:relative; margin-bottom: 12px;">
-            <div style="position:absolute; left:-21px; top:3px; width:10px; height:10px; border-radius:50%; background:${event.es_hito ? '#e65100' : '#1a1a2e'}; border: 2px solid #fff; box-shadow: 0 0 0 1.5px ${event.es_hito ? '#e65100' : '#1a1a2e'};"></div>
-            <div style="font-weight: 600; font-size: 11.5px;">${event.titulo_tarea} ${event.es_hito ? `<span style="font-size:8.5px; background:#ffe0b2; color:#e65100; padding:1px 4px; border-radius:8px; margin-left:4px; font-weight:700;">${tr('reportExport.milestoneBadge')}</span>` : ''}</div>
-            <div style="font-size:10px; color:#666;">${tr('reportExport.deadlineLimit')} ${formatDate(event.fecha_limite)} · ${tr('reportExport.statusHeader')}: ${event.estado}</div>
+      <div style="position:relative; padding-left: 14px; border-left: 2px solid #1a1a2e; margin: 8px 0 8px 6px;">
+        ${[...allTasks].sort((a,b) => new Date(a.fecha_limite) - new Date(b.fecha_limite)).slice(0, 4).map(event => `
+          <div style="position:relative; margin-bottom: 8px;">
+            <div style="position:absolute; left:-19px; top:3px; width:8px; height:8px; border-radius:50%; background:${event.es_hito ? '#ea580c' : '#1a1a2e'}; border: 1.5px solid #fff;"></div>
+            <div style="font-weight: 600; font-size: 11px;">${event.titulo_tarea} ${event.es_hito ? `<span style="font-size:9px; background:#ffedd5; color:#c2410c; padding:1px 4px; border-radius:6px;">HITO</span>` : ''}</div>
+            <div style="font-size: 10px; color: #666;">${formatDate(event.fecha_limite)} · <span style="font-weight:600; color:${event.estado === 'COMPLETADA' ? '#16a34a' : '#ea580c'};">${event.estado}</span></div>
           </div>
         `).join('')}
-      </div>`}
+      </div>
     </div>` : '';
 
-  const risksList = project.Riesgos || [];
   const risksHtml = (reportOptions.riesgos && risksList.length > 0) ? `
     <div class="sub-section">
       <h3>${tr('reportExport.risksTitle')}</h3>
       <table>
-        <thead><tr><th>${tr('reportExport.code')}</th><th>Riesgo</th><th>${tr('reportExport.probImpact')}</th><th>${tr('reportExport.mitigation')}</th><th>${tr('reportExport.statusHeader')}</th></tr></thead>
+        <thead><tr><th>${tr('reportExport.code')}</th><th>Riesgo</th><th>${tr('reportExport.probImpact')}</th><th>${tr('reportExport.statusHeader')}</th></tr></thead>
         <tbody>
           ${risksList.map(r => `
             <tr>
               <td><strong>${r.id_riesgo}</strong></td>
               <td>${r.titulo_riesgo}</td>
-              <td>${r.probabilidad} / ${r.impacto}</td>
-              <td>${r.plan_mitigacion}</td>
+              <td>P:${r.probabilidad} | I:${r.impacto}</td>
               <td>${r.estado_riesgo}</td>
             </tr>
           `).join('')}
@@ -146,19 +151,17 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
       </table>
     </div>` : '';
 
-  const incidentsList = project.Incidencias || [];
   const incidentsHtml = (reportOptions.incidencias && incidentsList.length > 0) ? `
     <div class="sub-section">
       <h3>${tr('reportExport.incidentsTitle')}</h3>
       <table>
-        <thead><tr><th>${tr('reportExport.code')}</th><th>Incidencia</th><th>Tipo</th><th>Criticidad</th><th>${tr('reportExport.statusHeader')}</th></tr></thead>
+        <thead><tr><th>${tr('reportExport.code')}</th><th>Incidencia</th><th>Criticidad</th><th>${tr('reportExport.statusHeader')}</th></tr></thead>
         <tbody>
           ${incidentsList.map(i => `
             <tr>
               <td><strong>${i.id_incidencia}</strong></td>
               <td>${i.titulo}</td>
-              <td>${i.tipo_incidencias}</td>
-              <td>${i.criticidad}</td>
+              <td><span style="color:${i.criticidad === 'ALTA' ? '#dc2626' : i.criticidad === 'MEDIA' ? '#d97706' : '#16a34a'};font-weight:600;">${i.criticidad}</span></td>
               <td>${i.estado}</td>
             </tr>
           `).join('')}
@@ -166,27 +169,24 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
       </table>
     </div>` : '';
 
-  const crList = project.CambiosAlcance || [];
   const crHtml = (reportOptions.cambios && crList.length > 0) ? `
     <div class="sub-section">
       <h3>${tr('reportExport.crTitle')}</h3>
       <table>
-        <thead><tr><th>${tr('reportExport.crCode')}</th><th>${tr('reportExport.description')}</th><th>${tr('reportExport.costImpact')}</th><th>${tr('reportExport.timeImpact')}</th><th>${tr('reportExport.statusHeader')}</th></tr></thead>
+        <thead><tr><th>${tr('reportExport.crCode')}</th><th>${tr('reportExport.description')}</th><th>${tr('reportExport.costImpact')}</th><th>${tr('reportExport.timeImpact')}</th></tr></thead>
         <tbody>
           ${crList.map(c => `
             <tr>
               <td><strong>${c.id_cambio}</strong></td>
               <td>${c.descripcion_motivo}</td>
-              <td>${c.impacta_importe ? `${formatCurrency(parseFloat(c.importe_impacto))}` : 'Sin impacto'}</td>
-              <td>${c.impacta_tiempo ? `+${c.dias_impacto} días` : 'Sin impacto'}</td>
-              <td>${c.estado_cambio}</td>
+              <td>${c.impacta_importe ? formatCurrency(parseFloat(c.importe_impacto)) : '—'}</td>
+              <td>${c.impacta_tiempo ? `+${c.dias_impacto}d` : '—'}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
     </div>` : '';
 
-  const lessonsList = project.LeccionesAprendidas || [];
   const lessonsHtml = (reportOptions.lecciones && lessonsList.length > 0) ? `
     <div class="sub-section">
       <h3>${tr('reportExport.lessonsTitle')}</h3>
@@ -205,26 +205,46 @@ export const renderProjectCard = (project, comments, reportOptions, highlightDat
       </table>
     </div>` : '';
 
+  const commentsSectionTitle = isDirector ? '🛡️ Notas de Dirección' : `💬 ${tr('reportExport.executiveWall')}`;
+
   const commentsHtml = reportOptions.resumen ? `
     <div class="sub-section">
-      <h3>💬 ${tr('reportExport.executiveWall')}</h3>
-      ${importantComments.length === 0 ? '<p style="color:#999;font-style:italic;">No hay comentarios importantes.</p>' : importantComments.map(c => {
-        const isDireccion = c.para_direccion;
-        const commentDate = new Date(c.fecha_registro).toISOString().split('T')[0];
-        const shouldHighlight = highlightDate && commentDate >= highlightDate;
+      <h3>${commentsSectionTitle}</h3>
+      ${commentsToInclude.length === 0 ? `<p style="color:#999;font-style:italic;">${isDirector ? 'No hay notas de dirección registradas.' : 'No hay comentarios importantes.'}</p>` : commentsToInclude.map(c => {
+        let borderColor = isDirector ? '#007aff' : '#f59e0b';
+        let bgColor = isDirector ? 'rgba(0, 122, 255, 0.05)' : '#f8f9fa';
+        let tagHtml = '';
 
-        const highlightTag = shouldHighlight ? `
-          <span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background-color:#ffebeb;color:#e63946;margin-left:8px;border:1px solid #ffccd5;">A REVISAR</span>
-        ` : '';
-
-        const directionTag = isDireccion ? `
-          <span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background-color:#e8f0fe;color:#1a73e8;margin-left:8px;border:1px solid #d2e3fc;">⭐ DIRECCIÓN</span>
-        ` : '';
+        if (isDirector) {
+          if (highlightDate && c.fecha_registro) {
+            const commentDate = new Date(c.fecha_registro).toISOString().split('T')[0];
+            if (commentDate >= highlightDate) {
+              // Posterior o igual a la fecha de corte -> AZUL
+              borderColor = '#007aff';
+              bgColor = 'rgba(0, 122, 255, 0.06)';
+              tagHtml = `<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background-color:#e8f0fe;color:#007aff;margin-left:8px;border:1px solid #b3d7ff;">POSTERIOR</span>`;
+            } else {
+              // Anterior a la fecha de corte -> ROJO
+              borderColor = '#dc2626';
+              bgColor = 'rgba(220, 38, 38, 0.05)';
+              tagHtml = `<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background-color:#ffebeb;color:#dc2626;margin-left:8px;border:1px solid #ffccd5;">ANTERIOR</span>`;
+            }
+          } else {
+            tagHtml = `<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background-color:#e8f0fe;color:#007aff;margin-left:8px;border:1px solid #b3d7ff;">DIRECCIÓN</span>`;
+          }
+        } else {
+          if (highlightDate && c.fecha_registro) {
+            const commentDate = new Date(c.fecha_registro).toISOString().split('T')[0];
+            if (commentDate >= highlightDate) {
+              tagHtml = `<span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background-color:#e8f0fe;color:#1a73e8;margin-left:8px;border:1px solid #d2e3fc;">NUEVO</span>`;
+            }
+          }
+        }
 
         return `
-          <div style="padding:10px; margin-bottom:8px; background:${isDireccion ? 'rgba(10, 132, 255, 0.05)' : '#f8f9fa'}; border-left:4px solid ${isDireccion ? '#007aff' : '#f59e0b'}; border-radius:4px;">
+          <div style="padding:10px; margin-bottom:8px; background:${bgColor}; border-left:4px solid ${borderColor}; border-radius:4px;">
             <div style="display:flex; justify-content:space-between; font-size:11px; color:#666; margin-bottom:4px;">
-              <strong>${c.Autor?.nombre || ''} ${c.Autor?.apellidos || ''} ${directionTag} ${highlightTag}</strong>
+              <strong>${c.Autor?.nombre || ''} ${c.Autor?.apellidos || ''} ${tagHtml}</strong>
               <span>${formatDate(c.fecha_registro)}</span>
             </div>
             <div style="font-size:11.5px; line-height:1.4;">${c.texto_comentario}</div>

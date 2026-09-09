@@ -189,7 +189,7 @@ export default function CreateProjectModal({
 
       setIsSubmittingTasks(false);
       setPendingStateTasksModal(null);
-      onSuccess();
+      if (onSuccess) onSuccess(createdProject);
       onClose();
     } catch (err) {
       setIsSubmittingTasks(false);
@@ -348,11 +348,9 @@ export default function CreateProjectModal({
                   className="user-select"
                 >
                   <option value="">Seleccione Sede</option>
-                  {sedesList.map(s => {
-                    const code = s.code || s.nombre_sede?.toUpperCase().replace(/\s+/g, '_');
-                    const label = code && t(`sede.${code}`) !== `sede.${code}` ? t(`sede.${code}`) : s.nombre_sede;
-                    return <option key={s.id_sede} value={s.id_sede}>{label}</option>;
-                  })}
+                  {sedesList.map(s => (
+                    <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>
+                  ))}
                 </select>
               </div>
               <div className="form-group">
@@ -364,11 +362,9 @@ export default function CreateProjectModal({
                   className="user-select"
                 >
                   <option value="">Seleccione Sede</option>
-                  {sedesList.map(s => {
-                    const code = s.code || s.nombre_sede?.toUpperCase().replace(/\s+/g, '_');
-                    const label = code && t(`sede.${code}`) !== `sede.${code}` ? t(`sede.${code}`) : s.nombre_sede;
-                    return <option key={s.id_sede} value={s.id_sede}>{label}</option>;
-                  })}
+                  {sedesList.map(s => (
+                    <option key={s.id_sede} value={s.id_sede}>{s.nombre_sede}</option>
+                  ))}
                 </select>
               </div>
             </div>

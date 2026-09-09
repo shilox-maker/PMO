@@ -1,7 +1,7 @@
 import { formatDate, formatCurrency } from './reportHtmlComponents';
 import { getDashboardStyles, renderProjectCard } from './dashboardReportHtmlComponents';
 
-export const generateDashboardReport = (detailedProjects, reportOptions, highlightDate, t, lang = 'es') => {
+export const generateDashboardReport = (detailedProjects, reportOptions, highlightDate, isDirector = false, t = null, lang = 'es') => {
   if (!detailedProjects || detailedProjects.length === 0) return;
 
   const tr = t || ((key, opts) => key);
@@ -90,7 +90,15 @@ export const generateDashboardReport = (detailedProjects, reportOptions, highlig
     </div>
   `;
 
-  const projectsHtml = detailedProjects.map(dp => renderProjectCard(dp.project, dp.comments, reportOptions, highlightDate, tr)).join('');
+  const projectsHtml = detailedProjects.map(dp => renderProjectCard(
+    dp.project, 
+    dp.comments, 
+    dp.directionComments, 
+    reportOptions, 
+    highlightDate, 
+    isDirector, 
+    tr
+  )).join('');
 
   const html = `<!DOCTYPE html>
 <html lang="${lang}">

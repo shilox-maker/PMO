@@ -1,11 +1,13 @@
 import React from 'react';
-import { Plus, Edit2, TrendingUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getSortedData } from '../../../utils/sorting';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function ProjectCambiosTab({
-  project, openAddCr, openEditCr, setShowCrModal, setEditingCr, crSort, setCrSort, renderSortHeader
+  project, openAddCr, openEditCr, handleDeleteCr,
+  setShowCrModal, setEditingCr, fetchProjectData, getAuthHeaders,
+  crSort, setCrSort, renderSortHeader
 }) {
   const { t } = useTranslation();
   const { canWrite } = useAuth();
@@ -19,6 +21,19 @@ export default function ProjectCambiosTab({
   const handleOpenEdit = openEditCr || ((cr) => {
     if (setEditingCr) setEditingCr(cr);
     if (setShowCrModal) setShowCrModal(true);
+  });
+
+  const handleDelete = handleDeleteCr || ((id) => {
+    if (!window.confirm(t('changesTab.deleteConfirm', '¿Seguro que desea eliminar esta solicitud de cambio (CR)?'))) return;
+    fetch(`${import.meta.env.VITE_API_URL}/scope-changes/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders ? getAuthHeaders() : {}
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(t('changesTab.deleteError', 'Error al eliminar la solicitud de cambio'));
+        if (fetchProjectData) fetchProjectData();
+      })
+      .catch(err => alert(err.message));
   });
 
   const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
@@ -84,6 +99,9 @@ export default function ProjectCambiosTab({
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button className="icon-btn" onClick={() => handleOpenEdit(cr)} title={t('changesTab.editTooltip', 'Editar solicitud')}>
                           <Edit2 size={14} />
+                        </button>
+                        <button className="icon-btn" onClick={() => handleDelete(cr.id_cambio)} title={t('changesTab.deleteTooltip', 'Eliminar solicitud')} style={{ color: 'var(--color-rag-red)' }}>
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>

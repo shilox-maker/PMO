@@ -31,10 +31,13 @@ module.exports = {
       return originalCreateTable(targetTable, qualifiedAttributes, options);
     };
 
+    const tableTarget = isSqlite ? 'Tipos_Factura' : { tableName: 'Tipos_Factura', schema };
+    const facturasTarget = isSqlite ? 'Facturas' : { tableName: 'Facturas', schema };
+
     // 1. Crear tabla Tipos_Factura si no existe
     let exists = false;
     try {
-      const tableInfo = await queryInterface.describeTable('Tipos_Factura');
+      const tableInfo = await queryInterface.describeTable(tableTarget);
       if (tableInfo && Object.keys(tableInfo).length > 0) exists = true;
     } catch (e) {
       exists = false;
@@ -80,22 +83,22 @@ module.exports = {
       if (isSqlite) {
         await queryInterface.bulkInsert('Tipos_Factura', defaultData);
       } else {
-        await queryInterface.bulkInsert({ tableName: 'Tipos_Factura', schema }, defaultData);
+        await queryInterface.bulkInsert(tableTarget, defaultData);
       }
     }
 
     // 2. Añadir columna id_tipo_factura a tabla Facturas si no existe
     try {
-      const facturasInfo = await queryInterface.describeTable('Facturas');
+      const facturasInfo = await queryInterface.describeTable(facturasTarget);
       if (facturasInfo && !facturasInfo.id_tipo_factura) {
         await queryInterface.addColumn(
-          isSqlite ? 'Facturas' : { tableName: 'Facturas', schema },
+          facturasTarget,
           'id_tipo_factura',
           {
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-              model: isSqlite ? 'Tipos_Factura' : { tableName: 'Tipos_Factura', schema },
+              model: tableTarget,
               key: 'id_tipo_factura'
             }
           }

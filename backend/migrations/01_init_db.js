@@ -17,15 +17,21 @@ module.exports = {
 
     // Envolver createTable para inyectar esquema en atributos y referencias
     queryInterface.createTable = async (tableName, attributes, options) => {
-      const targetTable = { tableName, schema };
+      const actualTableName = typeof tableName === 'object' && tableName !== null ? tableName.tableName : tableName;
+      const targetTable = isSqlite ? actualTableName : { tableName: actualTableName, schema };
       const qualifiedAttributes = { ...attributes };
       for (const key in qualifiedAttributes) {
         const attribute = qualifiedAttributes[key];
-        if (attribute && attribute.references && typeof attribute.references.model === 'string') {
-          attribute.references.model = {
-            tableName: attribute.references.model,
-            schema
-          };
+        if (attribute && attribute.references) {
+          const refModel = typeof attribute.references.model === 'object' && attribute.references.model !== null
+            ? attribute.references.model.tableName
+            : attribute.references.model;
+          if (typeof refModel === 'string') {
+            attribute.references.model = isSqlite ? refModel : {
+              tableName: refModel,
+              schema
+            };
+          }
         }
       }
       return originalCreateTable(targetTable, qualifiedAttributes, options);
@@ -33,7 +39,8 @@ module.exports = {
 
     // Envolver addIndex para inyectar esquema
     queryInterface.addIndex = async (tableName, columns, options) => {
-      return originalAddIndex({ tableName, schema }, columns, options);
+      const actualTableName = typeof tableName === 'object' && tableName !== null ? tableName.tableName : tableName;
+      return originalAddIndex(isSqlite ? actualTableName : { tableName: actualTableName, schema }, columns, options);
     };
 
     // Helper para agregar índices de forma segura
@@ -645,6 +652,10 @@ module.exports = {
       { id_tipo_capex: specialId, nombre: 'AI', orden: 2 },
       { id_tipo_capex: specialId, nombre: 'Industry 4.0', orden: 3 }
     ]);
+
+    // Restaurar referencias originales
+    queryInterface.createTable = originalCreateTable;
+    queryInterface.addIndex = originalAddIndex;
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -686,5 +697,8 @@ module.exports = {
     await queryInterface.dropTable('Contactos_Proveedors');
     await queryInterface.dropTable('Proveedores');
     await queryInterface.dropTable('Sedes');
+
+    // Restaurar referencias originales
+    queryInterface.dropTable = originalDropTable;
   }
 };

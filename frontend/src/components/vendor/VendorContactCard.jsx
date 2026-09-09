@@ -85,7 +85,7 @@ export default function VendorContactCard({
             </div>
             <div>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>{t('vendorDirectory.generalInfo')}</h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>#{vendor.id_proveedor}</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>#{vendor?.id_proveedor}</span>
             </div>
           </div>
           
@@ -153,7 +153,7 @@ export default function VendorContactCard({
                   onChange={(e) => setGeneralForm({ ...generalForm, es_grupo_dacsa: e.target.checked })}
                   className="m3-checkbox"
                 />
-                <span style={{ fontWeight: 500 }}>{t('vendor360.isDacsaGroup')}</span>
+                <span style={{ fontWeight: 500 }}>{t('vendor360.belongsDacsa')}</span>
               </label>
             </div>
 
@@ -183,14 +183,14 @@ export default function VendorContactCard({
           <div style={{ borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.9rem' }}>
               <Phone size={16} style={{ color: 'var(--md-sys-color-outline)' }} />
-              <span>{t('vendorDirectory.phone')} {vendor.telefono_general || t('vendorDirectory.notRegistered')}</span>
+              <span>{t('vendorDirectory.phone')} {vendor?.telefono_general || t('vendorDirectory.notRegistered')}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.9rem' }}>
               <Mail size={16} style={{ color: 'var(--md-sys-color-outline)' }} />
-              <span>{t('vendorDirectory.email')} {vendor.email_general || t('vendorDirectory.notRegistered')}</span>
+              <span>{t('vendorDirectory.email')} {vendor?.email_general || t('vendorDirectory.notRegistered')}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-              {vendor.es_grupo_dacsa ? (
+              {vendor?.es_grupo_dacsa ? (
                 <span style={{ fontSize: '0.75rem', backgroundColor: 'var(--md-sys-color-primary)', color: '#fff', padding: '3px 8px', borderRadius: 100, fontWeight: 600 }}>
                   Dacsa Group
                 </span>
@@ -252,7 +252,7 @@ export default function VendorContactCard({
                 <div style={{ fontWeight: 600, fontSize: '0.9rem', width: '75%' }}>{c.nombre} {c.apellidos}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-primary)', fontWeight: 500, marginBottom: 8 }}>{c.puesto}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Phone size={10} /> {c.telefono}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Phone size={10} /> {c.telefono || '—'}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Mail size={10} /> {c.email}</span>
                 </div>
               </div>

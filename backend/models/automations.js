@@ -14,7 +14,9 @@ async function getProjectCalculations(id_proyecto, budget_inicial, fecha_fin_ini
     where: {
       id_proyecto,
       estado_cambio: 'APROBADO'
-    }
+    },
+    attributes: ['id_proyecto', 'impacta_importe', 'importe_impacto', 'impacta_tiempo', 'dias_impacto', 'estado_cambio'],
+    raw: true
   });
 
   let totalCRImporte = 0;
@@ -36,7 +38,9 @@ async function getProjectCalculations(id_proyecto, budget_inicial, fecha_fin_ini
     where: {
       id_proyecto,
       estado: ['RECIBIDA', 'PENDIENTE_DE_RECIBIR']
-    }
+    },
+    attributes: ['id_proyecto', 'importe', 'estado'],
+    raw: true
   });
 
   let consumo_real = 0;
@@ -91,7 +95,8 @@ async function getProjectsCalculationsBatch(projectsList) {
   const calculationsMap = new Map();
   if (!projectsList || projectsList.length === 0) return calculationsMap;
 
-  const projectIds = projectsList.map(p => p.id_proyecto);
+  const projectIds = projectsList.map(p => p.id_proyecto).filter(Boolean);
+  if (projectIds.length === 0) return calculationsMap;
   const { Op } = require('sequelize');
 
   // 1. Fetch all approved CRs in 1 query
@@ -99,7 +104,9 @@ async function getProjectsCalculationsBatch(projectsList) {
     where: {
       id_proyecto: { [Op.in]: projectIds },
       estado_cambio: 'APROBADO'
-    }
+    },
+    attributes: ['id_proyecto', 'impacta_importe', 'importe_impacto', 'impacta_tiempo', 'dias_impacto', 'estado_cambio'],
+    raw: true
   });
 
   // Group CRs by id_proyecto
@@ -115,7 +122,9 @@ async function getProjectsCalculationsBatch(projectsList) {
     where: {
       id_proyecto: { [Op.in]: projectIds },
       estado: ['RECIBIDA', 'PENDIENTE_DE_RECIBIR']
-    }
+    },
+    attributes: ['id_proyecto', 'importe', 'estado'],
+    raw: true
   });
 
   // Group Invoices by id_proyecto

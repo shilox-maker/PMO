@@ -14,12 +14,26 @@ import {
   getCommentsHtml 
 } from './reportHtmlComponents';
 
-export const generateProjectReport = (project, comments, reportOptions, t, lang = 'es') => {
+export const generateProjectReport = (
+  project, 
+  comments = [], 
+  directionComments = [], 
+  reportOptions = {}, 
+  highlightDate = null, 
+  isDirector = false, 
+  t = null, 
+  lang = 'es'
+) => {
   if (!project) return;
 
   const tr = t || ((key, opts) => key);
-  const importantComments = comments.filter(c => c.es_importante);
   const calc = project.calculations || {};
+
+  // Para el informe de Dirección: mostrar exclusivamente las notas de Dirección.
+  // Para el PM / operativo: mostrar exclusivamente los comentarios importantes del muro ordinario.
+  const commentsToInclude = isDirector 
+    ? (directionComments || []) 
+    : (comments || []).filter(c => c.es_importante);
 
   // Milestones (from tasks that are hitos)
   const allTasks = project.Tareas || [];
@@ -42,7 +56,8 @@ export const generateProjectReport = (project, comments, reportOptions, t, lang 
 
   const sortedTimelineEvents = [...allTasks].sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite));
   const timelineHtml = getTimelineHtml(sortedTimelineEvents, reportOptions, tr);
-  const commentsHtml = getCommentsHtml(importantComments, reportOptions, tr);
+  const commentsHtml = getCommentsHtml(commentsToInclude, reportOptions, highlightDate, isDirector, tr);
+  const commentsSectionTitle = isDirector ? '🛡️ Notas y Acuerdos de Dirección' : `⭐ ${tr('reportExport.executiveWall')}`;
 
   const html = `<!DOCTYPE html>
 <html lang="${lang}">
@@ -68,7 +83,7 @@ export const generateProjectReport = (project, comments, reportOptions, t, lang 
   ${lessonsHtml}
   ${commentsHtml ? `
   <div class="section">
-    <h2>⭐ ${tr('reportExport.executiveWall')}</h2>
+    <h2>${commentsSectionTitle}</h2>
     ${commentsHtml}
   </div>` : ''}
 

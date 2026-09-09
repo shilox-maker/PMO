@@ -31,6 +31,7 @@ router.delete('/invoices/:id_interno_factura', itemController.deleteInvoice);
 // Scope Changes
 router.post('/scope-changes', validateBody(scopeChangeCreateSchema), itemController.createScopeChange);
 router.put('/scope-changes/:id_cambio', validateBody(scopeChangeUpdateSchema), itemController.updateScopeChange);
+router.delete('/scope-changes/:id_cambio', itemController.deleteScopeChange);
 
 // Risks
 router.post('/risks', validateBody(riskCreateSchema), itemController.createRisk);
@@ -51,7 +52,7 @@ router.post('/lessons', validateBody(lessonCreateSchema), itemController.createL
 router.put('/lessons/:id', validateBody(lessonUpdateSchema), itemController.updateLesson);
 router.delete('/lessons/:id', itemController.deleteLesson);
 
-// Comments
+// Operational Comments
 router.get('/projects/:id_proyecto/comments', itemController.getProjectComments);
 router.post('/projects/:id_proyecto/comments', validateBody(commentCreateSchema), itemController.createComment);
 router.put('/projects/:id_proyecto/comments/:id_comentario', validateBody(commentUpdateSchema), itemController.updateComment);
@@ -60,5 +61,15 @@ router.delete('/projects/:id_proyecto/comments/:id_comentario', itemController.d
 router.post('/comments', validateBody(commentCreateSchema), itemController.createComment);
 router.put('/comments/:id_comentario', validateBody(commentUpdateSchema), itemController.updateComment);
 router.delete('/comments/:id_comentario', itemController.deleteComment);
+
+// Direction Comments (Exclusivos Dirección / Administrador)
+router.get('/projects/:id_proyecto/direction-comments', itemController.getProjectDirectionComments);
+router.post('/projects/:id_proyecto/direction-comments', validateBody(commentCreateSchema), itemController.createDirectionComment);
+router.put('/projects/:id_proyecto/direction-comments/:id_comentario', validateBody(commentUpdateSchema), itemController.updateDirectionComment);
+router.delete('/projects/:id_proyecto/direction-comments/:id_comentario', itemController.deleteDirectionComment);
+
+router.post('/direction-comments', validateBody(commentCreateSchema), itemController.createDirectionComment);
+router.put('/direction-comments/:id_comentario', validateBody(commentUpdateSchema), itemController.updateDirectionComment);
+router.delete('/direction-comments/:id_comentario', itemController.deleteDirectionComment);
 
 module.exports = router;

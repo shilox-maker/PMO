@@ -62,11 +62,18 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
   const [newCommentImportant, setNewCommentImportant] = useState(false);
-  const [newCommentDireccion, setNewCommentDireccion] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [editingCommentImportant, setEditingCommentImportant] = useState(false);
-  const [editingCommentDireccion, setEditingCommentDireccion] = useState(false);
+
+  // Direction Comments states (Solo Dirección / Admin)
+  const [directionComments, setDirectionComments] = useState([]);
+  const [directionCommentsLoading, setDirectionCommentsLoading] = useState(false);
+  const [newDirCommentText, setNewDirCommentText] = useState('');
+  const [newDirCommentImportant, setNewDirCommentImportant] = useState(false);
+  const [editingDirCommentId, setEditingDirCommentId] = useState(null);
+  const [editingDirCommentText, setEditingDirCommentText] = useState('');
+  const [editingDirCommentImportant, setEditingDirCommentImportant] = useState(false);
 
   // Modals Visibility
   const [showEditProjectModal, setShowEditProjectModal] = useState(false);
@@ -139,12 +146,30 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`, { headers: getAuthHeaders() })
       .then(res => res.json())
       .then(data => {
-        setComments(data);
+        setComments(Array.isArray(data) ? data : []);
         setCommentsLoading(false);
       })
       .catch(err => {
         console.error('Error fetching comments:', err);
         setCommentsLoading(false);
+      });
+  };
+
+  const fetchDirectionComments = () => {
+    if (!canSeeDireccion) return;
+    setDirectionCommentsLoading(true);
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/direction-comments`, { headers: getAuthHeaders() })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al cargar comentarios de dirección');
+        return res.json();
+      })
+      .then(data => {
+        setDirectionComments(Array.isArray(data) ? data : []);
+        setDirectionCommentsLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching direction comments:', err);
+        setDirectionCommentsLoading(false);
       });
   };
 
@@ -167,9 +192,12 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
     if (projectId) {
       fetchProjectData(true);
       fetchComments();
+      if (canSeeDireccion) {
+        fetchDirectionComments();
+      }
       fetchMetadata();
     }
-  }, [projectId]);
+  }, [projectId, canSeeDireccion]);
 
   useEffect(() => {
     if (showEditProjectModal || showRaciModal || showInvoiceModal || showCrModal || showRiskModal || showIssueModal || showTaskModal || showLessonModal || showReportModal) {
@@ -310,8 +338,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       headers: getAuthHeaders(),
       body: JSON.stringify({
         texto_comentario: newCommentText,
-        es_importante: newCommentImportant,
-        para_direccion: newCommentDireccion
+        es_importante: newCommentImportant
       })
     })
       .then(async (res) => {
@@ -322,7 +349,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       .then(() => {
         setNewCommentText('');
         setNewCommentImportant(false);
-        setNewCommentDireccion(false);
         fetchComments();
       })
       .catch(err => alert(err.message));
@@ -334,8 +360,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       headers: getAuthHeaders(),
       body: JSON.stringify({
         texto_comentario: editingCommentText,
-        es_importante: editingCommentImportant,
-        para_direccion: editingCommentDireccion
+        es_importante: editingCommentImportant
       })
     })
       .then(async (res) => {
@@ -358,6 +383,64 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       })
         .then(() => fetchComments());
     }
+  };
+
+  const handleAddDirectionComment = () => {
+    if (!newDirCommentText || !newDirCommentText.trim()) return;
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/direction-comments`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        texto_comentario: newDirCommentText,
+        es_importante: newDirCommentImportant
+      })
+    })
+      .then(async (res) => {
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Error al publicar nota de dirección');
+        return d;
+      })
+      .then(() => {
+        setNewDirCommentText('');
+        setNewDirCommentImportant(false);
+        fetchDirectionComments();
+      })
+      .catch(err => alert(err.message));
+  };
+
+  const handleUpdateDirectionComment = (commentId) => {
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/direction-comments/${commentId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        texto_comentario: editingDirCommentText,
+        es_importante: editingDirCommentImportant
+      })
+    })
+      .then(async (res) => {
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Error al actualizar nota de dirección');
+        return d;
+      })
+      .then(() => {
+        setEditingDirCommentId(null);
+        fetchDirectionComments();
+      })
+      .catch(err => alert(err.message));
+  };
+
+  const handleDeleteDirectionComment = (commentId) => {
+    fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/direction-comments/${commentId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    })
+      .then(async (res) => {
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Error al eliminar nota de dirección');
+        return d;
+      })
+      .then(() => fetchDirectionComments())
+      .catch(err => alert(err.message));
   };
 
   if (loading || !project) {
@@ -408,8 +491,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
             setNewCommentText={setNewCommentText}
             newCommentImportant={newCommentImportant}
             setNewCommentImportant={setNewCommentImportant}
-            newCommentDireccion={newCommentDireccion}
-            setNewCommentDireccion={setNewCommentDireccion}
             handleAddComment={handleAddComment}
             handleDeleteComment={handleDeleteComment}
             editingCommentId={editingCommentId}
@@ -418,9 +499,22 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
             setEditingCommentText={setEditingCommentText}
             editingCommentImportant={editingCommentImportant}
             setEditingCommentImportant={setEditingCommentImportant}
-            editingCommentDireccion={editingCommentDireccion}
-            setEditingCommentDireccion={setEditingCommentDireccion}
             handleUpdateComment={handleUpdateComment}
+            directionComments={directionComments}
+            directionCommentsLoading={directionCommentsLoading}
+            newDirCommentText={newDirCommentText}
+            setNewDirCommentText={setNewDirCommentText}
+            newDirCommentImportant={newDirCommentImportant}
+            setNewDirCommentImportant={setNewDirCommentImportant}
+            handleAddDirectionComment={handleAddDirectionComment}
+            handleDeleteDirectionComment={handleDeleteDirectionComment}
+            editingDirCommentId={editingDirCommentId}
+            setEditingDirCommentId={setEditingDirCommentId}
+            editingDirCommentText={editingDirCommentText}
+            setEditingDirCommentText={setEditingDirCommentText}
+            editingDirCommentImportant={editingDirCommentImportant}
+            setEditingDirCommentImportant={setEditingDirCommentImportant}
+            handleUpdateDirectionComment={handleUpdateDirectionComment}
             handleOpenEditLifecycle={handleOpenEditLifecycle}
             handleDeleteParticipant={handleDeleteParticipant}
             handleOpenAddRaci={handleOpenAddRaci}
@@ -469,6 +563,22 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
             project={project}
             openAddCr={() => { setEditingCr(null); setShowCrModal(true); }}
             openEditCr={(cr) => { setEditingCr(cr); setShowCrModal(true); }}
+            handleDeleteCr={(id) => {
+              if (!window.confirm(t('changesTab.deleteConfirm', '¿Seguro que desea eliminar esta solicitud de cambio (CR)?'))) return;
+              fetch(`${import.meta.env.VITE_API_URL}/scope-changes/${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+              })
+                .then(res => {
+                  if (!res.ok) throw new Error(t('changesTab.deleteError', 'Error al eliminar la solicitud de cambio'));
+                  fetchProjectData();
+                })
+                .catch(err => alert(err.message));
+            }}
+            setShowCrModal={setShowCrModal}
+            setEditingCr={setEditingCr}
+            fetchProjectData={fetchProjectData}
+            getAuthHeaders={getAuthHeaders}
             crSort={crSort}
             setCrSort={setCrSort}
             renderSortHeader={renderSortHeader}
@@ -667,6 +777,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           onClose={() => setShowReportModal(false)}
           project={project}
           comments={comments}
+          directionComments={directionComments}
+          canSeeDireccion={canSeeDireccion}
           getAuthHeaders={getAuthHeaders}
         />
       )}

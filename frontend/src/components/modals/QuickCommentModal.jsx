@@ -1,32 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Star } from 'lucide-react';
+import { RefreshCw, Star, ShieldAlert, MessageSquare } from 'lucide-react';
 import RichTextEditor from '../RichTextEditor';
 
 export default function QuickCommentModal({ isOpen, onClose, projectId, getAuthHeaders, onSuccess, canSeeDireccion }) {
+  const [targetWall, setTargetWall] = useState('OPERATIVO'); // 'OPERATIVO' | 'DIRECCION'
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [esImportante, setEsImportante] = useState(false);
-  const [paraDireccion, setParaDireccion] = useState(false);
 
   useEffect(() => {
     if (isOpen && projectId) {
       setLoading(true);
-      fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`, {
-        headers: getAuthHeaders()
-      })
+      const endpoint = (canSeeDireccion && targetWall === 'DIRECCION')
+        ? `${import.meta.env.VITE_API_URL}/projects/${projectId}/direction-comments`
+        : `${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`;
+
+      fetch(endpoint, { headers: getAuthHeaders() })
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data) && data.length > 0) {
-            // Pre-load the last chronological comment
             const last = data[0];
             setCommentText(last.texto_comentario || '');
             setEsImportante(last.es_importante || false);
-            setParaDireccion(last.para_direccion || false);
           } else {
             setCommentText('');
             setEsImportante(false);
-            setParaDireccion(false);
           }
           setLoading(false);
         })
@@ -35,7 +34,7 @@ export default function QuickCommentModal({ isOpen, onClose, projectId, getAuthH
           setLoading(false);
         });
     }
-  }, [isOpen, projectId]);
+  }, [isOpen, projectId, targetWall, canSeeDireccion]);
 
   if (!isOpen) return null;
 
@@ -45,19 +44,22 @@ export default function QuickCommentModal({ isOpen, onClose, projectId, getAuthH
       return;
     }
     setSaving(true);
-    fetch(`${import.meta.env.VITE_API_URL}/comments`, {
+    const postEndpoint = (canSeeDireccion && targetWall === 'DIRECCION')
+      ? `${import.meta.env.VITE_API_URL}/direction-comments`
+      : `${import.meta.env.VITE_API_URL}/comments`;
+
+    fetch(postEndpoint, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
         id_proyecto: projectId,
         texto_comentario: commentText,
-        es_importante: esImportante,
-        para_direccion: canSeeDireccion ? paraDireccion : false
+        es_importante: esImportante
       })
     })
       .then(async (res) => {
         const d = await res.json();
-        if (!res.ok) throw new Error(d.error || 'Error al guardar el comentario');
+        if (!res.ok) throw new Error(d.error || 'Error al guardar la actualización');
         return d;
       })
       .then(() => {
@@ -68,6 +70,8 @@ export default function QuickCommentModal({ isOpen, onClose, projectId, getAuthH
       .finally(() => setSaving(false));
   };
 
+  const isDirection = canSeeDireccion && targetWall === 'DIRECCION';
+
   return (
     <div className="modal-overlay">
       <div className="modal-content glass-panel" style={{ maxWidth: '600px' }}>
@@ -76,21 +80,52 @@ export default function QuickCommentModal({ isOpen, onClose, projectId, getAuthH
           <button className="icon-btn" onClick={onClose} disabled={saving}>✕</button>
         </div>
 
+        {/* Selector de Muro Destino para Dirección */}
+        {canSeeDireccion && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 12, marginBottom: 4, paddingBottom: 12, borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
+            <button
+              type="button"
+              className={`m3-btn ${targetWall === 'OPERATIVO' ? 'm3-btn-primary' : 'm3-btn-outline'}`}
+              onClick={() => setTargetWall('OPERATIVO')}
+              style={{ fontSize: '0.8rem', height: '32px', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <MessageSquare size={14} /> Muro Operativo (PM)
+            </button>
+            <button
+              type="button"
+              className={`m3-btn ${targetWall === 'DIRECCION' ? 'm3-btn-primary' : 'm3-btn-outline'}`}
+              onClick={() => setTargetWall('DIRECCION')}
+              style={{ 
+                fontSize: '0.8rem', 
+                height: '32px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 6,
+                background: targetWall === 'DIRECCION' ? '#007aff' : undefined,
+                borderColor: '#007aff',
+                color: targetWall === 'DIRECCION' ? '#fff' : '#007aff'
+              }}
+            >
+              <ShieldAlert size={14} /> Muro de Dirección (Privado)
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', gap: 16 }}>
-            <RefreshCw className="animate-spin" size={24} style={{ color: 'var(--md-sys-color-primary)' }} />
-            <span>Precargando última actualización...</span>
+            <RefreshCw className="animate-spin" size={24} style={{ color: isDirection ? '#007aff' : 'var(--md-sys-color-primary)' }} />
+            <span>Precargando última actualización de {isDirection ? 'Dirección' : 'Proyecto'}...</span>
           </div>
         ) : (
           <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ color: 'var(--md-sys-color-on-surface-variant)', fontSize: '0.85rem' }}>
-              Modifique la actualización del proyecto <strong>{projectId}</strong>. Se guardará como un nuevo comentario cronológico en el muro.
+              Modifique la actualización del proyecto <strong>{projectId}</strong> en el <strong>{isDirection ? 'Muro de Dirección' : 'Muro Operativo'}</strong>. Se guardará como un nuevo apunte cronológico.
             </p>
 
             <RichTextEditor 
               value={commentText}
               onChange={setCommentText}
-              placeholder="Escribe la actualización semanal..."
+              placeholder={isDirection ? "Escribe la nota estratégica de dirección..." : "Escribe la actualización semanal..."}
             />
 
             <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginTop: 8 }}>
@@ -102,25 +137,10 @@ export default function QuickCommentModal({ isOpen, onClose, projectId, getAuthH
                   disabled={saving}
                   className="m3-checkbox"
                 />
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--priority-alta)', fontWeight: 600 }}>
-                  <Star size={14} fill={esImportante ? 'var(--priority-alta)' : 'none'} /> Importante (Muro / PDF)
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: isDirection ? '#007aff' : 'var(--priority-alta)', fontWeight: 600 }}>
+                  <Star size={14} fill={esImportante ? (isDirection ? '#007aff' : 'var(--priority-alta)') : 'none'} color={isDirection ? '#007aff' : undefined} /> {isDirection ? 'Clave para informe de Dirección' : 'Importante (Muro / PDF)'}
                 </span>
               </label>
-
-              {canSeeDireccion && (
-                <label className="m3-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={paraDireccion} 
-                    onChange={(e) => setParaDireccion(e.target.checked)}
-                    disabled={saving}
-                    className="m3-checkbox"
-                  />
-                  <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
-                    📢 Para dirección
-                  </span>
-                </label>
-              )}
             </div>
           </div>
         )}
@@ -139,13 +159,20 @@ export default function QuickCommentModal({ isOpen, onClose, projectId, getAuthH
             className="m3-btn m3-btn-primary" 
             onClick={handleSave}
             disabled={loading || saving}
-            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 8,
+              background: isDirection ? '#007aff' : undefined,
+              borderColor: isDirection ? '#007aff' : undefined
+            }}
           >
             {saving && <RefreshCw className="animate-spin" size={16} />}
-            {saving ? 'Publicando...' : 'Publicar Actualización'}
+            {saving ? 'Publicando...' : (isDirection ? 'Publicar Nota de Dirección' : 'Publicar Actualización')}
           </button>
         </div>
       </div>
     </div>
   );
 }
+

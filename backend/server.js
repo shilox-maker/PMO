@@ -129,10 +129,13 @@ if (process.env.NODE_ENV !== 'test') {
   sequelize.authenticate()
     .then(() => {
       logger.info('✅ Connection to database established successfully. Log directory: %s', logger.logDir);
+      return ensureSchemaConsistency(sequelize);
+    })
+    .then(() => {
       return umzug.up();
     })
     .then((migrations) => {
-      if (migrations.length > 0) {
+      if (migrations && migrations.length > 0) {
         logger.info(`✅ Executed ${migrations.length} migrations`);
       } else {
         logger.info('✅ Database is up to date');
@@ -140,7 +143,9 @@ if (process.env.NODE_ENV !== 'test') {
       return ensureSchemaConsistency(sequelize);
     })
     .catch(err => {
-      logger.error('❌ Error during database initialization: %s', err.stack || err.message || err);
+      const orig = err.original || err.cause || err.parent;
+      const origMsg = orig ? ` | Caused by: ${orig.stack || orig.message || orig}` : '';
+      logger.error('❌ Error during database initialization: %s%s', err.stack || err.message || err, origMsg);
     });
 }
 

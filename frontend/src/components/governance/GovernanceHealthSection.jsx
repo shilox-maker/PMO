@@ -1,10 +1,14 @@
 import React from 'react';
 import { Eye } from 'lucide-react';
 import { getSortedData } from '../../utils/sorting';
+import ColumnSelector from '../ColumnSelector';
 
 export default function GovernanceHealthSection({
   filteredGridData,
   visibleColumnsMap,
+  tableCols,
+  toggleColumn,
+  resetColumns,
   sortConfig,
   renderSortHeader,
   onViewProject,
@@ -55,7 +59,7 @@ export default function GovernanceHealthSection({
           <table className="m3-table">
             <thead>
               <tr>
-                {visibleColumnsMap.id_proyecto && renderSortHeader('Código', 'id_proyecto')}
+                {visibleColumnsMap.id_proyecto && renderSortHeader('Código', 'id_proyecto', { minWidth: '135px', whiteSpace: 'nowrap' })}
                 {visibleColumnsMap.nombre_proyecto && renderSortHeader('Proyecto', 'nombre_proyecto')}
                 {visibleColumnsMap.pm_nombre && renderSortHeader('PM', 'pm_nombre')}
                 {visibleColumnsMap.indicador_rag && renderSortHeader('RAG', 'indicador_rag')}
@@ -67,7 +71,16 @@ export default function GovernanceHealthSection({
                 {visibleColumnsMap.alerta_dinero && <th>Alerta Dinero</th>}
                 {visibleColumnsMap.proximo_hito && renderSortHeader('Próximo Hito', 'nextMilestone.fecha_limite')}
                 {visibleColumnsMap.ultimo_comentario && renderSortHeader('Último Comentario', 'ultimo_comentario')}
-                {visibleColumnsMap.accion && <th>Ficha</th>}
+                {visibleColumnsMap.accion && (
+                  <th style={{ minWidth: '90px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                      <span>Ficha</span>
+                      {tableCols && toggleColumn && resetColumns && (
+                        <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
+                      )}
+                    </div>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -82,7 +95,7 @@ export default function GovernanceHealthSection({
 
                 return (
                   <tr key={p.id_proyecto} style={isProjectOverdue ? { backgroundColor: 'rgba(255, 69, 58, 0.08)' } : {}}>
-                    {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{p.id_proyecto}</td>}
+                    {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{p.id_proyecto}</td>}
                     {visibleColumnsMap.nombre_proyecto && <td style={{ fontWeight: 600 }}>{p.nombre_proyecto}</td>}
                     {visibleColumnsMap.pm_nombre && <td>{p.pm_nombre}</td>}
                     {visibleColumnsMap.indicador_rag && <td style={{ textAlign: 'center' }}><div className={`project-rag-dot ${p.indicador_rag}`} style={{ width: 16, height: 16, margin: '0 auto' }}></div></td>}

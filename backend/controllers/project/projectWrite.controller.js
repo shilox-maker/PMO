@@ -60,6 +60,12 @@ async function resolveWorkflowAndState(data) {
     const firstState = await EstadosProyecto.findOne({ order: [['orden', 'ASC']] });
     if (firstState) data.id_estado = firstState.id_estado;
   }
+
+  // 4. Sincronizar siempre el nombre del estado_proyecto con el id_estado
+  if (data.id_estado) {
+    const st = await EstadosProyecto.findByPk(data.id_estado);
+    if (st) data.estado_proyecto = st.nombre_estado;
+  }
 }
 
 const createProject = asyncHandler(async (req, res) => {
@@ -211,7 +217,7 @@ const updateProject = asyncHandler(async (req, res) => {
         id_proyecto,
         texto_comentario: `El sistema ha registrado automáticamente la <strong>Fecha de Kickoff</strong> como ${todayStr} al cambiar el estado a Kickoff.`,
         id_usuario: autorId,
-        es_importante: true
+        es_importante: false
       });
     }
   }
@@ -223,7 +229,7 @@ const updateProject = asyncHandler(async (req, res) => {
         id_proyecto,
         texto_comentario: `El sistema ha registrado automáticamente la <strong>Fecha de Go Live</strong> como ${todayStr} al cambiar el estado a Go Live.`,
         id_usuario: autorId,
-        es_importante: true
+        es_importante: false
       });
     }
   }
@@ -233,7 +239,7 @@ const updateProject = asyncHandler(async (req, res) => {
       id_proyecto,
       texto_comentario: `El usuario <strong>${nombreAutor}</strong> ha modificado la <strong>Fecha Fin Base</strong> de ${project.fecha_fin_inicial || 'N/A'} a ${data.fecha_fin_inicial}`,
       id_usuario: autorId,
-      es_importante: true
+      es_importante: false
     });
   }
 
@@ -242,7 +248,7 @@ const updateProject = asyncHandler(async (req, res) => {
       id_proyecto,
       texto_comentario: `El usuario <strong>${nombreAutor}</strong> ha modificado el <strong>Presupuesto Inicial</strong> de ${project.budget_inicial || '0'} a ${data.budget_inicial}`,
       id_usuario: autorId,
-      es_importante: true
+      es_importante: false
     });
   }
 

@@ -3,13 +3,12 @@ import { useAuth } from '../context/AuthContext';
 import { Filter, Search, ChevronDown, ChevronUp, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown, RotateCcw } from 'lucide-react';
 import { useTableColumns } from '../hooks/useTableColumns';
 import usePersistentFilters from '../hooks/usePersistentFilters';
-import ColumnSelector from '../components/ColumnSelector';
 import GovernanceKpiHeader from '../components/governance/GovernanceKpiHeader';
 import GovernanceCommitteesSection from '../components/governance/GovernanceCommitteesSection';
 import GovernanceHealthSection from '../components/governance/GovernanceHealthSection';
 
 const DEFAULT_GOV_COLUMNS = [
-  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
+  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true, width: 140 },
   { id: 'nombre_proyecto', label: 'Proyecto', fixed: true, visible: true },
   { id: 'pm_nombre', label: 'PM', fixed: false, visible: true },
   { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
@@ -480,10 +479,6 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
               </select>
             </div>
           )}
-
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginLeft: 'auto' }}>
-            <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
-          </div>
         </div>
       </div>
 
@@ -511,6 +506,9 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
           <GovernanceHealthSection 
             filteredGridData={filteredGridData}
             visibleColumnsMap={visibleColumnsMap}
+            tableCols={tableCols}
+            toggleColumn={toggleColumn}
+            resetColumns={resetColumns}
             sortConfig={sortConfig}
             renderSortHeader={renderSortHeader}
             onViewProject={onViewProject}

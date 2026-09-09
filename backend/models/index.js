@@ -83,7 +83,7 @@ const ContactosProveedor = sequelize.define('Contactos_Proveedor', {
   },
   telefono: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   email: {
     type: DataTypes.STRING,
@@ -1293,7 +1293,7 @@ const CambiosAlcance = sequelize.define('Cambios_Alcance', {
     }
   }
 }, {
-  tableName: 'Cambios_Alcances'
+  tableName: 'Cambios_Alcance'
 });
 
 // 12. Tareas Model
@@ -1423,11 +1423,80 @@ const ComentariosProyecto = sequelize.define('Comentarios_Proyecto', {
     allowNull: true
   }
 }, {
-  tableName: 'Comentarios_Proyectos',
+  tableName: 'Comentarios_Proyecto',
   indexes: [
     { name: 'idx_comentarios_id_proyecto', fields: ['id_proyecto'] },
     { name: 'idx_comentarios_id_usuario', fields: ['id_usuario'] },
     { name: 'idx_comentarios_id_usuario_mod', fields: ['id_usuario_modificacion'] }
+  ]
+});
+
+// 13b. ComentariosDireccionProyecto Model
+const ComentariosDireccionProyecto = sequelize.define('Comentarios_Direccion', {
+  id_comentario: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  uuid_v7: {
+    type: DataTypes.UUID,
+    defaultValue: () => uuidv7(),
+    allowNull: true
+  },
+  id_proyecto: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: Proyectos,
+      key: 'id_proyecto'
+    },
+    onDelete: 'CASCADE'
+  },
+  id_usuario: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
+  },
+  texto_comentario: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  es_importante: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  fecha_registro: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  editado: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  id_usuario_modificacion: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Usuarios,
+      key: 'id_usuario'
+    }
+  },
+  fecha_modificacion: {
+    type: DataTypes.DATE,
+    allowNull: true
+  }
+}, {
+  tableName: 'Comentarios_Direccion',
+  indexes: [
+    { name: 'idx_comentarios_dir_id_proyecto', fields: ['id_proyecto'] },
+    { name: 'idx_comentarios_dir_id_usuario', fields: ['id_usuario'] },
+    { name: 'idx_comentarios_dir_id_usuario_mod', fields: ['id_usuario_modificacion'] }
   ]
 });
 
@@ -1686,6 +1755,18 @@ ComentariosProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario', as: 'Autor',
 Usuarios.hasMany(ComentariosProyecto, { foreignKey: 'id_usuario_modificacion', onDelete: 'NO ACTION' });
 ComentariosProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario_modificacion', as: 'Editor', onDelete: 'NO ACTION' });
 
+// Project has many ComentariosDireccionProyecto
+Proyectos.hasMany(ComentariosDireccionProyecto, { foreignKey: 'id_proyecto', onDelete: 'CASCADE' });
+ComentariosDireccionProyecto.belongsTo(Proyectos, { foreignKey: 'id_proyecto' });
+
+// Usuario has many ComentariosDireccionProyecto (Autor)
+Usuarios.hasMany(ComentariosDireccionProyecto, { foreignKey: 'id_usuario', onDelete: 'NO ACTION' });
+ComentariosDireccionProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario', as: 'Autor', onDelete: 'NO ACTION' });
+
+// Usuario has many ComentariosDireccionProyecto (Editor)
+Usuarios.hasMany(ComentariosDireccionProyecto, { foreignKey: 'id_usuario_modificacion', onDelete: 'NO ACTION' });
+ComentariosDireccionProyecto.belongsTo(Usuarios, { foreignKey: 'id_usuario_modificacion', as: 'Editor', onDelete: 'NO ACTION' });
+
 // Portfolios associations
 Portfolios.hasMany(Proyectos, { foreignKey: 'portfolio_id', as: 'Proyectos' });
 Proyectos.belongsTo(Portfolios, { foreignKey: 'portfolio_id', as: 'Portfolio' });
@@ -1811,6 +1892,7 @@ module.exports = {
   Tareas,
   EstadoTareasPlantilla,
   ComentariosProyecto,
+  ComentariosDireccionProyecto,
 
   Portfolios,
   Tags,

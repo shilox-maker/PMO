@@ -115,12 +115,23 @@ const updateScopeChange = asyncHandler(async (req, res) => {
   res.json(cr);
 });
 
+const deleteScopeChange = asyncHandler(async (req, res) => {
+  const { id_cambio } = req.params;
+  const cr = await CambiosAlcance.findByPk(id_cambio);
+  if (!cr) {
+    return res.status(404).json({ error: 'Cambio de alcance no encontrado' });
+  }
+  await cr.destroy();
+  res.json({ message: 'Cambio de alcance eliminado con éxito' });
+});
+
 module.exports = {
   createInvoice,
   createBatchInvoices,
   updateInvoice,
   deleteInvoice,
   createScopeChange,
-  updateScopeChange
+  updateScopeChange,
+  deleteScopeChange
 };
 

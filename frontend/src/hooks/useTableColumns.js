@@ -43,13 +43,21 @@ export function useTableColumns(storageKey, defaultColumns) {
 
   // Estado para los anchos de columna en px
   const [columnWidths, setColumnWidths] = useState(() => {
+    const initialWidths = {};
+    if (Array.isArray(defaultColumns)) {
+      defaultColumns.forEach(col => {
+        if (col.width) initialWidths[col.id] = col.width;
+      });
+    }
     try {
       const savedWidths = localStorage.getItem(`${storageKey}_widths`);
-      if (savedWidths) return JSON.parse(savedWidths);
+      if (savedWidths) {
+        return { ...initialWidths, ...JSON.parse(savedWidths) };
+      }
     } catch (e) {
       console.warn(`Error reading ${storageKey}_widths from localStorage`, e);
     }
-    return {};
+    return initialWidths;
   });
 
   // Guardar anchos en localStorage cuando cambien
@@ -72,7 +80,13 @@ export function useTableColumns(storageKey, defaultColumns) {
 
   const resetColumns = () => {
     setColumns(defaultColumns);
-    setColumnWidths({});
+    const initialWidths = {};
+    if (Array.isArray(defaultColumns)) {
+      defaultColumns.forEach(col => {
+        if (col.width) initialWidths[col.id] = col.width;
+      });
+    }
+    setColumnWidths(initialWidths);
     localStorage.removeItem(`${storageKey}_widths`);
   };
 

@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## [4.3.0] - 2026-09-09
+### Added
+- **Muro de Comentarios Privados de Dirección (`ProjectDirectionWall`)**:
+  - Nuevo canal de notas y observaciones confidenciales exclusivo para perfiles `DIRECTOR` y `ADMINISTRADOR` dentro de la ficha del proyecto.
+  - Endpoints dedicados (`/api/projects/:id/direction-comments`) y modelo `Comentarios_Direccion` segregado en base de datos (migración `23_create_direction_comments.js`).
+  - Capacidad de filtrar por comentarios importantes, editar y eliminar notas con auditoría de autoría y fecha de modificación.
+- **Manual de Formación de Usuarios Integrado en la App (`UserManualModal`)**:
+  - Modal interactivo con visor markdown integrado para consultar la guía completa de usuario directamente desde la aplicación (`/docs/manual_formacion_usuarios.md`).
+  - Barra lateral de navegación con índice por capítulos, búsqueda y capturas de pantalla actualizadas de todas las secciones del sistema.
+  - Script automatizado de sincronización de documentación (`scripts/sync-docs.js`) integrado en el ciclo de build de Vite.
+- **Migraciones y Resiliencia en Base de Datos**:
+  - Migración `24_make_telefono_nullable.js` para permitir contactos de proveedores sin obligatoriedad de número telefónico.
+  - Migración `25_ensure_uuidv7_all_tables.js` y adaptación de auto-esquema para garantizar coherencia en identificadores UUIDv7 en despliegues sobre Azure SQL Server y SQLite.
+
+### Changed / Improved
+- **Reubicación y Mejora del Selector de Columnas**:
+  - Selector de columnas integrado directamente en la cabecera de las tablas de proyectos (`ProjectTableHeader.jsx`, `ColumnSelector.jsx`) con tema oscuro homogéneo (eliminadas transparencias).
+  - Eliminado el selector de densidad obsoleto para simplificar la interfaz.
+- **Ajuste en Auditoría Automática en Muro de Comentarios**:
+  - Las notas generadas automáticamente por cambios en el Presupuesto Inicial, Fecha Fin Base y autoasignación de fechas Kickoff/Go Live se registran como comentarios normales (`es_importante: false`), preservando la trazabilidad sin saturar los avisos críticos ni interferir en los informes ejecutivos.
+- **Mejoras Visuales y de Usabilidad UI/UX**:
+  - Botón interactivo para descartar/eliminar cambios de alcance en borrador (`ProjectCambiosTab.jsx`).
+  - Alineación visual corregida de etiquetas corporativas "Grupo Dacsa".
+  - Ajuste de anchuras y legibilidad en columnas de tablas de proyectos y paneles de control.
+  - Actualización de capturas de pantalla e imágenes de la documentación oficial.
+
 ## [4.2.0] - 2026-09-04
 ### Added
 - **Sistema Unificado de Filtrado de Proyectos por Macro-Etapas del Ciclo de Vida y Flujos de Trabajo (FEATURE-81 / IDEA-81)**:

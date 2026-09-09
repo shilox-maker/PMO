@@ -1,5 +1,5 @@
 'use strict';
-const { DataTypes, Op } = require('sequelize');
+const { DataTypes, QueryTypes } = require('sequelize');
 
 /**
  * Migration: 20_create_workflows_and_workflow_estados.js
@@ -11,16 +11,42 @@ const { DataTypes, Op } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const isSqlite = queryInterface.sequelize.options.dialect === 'sqlite';
+    const dialect = queryInterface.sequelize.options.dialect;
+    const isSqlite = dialect === 'sqlite';
     const schema = process.env.DB_SCHEMA || queryInterface.sequelize.options.define?.schema || 'dbo';
 
     const getTarget = (tableName) => isSqlite ? tableName : { tableName, schema };
 
+    const tableExists = async (tableName) => {
+      if (isSqlite) {
+        const res = await queryInterface.sequelize.query(
+          `SELECT name FROM sqlite_master WHERE type='table' AND name = :tableName`,
+          { replacements: { tableName }, type: QueryTypes.SELECT }
+        );
+        return res && res.length > 0;
+      }
+      const res = await queryInterface.sequelize.query(
+        `SELECT 1 FROM sys.tables t INNER JOIN sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = :schema AND t.name = :tableName`,
+        { replacements: { schema, tableName }, type: QueryTypes.SELECT }
+      );
+      return res && res.length > 0;
+    };
+
+    const columnExists = async (tableName, columnName) => {
+      if (isSqlite) {
+        const res = await queryInterface.sequelize.query(`PRAGMA table_info("${tableName}")`, { type: QueryTypes.SELECT });
+        return res && res.some(c => c.name === columnName);
+      }
+      const res = await queryInterface.sequelize.query(
+        `SELECT 1 FROM sys.columns c INNER JOIN sys.tables t ON c.object_id = t.object_id INNER JOIN sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = :schema AND t.name = :tableName AND c.name = :columnName`,
+        { replacements: { schema, tableName, columnName }, type: QueryTypes.SELECT }
+      );
+      return res && res.length > 0;
+    };
+
     // 1. Crear tabla Workflows si no existe
     const workflowsTarget = getTarget('Workflows');
-    const hasWorkflows = await queryInterface.showAllTables().then(tables =>
-      tables.includes('Workflows') || tables.includes('workflows')
-    );
+    const hasWorkflows = await tableExists('Workflows');
 
     if (!hasWorkflows) {
       await queryInterface.createTable(workflowsTarget, {
@@ -75,9 +101,7 @@ module.exports = {
 
     // 2. Crear tabla Workflow_Estados si no existe
     const workflowEstadosTarget = getTarget('Workflow_Estados');
-    const hasWorkflowEstados = await queryInterface.showAllTables().then(tables =>
-      tables.includes('Workflow_Estados') || tables.includes('workflow_estados')
-    );
+    const hasWorkflowEstados = await tableExists('Workflow_Estados');
 
     if (!hasWorkflowEstados) {
       await queryInterface.createTable(workflowEstadosTarget, {
@@ -114,37 +138,37 @@ module.exports = {
 
     // 3. Añadir columna id_workflow a Proyectos si no existe
     const proyectosTarget = getTarget('Proyectos');
-    try {
-      const proyectosInfo = await queryInterface.describeTable(proyectosTarget);
-      if (proyectosInfo && !proyectosInfo.id_workflow) {
-        await queryInterface.addColumn(
-          proyectosTarget,
-          'id_workflow',
-          {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-              model: isSqlite ? 'Workflows' : { tableName: 'Workflows', schema },
-              key: 'id'
-            },
-            onDelete: 'SET NULL'
-          }
-        );
-      }
-    } catch (e) {
-      console.warn('Advertencia comprobando columna id_workflow en Proyectos:', e.message);
+    const hasProyectosWf = await columnExists('Proyectos', 'id_workflow');
+    if (!hasProyectosWf) {
+      await queryInterface.addColumn(
+        proyectosTarget,
+        'id_workflow',
+        {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+          references: {
+            model: isSqlite ? 'Workflows' : { tableName: 'Workflows', schema },
+            key: 'id'
+          },
+          onDelete: 'SET NULL'
+        }
+      );
     }
 
     // 4. Inicializar 'Flujo Estándar' y poblar Workflow_Estados con los estados existentes
     try {
-      const [existingWorkflows] = await queryInterface.sequelize.query(
-        `SELECT id, nombre FROM ${isSqlite ? '"Workflows"' : `[${schema}].[Workflows]`} WHERE nombre = 'Flujo Estándar' OR is_default = 1 LIMIT 1`
-      ).catch(async () => {
-        // En SQL Server TOP 1
-        return await queryInterface.sequelize.query(
-          `SELECT TOP 1 id, nombre FROM [${schema}].[Workflows] WHERE nombre = 'Flujo Estándar' OR is_default = 1`
+      let existingWorkflows = [];
+      if (isSqlite) {
+        existingWorkflows = await queryInterface.sequelize.query(
+          `SELECT id, nombre FROM "Workflows" WHERE nombre = 'Flujo Estándar' OR is_default = 1 LIMIT 1`,
+          { type: QueryTypes.SELECT }
         );
-      });
+      } else {
+        existingWorkflows = await queryInterface.sequelize.query(
+          `SELECT TOP 1 id, nombre FROM [${schema}].[Workflows] WHERE nombre = 'Flujo Estándar' OR is_default = 1`,
+          { type: QueryTypes.SELECT }
+        );
+      }
 
       let defaultWorkflowId = existingWorkflows && existingWorkflows.length > 0 ? existingWorkflows[0].id : null;
 
@@ -164,8 +188,9 @@ module.exports = {
           }]
         );
 
-        const [createdWf] = await queryInterface.sequelize.query(
-          `SELECT id FROM ${isSqlite ? '"Workflows"' : `[${schema}].[Workflows]`} WHERE nombre = 'Flujo Estándar'`
+        const createdWf = await queryInterface.sequelize.query(
+          `SELECT id FROM ${isSqlite ? '"Workflows"' : `[${schema}].[Workflows]`} WHERE nombre = 'Flujo Estándar'`,
+          { type: QueryTypes.SELECT }
         );
         if (createdWf && createdWf.length > 0) {
           defaultWorkflowId = createdWf[0].id;
@@ -174,14 +199,16 @@ module.exports = {
 
       if (defaultWorkflowId) {
         // Obtener todos los estados actuales
-        const [states] = await queryInterface.sequelize.query(
-          `SELECT id_estado, orden FROM ${isSqlite ? '"Estados_Proyecto"' : `[${schema}].[Estados_Proyecto]`} ORDER BY orden ASC`
+        const states = await queryInterface.sequelize.query(
+          `SELECT id_estado, orden FROM ${isSqlite ? '"Estados_Proyecto"' : `[${schema}].[Estados_Proyecto]`} ORDER BY orden ASC`,
+          { type: QueryTypes.SELECT }
         );
 
         if (states && states.length > 0) {
           // Comprobar si ya existen relaciones en Workflow_Estados para este flujo
-          const [existingLinks] = await queryInterface.sequelize.query(
-            `SELECT id FROM ${isSqlite ? '"Workflow_Estados"' : `[${schema}].[Workflow_Estados]`} WHERE id_workflow = ${defaultWorkflowId}`
+          const existingLinks = await queryInterface.sequelize.query(
+            `SELECT id FROM ${isSqlite ? '"Workflow_Estados"' : `[${schema}].[Workflow_Estados]`} WHERE id_workflow = ${defaultWorkflowId}`,
+            { type: QueryTypes.SELECT }
           );
 
           if (!existingLinks || existingLinks.length === 0) {
@@ -196,7 +223,8 @@ module.exports = {
 
         // Asignar defaultWorkflowId a todos los proyectos existentes con id_workflow NULL
         await queryInterface.sequelize.query(
-          `UPDATE ${isSqlite ? '"Proyectos"' : `[${schema}].[Proyectos]`} SET id_workflow = ${defaultWorkflowId} WHERE id_workflow IS NULL`
+          `UPDATE ${isSqlite ? '"Proyectos"' : `[${schema}].[Proyectos]`} SET id_workflow = ${defaultWorkflowId} WHERE id_workflow IS NULL`,
+          { type: QueryTypes.UPDATE }
         );
       }
     } catch (e) {

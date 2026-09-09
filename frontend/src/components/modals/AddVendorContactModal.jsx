@@ -38,8 +38,8 @@ export default function AddVendorContactModal({ isOpen, vendorId, contact, getAu
     e.preventDefault();
     setContactError('');
 
-    if (!contactForm.nombre.trim() || !contactForm.apellidos.trim() || !contactForm.puesto.trim() || !contactForm.telefono.trim() || !contactForm.email.trim()) {
-      setContactError(t('vendor360.allFieldsRequired'));
+    if (!contactForm.nombre.trim() || !contactForm.apellidos.trim() || !contactForm.puesto.trim() || !contactForm.email.trim()) {
+      setContactError(t('vendor360.requiredFields', 'Por favor, rellene todos los campos obligatorios.'));
       return;
     }
 
@@ -49,9 +49,14 @@ export default function AddVendorContactModal({ isOpen, vendorId, contact, getAu
       : `${import.meta.env.VITE_API_URL}/contacts`;
     const method = isEdit ? 'PUT' : 'POST';
 
+    const cleanedContactForm = {
+      ...contactForm,
+      telefono: contactForm.telefono.trim() || null
+    };
+
     const payload = isEdit
-      ? contactForm
-      : { ...contactForm, id_proveedor: parseInt(vendorId, 10) };
+      ? cleanedContactForm
+      : { ...cleanedContactForm, id_proveedor: parseInt(vendorId, 10) };
 
     fetch(url, {
       method,
@@ -126,13 +131,12 @@ export default function AddVendorContactModal({ isOpen, vendorId, contact, getAu
           </div>
 
           <div className="form-group">
-            <label className="form-label">{t('vendor360.technicalPhone')} *</label>
+            <label className="form-label">{t('vendor360.technicalPhone')}</label>
             <input 
               type="text" 
               value={contactForm.telefono}
               onChange={(e) => setContactForm({ ...contactForm, telefono: e.target.value })}
               placeholder="600123456"
-              required
               className="m3-input"
             />
           </div>

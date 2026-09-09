@@ -64,11 +64,26 @@
     "logout": "Log Out",
     "language": "Interface Language",
     "releaseNotes": "Release Notes",
+    "userManual": "User Manual",
     "themeDark": "Dark Theme",
     "themeDacsa": "Dacsa Theme",
     "spanish": "Spanish",
     "english": "English",
     "portuguese": "Portuguese"
+  },
+  "manual": {
+    "title": "User Manual & Training Guide",
+    "subtitle": "Corporate Governance & Project Portfolio Control Platform",
+    "searchPlaceholder": "Search in manual...",
+    "toc": "Table of Contents",
+    "backToTop": "Back to top",
+    "loading": "Loading user training manual...",
+    "error": "Could not load user manual.",
+    "zoomHint": "Click image to enlarge",
+    "close": "Close",
+    "openInTab": "Open in new tab",
+    "noResults": "No matches found for",
+    "filterSections": "Filter sections..."
   },
   "header": {
     "commandPaletteTooltip": "Command Palette (Ctrl+K)",
@@ -284,6 +299,7 @@
     "saveChanges": "Save Changes",
     "cancel": "Cancel",
     "belongsDacsa": "Belongs to Dacsa Group",
+    "isDacsaGroup": "Belongs to Dacsa Group",
     "companyName": "Company Name / Partner Name",
     "nameRequired": "Company name is required.",
     "editContact": "Edit Partner Contact",
@@ -294,7 +310,8 @@
     "position": "Role / Position",
     "technicalPhone": "Technical Phone",
     "officialEmail": "Official Email",
-    "allFieldsRequired": "All fields are required."
+    "allFieldsRequired": "All required fields must be completed.",
+    "requiredFields": "Please fill in all required fields."
   },
   "vendorDirectory": {
     "techPartners": "Tech Partners:",
@@ -451,11 +468,6 @@
     "RECURSOS_INTERNOS": "Internal Resources",
     "OTROS_GASTOS": "Other Expenses"
   },
-  "density": {
-    "comfortable": "Comfortable",
-    "standard": "Standard",
-    "compact": "Compact"
-  },
   "projectsTable": {
     "title": "Projects",
     "code": "Code",
@@ -532,7 +544,10 @@
     "daysSuffix": "+{{count}} days",
     "status": "Status",
     "noChanges": "No scope change requests recorded for this project.",
-    "editTooltip": "Edit request"
+    "editTooltip": "Edit request",
+    "deleteTooltip": "Delete request",
+    "deleteConfirm": "Are you sure you want to delete this change request (CR)?",
+    "deleteError": "Error deleting change request"
   },
   "financeTab": {
     "initialBudget": "Initial Budget",
@@ -817,19 +832,34 @@
       "subtitle": "Chronological record of important governance comments and committee agreements.",
       "placeholder": "Add an executive comment or agreement here...",
       "markImportant": "Mark as important / executive (PDF)",
-      "forManagement": "📢 For Management",
       "publishBtn": "Publish Comment",
       "filterLabel": "Filter wall:",
       "filterAll": "All ({{count}})",
       "filterImportant": "⭐ Important ({{count}})",
-      "filterManagement": "📢 Management ({{count}})",
       "loading": "Loading comments...",
       "noComments": "No comments recorded for this project.",
       "noFilterComments": "No comments match the selected filter.",
       "importantBadge": "IMPORTANT",
-      "managementBadge": "MANAGEMENT",
       "editedBy": "Edited by {{name}} on {{date}}",
       "deleteConfirm": "Are you sure you want to delete this comment?"
+    },
+    "directionWall": {
+      "title": "Management Wall (Confidential Channel)",
+      "subtitle": "Strategic notes and reserved Steering Committee agreements. Not visible to the Project Manager.",
+      "placeholder": "Write a strategic note or management decision...",
+      "markImportant": "Mark as key for Management Report",
+      "publishBtn": "Publish Management Note",
+      "filterLabel": "Filter notes:",
+      "filterAll": "All ({{count}})",
+      "filterImportant": "⭐ Key ({{count}})",
+      "loading": "Loading management notes...",
+      "noComments": "No management notes recorded for this project.",
+      "noFilterComments": "No notes match the selected filter.",
+      "badge": "MANAGEMENT ONLY",
+      "directionBadge": "MANAGEMENT",
+      "importantBadge": "KEY",
+      "editedBy": "Edited by {{name}} on {{date}}",
+      "deleteConfirm": "Are you sure you want to delete this management note?"
     },
     "scopeTab": {
       "title": "Scope and Acceptance Criteria",

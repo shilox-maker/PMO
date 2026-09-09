@@ -4,13 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { getSortedData } from '../utils/sorting';
 import { useTableColumns } from '../hooks/useTableColumns';
 import ColumnSelector from './ColumnSelector';
-import DensitySelector from './DensitySelector';
 import ExportProjectsModal from './modals/ExportProjectsModal';
 import { useAuth } from '../context/AuthContext';
 import ProjectTableHeader from './ProjectTableHeader';
 
 const DEFAULT_PROJECT_COLUMNS = [
-  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
+  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true, width: 140 },
   { id: 'nombre_proyecto', label: 'Nombre del Proyecto', fixed: true, visible: true },
   { id: 'estado_proyecto', label: 'Estado/Fase', fixed: false, visible: true },
   { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
@@ -26,23 +25,9 @@ const DEFAULT_PROJECT_COLUMNS = [
   { id: 'cambios_alcance_count', label: 'Cambios Alcance', fixed: false, visible: true }, { id: 'accion', label: 'Acción', fixed: true, visible: true }
 ];
 
-export default function ProjectTable({ projects, onViewProject, onViewVendor, showHeaderSelector = true, density: propDensity, onDensityChange }) {
+export default function ProjectTable({ projects, onViewProject, onViewVendor, showHeaderSelector = true }) {
   const { t } = useTranslation();
   const { getAuthHeaders } = useAuth();
-  const [density, setDensity] = useState(() => propDensity || localStorage.getItem('pmo_table_density') || 'standard');
-  const activeDensity = propDensity !== undefined ? propDensity : density;
-
-  React.useEffect(() => {
-    if (propDensity && propDensity !== density) {
-      setDensity(propDensity);
-    }
-  }, [propDensity]);
-
-  const handleDensityChange = (newDensity) => {
-    setDensity(newDensity);
-    localStorage.setItem('pmo_table_density', newDensity);
-    if (onDensityChange) onDensityChange(newDensity);
-  };
 
   const { columns: tableCols, visibleColumnsMap, columnWidths, updateColumnWidth, toggleColumn, resetColumns } = useTableColumns('ppm-projects-columns-v2', DEFAULT_PROJECT_COLUMNS);
   const [sortConfig, setSortConfig] = useState({ key: 'id_proyecto', direction: 'asc' });
@@ -103,15 +88,13 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
             <FileDown size={18} />
             <span>Exportar Excel</span>
           </button>
-          <DensitySelector density={activeDensity} onChange={handleDensityChange} />
-          <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
         </div>
       )}
-      <div className="m3-table-wrapper glass-panel" data-density={activeDensity}>
+      <div className="m3-table-wrapper glass-panel">
         <table className="m3-table">
           <thead>
             <tr>
-              {visibleColumnsMap.id_proyecto && renderTH('projectsTable.code', 'Código', 'id_proyecto')}
+              {visibleColumnsMap.id_proyecto && renderTH('projectsTable.code', 'Código', 'id_proyecto', { minWidth: '135px', whiteSpace: 'nowrap' })}
               {visibleColumnsMap.nombre_proyecto && renderTH('projectsTable.name', 'Nombre del Proyecto', 'nombre_proyecto')}
               {visibleColumnsMap.estado_proyecto && renderTH('projectsTable.status', 'Estado/Fase', 'estado_proyecto')}
               {visibleColumnsMap.indicador_rag && renderTH('RAG', 'RAG', 'indicador_rag', { textAlign: 'center' })}
@@ -126,7 +109,19 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
               {visibleColumnsMap.proximo_hito && renderTH('Próximo Hito', 'Próximo Hito', 'nextMilestone.fecha_limite', {}, 'proximo_hito')}
               {visibleColumnsMap.ultimo_comentario && renderTH('Último Comentario', 'Último Comentario', 'ultimo_comentario')}
               {visibleColumnsMap.cambios_alcance_count && renderTH('Cambios Alcance', 'Cambios Alcance', 'cambios_alcance_count', { textAlign: 'center' })}
-              {visibleColumnsMap.accion && renderTH('projectsTable.actions', 'Acción', null, {}, 'accion')}
+              {visibleColumnsMap.accion && (
+                <ProjectTableHeader
+                  label={t('projectsTable.actions') !== 'projectsTable.actions' ? t('projectsTable.actions') : 'Acción'}
+                  sortKey={null}
+                  sortConfig={sortConfig}
+                  onSort={handleSort}
+                  colId="accion"
+                  columnWidths={columnWidths}
+                  onMouseDown={handleMouseDown}
+                >
+                  <ColumnSelector columns={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns} />
+                </ProjectTableHeader>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -150,13 +145,12 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
               const statusCode = project.Estado?.code || project.estado_code || project.estado_proyecto?.toUpperCase().replace(/\s+/g, '_');
               const statusLabel = statusCode && t(`status.${statusCode}`) !== `status.${statusCode}` ? t(`status.${statusCode}`) : project.estado_proyecto;
 
-              const sedeCode = project.Sede?.code || project.sede_code || project.Sede?.nombre_sede?.toUpperCase().replace(/\s+/g, '_');
-              const sedeLabel = sedeCode && t(`sede.${sedeCode}`) !== `sede.${sedeCode}` ? t(`sede.${sedeCode}`) : (project.Sede?.nombre_sede || project.sede_nombre);
+              const sedeLabel = project.Sede?.nombre_sede || project.sede_nombre || '-';
 
               return (
                 <tr key={project.id_proyecto} style={isProjectOverdue ? { backgroundColor: 'rgba(255, 69, 58, 0.1)' } : {}}>
                   {/* ID */}
-                  {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.85rem' }}>{project.id_proyecto}</td>}
+                  {visibleColumnsMap.id_proyecto && <td style={{ fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{project.id_proyecto}</td>}
                   
                   {/* Name */}
                   {visibleColumnsMap.nombre_proyecto && <td style={{ fontWeight: 600, minWidth: '180px' }}>
@@ -209,7 +203,7 @@ export default function ProjectTable({ projects, onViewProject, onViewVendor, sh
                         style={{ textDecoration: 'underline', cursor: 'pointer', color: 'var(--md-sys-color-primary)', fontWeight: 500 }}
                         onClick={() => onViewVendor && onViewVendor(project.id_proveedor)}
                       >
-                        {project.Proveedor.nombre_razon_social || project.prov_nombre || 'Sin Partner'}
+                        {project.Proveedor?.nombre_razon_social || project.prov_nombre || 'Sin Partner'}
                       </span>
                     )}
                   </td>}

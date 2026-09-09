@@ -64,11 +64,26 @@
     "logout": "Cerrar Sesión",
     "language": "Idioma de Interfaz",
     "releaseNotes": "Notas de versión",
+    "userManual": "Manual de Usuario",
     "themeDark": "Tema Oscuro",
     "themeDacsa": "Tema Dacsa",
     "spanish": "Español",
     "english": "English",
     "portuguese": "Português"
+  },
+  "manual": {
+    "title": "Manual de Usuario y Formación",
+    "subtitle": "Plataforma Corporativa de Gobernanza Estratégica y Control de Proyectos",
+    "searchPlaceholder": "Buscar en el manual...",
+    "toc": "Índice de Contenidos",
+    "backToTop": "Volver arriba",
+    "loading": "Cargando manual de formación...",
+    "error": "No se pudo cargar el manual de usuario.",
+    "zoomHint": "Clic en la imagen para ampliar",
+    "close": "Cerrar",
+    "openInTab": "Abrir en pestaña nueva",
+    "noResults": "No se encontraron coincidencias para",
+    "filterSections": "Filtrar secciones..."
   },
   "header": {
     "commandPaletteTooltip": "Paleta de Comandos (Ctrl+K)",
@@ -284,6 +299,7 @@
     "saveChanges": "Guardar Cambios",
     "cancel": "Cancelar",
     "belongsDacsa": "Pertenece al Grupo Dacsa",
+    "isDacsaGroup": "Pertenece al Grupo Dacsa",
     "companyName": "Razón Social o Nombre del Socio",
     "nameRequired": "El nombre o razón social es obligatorio.",
     "editContact": "Editar Contacto de Partner",
@@ -294,7 +310,8 @@
     "position": "Puesto / Cargo",
     "technicalPhone": "Teléfono Técnico",
     "officialEmail": "Email Oficial",
-    "allFieldsRequired": "Todos los campos son obligatorios."
+    "allFieldsRequired": "Todos los campos obligatorios deben ser completados.",
+    "requiredFields": "Por favor, rellene todos los campos obligatorios."
   },
   "vendorDirectory": {
     "techPartners": "Socios Tecnológicos:",
@@ -451,11 +468,6 @@
     "RECURSOS_INTERNOS": "Recursos Internos",
     "OTROS_GASTOS": "Otros Gastos"
   },
-  "density": {
-    "comfortable": "Cómoda",
-    "standard": "Normal",
-    "compact": "Compacta"
-  },
   "projectsTable": {
     "title": "Proyectos",
     "code": "Código",
@@ -532,7 +544,10 @@
     "daysSuffix": "+{{count}} días",
     "status": "Estado",
     "noChanges": "No se han registrado cambios de alcance en este proyecto.",
-    "editTooltip": "Editar solicitud"
+    "editTooltip": "Editar solicitud",
+    "deleteTooltip": "Eliminar solicitud",
+    "deleteConfirm": "¿Seguro que desea eliminar esta solicitud de cambio (CR)?",
+    "deleteError": "Error al eliminar la solicitud de cambio"
   },
   "financeTab": {
     "initialBudget": "Presupuesto Inicial",
@@ -817,19 +832,34 @@
       "subtitle": "Registro cronológico de comentarios importantes de gobernanza y acuerdos de comités.",
       "placeholder": "Añada un comentario o acuerdo ejecutivo aquí...",
       "markImportant": "Marcar como importante / ejecutivo (PDF)",
-      "forManagement": "📢 Para dirección",
       "publishBtn": "Publicar Comentario",
       "filterLabel": "Filtrar muro:",
       "filterAll": "Todos ({{count}})",
       "filterImportant": "⭐ Importantes ({{count}})",
-      "filterManagement": "📢 Dirección ({{count}})",
       "loading": "Cargando comentarios...",
       "noComments": "No hay comentarios registrados en este proyecto.",
       "noFilterComments": "No hay comentarios que coincidan con el filtro seleccionado.",
       "importantBadge": "IMPORTANTE",
-      "managementBadge": "DIRECCIÓN",
       "editedBy": "Editado por {{name}} el {{date}}",
       "deleteConfirm": "¿Seguro que deseas eliminar este comentario?"
+    },
+    "directionWall": {
+      "title": "Muro de Dirección (Canal Confidencial)",
+      "subtitle": "Anotaciones estratégicas y acuerdos reservados del Comité de Dirección. No visible para el Project Manager.",
+      "placeholder": "Escriba un apunte estratégico o decisión de dirección...",
+      "markImportant": "Marcar como clave para informe de Dirección",
+      "publishBtn": "Publicar Nota de Dirección",
+      "filterLabel": "Filtrar notas:",
+      "filterAll": "Todas ({{count}})",
+      "filterImportant": "⭐ Claves ({{count}})",
+      "loading": "Cargando notas de dirección...",
+      "noComments": "No hay notas de dirección registradas para este proyecto.",
+      "noFilterComments": "No hay notas que coincidan con el filtro seleccionado.",
+      "badge": "SOLO DIRECCIÓN",
+      "directionBadge": "DIRECCIÓN",
+      "importantBadge": "CLAVE",
+      "editedBy": "Editado por {{name}} el {{date}}",
+      "deleteConfirm": "¿Seguro que deseas eliminar esta nota de dirección?"
     },
     "scopeTab": {
       "title": "Alcance y Criterios de Cierre",

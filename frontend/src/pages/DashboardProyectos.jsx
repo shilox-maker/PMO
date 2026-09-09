@@ -2,27 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Filter, Activity, ChevronDown, ChevronUp } from 'lucide-react';
-import { useTableColumns } from '../hooks/useTableColumns';
 import usePersistentFilters from '../hooks/usePersistentFilters';
 import ProjectsFilterPanel from '../components/projects/ProjectsFilterPanel';
 import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid';
 import DashboardChartsSection from '../components/dashboard/DashboardChartsSection';
 import DashboardSummaryTable from '../components/dashboard/DashboardSummaryTable';
 import DashboardReportModal from '../components/modals/DashboardReportModal';
-
-const DEFAULT_DASHBOARD_COLUMNS = [
-  { id: 'id_proyecto', label: 'Código', fixed: true, visible: true },
-  { id: 'nombre_proyecto', label: 'Proyecto', fixed: true, visible: true },
-  { id: 'pm_nombre', label: 'PM', fixed: false, visible: true },
-  { id: 'indicador_rag', label: 'RAG', fixed: false, visible: true },
-  { id: 'fecha_inicio', label: 'Inicio', fixed: false, visible: true },
-  { id: 'fecha_fin_inicial', label: 'Fin Base', fixed: false, visible: true },
-  { id: 'fecha_fin_estimada', label: 'Fin Est.', fixed: false, visible: true },
-  { id: 'gasto_total_facturas', label: 'Gasto Facturado', fixed: false, visible: true },
-  { id: 'proximo_hito', label: 'Próximo Hito', fixed: false, visible: true },
-  { id: 'ultimo_comentario', label: 'Último Comentario', fixed: false, visible: true },
-  { id: 'accion', label: 'Ficha', fixed: true, visible: true }
-];
 
 const DEFAULT_DASHBOARD_PROYECTOS_FILTERS = {
   filterPm: '',
@@ -99,14 +84,10 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
   const [tagsList, setTagsList] = useState([]);
   const [statesList, setStatesList] = useState([]);
 
-  // Column Selector
-  const { columns: tableCols, toggleColumn, resetColumns } = useTableColumns('ppm-dashboard-proyectos-columns', DEFAULT_DASHBOARD_COLUMNS);
-
   const [selectedKpi, setSelectedKpi] = useState(null);
   const [selectedChartFilter, setSelectedChartFilter] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [trends, setTrends] = useState({});
-  const [density, setDensity] = useState(() => localStorage.getItem('pmo_table_density') || 'standard');
   const [isChartsCollapsed, setIsChartsCollapsed] = useState(() => localStorage.getItem('pmo_dashboard_charts_collapsed') === 'true');
 
   const toggleChartsCollapsed = () => {
@@ -245,8 +226,6 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
         isStatesOpen={isStatesOpen} setIsStatesOpen={setIsStatesOpen}
         pmsList={pmsList} vendorsList={vendorsList} portfoliosList={portfoliosList} workflowsList={workflowsList} tagsList={tagsList} statesList={statesList}
         projects={projects}
-        tableCols={tableCols} toggleColumn={toggleColumn} resetColumns={resetColumns}
-        density={density} onDensityChange={setDensity}
         onOpenReport={() => setIsReportModalOpen(true)}
         activeFiltersCount={activeFiltersCount}
         onResetFilters={resetFilters}
@@ -346,7 +325,6 @@ export default function DashboardProyectos({ onViewProject, onViewVendor }) {
         projects={filteredProjects}
         onViewProject={onViewProject}
         onViewVendor={onViewVendor}
-        density={density}
       />
 
       <DashboardReportModal
