@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useMetadata } from '../../context/MetadataContext';
 import { Edit2, Trash2, RefreshCw, Coins } from 'lucide-react';
 import PortfolioBudgetsAdmin from './PortfolioBudgetsAdmin';
 
 export default function PortfoliosAdmin({ getAuthHeaders }) {
   const { t } = useTranslation();
   const { selectedAmbito } = useAuth();
+  const { refreshMetadata } = useMetadata();
   // Portfolios state
   const [portfolios, setPortfolios] = useState([]);
   const [portfoliosLoading, setPortfoliosLoading] = useState(false);
@@ -79,6 +81,7 @@ export default function PortfoliosAdmin({ getAuthHeaders }) {
         setPortfolioForm({ id: '', nombre: '', descripcion: '' });
         setEditingPortfolioId(null);
         fetchPortfolios();
+        if (refreshMetadata) refreshMetadata();
       })
       .catch(err => setPortfolioError(err.message));
   };
@@ -107,6 +110,7 @@ export default function PortfoliosAdmin({ getAuthHeaders }) {
       .then(() => {
         setPortfolioSuccess('Portfolio eliminado del sistema.');
         fetchPortfolios();
+        if (refreshMetadata) refreshMetadata();
       })
       .catch(err => setPortfolioError(err.message));
   };

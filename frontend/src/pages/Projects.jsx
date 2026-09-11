@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useMetadata } from '../context/MetadataContext';
 import { ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import QuickCommentModal from '../components/modals/QuickCommentModal';
 import DashboardReportModal from '../components/modals/DashboardReportModal';
@@ -137,16 +138,18 @@ export default function Projects({ onViewProject, onViewVendor }) {
 
   const [isReportOpen, setIsReportOpen] = useState(false);
 
-  // Dropdowns lists
-  const [pmsList, setPmsList] = useState([]);
-  const [vendorsList, setVendorsList] = useState([]);
-  const [sedesList, setSedesList] = useState([]);
-  const [contactosList, setContactosList] = useState([]);
-  const [statesList, setStatesList] = useState([]);
-  const [workflowsList, setWorkflowsList] = useState([]);
-  const [portfoliosList, setPortfoliosList] = useState([]);
-  const [tagsList, setTagsList] = useState([]);
-  const [capexTypes, setCapexTypes] = useState([]);
+  // Unified master metadata from context
+  const {
+    pms: pmsList,
+    vendors: vendorsList,
+    sedes: sedesList,
+    contactos: contactosList,
+    states: statesList,
+    workflows: workflowsList,
+    portfolios: portfoliosList,
+    tags: tagsList,
+    capexTypes
+  } = useMetadata();
 
   // Modal creation state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -179,25 +182,9 @@ export default function Projects({ onViewProject, onViewVendor }) {
       });
   };
 
-  const fetchMetadata = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedesList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/workflows`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowsList(Array.isArray(data) ? data : []));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/capex-types`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setCapexTypes(data));
-  };
-
   useEffect(() => {
     fetchProjects();
   }, [filterPm, filterVendor, filterRag, filterEstrategico, filterIniciativa, filterPortfolio, filterWorkflow, filterTag, filterStates, searchTerm, selectedAmbito]);
-
-  useEffect(() => {
-    fetchMetadata();
-  }, [selectedAmbito]);
 
   const handleProjectCreated = (createdProject) => {
     if (createdProject?.id_ambito && selectedAmbito && selectedAmbito !== 'ALL' && String(createdProject.id_ambito) !== String(selectedAmbito)) {

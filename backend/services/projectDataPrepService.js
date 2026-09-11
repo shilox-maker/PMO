@@ -52,7 +52,7 @@ async function prepareProjectsData(projectsList) {
         where: {
           id_proyecto,
           es_hito: true,
-          estado: 'PENDIENTE',
+          estado: { [Op.ne]: 'COMPLETADA' },
           fecha_limite: { [Op.lt]: todayStr }
         }
       });

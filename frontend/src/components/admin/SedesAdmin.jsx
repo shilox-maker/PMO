@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Edit2, Trash2, RefreshCw, XCircle, CheckCircle } from 'lucide-react';
+import { useMetadata } from '../../context/MetadataContext';
 
 export default function SedesAdmin({ getAuthHeaders }) {
   const { t } = useTranslation();
+  const { refreshMetadata } = useMetadata();
   const [sedes, setSedes] = useState([]);
   const [sedesLoading, setSedesLoading] = useState(false);
   const [sedeForm, setSedeForm] = useState({ id_sede: '', nombre_sede: '', orden: 0 });
@@ -65,6 +67,7 @@ export default function SedesAdmin({ getAuthHeaders }) {
         setSedeForm({ id_sede: '', nombre_sede: '', orden: 0 });
         setEditingSedeId(null);
         fetchSedes();
+        if (refreshMetadata) refreshMetadata();
       })
       .catch(err => setSedeError(err.message));
   };
@@ -93,6 +96,7 @@ export default function SedesAdmin({ getAuthHeaders }) {
       .then(() => {
         setSedeSuccess('Sede eliminada del sistema.');
         fetchSedes();
+        if (refreshMetadata) refreshMetadata();
       })
       .catch(err => setSedeError(err.message));
   };

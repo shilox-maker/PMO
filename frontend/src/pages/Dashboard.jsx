@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useMetadata } from '../context/MetadataContext';
 import { Filter, Search, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import DashboardKpiGrid from '../components/dashboard/DashboardKpiGrid';
 import DashboardChartsSection from '../components/dashboard/DashboardChartsSection';
@@ -88,20 +89,14 @@ export default function Dashboard({ onViewProject, onViewVendor }) {
     return res;
   };
 
-  // Dropdowns
-  const [pmsList, setPmsList] = useState([]);
-  const [vendorsList, setVendorsList] = useState([]);
-  const [statesList, setStatesList] = useState([]);
-  const [portfoliosList, setPortfoliosList] = useState([]);
-  const [tagsList, setTagsList] = useState([]);
-
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(data));
-  }, [selectedAmbito]);
+  // Dropdowns from global metadata context
+  const {
+    pms: pmsList,
+    vendors: vendorsList,
+    states: statesList,
+    portfolios: portfoliosList,
+    tags: tagsList
+  } = useMetadata();
 
   const [trends, setTrends] = useState({});
   const [timeframe, setTimeframe] = useState(7);

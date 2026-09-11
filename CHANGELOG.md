@@ -2,6 +2,11 @@
 
 ## [4.3.0] - 2026-09-09
 ### Added
+- **Restricción de Solicitante y Aprobador en Change Requests a la Matriz RACI**:
+  - En la creación y edición de Solicitudes de Cambio de Alcance (`CrModal.jsx`), los campos de Solicitante y Aprobador ahora utilizan `SearchableContactSelect` y se restringen exclusivamente a los contactos asignados a la Matriz RACI del proyecto (`project.InvolvedContacts`).
+  - Validación en backend (`financial.controller.js`) para rechazar con HTTP 400 cualquier solicitud de cambio cuyo solicitante o aprobador no pertenezca a la matriz RACI del proyecto.
+  - Aviso visual informativo cuando un proyecto no dispone de participantes RACI configurados.
+  - Retrocompatibilidad asegurada para preservar y visualizar solicitantes/aprobadores históricos en modo edición.
 - **Muro de Comentarios Privados de Dirección (`ProjectDirectionWall`)**:
   - Nuevo canal de notas y observaciones confidenciales exclusivo para perfiles `DIRECTOR` y `ADMINISTRADOR` dentro de la ficha del proyecto.
   - Endpoints dedicados (`/api/projects/:id/direction-comments`) y modelo `Comentarios_Direccion` segregado en base de datos (migración `23_create_direction_comments.js`).
@@ -18,6 +23,12 @@
 - **Reubicación y Mejora del Selector de Columnas**:
   - Selector de columnas integrado directamente en la cabecera de las tablas de proyectos (`ProjectTableHeader.jsx`, `ColumnSelector.jsx`) con tema oscuro homogéneo (eliminadas transparencias).
   - Eliminado el selector de densidad obsoleto para simplificar la interfaz.
+- **Filtrado de Último Comentario por Importancia (`es_importante`) en Vistas de Proyectos**:
+  - En la pantalla de proyectos (`/projects`) y cuadros de mando de portafolio/gobernanza (`/portfolio/dashboard`), la columna y propiedad `ultimo_comentario` ahora muestra exclusivamente el comentario más reciente que haya sido **marcado como importante** (`es_importante: true`), ignorando notas ordinarias de seguimiento o auditorías rutinarias y mostrando vacío (`—`) si ningún comentario está marcado como relevante.
+- **Corrección en Cálculo de Próximo Hito (`nextMilestone` / `proximo_hito`)**:
+  - Se corrigió la consulta de hitos pendientes en las vistas de proyectos (`/projects`), dashboard (`/portfolio/dashboard`) y exportadores de informes, que filtraba por el valor antiguo `estado: 'PENDIENTE'` en lugar del estándar actual (`estado !== 'COMPLETADA'`, considerando estados como `SIN INICIAR` y `EN CURSO`). Con ello, los hitos no completados vuelven a aparecer puntualmente en la columna "Próximo Hito".
+- **Preservación de Texto en Modal de Seguimiento Rápido (`QuickCommentModal`)**:
+  - Al abrir el modal de comentario rápido desde la tabla de proyectos, el texto precargado se mantiene intacto al alternar entre el Muro Operativo y el Muro de Dirección (evitando que se vacíe si el muro de destino aún no tenía notas previas).
 - **Ajuste en Auditoría Automática en Muro de Comentarios**:
   - Las notas generadas automáticamente por cambios en el Presupuesto Inicial, Fecha Fin Base y autoasignación de fechas Kickoff/Go Live se registran como comentarios normales (`es_importante: false`), preservando la trazabilidad sin saturar los avisos críticos ni interferir en los informes ejecutivos.
 - **Mejoras Visuales y de Usabilidad UI/UX**:

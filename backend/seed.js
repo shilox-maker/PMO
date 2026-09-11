@@ -421,14 +421,19 @@ async function seed() {
     // ==========================================
     const p1 = proyectos[0];
     const p5 = proyectos[4];
+    const p7 = proyectos[6];
     await p1.addInvolvedContacts([contactoAna.id_contacto, contactoRoberto.id_contacto]);
     await p1.addComSemanalContactos([contactoAna.id_contacto]);
     await p1.addComMensualContactos([contactoRoberto.id_contacto]);
     await p1.addComSteerCoContactos([contactoRoberto.id_contacto, contactoElena.id_contacto]);
 
-    await p5.addInvolvedContacts([contactoAna.id_contacto, contactoDiego.id_contacto]);
+    await p5.addInvolvedContacts([contactoAna.id_contacto, contactoDiego.id_contacto, contactoRoberto.id_contacto]);
     await p5.addComSemanalContactos([contactoAna.id_contacto]);
     await p5.addComMensualContactos([contactoDiego.id_contacto]);
+
+    if (p7) {
+      await p7.addInvolvedContacts([contactoAna.id_contacto, contactoRoberto.id_contacto]);
+    }
     console.log('Relaciones Many-to-Many configuradas.');
 
     console.log(`Successfully seeded ${proyectosExcel.length} projects.`);

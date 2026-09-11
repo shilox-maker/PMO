@@ -568,6 +568,28 @@
     "deleteConfirm": "Are you sure you want to delete this change request (CR)?",
     "deleteError": "Error deleting change request"
   },
+  "crModal": {
+    "addTitle": "Register Scope Change Request (CR)",
+    "editTitle": "Edit Scope Change Request (CR)",
+    "noRaciNotice": "This project has no participants assigned to the RACI Matrix. You must add participants to the RACI Matrix to select them as requester or approver.",
+    "idLabel": "Scope Change ID (Format: CR-YYYY-XXX or leave empty)",
+    "idPlaceholder": "Auto-generated (e.g. CR-2026-005)",
+    "requester": "Requester (RACI Matrix)",
+    "approver": "Approver (RACI Matrix)",
+    "selectRequester": "Select Requester...",
+    "selectApprover": "Select Approver...",
+    "requestDate": "Request Date",
+    "status": "Request Status",
+    "impactsCost": "Impacts Cost?",
+    "costPlaceholder": "Impact Amount +/- (€)",
+    "impactsTime": "Impacts Schedule?",
+    "timePlaceholder": "Impact Days +/-",
+    "description": "Detailed Description / Justification",
+    "descPlaceholder": "Details on why this scope change is requested and its technical impacts...",
+    "fillRequired": "Please fill in all required fields.",
+    "saveError": "Error saving scope change",
+    "submit": "Submit Request"
+  },
   "financeTab": {
     "initialBudget": "Initial Budget",
     "updatedBudget": "Updated Budget",

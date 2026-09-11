@@ -20,7 +20,7 @@ export const generateDashboardReport = (detailedProjects, reportOptions, highlig
     const budgetOverrun = gastoTotal > budgetInitial;
     
     const milestones = (project.Tareas || []).filter(t => t.es_hito);
-    const overdueMilestones = milestones.filter(m => m.estado === 'PENDIENTE' && m.fecha_limite < todayStr);
+    const overdueMilestones = milestones.filter(m => m.estado !== 'COMPLETADA' && m.fecha_limite < todayStr);
 
     const reasons = [];
     if (project.indicador_rag === 'ROJO') reasons.push(tr('reportExport.criticalRag'));

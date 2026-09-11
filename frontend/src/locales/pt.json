@@ -328,6 +328,28 @@
     "deleteConfirm": "Tem a certeza de que deseja eliminar esta alteração de âmbito (CR)?",
     "deleteError": "Erro ao eliminar a alteração de âmbito"
   },
+  "crModal": {
+    "addTitle": "Registar Pedido de Alteração (CR)",
+    "editTitle": "Editar Pedido de Alteração (CR)",
+    "noRaciNotice": "Este projeto não tem participantes atribuídos na Matriz RACI. Deve adicionar participantes à Matriz RACI para selecioná-los como requerente ou aprovador.",
+    "idLabel": "ID Alteração de Âmbito (Formato: CR-YYYY-XXX ou deixar vazio)",
+    "idPlaceholder": "Auto-gerado (Ex. CR-2026-005)",
+    "requester": "Requerente (Matriz RACI)",
+    "approver": "Aprovador (Matriz RACI)",
+    "selectRequester": "Selecionar Requerente...",
+    "selectApprover": "Selecionar Aprovador...",
+    "requestDate": "Data do Pedido",
+    "status": "Estado do Pedido",
+    "impactsCost": "Impacta Custo?",
+    "costPlaceholder": "Valor Impacto +/- (€)",
+    "impactsTime": "Impacta Prazos?",
+    "timePlaceholder": "Dias Impacto +/-",
+    "description": "Descrição Detalhada / Justificação",
+    "descPlaceholder": "Detalhes sobre o motivo deste pedido de alteração de âmbito e impactos técnicos...",
+    "fillRequired": "Por favor, preencha todos os campos obrigatórios.",
+    "saveError": "Erro ao guardar a alteração de âmbito",
+    "submit": "Enviar Pedido"
+  },
   "financeTab": {
     "initialBudget": "Orçamento Inicial",
     "updatedBudget": "Orçamento Atualizado",

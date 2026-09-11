@@ -76,16 +76,18 @@ const getProjects = asyncHandler(async (req, res) => {
   // Batch load calculations & metadata
   const [calcMap, allMilestones, allComments, allTasksLatest] = await Promise.all([
     getProjectsCalculationsBatch(projectsList),
-    Tareas.findAll({ where: { id_proyecto: { [Op.in]: projectIds }, es_hito: true, estado: 'PENDIENTE' }, attributes: ['id_proyecto', 'id_tarea', 'titulo_tarea', 'fecha_limite', 'estado'], order: [['fecha_limite', 'ASC']], raw: true }),
-    ComentariosProyecto.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'texto_comentario', 'fecha_registro', 'updatedAt'], order: [['fecha_registro', 'DESC']], raw: true }),
+    Tareas.findAll({ where: { id_proyecto: { [Op.in]: projectIds }, es_hito: true, estado: { [Op.ne]: 'COMPLETADA' } }, attributes: ['id_proyecto', 'id_tarea', 'titulo_tarea', 'fecha_limite', 'estado'], order: [['fecha_limite', 'ASC']], raw: true }),
+    ComentariosProyecto.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'texto_comentario', 'fecha_registro', 'updatedAt', 'es_importante'], order: [['fecha_registro', 'DESC']], raw: true }),
     Tareas.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'updatedAt'], order: [['updatedAt', 'DESC']], raw: true })
   ]);
 
   const nextMilestoneMap = new Map(), lastCommentMap = new Map(), lastCommentDateMap = new Map(), lastTaskDateMap = new Map();
   allMilestones.forEach(t => { if (!nextMilestoneMap.has(t.id_proyecto)) nextMilestoneMap.set(t.id_proyecto, t); });
   allComments.forEach(c => {
-    if (!lastCommentMap.has(c.id_proyecto)) {
+    if (c.es_importante && !lastCommentMap.has(c.id_proyecto)) {
       lastCommentMap.set(c.id_proyecto, c.texto_comentario ? c.texto_comentario.replace(/<[^>]+>/g, '') : '');
+    }
+    if (!lastCommentDateMap.has(c.id_proyecto)) {
       lastCommentDateMap.set(c.id_proyecto, c.fecha_registro || c.updatedAt);
     }
   });

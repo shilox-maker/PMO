@@ -568,6 +568,28 @@
     "deleteConfirm": "¿Seguro que desea eliminar esta solicitud de cambio (CR)?",
     "deleteError": "Error al eliminar la solicitud de cambio"
   },
+  "crModal": {
+    "addTitle": "Registrar Solicitud de Cambio (CR)",
+    "editTitle": "Editar Solicitud de Cambio (CR)",
+    "noRaciNotice": "Este proyecto no tiene participantes asignados en la Matriz RACI. Debe añadir participantes a la Matriz RACI para seleccionarlos como solicitante o aprobador.",
+    "idLabel": "ID Cambio de Alcance (Format: CR-YYYY-XXX o dejar vacío)",
+    "idPlaceholder": "Auto-generado (Ej. CR-2026-005)",
+    "requester": "Solicitante (Matriz RACI)",
+    "approver": "Aprobador (Matriz RACI)",
+    "selectRequester": "Seleccione Solicitante...",
+    "selectApprover": "Seleccione Aprobador...",
+    "requestDate": "Fecha de Solicitud",
+    "status": "Estado de Solicitud",
+    "impactsCost": "¿Impacta Importe?",
+    "costPlaceholder": "Importe +/- (€)",
+    "impactsTime": "¿Impacta Plazos?",
+    "timePlaceholder": "Días +/-",
+    "description": "Descripción Detallada / Justificación",
+    "descPlaceholder": "Detalles sobre por qué se solicita esta ampliación del alcance y sus impactos técnicos...",
+    "fillRequired": "Por favor, rellene todos los campos obligatorios.",
+    "saveError": "Error al guardar el cambio de alcance",
+    "submit": "Enviar Solicitud"
+  },
   "financeTab": {
     "initialBudget": "Presupuesto Inicial",
     "updatedBudget": "Budget Actualizado",

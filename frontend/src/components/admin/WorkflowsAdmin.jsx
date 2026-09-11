@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import WorkflowsList from './WorkflowsList';
 import WorkflowDetailForm from './WorkflowDetailForm';
+import { useMetadata } from '../../context/MetadataContext';
 
 export default function WorkflowsAdmin({ getAuthHeaders }) {
   const { t } = useTranslation();
+  const { refreshMetadata } = useMetadata();
   const [workflows, setWorkflows] = useState([]);
   const [workflowsLoading, setWorkflowsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -72,6 +74,7 @@ export default function WorkflowsAdmin({ getAuthHeaders }) {
       .then(() => {
         setSuccess(t('workflowsAdmin.deleteSuccess', 'Flujo de trabajo eliminado correctamente.'));
         fetchWorkflows();
+        if (refreshMetadata) refreshMetadata();
       })
       .catch(err => setError(err.message));
   };
@@ -102,7 +105,10 @@ export default function WorkflowsAdmin({ getAuthHeaders }) {
         <WorkflowDetailForm
           initialWorkflow={editingWorkflow}
           onBack={() => setViewMode('list')}
-          onWorkflowSaved={fetchWorkflows}
+          onWorkflowSaved={() => {
+            fetchWorkflows();
+            if (refreshMetadata) refreshMetadata();
+          }}
           getAuthHeaders={getAuthHeaders}
         />
       )}

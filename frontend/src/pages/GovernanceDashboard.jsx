@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useMetadata } from '../context/MetadataContext';
 import { Filter, Search, ChevronDown, ChevronUp, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown, RotateCcw } from 'lucide-react';
 import { useTableColumns } from '../hooks/useTableColumns';
 import usePersistentFilters from '../hooks/usePersistentFilters';
@@ -94,18 +95,13 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
   const [isStatesOpen, setIsStatesOpen] = useState(false);
   const [activeKpiFilter, setActiveKpiFilter] = useState(null);
 
-  // Dropdowns lists
-  const [pmsList, setPmsList] = useState([]);
-  const [vendorsList, setVendorsList] = useState([]);
-  const [statesList, setStatesList] = useState([]);
-  const [workflowsList, setWorkflowsList] = useState([]);
-
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(data));
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/workflows`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowsList(Array.isArray(data) ? data : [])).catch(() => {});
-  }, []);
+  // Dropdowns lists from global metadata context
+  const {
+    pms: pmsList,
+    vendors: vendorsList,
+    states: statesList,
+    workflows: workflowsList
+  } = useMetadata();
 
   const fetchDashboardData = () => {
     setLoading(true);
@@ -223,7 +219,7 @@ export default function GovernanceDashboard({ onViewProject, onViewVendor }) {
         const allTasks = detail.Tareas || [];
         const milestones = allTasks.filter(t => t.es_hito);
         const completed = milestones.filter(t => t.estado === 'COMPLETADA').sort((a,b) => new Date(b.fecha_limite) - new Date(a.fecha_limite)).slice(0,3);
-        const pending = milestones.filter(t => t.estado === 'PENDIENTE').sort((a,b) => new Date(a.fecha_limite) - new Date(b.fecha_limite)).slice(0,3);
+        const pending = milestones.filter(t => t.estado !== 'COMPLETADA').sort((a,b) => new Date(a.fecha_limite) - new Date(b.fecha_limite)).slice(0,3);
 
         const milestoneRows = (list, type) => {
           if (list.length === 0) return `<tr><td colspan="3" style="text-align:center;color:#999;padding:8px;">Sin hitos ${type}</td></tr>`;

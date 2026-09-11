@@ -19,7 +19,7 @@ describe('Assistant Controller API', () => {
       apellidos: 'Assistant',
       correo: `test_assistant_${Date.now()}@pmo.com`,
       password: 'password123',
-      perfil: 'ADMINISTRADOR',
+      perfil: 'PM',
       activo: true
     });
 

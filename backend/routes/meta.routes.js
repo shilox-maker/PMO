@@ -7,6 +7,8 @@ const router = express.Router();
 
 router.get('/health', metaController.getHealth);
 router.get('/maintenance/status', getMaintenanceStatus);
+router.get('/meta/bootstrap', metaController.getBootstrap);
+router.get('/bootstrap', metaController.getBootstrap);
 router.get('/sedes', metaController.getSedes);
 
 router.get('/contactos', metaController.getContactos);

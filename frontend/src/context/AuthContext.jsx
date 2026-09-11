@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import i18n from '../i18n';
 import { API_URL } from '../config/api';
 
@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }) => {
               if (data.error) setMaintenanceMessage(data.error);
             }
           }).catch(() => {});
-        } else if (response.status === 401 && !url.includes('/login') && !url.includes('/auth/verify')) {
+        } else if (response.status === 401 && !url.includes('/login') && !url.includes('/auth/verify') && !url.includes('/bootstrap')) {
           setIsSessionExpired(true);
         }
         return response;
@@ -340,11 +340,11 @@ export const AuthProvider = ({ children }) => {
     setIsFirstLoginSelection(false);
   };
 
-  const getAuthHeaders = () => ({
+  const getAuthHeaders = useCallback(() => ({
     'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : '',
+    'Authorization': token ? `Bearer ${token}` : (localStorage.getItem('pm_token') ? `Bearer ${localStorage.getItem('pm_token')}` : ''),
     'X-Ambito-Id': localStorage.getItem('pmo_selected_ambito_id') || '1'
-  });
+  }), [token]);
 
   return (
     <AuthContext.Provider value={{

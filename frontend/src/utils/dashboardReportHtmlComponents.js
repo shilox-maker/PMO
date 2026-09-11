@@ -55,7 +55,7 @@ export const renderProjectCard = (project, comments = [], directionComments = []
   const allTasks = project.Tareas || [];
   const milestones = allTasks.filter(t => t.es_hito);
   const completed = milestones.filter(t => t.estado === 'COMPLETADA').slice(0, 3);
-  const pending = milestones.filter(t => t.estado === 'PENDIENTE').slice(0, 3);
+  const pending = milestones.filter(t => t.estado !== 'COMPLETADA').slice(0, 3);
 
   const risksList = (project.Riesgos || []).slice(0, 3);
   const incidentsList = (project.Incidencias || []).slice(0, 3);

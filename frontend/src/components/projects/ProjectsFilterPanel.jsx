@@ -15,7 +15,7 @@ export default function ProjectsFilterPanel({
   filterStates, setFilterStates,
   searchTerm, setSearchTerm,
   isStatesOpen, setIsStatesOpen,
-  pmsList, vendorsList, portfoliosList, workflowsList = [], tagsList, statesList = [], projects,
+  pmsList = [], vendorsList = [], portfoliosList = [], workflowsList = [], tagsList = [], statesList = [], projects = [],
   tableCols, toggleColumn, resetColumns,
   onOpenReport, onOpenCreate,
   activeFiltersCount = 0,

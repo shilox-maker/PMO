@@ -80,7 +80,7 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
     Tareas.findAll({ where: { id_proyecto: { [Op.in]: projectIds }, es_hito: true }, attributes: ['id_proyecto', 'titulo_tarea', 'fecha_limite', 'estado', 'updatedAt'], order: [['fecha_limite', 'ASC']], raw: true }),
     Riesgos.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'updatedAt'], raw: true }),
     Incidencias.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'updatedAt'], raw: true }),
-    ComentariosProyecto.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'texto_comentario', 'fecha_registro'], order: [['fecha_registro', 'DESC']], raw: true })
+    ComentariosProyecto.findAll({ where: { id_proyecto: { [Op.in]: projectIds } }, attributes: ['id_proyecto', 'texto_comentario', 'fecha_registro', 'updatedAt', 'es_importante'], order: [['fecha_registro', 'DESC']], raw: true })
   ]);
 
   const poSets = new Map(), maxUpdatedMap = new Map(), crCountMap = new Map(), nextMilestoneMap = new Map(), overdueSet = new Set(), lastCommentMap = new Map();
@@ -97,7 +97,7 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
   });
 
   allMilestones.forEach(t => {
-    if (t.estado === 'PENDIENTE') {
+    if (t.estado !== 'COMPLETADA') {
       if (!nextMilestoneMap.has(t.id_proyecto)) nextMilestoneMap.set(t.id_proyecto, { titulo_tarea: t.titulo_tarea, fecha_limite: t.fecha_limite });
       if (t.fecha_limite && t.fecha_limite < todayStr) overdueSet.add(t.id_proyecto);
     }
@@ -109,7 +109,13 @@ const getPortfolioDashboard = asyncHandler(async (req, res) => {
   });
 
   allComments.forEach(c => {
-    if (!lastCommentMap.has(c.id_proyecto)) lastCommentMap.set(c.id_proyecto, c.texto_comentario ? c.texto_comentario.replace(/<[^>]+>/g, '') : '');
+    if (c.es_importante && !lastCommentMap.has(c.id_proyecto)) {
+      lastCommentMap.set(c.id_proyecto, c.texto_comentario ? c.texto_comentario.replace(/<[^>]+>/g, '') : '');
+    }
+    const cDate = c.updatedAt || c.fecha_registro;
+    if (cDate && new Date(cDate) > maxUpdatedMap.get(c.id_proyecto)) {
+      maxUpdatedMap.set(c.id_proyecto, new Date(cDate));
+    }
   });
 
   const dashboardData = projectsList.map(p => {

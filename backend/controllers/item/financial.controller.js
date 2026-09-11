@@ -1,4 +1,5 @@
-const { Facturas, CambiosAlcance } = require('../../models/index');
+const { Facturas, CambiosAlcance, ProyectoContactos } = require('../../models/index');
+const { Op } = require('sequelize');
 const { generateNextId } = require('../../utils/helpers');
 const { asyncHandler } = require('../../middlewares/errorHandler');
 
@@ -18,16 +19,19 @@ const createInvoice = asyncHandler(async (req, res) => {
   if (!data.id_proveedor || data.id_proveedor === '') data.id_proveedor = null;
   if (!data.id_tipo_factura || data.id_tipo_factura === '') data.id_tipo_factura = null;
   if (!data.numero_factura || data.numero_factura === '') data.numero_factura = null;
-  if (!data.PO || data.PO === '') data.PO = null;
+  if (!data.concepto || data.concepto === '') data.concepto = null;
   const fac = await Facturas.create(data);
   res.status(201).json(fac);
 });
 
 const createBatchInvoices = asyncHandler(async (req, res) => {
-  const { items } = req.body;
-  const createdInvoices = [];
+  const { facturas } = req.body;
+  if (!facturas || !Array.isArray(facturas) || facturas.length === 0) {
+    return res.status(400).json({ error: 'Se requiere una lista no vacía de facturas.' });
+  }
 
-  for (const item of items) {
+  const createdInvoices = [];
+  for (const item of facturas) {
     item.createdBy = req.currentPmId;
     item.modifiedBy = req.currentPmId;
     if (!item.id_interno_factura || item.id_interno_factura.trim() === '') {
@@ -36,29 +40,27 @@ const createBatchInvoices = asyncHandler(async (req, res) => {
     if (!item.id_proveedor || item.id_proveedor === '') item.id_proveedor = null;
     if (!item.id_tipo_factura || item.id_tipo_factura === '') item.id_tipo_factura = null;
     if (!item.numero_factura || item.numero_factura === '') item.numero_factura = null;
-    if (!item.PO || item.PO === '') item.PO = null;
-
-    const fac = await Facturas.create(item);
-    createdInvoices.push(fac);
+    if (!item.concepto || item.concepto === '') item.concepto = null;
+    const created = await Facturas.create(item);
+    createdInvoices.push(created);
   }
 
   res.status(201).json(createdInvoices);
 });
-
 
 const updateInvoice = asyncHandler(async (req, res) => {
   const { id_interno_factura } = req.params;
   const data = req.body;
   delete data.createdBy;
   data.modifiedBy = req.currentPmId;
+  if (data.id_proveedor === '') data.id_proveedor = null;
+  if (data.id_tipo_factura === '') data.id_tipo_factura = null;
+  if (data.numero_factura === '') data.numero_factura = null;
+  if (data.concepto === '') data.concepto = null;
   const fac = await Facturas.findByPk(id_interno_factura);
   if (!fac) {
     return res.status(404).json({ error: 'Factura no encontrada' });
   }
-  if (data.hasOwnProperty('id_proveedor') && (!data.id_proveedor || data.id_proveedor === '')) data.id_proveedor = null;
-  if (data.hasOwnProperty('id_tipo_factura') && (!data.id_tipo_factura || data.id_tipo_factura === '')) data.id_tipo_factura = null;
-  if (data.hasOwnProperty('numero_factura') && (!data.numero_factura || data.numero_factura === '')) data.numero_factura = null;
-  if (data.hasOwnProperty('PO') && (!data.PO || data.PO === '')) data.PO = null;
   await fac.update(data);
   res.json(fac);
 });
@@ -86,6 +88,22 @@ const createScopeChange = asyncHandler(async (req, res) => {
       return res.status(400).json({ error: 'El ID del cambio de alcance debe tener el formato CR-YYYY-XXX.' });
     }
   }
+
+  // Validar que solicitante y aprobador pertenezcan a la matriz RACI del proyecto
+  if (data.id_proyecto && (data.id_solicitante_contacto || data.id_aprobador_contacto)) {
+    const contactIds = [data.id_solicitante_contacto, data.id_aprobador_contacto].filter(Boolean);
+    const uniqueIds = [...new Set(contactIds.map(Number))];
+    const count = await ProyectoContactos.count({
+      where: {
+        id_proyecto: data.id_proyecto,
+        id_contacto: { [Op.in]: uniqueIds }
+      }
+    });
+    if (count < uniqueIds.length) {
+      return res.status(400).json({ error: 'Tanto el solicitante como el aprobador deben pertenecer a la matriz RACI del proyecto.' });
+    }
+  }
+
   if (!data.impacta_importe) {
     data.importe_impacto = 0.00;
   }
@@ -105,6 +123,25 @@ const updateScopeChange = asyncHandler(async (req, res) => {
   if (!cr) {
     return res.status(404).json({ error: 'Cambio de alcance no encontrado' });
   }
+
+  const targetProjectId = data.id_proyecto || cr.id_proyecto;
+  const solicitanteId = data.id_solicitante_contacto !== undefined ? data.id_solicitante_contacto : cr.id_solicitante_contacto;
+  const aprobadorId = data.id_aprobador_contacto !== undefined ? data.id_aprobador_contacto : cr.id_aprobador_contacto;
+
+  if (targetProjectId && (solicitanteId || aprobadorId)) {
+    const contactIds = [solicitanteId, aprobadorId].filter(Boolean);
+    const uniqueIds = [...new Set(contactIds.map(Number))];
+    const count = await ProyectoContactos.count({
+      where: {
+        id_proyecto: targetProjectId,
+        id_contacto: { [Op.in]: uniqueIds }
+      }
+    });
+    if (count < uniqueIds.length) {
+      return res.status(400).json({ error: 'Tanto el solicitante como el aprobador deben pertenecer a la matriz RACI del proyecto.' });
+    }
+  }
+
   if (data.hasOwnProperty('impacta_importe') && !data.impacta_importe) {
     data.importe_impacto = 0.00;
   }

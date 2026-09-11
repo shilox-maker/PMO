@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Edit2, Trash2, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import CapexTypeForm from './CapexTypeForm';
 import CapexSubtypeForm from './CapexSubtypeForm';
+import { useMetadata } from '../../context/MetadataContext';
 
 export default function CapexTypesAdmin({ getAuthHeaders }) {
   const { t } = useTranslation();
+  const { refreshMetadata } = useMetadata();
   const [types, setTypes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -78,6 +80,7 @@ export default function CapexTypesAdmin({ getAuthHeaders }) {
         setTypeForm({ id: '', nombre: '', orden: '' });
         setEditingTypeId(null);
         fetchTypes();
+        if (refreshMetadata) refreshMetadata();
       })
       .catch(err => setError(err.message));
   };
@@ -104,6 +107,7 @@ export default function CapexTypesAdmin({ getAuthHeaders }) {
       .then(() => {
         setSuccess('Tipo CAPEX eliminado.');
         fetchTypes();
+        if (refreshMetadata) refreshMetadata();
       })
       .catch(err => setError(err.message));
   };
@@ -138,6 +142,7 @@ export default function CapexTypesAdmin({ getAuthHeaders }) {
         setEditingSubtypeId(null);
         setAddingSubtypeToId(null);
         fetchTypes();
+        if (refreshMetadata) refreshMetadata();
       })
       .catch(err => setError(err.message));
   };
@@ -172,6 +177,7 @@ export default function CapexTypesAdmin({ getAuthHeaders }) {
       .then(() => {
         setSuccess('Subtipo CAPEX eliminado.');
         fetchTypes();
+        if (refreshMetadata) refreshMetadata();
       })
       .catch(err => setError(err.message));
   };

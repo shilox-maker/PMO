@@ -4,8 +4,8 @@ const { restrictToAdmin } = require('../middlewares/auth');
 
 const router = express.Router();
 
-// Apply restrictToAdmin to all routes in this router
-router.use(restrictToAdmin);
+// Apply restrictToAdmin to all /admin routes in this router
+router.use('/admin', restrictToAdmin);
 
 // Sedes admin
 router.post('/admin/sedes', adminController.createSede);

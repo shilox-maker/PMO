@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useMetadata } from '../context/MetadataContext';
 import usePersistentFilters from '../hooks/usePersistentFilters';
 import TimelineToolbar from '../components/timeline/TimelineToolbar';
 import { 
@@ -38,12 +39,14 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
   const [loading, setLoading] = useState(true);
   const [expandedProjects, setExpandedProjects] = useState(new Set());
 
-  // Master Lists
-  const [pmsList, setPmsList] = useState([]);
-  const [vendorsList, setVendorsList] = useState([]);
-  const [portfoliosList, setPortfoliosList] = useState([]);
-  const [workflowsList, setWorkflowsList] = useState([]);
-  const [statesList, setStatesList] = useState([]);
+  // Master Lists from global context
+  const {
+    pms: pmsList,
+    vendors: vendorsList,
+    portfolios: portfoliosList,
+    workflows: workflowsList,
+    states: statesList
+  } = useMetadata();
 
   // Persistent Filters
   const {
@@ -97,22 +100,16 @@ export default function Timeline({ onViewProject, projectId, hideHeader }) {
     setLoading(true);
     const headers = getAuthHeaders();
     const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    Promise.all([
-      fetch(`${API}/pms`, { headers }).then(r => r.json()),
-      fetch(`${API}/vendors`, { headers }).then(r => r.json()),
-      fetch(`${API}/portfolios`, { headers }).then(r => r.json()),
-      fetch(`${API}/portfolio/states`, { headers }).then(r => r.json()),
-      fetch(`${API}/portfolio/workflows`, { headers }).then(r => r.json()),
-      fetch(`${API}/timeline`, { headers }).then(r => r.json())
-    ]).then(([pms, vds, pts, sts, wfs, tml]) => {
-      setPmsList(Array.isArray(pms) ? pms : []);
-      setVendorsList(Array.isArray(vds) ? vds : []);
-      setPortfoliosList(Array.isArray(pts) ? pts : []);
-      setStatesList(Array.isArray(sts) ? sts : []);
-      setWorkflowsList(Array.isArray(wfs) ? wfs : []);
-      setProjects(Array.isArray(tml) ? tml : []);
-      setLoading(false);
-    }).catch(err => { console.error(err); setLoading(false); });
+    fetch(`${API}/timeline`, { headers })
+      .then(r => r.json())
+      .then(tml => {
+        setProjects(Array.isArray(tml) ? tml : []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
   }, [selectedAmbito]);
 
   useEffect(() => {

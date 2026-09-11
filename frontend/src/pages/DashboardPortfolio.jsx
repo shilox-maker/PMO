@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useMetadata } from '../context/MetadataContext';
 import { Filter, PieChart } from 'lucide-react';
 import { useTableColumns } from '../hooks/useTableColumns';
 import usePersistentFilters from '../hooks/usePersistentFilters';
@@ -100,27 +101,20 @@ export default function DashboardPortfolio({ onViewProject }) {
     }));
   };
 
-  // Master Lists
-  const [pmsList, setPmsList] = useState([]);
-  const [vendorsList, setVendorsList] = useState([]);
-  const [portfoliosList, setPortfoliosList] = useState([]);
-  const [workflowsList, setWorkflowsList] = useState([]);
-  const [tagsList, setTagsList] = useState([]);
-  const [statesList, setStatesList] = useState([]);
+  // Master Lists from global context
+  const {
+    pms: pmsList,
+    vendors: vendorsList,
+    portfolios: portfoliosList,
+    workflows: workflowsList,
+    tags: tagsList,
+    states: statesList
+  } = useMetadata();
 
   // Column visibility & Sorting
   const { columns: tableCols, visibleColumnsMap, columnWidths, updateColumnWidth, toggleColumn, resetColumns } = useTableColumns('ppm-portfolio-columns', DEFAULT_GOV_COLUMNS);
   const [selectedKpi, setSelectedKpi] = useState(null);
   const [trends, setTrends] = useState({});
-
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPmsList(Array.isArray(data) ? data : [])).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendorsList(Array.isArray(data) ? data : [])).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(Array.isArray(data) ? data : [])).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/tags`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setTagsList(Array.isArray(data) ? data : [])).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setStatesList(Array.isArray(data) ? data : [])).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/portfolio/workflows`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowsList(Array.isArray(data) ? data : [])).catch(() => {});
-  }, [selectedAmbito]);
 
   const fetchDashboardData = () => {
     setLoading(true);

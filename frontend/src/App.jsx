@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, useParams, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { MetadataProvider } from './context/MetadataContext';
 import { getMsalInstance } from './config/msal';
 // Lazy-loaded pages — solo se descargan al navegar a cada ruta
 const Projects           = React.lazy(() => import('./pages/Projects'));
@@ -1069,7 +1070,9 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <AppConsumer />
+          <MetadataProvider>
+            <AppConsumer />
+          </MetadataProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

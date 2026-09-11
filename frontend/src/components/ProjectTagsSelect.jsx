@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Plus, X } from 'lucide-react';
+import { useMetadata } from '../context/MetadataContext';
 
 export default function ProjectTagsSelect({ 
   projectId, 
@@ -7,25 +8,19 @@ export default function ProjectTagsSelect({
   getAuthHeaders, 
   onUpdateProject 
 }) {
-  const [allTags, setAllTags] = useState([]);
+  const { tags: contextTags, refreshMetadata } = useMetadata();
+  const [allTags, setAllTags] = useState(contextTags || []);
   const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
-  const fetchTags = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/tags`, {
-      headers: getAuthHeaders()
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setAllTags(data);
-      })
-      .catch(err => console.error('Error fetching tags:', err));
-  };
+  useEffect(() => {
+    if (contextTags && contextTags.length > 0) {
+      setAllTags(contextTags);
+    }
+  }, [contextTags]);
 
   useEffect(() => {
-    fetchTags();
-    
     function handleClickOutside(event) {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
         setIsOpen(false);
@@ -78,6 +73,8 @@ export default function ProjectTagsSelect({
       .then((newTag) => {
         // Add to global tags list
         setAllTags(prev => [...prev, newTag].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+        // Refresh shared context
+        if (refreshMetadata) refreshMetadata();
         // Add to project tags
         const newTagIds = [...projectTags.map(t => t.id), newTag.id];
         onUpdateProject({ tagIds: newTagIds });

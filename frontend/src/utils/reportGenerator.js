@@ -41,7 +41,7 @@ export const generateProjectReport = (
   const completed = milestones.filter(t => t.estado === 'COMPLETADA')
     .sort((a, b) => new Date(b.fecha_limite) - new Date(a.fecha_limite))
     .slice(0, 3);
-  const pending = milestones.filter(t => t.estado === 'PENDIENTE')
+  const pending = milestones.filter(t => t.estado !== 'COMPLETADA')
     .sort((a, b) => new Date(a.fecha_limite) - new Date(b.fecha_limite))
     .slice(0, 3);
 

@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../server');
-const { sequelize, Usuarios, Proyectos, EstadosProyecto, Sedes, Proveedores, ContactosProveedor, Workflows, WorkflowEstados, Tags } = require('../models');
+const { sequelize, Usuarios, Proyectos, EstadosProyecto, Sedes, Proveedores, ContactosProveedor, Workflows, WorkflowEstados, Tags, ProyectoContactos } = require('../models');
 const bcrypt = require('bcryptjs');
 
 let token = '';
@@ -461,6 +461,30 @@ describe('API Endpoints', () => {
           fecha_fin_inicial: '2026-12-31'
         }
       });
+
+      await ProyectoContactos.findOrCreate({
+        where: { id_proyecto: 'PRJ-2026-CR01', id_contacto: 1 },
+        defaults: { rol: 'Key User', raci: 'RA' }
+      });
+    });
+
+    it('should reject creating a scope change if solicitante or aprobador is not in RACI matrix', async () => {
+      const res = await request(app)
+        .post('/api/scope-changes')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          id_proyecto: 'PRJ-2026-CR01',
+          fecha_solicitud: '2026-05-01',
+          id_solicitante_contacto: 99999, // Contact not in RACI
+          id_aprobador_contacto: 1,
+          descripcion_motivo: 'Intento con solicitante no RACI',
+          impacta_importe: false,
+          impacta_tiempo: false,
+          estado_cambio: 'SOLICITADO'
+        });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body.error).toBe('Tanto el solicitante como el aprobador deben pertenecer a la matriz RACI del proyecto.');
     });
 
     it('should create a new scope change (CR)', async () => {

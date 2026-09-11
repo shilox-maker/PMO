@@ -1,5 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useMetadata } from '../context/MetadataContext';
 import { RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import SkeletonLoader from '../components/SkeletonLoader';
 
@@ -47,15 +48,17 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
   const [tasksSort, setTasksSort] = useState({ key: 'fecha_limite', direction: 'asc' });
   const [lessonsSort, setLessonsSort] = useState({ key: 'fecha_registro', direction: 'desc' });
 
-  // Metadata list for dropdowns
-  const [sedes, setSedes] = useState([]);
-  const [vendors, setVendors] = useState([]);
-  const [contactosList, setContactosList] = useState([]);
-  const [pms, setPms] = useState([]);
-  const [workflowStates, setWorkflowStates] = useState([]);
-  const [workflowsList, setWorkflowsList] = useState([]);
-  const [portfoliosList, setPortfoliosList] = useState([]);
-  const [capexTypes, setCapexTypes] = useState([]);
+  // Master metadata from global context
+  const {
+    sedes,
+    vendors,
+    contactos: contactosList,
+    pms,
+    states: workflowStates,
+    workflows: workflowsList,
+    portfolios: portfoliosList,
+    capexTypes
+  } = useMetadata();
 
   // Comments states
   const [comments, setComments] = useState([]);
@@ -173,21 +176,6 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       });
   };
 
-  const [metadataLoaded, setMetadataLoaded] = useState(false);
-
-  const fetchMetadata = () => {
-    if (metadataLoaded) return;
-    setMetadataLoaded(true);
-    fetch(`${import.meta.env.VITE_API_URL}/sedes`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setSedes(data)).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL}/vendors`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setVendors(data)).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL}/contactos`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setContactosList(data)).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL}/pms`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPms(data)).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/states`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowStates(data)).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL}/portfolio/workflows`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setWorkflowsList(Array.isArray(data) ? data : [])).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL}/portfolios`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setPortfoliosList(data)).catch(() => {});
-    fetch(`${import.meta.env.VITE_API_URL}/capex-types`, { headers: getAuthHeaders() }).then(res => res.json()).then(data => setCapexTypes(data)).catch(() => {});
-  };
-
   useEffect(() => {
     if (projectId) {
       fetchProjectData(true);
@@ -195,15 +183,8 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
       if (canSeeDireccion) {
         fetchDirectionComments();
       }
-      fetchMetadata();
     }
   }, [projectId, canSeeDireccion]);
-
-  useEffect(() => {
-    if (showEditProjectModal || showRaciModal || showInvoiceModal || showCrModal || showRiskModal || showIssueModal || showTaskModal || showLessonModal || showReportModal) {
-      fetchMetadata();
-    }
-  }, [showEditProjectModal, showRaciModal, showInvoiceModal, showCrModal, showRiskModal, showIssueModal, showTaskModal, showLessonModal, showReportModal]);
 
   const executeUpdateProject = (fieldsToUpdate) => {
     return fetch(`${import.meta.env.VITE_API_URL}/projects/${projectId}`, {
@@ -715,6 +696,7 @@ export default function ProjectDetail({ projectId, onBack, onViewVendor }) {
           projectId={projectId}
           editingCr={editingCr}
           cr={editingCr}
+          raciContacts={project?.InvolvedContacts || []}
           contactosList={contactosList}
           getAuthHeaders={getAuthHeaders}
           onSuccess={fetchProjectData}

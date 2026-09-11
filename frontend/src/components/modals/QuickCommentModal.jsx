@@ -12,17 +12,21 @@ export default function QuickCommentModal({ isOpen, onClose, projectId, getAuthH
   useEffect(() => {
     if (isOpen && projectId) {
       setLoading(true);
-      const endpoint = (canSeeDireccion && targetWall === 'DIRECCION')
-        ? `${import.meta.env.VITE_API_URL}/projects/${projectId}/direction-comments`
-        : `${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`;
+      setTargetWall('OPERATIVO');
+      const endpoint = `${import.meta.env.VITE_API_URL}/projects/${projectId}/comments`;
 
       fetch(endpoint, { headers: getAuthHeaders() })
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data) && data.length > 0) {
-            const last = data[0];
-            setCommentText(last.texto_comentario || '');
-            setEsImportante(last.es_importante || false);
+            const lastImportant = data.find(c => c.es_importante);
+            if (lastImportant) {
+              setCommentText(lastImportant.texto_comentario || '');
+              setEsImportante(true);
+            } else {
+              setCommentText('');
+              setEsImportante(false);
+            }
           } else {
             setCommentText('');
             setEsImportante(false);
@@ -34,7 +38,7 @@ export default function QuickCommentModal({ isOpen, onClose, projectId, getAuthH
           setLoading(false);
         });
     }
-  }, [isOpen, projectId, targetWall, canSeeDireccion]);
+  }, [isOpen, projectId]);
 
   if (!isOpen) return null;
 

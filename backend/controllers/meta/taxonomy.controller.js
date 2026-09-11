@@ -170,6 +170,140 @@ const getHealth = async (req, res) => {
   }
 };
 
+const getBootstrap = asyncHandler(async (req, res) => {
+  const workflowWhere = { activo: true };
+  const portfolioWhere = {};
+  if (req.currentAmbitoId && req.currentAmbitoId !== 'ALL') {
+    workflowWhere[Op.or] = [
+      { id_ambito: null },
+      { id_ambito: req.currentAmbitoId }
+    ];
+    portfolioWhere.id_ambito = req.currentAmbitoId;
+  }
+
+  const [
+    pms,
+    vendors,
+    sedes,
+    contactos,
+    states,
+    workflowsRaw,
+    portfolios,
+    tags,
+    capexTypes,
+    invoiceTypes
+  ] = await Promise.all([
+    Usuarios.findAll({
+      where: { activo: true },
+      order: [['nombre', 'ASC']]
+    }).catch(err => {
+      console.error('[Bootstrap] Error fetching pms:', err.message);
+      return [];
+    }),
+    Proveedores.findAll({
+      order: [['nombre_razon_social', 'ASC']]
+    }).catch(err => {
+      console.error('[Bootstrap] Error fetching vendors:', err.message);
+      return [];
+    }),
+    Sedes.findAll({
+      order: [['orden', 'ASC'], ['nombre_sede', 'ASC']]
+    }).catch(err => {
+      console.error('[Bootstrap] Error fetching sedes:', err.message);
+      return [];
+    }),
+    ContactosProveedor.findAll({
+      include: [{ model: Proveedores, attributes: ['nombre_razon_social', 'es_grupo_dacsa'] }],
+      order: [['nombre', 'ASC']]
+    }).catch(err => {
+      console.error('[Bootstrap] Error fetching contactos:', err.message);
+      return [];
+    }),
+    EstadosProyecto.findAll({
+      include: [{ model: EstadoTareasPlantilla, as: 'TareasPlantilla' }],
+      order: [['orden', 'ASC']]
+    }).catch(err => {
+      console.error('[Bootstrap] Error fetching states:', err.message);
+      return [];
+    }),
+    Workflows.findAll({
+      where: workflowWhere,
+      include: [
+        {
+          model: EstadosProyecto,
+          as: 'Estados',
+          include: [{ model: EstadoTareasPlantilla, as: 'TareasPlantilla' }],
+          through: { attributes: ['orden', 'id'] }
+        },
+        {
+          model: Ambitos,
+          as: 'Ambito',
+          attributes: ['id_ambito', 'nombre', 'code']
+        }
+      ],
+      order: [
+        ['is_default', 'DESC'],
+        ['nombre', 'ASC']
+      ]
+    }).catch(err => {
+      console.error('[Bootstrap] Error fetching workflows:', err.message);
+      return [];
+    }),
+    Portfolios.findAll({
+      where: portfolioWhere,
+      order: [['nombre', 'ASC']]
+    }).catch(err => {
+      console.error('[Bootstrap] Error fetching portfolios:', err.message);
+      return [];
+    }),
+    Tags.findAll({
+      order: [['nombre', 'ASC']]
+    }).catch(err => {
+      console.error('[Bootstrap] Error fetching tags:', err.message);
+      return [];
+    }),
+    TiposCapex.findAll({
+      include: [{ model: SubtiposCapex, as: 'Subtipos' }],
+      order: [['orden', 'ASC'], [{ model: SubtiposCapex, as: 'Subtipos' }, 'orden', 'ASC']]
+    }).catch(err => {
+      console.error('[Bootstrap] Error fetching capexTypes:', err.message);
+      return [];
+    }),
+    TiposFactura.findAll({
+      order: [['orden', 'ASC'], ['nombre', 'ASC']]
+    }).catch(async (err) => {
+      try {
+        await TiposFactura.sync();
+        return await TiposFactura.findAll({ order: [['orden', 'ASC'], ['nombre', 'ASC']] });
+      } catch (syncErr) {
+        console.error('[Bootstrap] Error fetching invoiceTypes after sync:', syncErr.message);
+        return [];
+      }
+    })
+  ]);
+
+  const workflows = (workflowsRaw || []).map(wf => {
+    const json = typeof wf.toJSON === 'function' ? wf.toJSON() : wf;
+    if (json.Estados && Array.isArray(json.Estados)) {
+      json.Estados.sort((a, b) => (a.Workflow_Estados?.orden ?? 0) - (b.Workflow_Estados?.orden ?? 0));
+    }
+    return json;
+  });
+
+  res.json({
+    pms,
+    vendors,
+    sedes,
+    contactos,
+    states,
+    workflows,
+    portfolios,
+    tags,
+    capexTypes,
+    invoiceTypes
+  });
+});
+
 module.exports = {
   getSedes,
   getContactos,
@@ -183,6 +317,8 @@ module.exports = {
   getCapexTypes,
   getPortfolioBudgets,
   getInvoiceTypes,
-  getHealth
+  getHealth,
+  getBootstrap
 };
+
 
